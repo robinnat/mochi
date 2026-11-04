@@ -56,7 +56,7 @@ import {
   type Rendu3d,
   RENDU_3D_DEFAUT
 } from './rendu3d'
-import { peindreReflet, REFLET_DEFAUT, refletDuCorps, type Reflet } from './reflet'
+import { peindreReflet, REFLET_DEFAUT, type Reflet } from './reflet'
 import {
   contourDuCorps,
   demiEtendueOeil,
@@ -129,7 +129,8 @@ export class Mochi3d {
   private rendu: Rendu3d = RENDU_3D_DEFAUT
   private douceur: Douceur = DOUCEUR_DEFAUT
   /** petit reflet doux en haut a gauche (matiere `doux` seulement) */
-  private reflet = REFLET_DEFAUT
+  /** reflet doux en shader : 1 = actif (uniform partage par les materiaux de ce corps) */
+  private readonly uReflet = { value: 1 }
   /** demi-epaisseur du contour, en unites du moteur (uniform de la coque) */
   private readonly epaisseur = { value: 4.5 }
   /** derniers contour et visage peints : inchanges d'une image a l'autre, on ne refait rien */
@@ -196,7 +197,7 @@ export class Mochi3d {
       // le shader toon sait deriver une normale par facette ; seul le typage ne le declare pas
       if (plat.facettes) (m as unknown as { flatShading: boolean }).flatShading = true
     }
-    lisere(m, plat ? 0.7 : 0.5, plat ? 0.32 : 0.22)
+    lisere(m, plat ? 0.7 : 0.5, plat ? 0.32 : 0.22, { reflet: this.uReflet, ao: 1 })
     this.materiaux.set(cle, m)
     return m
   }
@@ -205,7 +206,7 @@ export class Mochi3d {
   setRendu(r: Rendu3d, contour = false, douceur: Douceur = DOUCEUR_DEFAUT, reflet = REFLET_DEFAUT) {
     this.rendu = r
     this.douceur = douceur
-    this.reflet = reflet
+    this.uReflet.value = reflet && reglagePlat(r, douceur)?.lisse ? 1 : 0
     this.mesh.material = this.materiau(r, douceur)
     // le contour cartoon est une option des variantes plates (jamais du realiste)
     this.coque.visible = !!reglagePlat(r, douceur) && (contour || !!reglagePlat(r, douceur)?.contour)
@@ -285,17 +286,9 @@ export class Mochi3d {
     frame = this.yeuxSurLaFace(frame)
     this.porte3d.maj(this.porte, frameCorps, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y))
     const ombres: Ombre[] = this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []
-    // reflet : seulement la matiere `doux` (ombrage lisse), pose selon la forme du moment
-    const reflet = plat?.lisse
-      ? refletDuCorps(
-          contourDuCorps(frame.bodyPath, 3),
-          frame.eyes.map((e) => {
-            const [, , , , x, y] = lireMatrice(e.matrix)
-            return { x: x!, y: y! }
-          }),
-          this.reflet
-        )
-      : null
+    // le reflet doux est un effet de matiere (shader, repere de la vue) : plus rien n'est peint dans la
+    // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
+    const reflet = null as Reflet | null
     const cleReflet = reflet ? [reflet.x, reflet.y, reflet.rx].map((v) => Math.round(v * 2)).join(',') : '-'
     const cleVisage = `${this.rendu}|${this.douceur}|${couleur}|${papier}|${JSON.stringify(frame.eyes)}|${cleReflet}|${this.porte ?? ''}|${ombres.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
     if (cleVisage !== this.cleVisage) {
@@ -379,21 +372,6 @@ export class Mochi3d {
     c.globalAlpha = 1
     c.fillStyle = base
     c.fillRect(0, 0, T, T)
-    // ombrage de studio : le corps s'assombrit doucement vers le bas et sur les bords (type
-    // occlusion ambiante), dans une teinte de la couleur du corps et jamais en noir pur
-    {
-      const ombre = mixHex(creux, '#000000', 0.35)
-      const g = c.createLinearGradient(0, T * 0.35, 0, T * 0.98)
-      g.addColorStop(0, hexA(ombre, 0))
-      g.addColorStop(1, hexA(ombre, 0.3))
-      c.fillStyle = g
-      c.fillRect(0, 0, T, T)
-      const r = c.createRadialGradient(T * 0.46, T * 0.44, T * 0.2, T * 0.5, T * 0.5, T * 0.5)
-      r.addColorStop(0, hexA(ombre, 0))
-      r.addColorStop(1, hexA(ombre, 0.2))
-      c.fillStyle = r
-      c.fillRect(0, 0, T, T)
-    }
     // le reflet est peint AVANT les yeux : ils le recouvrent, il ne les touche jamais
     if (reflet) peindreReflet(c, reflet, k, VB)
     const trous: Array<{ chemin: Path2D; m: number[]; alpha: number }> = frame.eyes.map((e) => ({
