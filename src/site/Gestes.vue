@@ -28,7 +28,7 @@ const anim = computed(() => TOUTES.find((a) => a.id === choisi.value) ?? TOUTES[
             :size="240"
             shape="cercle"
             color="rose"
-            rendu="argile"
+            rendu="3d"
             :expression="anim.expression"
             :cycle="anim.cycle"
             :geste="anim.geste"

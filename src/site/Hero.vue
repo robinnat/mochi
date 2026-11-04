@@ -26,7 +26,7 @@ const cycle: Block[] = [
           :size="280"
           shape="cercle"
           color="violet"
-          rendu="argile"
+          rendu="3d"
           :frozen-at="1"
           label="A Mochi, a round purple animated avatar"
         />
@@ -35,7 +35,7 @@ const cycle: Block[] = [
           :size="280"
           shape="cercle"
           color="violet"
-          rendu="argile"
+          rendu="3d"
           :cycle="cycle"
           :playing="true"
           follow
@@ -43,17 +43,17 @@ const cycle: Block[] = [
         />
       </Lazy>
       <div class="satellites" aria-hidden="true">
-        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="etoile" color="ambre" rendu="argile" :frozen-at="1" label="" /></Lazy>
-        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="nuage" color="rose" rendu="argile" :frozen-at="1" label="" /></Lazy>
-        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="fleur" color="turquoise" rendu="argile" :frozen-at="1" label="" /></Lazy>
-        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="goutte" color="bleu" rendu="argile" :frozen-at="1" label="" /></Lazy>
+        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="etoile" color="ambre" rendu="3d" :frozen-at="1" label="" /></Lazy>
+        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="nuage" color="rose" rendu="3d" :frozen-at="1" label="" /></Lazy>
+        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="fleur" color="turquoise" rendu="3d" :frozen-at="1" label="" /></Lazy>
+        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="goutte" color="bleu" rendu="3d" :frozen-at="1" label="" /></Lazy>
       </div>
     </div>
     <div>
       <h1>Mochi</h1>
       <p class="chapo">
         A tiny animated avatar engine for the web. One soft shape that morphs through five face moods,
-        in flat, pixel art, clay and real 3D. Drawn in code, no animation library.
+        in real 3D, in three styles: Soft, Flat and Pixel. Drawn in code, no animation library.
       </p>
       <div class="actions">
         <a class="btn primaire" href="#playground">Try the playground</a>

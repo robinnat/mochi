@@ -13,7 +13,7 @@ const state = ref('idle')
     v-model:state="state"
     shape="fleur"
     color="rose"
-    rendu="argile"
+    rendu="3d"
     :size="160"
     follow
   />
@@ -23,7 +23,7 @@ const VUE_3D = `<!-- 3D: Three.js is loaded on demand, only when this style is u
 <MochiBot shape="etoile" color="ambre" rendu="3d" contour :size="200" />
 
 <!-- an accessory and its gesture -->
-<MochiBot accessoire="portable" rendu="argile" :size="200" />
+<MochiBot accessoire="portable" rendu="3d" :size="200" />
 
 <!-- a frozen frame: no animation loop, same image every time -->
 <MochiBot state="wink" :frozen-at="1.2" :size="96" />`

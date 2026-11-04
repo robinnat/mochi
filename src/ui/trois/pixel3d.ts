@@ -8,7 +8,7 @@
  * Module pur (pas de Three.js, pas de DOM) : testable sous `node`.
  */
 
-export type Rgb = [number, number, number]
+export type Rgb = [number, number, number] | [number, number, number, number]
 
 const hexVersRgb = (hex: string): Rgb => {
   const v = parseInt(hex.slice(1), 16)
@@ -27,17 +27,18 @@ const versSrgb = (l: number) => {
 /** Les trois tons de l'ombrage (ombre, base, clair) : le meme multiple de la couleur, en lineaire, que le shader toon. */
 export const TONS_PIXEL = [0.7, 1, 1.12]
 
-export function tonsDe(hex: string): Rgb[] {
-  const [r, g, b] = hexVersRgb(hex).map(versLineaire) as Rgb
-  return TONS_PIXEL.map((t) => [versSrgb(r * t), versSrgb(g * t), versSrgb(b * t)] as Rgb)
+export function tonsDe(hex: string, poids = 1): Rgb[] {
+  const [r, g, b] = hexVersRgb(hex).map(versLineaire) as [number, number, number]
+  return TONS_PIXEL.map((t) => [versSrgb(r * t), versSrgb(g * t), versSrgb(b * t), poids] as Rgb)
 }
 
 /** Palette d'une image : tons du corps, tons de chaque accessoire, blanc des yeux. */
 export function palettePixel(corps: string, accessoires: string[] = []): Rgb[] {
-  return [...tonsDe(corps), ...accessoires.flatMap(tonsDe), [255, 255, 255]]
+  // les couleurs des accessoires pesent plus lourd : un pixel de bord (corps + blanc des yeux fondus) ne doit pas se changer en une teinte d'accessoire
+  return [...tonsDe(corps), ...accessoires.flatMap((a) => tonsDe(a, 1.9)), [255, 255, 255, 1]]
 }
 
-const dist = (a: Rgb, r: number, g: number, b: number) => (a[0] - r) ** 2 + (a[1] - g) ** 2 + (a[2] - b) ** 2
+const dist = (a: Rgb, r: number, g: number, b: number) => ((a[0] - r) ** 2 + (a[1] - g) ** 2 + (a[2] - b) ** 2) * (a[3] ?? 1)
 
 /**
  * Ramene chaque pixel a la couleur la plus proche de la palette, durcit le canal alpha (une case

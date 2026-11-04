@@ -128,10 +128,15 @@ export const PORTE_IDS_ENGINE = PORTE_IDS
 
 /** Nom de la forme 3D tel qu'on la voit : le moteur n'a qu'un profil par forme. */
 export const FORMES_3D: { id: string; label: string; couleur: string }[] = [
-  { id: 'cercle', label: 'Sphere', couleur: 'violet' },
-  { id: 'squircle', label: 'Cube', couleur: 'bleu' },
-  { id: 'triangle', label: 'Pyramid', couleur: 'ambre' },
-  { id: 'etoile', label: 'Star', couleur: 'rose' },
-  { id: 'fleur', label: 'Flower', couleur: 'turquoise' },
-  { id: 'hexagone', label: 'Hexagon', couleur: 'vert' }
+  { id: 'cercle', label: 'Circle', couleur: 'violet' },
+  { id: 'galet', label: 'Pebble', couleur: 'rose' },
+  { id: 'squircle', label: 'Squircle', couleur: 'turquoise' },
+  { id: 'capsule', label: 'Capsule', couleur: 'ambre' },
+  { id: 'triangle', label: 'Triangle', couleur: 'bleu' },
+  { id: 'hexagone', label: 'Hexagon', couleur: 'vert' },
+  { id: 'nuage', label: 'Cloud', couleur: 'orange' },
+  { id: 'goutte', label: 'Droplet', couleur: 'bleu' },
+  { id: 'etoile', label: 'Star', couleur: 'ambre' },
+  { id: 'fleur', label: 'Flower', couleur: 'rose' },
+  { id: 'oeuf', label: 'Egg', couleur: 'violet' }
 ]

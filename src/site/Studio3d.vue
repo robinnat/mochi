@@ -6,6 +6,7 @@ import { useReduit } from './reduced'
 import { ETATS, FORMES_3D, GESTES, PORTE_IDS_SITE, PORTE_LABEL, STATE_LABEL, cycleDe } from './catalog'
 import { POSES, type StateId } from '@/bot/states'
 import type { PorteId } from '@/bot/portes'
+import { styleSite } from './style'
 
 /**
  * Le modele 3D que l'on tourne a la main et auquel on donne une humeur ou un geste.
@@ -142,7 +143,7 @@ const degres = computed(() => Math.round(((yaw.value * 180) / Math.PI) % 360))
             :size="288"
             :shape="forme"
             :color="f.couleur"
-            rendu="3d"
+            :rendu="styleSite"
             :yaw="yaw"
             :porte="porte || null"
             :cycle="cycle"

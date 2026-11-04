@@ -15,8 +15,7 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         app: fileURLToPath(new URL('./app.html', import.meta.url)),
-        labo: fileURLToPath(new URL('./labo.html', import.meta.url)),
-        rendus: fileURLToPath(new URL('./labo-rendus.html', import.meta.url))
+        labo: fileURLToPath(new URL('./labo.html', import.meta.url))
       }
     }
   },

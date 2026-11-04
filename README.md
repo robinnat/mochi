@@ -2,9 +2,9 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochi-red-phi.vercel.app)
 
-Mochi is a small animated avatar engine for the web. One solid shape morphs between 14
-measured states, two eyes move on their own, and the same motion can be drawn as flat
-vector art, pixel art, soft clay, glossy bubble or real 3D. It comes with gestures, job
+Mochi is a small animated avatar engine for the web. One solid shape morphs between five
+measured face moods, two eyes move on their own, and everything is drawn in real 3D, in three
+styles: Soft, Flat and Pixel. It comes with gestures, job
 accessories, jumping movement and exports (SVG, PNG, GIF, MP4). No animation library.
 
 **Site and playground: https://mochi-red-phi.vercel.app** (the app is at `/app`).  
@@ -38,18 +38,18 @@ const state = ref('idle')
 </script>
 
 <template>
-  <MochiBot v-model:state="state" shape="fleur" color="rose" rendu="argile" :size="160" follow />
+  <MochiBot v-model:state="state" shape="fleur" color="rose" rendu="flat3d" :size="160" follow />
   <!-- a frozen frame: no animation loop, the same image every time -->
   <MochiBot state="wink" :frozen-at="1.2" :size="96" />
   <!-- real 3D, with the cartoon outline; Three.js is loaded on demand -->
   <MochiBot shape="etoile" color="ambre" rendu="3d" contour :size="200" />
   <!-- a job accessory and the gesture that goes with it -->
-  <MochiBot accessoire="portable" rendu="argile" :size="200" />
+  <MochiBot accessoire="portable" :size="200" />
 </template>
 ```
 
 Ids are the ones of the catalogues, which are in French for now (`etoile` is the star,
-`argile` is clay, `rendu` is the render style).
+`rendu` is the render style: `3d` Soft, `flat3d` Flat, `pixel3d` Pixel).
 
 ### Vanilla (engine only, no Vue)
 
@@ -98,16 +98,18 @@ Keep the MIT header of `LICENSE` at the top of the bundle you ship.
 
 ## What is in it
 
-**Render styles** (`rendu`): `original` (flat), `pixel` (pixel art, `pixel`: `gros` 16,
-`moyen` 24, `fin` 32 px for the ball), `argile` (clay), `bulle` (bubble), `3d` (real 3D).
-The 3D style has materials (`rendu3d`: `doux` by default, plus `aplat`, `toon`,
-`toon-contour`, `lowpoly`, `realiste`), a softness (`douceur`: `leger` or `marque`),
-an optional cartoon outline (`contour`) and a soft highlight (`reflet`). Export always
-serialises the SVG, so a 3D mochi exports as clay.
+**Render styles** (`rendu`), all real 3D: `3d` (Soft, the default: soft shading, rim glows
+and highlight computed in view space so the whole volume is lit the same way from every
+side), `flat3d` (Flat: two or three flat tones, optional `contour`) and `pixel3d` (Pixel: low
+resolution render, short palette, 1 px outline; `pixel`: `gros` 16, `moyen` 24, `fin` 32
+px for the ball). `yaw` turns the model. The old SVG drawings (`original`, `argile`, `bulle`,
+`pixel`) are no longer offered: they remain only as the fallback when WebGL is missing and
+for the SVG/PNG/GIF/MP4 exports, which still serialise the SVG (a 3D mochi exports as clay).
 
 **Shapes** (11): `cercle`, `galet`, `squircle`, `capsule`, `triangle`, `hexagone`, `nuage`,
-`goutte`, `etoile`, `fleur`, `oeuf`. In 3D the circle is a true sphere, the squircle a
-cube, the triangle a pyramid, and star, flower and hexagon are bevelled extrusions.
+`goutte`, `etoile`, `fleur`, `oeuf`. Every shape has a real volume from all angles: the circle is a
+sphere, the squircle a rounded pillow, the triangle a rounded cone, drop, egg and capsule are
+solids of revolution, and star, flower, hexagon and cloud are thick, fully rounded bodies.
 
 **Colours** (12): `encre`, `brun`, `rouge`, `orange`, `ambre`, `vert`, `turquoise`, `bleu`,
 `violet`, `rose`, `gris`, `creme`.
@@ -185,7 +187,7 @@ them loses the accuracy of the motion.
 |---|---|
 | [docs/architecture.md](docs/architecture.md) | The engine, radial-profile morphing, eyes as mask holes |
 | [docs/measurements.md](docs/measurements.md) | What was measured, regenerating `profiles.ts` |
-| [docs/styles.md](docs/styles.md) | Render styles: pixel art, clay, bubble, real 3D |
+| [docs/styles.md](docs/styles.md) | Render styles: Soft, Flat, Pixel (real 3D) |
 | [docs/gestes.md](docs/gestes.md) | Gestures and activities |
 | [docs/accessoires.md](docs/accessoires.md) | Job accessories |
 | [docs/iso.md](docs/iso.md) | Jumps and the isometric space |

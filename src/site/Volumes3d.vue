@@ -4,6 +4,7 @@ import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { FORMES_3D } from './catalog'
 import Studio3d from './Studio3d.vue'
+import { STYLES_SITE, styleSite } from './style'
 
 const contour = ref(false)
 const reflet = ref(true)
@@ -12,17 +13,19 @@ const reflet = ref(true)
 <template>
   <section id="volumes" class="bloc wrap" aria-labelledby="t-3d">
     <span class="etiquette">3D</span>
-    <h2 id="t-3d">Real 3D, with a soft material</h2>
+    <h2 id="t-3d">Real 3D, in three styles</h2>
     <p class="chapo">
-      Sphere, rounded cube, pyramid, bevelled star, flower and hexagon, built from the same outline as
-      the 2D shapes. The eyes always face you. Turn the model with your finger or mouse, and give it a mood or a gesture. Three.js loads only when you scroll here, and every card
+      Eleven shapes, all with a real volume you can look at from any side. The eyes always face you. Turn the model with your finger or mouse, and give it a mood or a gesture. Three.js loads only when you scroll here, and every card
       below draws through one shared WebGL context.
     </p>
-    <Studio3d />
-    <div class="chips" style="margin-top: 26px">
-      <label class="case"><input v-model="contour" type="checkbox" /> Cartoon outline</label>
-      <label class="case" style="margin-left: 14px"><input v-model="reflet" type="checkbox" /> Soft highlight</label>
+    <div class="chips" style="margin-top: 18px" role="group" aria-label="3D style">
+      <button v-for="s in STYLES_SITE" :key="s.id" type="button" class="chip" :aria-pressed="styleSite === s.id" @click="styleSite = s.id">
+        {{ s.label }}
+      </button>
+      <label v-if="styleSite === 'flat3d'" class="case" style="margin-left: 14px"><input v-model="contour" type="checkbox" /> Outline</label>
+      <label v-if="styleSite === '3d'" class="case" style="margin-left: 14px"><input v-model="reflet" type="checkbox" /> Soft highlight</label>
     </div>
+    <Studio3d />
     <div class="grille">
       <figure v-for="f in FORMES_3D" :key="f.id" class="carte">
         <Lazy garder :largeur="140" :hauteur="140">
@@ -30,7 +33,7 @@ const reflet = ref(true)
             :size="136"
             :shape="f.id"
             :color="f.couleur"
-            rendu="3d"
+            :rendu="styleSite"
             :contour="contour"
             :reflet="reflet"
             :frozen-at="1.2"
@@ -41,7 +44,7 @@ const reflet = ref(true)
       </figure>
     </div>
     <p class="note" style="margin-top: 12px">
-      Without WebGL, the 3D style falls back to the clay SVG, which is already on screen.
+      Without WebGL there is nothing to turn: the page keeps a still drawing of the mochi.
     </p>
   </section>
 </template>
