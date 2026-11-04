@@ -103,13 +103,13 @@ const star = normalize(
     profileFromPolygon(
       Array.from({ length: 10 }, (_, i) => {
         const a = -Math.PI / 2 + (i * Math.PI) / 5
-        const r = i % 2 === 0 ? 1 : 0.5
+        const r = i % 2 === 0 ? 1 : 0.6
         return { x: Math.cos(a) * r, y: Math.sin(a) * r }
       }),
       0,
       0
     ),
-    1.0
+    2.0
   ),
   1.1
 )

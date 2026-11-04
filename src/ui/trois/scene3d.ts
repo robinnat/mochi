@@ -374,6 +374,12 @@ export class Mochi3d {
     geo.attributes.uv!.needsUpdate = true
     geo.computeVertexNormals()
     souderNormales(geo.attributes.normal!.array as Float32Array, pts.length, finesseDe(this.rendu).anneaux)
+    // Flat et Pixel : des paliers nets sur des normales irregulieres font des taches (nuage, fleur,
+    // etoile). On lisse les normales avant de couper en tons : les limites deviennent des courbes propres.
+    if (plat && !plat.lisse && !plat.facettes && geo.index) {
+      lisserNormales(geo.attributes.normal as BufferAttribute, geo.index.array, 14)
+      souderNormales(geo.attributes.normal!.array as Float32Array, pts.length, finesseDe(this.rendu).anneaux)
+    }
     geo.computeBoundingSphere()
     mt.bas = -v.bas
   }
@@ -457,6 +463,39 @@ export class Mochi3d {
     this.texture.dispose()
     this.textureYeux.dispose()
   }
+}
+
+/**
+ * Quelques passes de moyenne des normales avec celles des sommets voisins (via les triangles),
+ * pour effacer les plis de triangulation qui se lisent comme des taches sous un ombrage a paliers.
+ */
+function lisserNormales(nor: BufferAttribute, index: ArrayLike<number>, passes: number) {
+  const n = nor.count
+  const acc = new Float32Array(n * 3)
+  const A = nor.array as Float32Array
+  for (let p = 0; p < passes; p++) {
+    acc.fill(0)
+    for (let t = 0; t < index.length; t += 3) {
+      const a = index[t]!
+      const b = index[t + 1]!
+      const c = index[t + 2]!
+      for (let d = 0; d < 3; d++) {
+        acc[a * 3 + d]! += A[b * 3 + d]! + A[c * 3 + d]!
+        acc[b * 3 + d]! += A[a * 3 + d]! + A[c * 3 + d]!
+        acc[c * 3 + d]! += A[a * 3 + d]! + A[b * 3 + d]!
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      const x = A[i * 3]! * 2 + acc[i * 3]!
+      const y = A[i * 3 + 1]! * 2 + acc[i * 3 + 1]!
+      const z = A[i * 3 + 2]! * 2 + acc[i * 3 + 2]!
+      const l = Math.hypot(x, y, z) || 1
+      A[i * 3] = x / l
+      A[i * 3 + 1] = y / l
+      A[i * 3 + 2] = z / l
+    }
+  }
+  nor.needsUpdate = true
 }
 
 /** Materiau du contour : une coque inversee, gonflee le long des normales. */

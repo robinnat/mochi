@@ -44,9 +44,9 @@ describe('nouvelles formes', () => {
 
   it("l'etoile a cinq branches, une vers le haut", () => {
     expect(bosses(rayons('etoile'))).toBe(5)
-    expect(r('etoile', -90)).toBeGreaterThan(r('etoile', -54) + 0.2)
-    // pointue : le creux est net (choix de design du 03/11/2026)
-    expect(Math.min(...rayons('etoile'))).toBeLessThan(0.7)
+    expect(r('etoile', -90)).toBeGreaterThan(r('etoile', -54) + 0.1)
+    // etoile douce (creux a 0,6 du sommet, bouts bien ronds, 04/11/2026) : le creux reste lisible
+    expect(Math.min(...rayons('etoile'))).toBeLessThan(0.85)
     expect(Math.min(...rayons('etoile'))).toBeGreaterThan(0.45)
   })
 

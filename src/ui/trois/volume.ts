@@ -159,9 +159,9 @@ export const PROFILS: Record<string, ProfilVolume> = {
   hexagone: { profondeur: 0.8, arrondi: 0.82, arriere: 1 },
   // extrusion a gros biseau (reference : icones 3D epaisses et douces) : faces plates, bords
   // ENTIEREMENT arrondis comme un bonbon, epaisseur ~0,45 x la largeur
-  etoile: { profondeur: 0.7, arrondi: 0.97, arriere: 1 },
+  etoile: { profondeur: 0.85, arrondi: 0.98, arriere: 1 },
   // fleur : cinq petales ronds extrudes, meme biseau
-  fleur: { profondeur: 0.7, arrondi: 0.97, arriere: 1 },
+  fleur: { profondeur: 0.85, arrondi: 0.98, arriere: 1 },
   // nuage : coussin bombe, valide tel quel
   nuage: { profondeur: 1, arrondi: 1, arriere: 1 }
 }

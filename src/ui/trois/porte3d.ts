@@ -121,8 +121,8 @@ export class Porte3d {
       for (let k = 0; k < 8; k++) z = Math.max(z, zFace(o.x + Math.cos((k / 8) * Math.PI * 2) * r, o.y + Math.sin((k / 8) * Math.PI * 2) * r * 1.1))
       z = Math.max(z, zFace(o.x, o.y))
     }
-    // posees DEVANT : un vrai ecart avec le visage, on voit l'espace et l'ombre portee quand on tourne
-    z += 0.42 * r
+    // posees contre le corps, avec un tout petit ecart : la monture ressort a peine devant les yeux
+    z += 0.14 * r
     const cle = `${id}|${base.uuid}|${[a.x, a.y, b.x, b.y, r, z].map((v) => Math.round(v * 2)).join(',')}`
     this.groupe.visible = true
     if (cle === this.cle) return

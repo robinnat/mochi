@@ -45,4 +45,19 @@ describe('style pixel 3D', () => {
     quantifier(data, w, 3, palettePixel('#7b6cd9', ['#f49ab0']))
     expect(Array.from(data.slice(16, 19))).toEqual([255, 255, 255])
   })
+
+  it('un oeil en escalier devient un bloc net, un pixel blanc isole disparait', () => {
+    const w = 8
+    const h = 8
+    const data = new Uint8ClampedArray(w * h * 4)
+    const base = tonsDe('#7b6cd9')[1]!
+    for (let i = 0; i < w * h; i++) data.set([base[0]!, base[1]!, base[2]!, 255], i * 4)
+    // un oeil de 2x4 pixels auquel il manque un coin, et un pixel blanc seul ailleurs
+    for (let y = 2; y < 6; y++) for (let x = 2; x < 4; x++) if (!(x === 3 && y === 5)) data.set([255, 255, 255, 255], (y * w + x) * 4)
+    data.set([255, 255, 255, 255], (0 * w + 7) * 4)
+    quantifier(data, w, h, palettePixel('#7b6cd9'))
+    const px = (x: number, y: number) => data[(y * w + x) * 4]
+    expect(px(3, 5)).toBe(255) // le coin manquant est comble
+    expect(px(7, 0)).not.toBe(255) // le pixel seul n'est plus blanc
+  })
 })
