@@ -237,12 +237,14 @@ const pixels = computed(() =>
  * `scene3d.ts`) : le calque SVG ne sert alors qu'au repli sans WebGL, et au pixel art, ou les
  * memes chemins sont rasterises sur la grille.
  */
+const PORTE_2D = false
 const porteTexte = computed(() => {
-  if (!props.porte || pixels.value || vraie3d.value) return ''
+  // les accessoires portes ne sont exposes qu'en 3D ; le calque 2D reste en attente (repli sans WebGL)
+  if (!props.porte || pixels.value || vraie3d.value || !PORTE_2D) return ''
   return porteSvg(props.porte, frame.value)
 })
 const portePixels = computed(() =>
-  props.porte && rendu.value === 'pixel' ? pixellisePrims(dessinPorte(props.porte, frame.value), grille.value) : null
+  PORTE_2D && props.porte && rendu.value === 'pixel' ? pixellisePrims(dessinPorte(props.porte, frame.value), grille.value) : null
 )
 
 let raf = 0

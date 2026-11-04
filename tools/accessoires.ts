@@ -12,10 +12,12 @@ const forme = q.get('forme') ?? 'cercle'
 const yaw = (Number(q.get('yaw') ?? 0) * Math.PI) / 180
 const taille = Number(q.get('s') ?? 120)
 const COULEURS = ['violet', 'rose', 'turquoise', 'ambre', 'bleu', 'vert', 'orange', 'violet', 'rose']
-const ids: string[] = mode === 'job' ? ACCESSOIRES.map((a) => a.id) : PORTE_IDS
+const choisis = q.get('ids')?.split(',')
+const ids: string[] = choisis ?? (mode === 'job' ? ACCESSOIRES.map((a) => a.id) : PORTE_IDS)
+const couleur = q.get('c')
 const cols = mode === 'job' ? 1 : etats.length
 const racine = document.getElementById('r')!
-racine.style.gridTemplateColumns = `repeat(${cols * (mode === 'job' ? 4 : 1)}, ${taille + 24}px)`
+racine.style.gridTemplateColumns = `repeat(${choisis ? ids.length * etats.length : cols * (mode === 'job' ? 4 : 1)}, ${taille + 24}px)`
 
 createApp({
   render: () =>
@@ -29,7 +31,7 @@ createApp({
       : ids.flatMap((id, i) =>
           etats.map((e) =>
             h('div', { class: 'c' }, [
-              h(MochiBot, { size: taille, shape: forme, color: COULEURS[i % 9], rendu: rendu as never, state: e, porte: id as never, frozenAt: POSES[e], yaw, label: id }),
+              h(MochiBot, { size: taille, shape: forme, color: couleur ?? COULEURS[i % 9], rendu: rendu as never, state: e, porte: id as never, frozenAt: POSES[e], yaw, label: id }),
               h('div', { class: 't' }, `${id} / ${e}`)
             ])
           )

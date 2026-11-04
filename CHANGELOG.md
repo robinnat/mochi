@@ -8,7 +8,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - **Worn accessories** (`src/bot/portes.ts`, `porte` prop): round glasses, sunglasses, mini top hat,
-  straw hat, beanie, bow, crown and headphones. They are recomputed from every engine frame
+  straw hat, beanie, bow, crown and headphones. Only glasses, a top hat and a bow are exposed on the site, in 3D; the 2D layer is kept in the engine but switched off (`PORTE_2D`). They are recomputed from every engine frame
   (body outline and eyes), so they follow squash, hops, shapes, gaze and blinks in flat, pixel
   art, clay, bubble and real 3D. Hats and headphones are real volumes in 3D and turn with the
   model; glasses are painted on the 3D face where the eyes are. Lenses are never opaque.

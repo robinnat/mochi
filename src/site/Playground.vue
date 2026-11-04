@@ -71,7 +71,7 @@ const extrait = computed(() => {
   if (trois.value && !reflet.value) lignes.push('  :reflet="false"')
   if (expression.value !== 'neutre') lignes.push(`  expression="${expression.value}"`)
   if (accessoire.value) lignes.push(`  accessoire="${accessoire.value}"`)
-  if (porte.value) lignes.push(`  porte="${porte.value}"`)
+  if (trois.value && porte.value) lignes.push(`  porte="${porte.value}"`)
   if (mouvement.value.startsWith('state:') && etat.value !== 'idle') lignes.push(`  state="${etat.value}"`)
   return lignes.join('\n') + '\n  :playing="true"\n/>'
 })
@@ -108,7 +108,7 @@ async function copier() {
               :reflet="reflet"
               :expression="exprEff"
               :accessoire="accessoire || null"
-              :porte="porte || null"
+              :porte="trois ? porte || null : null"
               :geste="geste"
               :state="reduit ? etat : undefined"
               :cycle="cycle"
@@ -183,8 +183,8 @@ async function copier() {
               <option v-for="[id, nom] in EXPRESSIONS" :key="id" :value="id">{{ nom }}</option>
             </select>
           </div>
-          <div>
-            <h3>Worn</h3>
+          <div v-if="trois">
+            <h3>Worn (3D)</h3>
             <select v-model="porte" aria-label="Worn accessory">
               <option value="">None</option>
               <option v-for="id in PORTE_IDS_SITE" :key="id" :value="id">{{ PORTE_LABEL[id] }}</option>

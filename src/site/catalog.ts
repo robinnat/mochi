@@ -122,7 +122,9 @@ export const PORTE_LABEL: Record<PorteId, string> = {
   couronne: 'Crown',
   casque: 'Headphones'
 }
-export const PORTE_IDS_SITE = PORTE_IDS
+/** Seuls trois accessoires sont exposes sur le site, en 3D : les autres restent en attente dans le moteur. */
+export const PORTE_IDS_SITE: PorteId[] = ['lunettes', 'haut-de-forme', 'noeud']
+export const PORTE_IDS_ENGINE = PORTE_IDS
 
 /** Nom de la forme 3D tel qu'on la voit : le moteur n'a qu'un profil par forme. */
 export const FORMES_3D: { id: string; label: string; couleur: string }[] = [
