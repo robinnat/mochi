@@ -34,9 +34,12 @@ import { Mochi3d } from '@/ui/trois/scene3d'
  * Page d'outil : aucun lien depuis le site.
  */
 const q = new URLSearchParams(location.search)
-const COUCHES = Number(q.get('couches') ?? 32)
-const DENS = Number(q.get('dens') ?? 1.0)
-const LONG = Number(q.get('long') ?? 4.2)
+const NN = Number(q.get('n') ?? 3)
+/** Niveau de detail : moins de couches quand le Mochi est petit ou nombreux. */
+export const couchesAuto = (px: number, n: number) => (n >= 10 ? 8 : px < 140 ? 10 : px < 220 ? 16 : px < 320 ? 24 : 32)
+const COUCHES = Number(q.get('couches') ?? couchesAuto(Number(q.get('s') ?? 440) / 2, NN))
+const DENS = Number(q.get('dens') ?? 1.7)
+const LONG = Number(q.get('long') ?? 6.5)
 const TAILLE = Number(q.get('s') ?? 440)
 
 /* ------------------------------------------------------------------ fibres */
@@ -72,7 +75,7 @@ void main() {
     vec3 f = fract(c) - (0.2 + 0.6 * r.xyz);
     float d = length(f);
     float haut = 0.35 + 0.65 * r.x;
-    float ray = mix(0.62, 0.12, L / max(haut, 0.001)) * uFine;
+    float ray = mix(0.55, 0.08, L / max(haut, 0.001)) * uFine;
     if (L > haut || d > ray) discard;
     jit = 0.88 + 0.24 * r.y;
   }
@@ -84,8 +87,12 @@ void main() {
   float sh = 0.16 + 0.34 * hemi + 0.95 * key * key * key;
   vec3 col = uCol * sh * ao * jit;
   col += uCol * vel * 0.38 * (0.4 + 0.6 * L) + vec3(1.0, 0.97, 0.92) * vel * 0.10 * L;
+  // pointe des fibres : plus claire et plus saturee, comme la lumiere traversant le poil
+  vec3 tip = uCol * 1.35 + vec3(0.05);
+  col = mix(col, tip * (0.45 + 0.4 * key + 0.2 * hemi), smoothstep(0.55, 1.0, L) * 0.55);
   col += uCol * uGlow;
-  gl_FragColor = vec4(col, 1.0);
+  float alpha = uBase > 0.5 ? 1.0 : (1.0 - smoothstep(0.82, 1.0, L) * 0.55);
+  gl_FragColor = vec4(col, alpha);
   #include <colorspace_fragment>
 }`
 
@@ -118,6 +125,10 @@ function peluche(geo: BufferGeometry, hex: string, long = LONG, dens = DENS, cou
         uGlow: { value: 0 }
       }
     })
+    if (i / (couches - 1) > 0.82) {
+      m.transparent = true
+      m.depthWrite = false
+    }
     mats.push(m)
     groupe.add(new Mesh(geo, m))
   }
@@ -169,9 +180,57 @@ function construire(p: Perso): { groupe: Group; fibres: Peluche[] } {
   const m = new Mochi3d(256)
   m.setRendu('doux', false, 'marque', false)
   m.setForme(p.forme)
+  m.setProfil({ profondeur: 0.92, arrondi: 0.99, arriere: 1 })
   m.maj(new BotEngine(100, 'idle', radii, null).sample(1), '#ffffff', '#ffffff')
   const geo = m.mesh.geometry.clone()
+  geo.computeBoundingBox()
+  const bb0 = geo.boundingBox!
+  const cc = bb0.getCenter(new Vector3())
   geo.computeVertexNormals()
+  {
+    // silhouette organique : un leger relief de basse frequence, puis des normales « gonflees »
+    // (melange avec la direction radiale) pour un degrade doux et sans anneaux de biseau
+    const pos = geo.attributes.position!
+    const nor = geo.attributes.normal!
+    const v = new Vector3()
+    const n = new Vector3()
+    const r = new Vector3()
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i)
+      n.fromBufferAttribute(nor, i)
+      const d = 3.2 * Math.sin(v.x * 0.041 + 1.3) * Math.sin(v.y * 0.047 + v.z * 0.03) + 1.6 * Math.sin(v.x * 0.11 + v.y * 0.09)
+      pos.setXYZ(i, v.x + n.x * d, v.y + n.y * d, v.z + n.z * d)
+    }
+    geo.computeVertexNormals()
+    // lissage des normales sur le maillage : quelques passes de moyenne avec les voisins, pour
+    // effacer les plis de triangulation (anneaux, facettes) qui se lisent sous la fourrure
+    const idx = geo.index?.array
+    if (idx) {
+      const acc = new Float32Array(pos.count * 3)
+      for (let pass = 0; pass < 14; pass++) {
+        acc.fill(0)
+        for (let t = 0; t < idx.length; t += 3) {
+          const a0 = idx[t]!
+          const b0 = idx[t + 1]!
+          const c0 = idx[t + 2]!
+          for (const [i, j, k] of [[a0, b0, c0], [b0, c0, a0], [c0, a0, b0]] as const) {
+            for (let d = 0; d < 3; d++) acc[i * 3 + d]! += nor.array[j * 3 + d]! + nor.array[k * 3 + d]!
+          }
+        }
+        for (let i = 0; i < pos.count; i++) {
+          n.set(nor.array[i * 3]! * 3 + acc[i * 3]!, nor.array[i * 3 + 1]! * 3 + acc[i * 3 + 1]!, nor.array[i * 3 + 2]! * 3 + acc[i * 3 + 2]!).normalize()
+          nor.setXYZ(i, n.x, n.y, n.z)
+        }
+      }
+    }
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i)
+      n.fromBufferAttribute(nor, i)
+      r.copy(v).sub(cc).normalize()
+      n.multiplyScalar(0.72).addScaledVector(r, 0.28).normalize()
+      nor.setXYZ(i, n.x, n.y, n.z)
+    }
+  }
   geo.computeBoundingBox()
   const bb = geo.boundingBox!
   const corps = peluche(geo, COLOR_BY_ID.get(p.couleur)!.hex)
@@ -196,11 +255,11 @@ function construire(p: Perso): { groupe: Group; fibres: Peluche[] } {
   for (const sg of [-1, 1]) {
     const s = surface(sg * ex, cy)
     if (p.yeux === 'perles') {
-      const b = new Mesh(new SphereGeometry(8.5, 28, 20), noir)
-      b.scale.set(0.85, 1.12, 0.6)
+      const b = new Mesh(new SphereGeometry(11, 32, 22), noir)
+      b.scale.set(0.82, 1.1, 0.62)
       b.position.set(sg * ex, cy, s.z - 1)
-      const h = new Mesh(new SphereGeometry(2.6, 12, 10), blanc)
-      h.position.set(sg * ex + 2.6, cy + 3.6, s.z + 4.4)
+      const h = new Mesh(new SphereGeometry(3.4, 14, 10), blanc)
+      h.position.set(sg * ex + 3.4, cy + 4.8, s.z + 6.2)
       groupe.add(b, h)
     } else {
       const bas = p.yeux === 'clin' && sg > 0
@@ -215,8 +274,8 @@ function construire(p: Perso): { groupe: Group; fibres: Peluche[] } {
   if (p.bouche) {
     const my = cy - ctx.box.h * 0.13
     const s = surface(0, my)
-    const sm = new CatmullRomCurve3([new Vector3(-9, my + 3.5, s.z + 2), new Vector3(0, my - 2.5, s.z + 3), new Vector3(9, my + 3.5, s.z + 2)])
-    groupe.add(new Mesh(new TubeGeometry(sm, 16, 2.0, 8), noir))
+    const sm = new CatmullRomCurve3([new Vector3(-13, my + 5, s.z + 3), new Vector3(0, my - 4, s.z + 4), new Vector3(13, my + 5, s.z + 3)])
+    groupe.add(new Mesh(new TubeGeometry(sm, 16, 2.8, 10), noir))
   }
   p.decor(ctx)
   return { groupe, fibres: ctx.fibres }
@@ -270,18 +329,18 @@ function lunettes(c: Ctx, cy: number, ex: number, r = 1) {
 
 /** Beret en feutre : disque bombe, pose de travers, avec sa petite queue. */
 function beret(c: Ctx, hex: string, dx = 0) {
-  const w = c.box.w * 0.5
+  const w = c.box.w * 0.4
   const geo = new SphereGeometry(1, 48, 32).scale(w, w * 0.4, w * 0.92)
-  const b = peluche(geo, hex, 2.4, 1.8, 14)
-  b.groupe.position.set(dx, c.box.haut - c.box.h * 0.04, 14)
+  const b = peluche(geo, hex, 3.4, 2.6, 18)
+  b.groupe.position.set(dx, c.box.haut - c.box.h * 0.1, 18)
   ombre(c, dx, c.box.haut - c.box.h * 0.17, w * 0.9, w * 0.3, 0.3)
-  b.groupe.rotation.z = -0.28
+  b.groupe.rotation.z = -0.42
   c.groupe.add(b.groupe)
   c.fibres.push(b)
-  const q = new Mesh(new SphereGeometry(1, 16, 12), noir)
-  q.scale.set(7, 8, 7)
-  q.position.set(dx - 10, c.box.haut - c.box.h * 0.04 + w * 0.4 + 1, 14)
-  c.groupe.add(q)
+  const pomp = peluche(new SphereGeometry(7, 20, 14), '#2a2438', 2.4, 2.6, 12)
+  pomp.groupe.position.set(dx - 6, c.box.haut - c.box.h * 0.1 + w * 0.55, 18)
+  c.groupe.add(pomp.groupe)
+  c.fibres.push(pomp)
 }
 
 /** Noeud en tissu : deux ailes bombees, un nœud central serre. */
@@ -294,8 +353,10 @@ function noeud(c: Ctx, hex: string, x: number, y: number, s = 1) {
       // aile pincee au centre : le tissu se plisse vers le noeud
       const px = pos.getX(i)
       const k = 0.3 + 0.7 * Math.min(1, Math.abs(px) * 1.3)
-      pos.setY(i, pos.getY(i) * k)
-      pos.setZ(i, pos.getZ(i) * (0.5 + 0.5 * k))
+      // plis : le tissu ondule le long de l'aile
+      const pli = 1 + 0.1 * Math.sin(px * 13) * Math.abs(px)
+      pos.setY(i, pos.getY(i) * k * pli)
+      pos.setZ(i, pos.getZ(i) * (0.5 + 0.5 * k) * (1 + 0.15 * Math.cos(px * 11)))
     }
     wg.scale(30 * s, 24 * s, 16 * s)
     wg.computeVertexNormals()
@@ -310,8 +371,16 @@ function noeud(c: Ctx, hex: string, x: number, y: number, s = 1) {
   c.fibres.push(n)
   const zb = Math.max(c.surface(x, y).z, c.surface(x - 20, y).z, c.surface(x + 20, y).z)
   ombre(c, x + 4, y - 8, 52 * s, 28 * s, 0.22)
+  // deux pans qui pendent sous le noeud
+  for (const sg of [-1, 1]) {
+    const pan = peluche(new SphereGeometry(1, 20, 14).scale(9 * s, 26 * s, 6 * s), hex, 1.8, 2.2, 10)
+    pan.groupe.position.set(sg * 9 * s, -22 * s, -4)
+    pan.groupe.rotation.z = sg * 0.28
+    g.add(pan.groupe)
+    c.fibres.push(pan)
+  }
   g.position.set(x, y, zb + 12)
-  g.rotation.z = -0.18
+  g.rotation.z = -0.3
   g.rotation.y = -0.15
   c.groupe.add(g)
 }
@@ -329,14 +398,14 @@ const PERSOS: Perso[] = [
     couleur: 'bleu',
     yeux: 'perles',
     bouche: true,
-    decor: (c) => beret(c, '#2b2b3a', 8)
+    decor: (c) => beret(c, '#3b3350', 14)
   },
   {
     forme: 'fleur',
     couleur: 'rose',
     yeux: 'clin',
     bouche: true,
-    decor: (c) => noeud(c, '#8a4fe0', c.box.w * 0.16, c.box.haut - c.box.h * 0.22, 1.25)
+    decor: (c) => noeud(c, '#12b5a3', c.box.w * 0.24, c.box.haut - c.box.h * 0.1, 1.15)
   }
 ]
 
