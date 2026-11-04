@@ -196,7 +196,7 @@ export class Mochi3d {
       // le shader toon sait deriver une normale par facette ; seul le typage ne le declare pas
       if (plat.facettes) (m as unknown as { flatShading: boolean }).flatShading = true
     }
-    lisere(m, plat ? 0.7 : 0.5)
+    lisere(m, plat ? 0.7 : 0.5, plat ? 0.32 : 0.22)
     this.materiaux.set(cle, m)
     return m
   }

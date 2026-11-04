@@ -277,8 +277,7 @@ function resous(epreuves: Epreuve[]): { x: number; y: number } {
    * Deja bon : le cas du cercle, et de toute forme assez large. La gelule doit RENTRER
    * en plus de n'etre pas plus serree que sur le profil d'origine — sans cette seconde
    * condition, une forme ou rien ne rentre satisfait la premiere de facon degeneree et
-   * on abandonnait. `wide` a des gelules de 87 unites de long, `notify` de 50 de
-   * diametre : sur un triangle ou une goutte elles debordent quoi qu'on fasse, et il
+   * on abandonnait. `wide` a des gelules de 87 unites de long : sur un triangle ou une goutte elles debordent quoi qu'on fasse, et il
    * faut alors viser le moins pire, pas renoncer.
    */
   const depart = marge(0, 0)

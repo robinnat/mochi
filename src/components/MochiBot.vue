@@ -422,7 +422,7 @@ function release() {
  */
 function aim() {
   // Le regard ne se pilote que sur les etats a VISAGE DE REPOS. Ailleurs la pose
-  // du regard EST l'animation relevee — l'orbite, par laquelle s'ouvre la vue,
+  // du regard EST l'animation relevee — le tourbillon, par lequel s'ouvre la vue,
   // fait deja filer les yeux autour de la sphere — et s'y superposer la
   // brouillerait.
   if (!STATE_BY_ID.get(state.value)?.baseFace) {
@@ -841,8 +841,7 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
         Les yeux sont des TROUS perces dans le corps, pas des formes blanches
         posees dessus : c'est ce qui les fait rogner tout seuls au bord de la
         silhouette, et ca ne change pas. Mais un trou laisse voir ce qui est
-        dessine derriere — or la moitie arriere des anneaux et les particules de
-        l'eclatement le sont justement, pour etre occultees par le corps. Sans ce
+        dessine derriere — or la moitie arriere des anneaux du tourbillon l'est justement, pour etre occultees par le corps. Sans ce
         fond, un anneau qui passe derriere la boule reapparait DANS les yeux.
 
         Rempli avec `paper` et non en blanc pur : c'est exactement ce que les yeux

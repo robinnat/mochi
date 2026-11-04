@@ -9,7 +9,7 @@
  */
 import type { Material, WebGLProgramParametersWithUniforms } from 'three'
 
-export function lisere(m: Material, force = 0.55) {
+export function lisere(m: Material, force = 0.55, haut = 0) {
   const prev = m.onBeforeCompile
   m.onBeforeCompile = (sh: WebGLProgramParametersWithUniforms, r) => {
     prev?.call(m, sh, r)
@@ -25,9 +25,13 @@ export function lisere(m: Material, force = 0.55) {
   float lueur = pow(bord, largeur) * sect;
   vec3 teinte = mix(diffuseColor.rgb, vec3(1.0), 0.42) * 1.15;
   outgoingLight += teinte * lueur * ${force.toFixed(2)};
+  // lueur legere en haut a gauche (vers 10 h), nettement plus discrete, bien plus fine que le reflet doux
+  float sectH = smoothstep(0.05, 0.9, dot(dir, normalize(vec2(-0.71, 0.70))));
+  float lueurH = pow(bord, 2.6) * sectH;
+  outgoingLight += teinte * lueurH * ${haut.toFixed(2)};
 }
 #include <opaque_fragment>`
     )
   }
-  m.customProgramCacheKey = () => `lisere${force}`
+  m.customProgramCacheKey = () => `lisere${force}-${haut}`
 }

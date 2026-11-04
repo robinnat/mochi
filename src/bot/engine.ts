@@ -338,7 +338,7 @@ export class BotEngine {
    * faire : il garde l'etat quitte pour le fondre, ce qui est exactement son role en
    * lecture, et exactement ce qu'il ne faut pas quand on revient au debut d'une sequence.
    * Rejouer l'image 0 apres une passe complete melangeait le premier etat avec le DERNIER,
-   * et l'export GIF s'ouvrait sur une boule sans yeux — la comete a un `eyeAlpha` nul.
+   * et l'export GIF s'ouvrait sur une boule sans yeux — `sleep` a un `eyeAlpha` nul.
    *
    * `sample` reste une fonction pure du temps : comme `setState`, ceci est un setter DATE,
    * appele par le pilote de la sequence, jamais pendant un echantillonnage.

@@ -87,7 +87,7 @@ export interface StateDef {
   /**
    * true = le corps est la silhouette "au repos", donc remplacable par la forme
    * choisie dans le personnalisateur. Les etats qui dessinent leur propre forme
-   * (le "!", les points, l'oeuf, le triangle...) valent false : c'est cette forme
+   * (les trois points de `thinking`, la petite boule de `sleep`) valent false : c'est cette forme
    * la qui EST l'animation.
    */
   baseBody: boolean
@@ -209,9 +209,9 @@ export const STATES: StateDef[] = [
      * Entree dans la vue des reglages.
      *
      * SEUL etat qui n'est pas releve sur la video : il est CHOISI, comme la
-     * couleur `--ink`. Il emprunte le vocabulaire d'`orbit` — les memes anneaux,
-     * avec leurs parametres mesures — mais coupe court : 1 s au lieu de 3,4, la
-     * moitie des anneaux, et aucun triangle.
+     * couleur `--ink`. Il utilise des anneaux dont les parametres sont ceux releves
+     * sur l'ancienne animation d'orbite (retiree du catalogue) : 1 s, six anneaux dont
+     * trois gardes, et aucun triangle.
      *
      * Les deux drapeaux a `true` sont tout l'interet de cet etat :
      *
@@ -219,7 +219,7 @@ export const STATES: StateDef[] = [
      *   imposer le cercle et le galet ou la goutte y MORPHENT au lieu de sauter ;
      * - `baseFace` fait porter le visage de repos, donc le suivi du curseur
      *   s'applique des cette entree. Un etat qui aurait sa propre pose de regard
-     *   (comme `orbit`) rendrait la main a l'etat suivant en pleine course, et
+     *   (comme `thinking`) rendrait la main a l'etat suivant en pleine course, et
      *   les yeux sauteraient d'un coup a la reprise.
      *
      * Il n'est volontairement PAS dans `SEQUENCE` : ce n'est pas une animation du
@@ -237,7 +237,7 @@ export const STATES: StateDef[] = [
     blinkIn: true,
     pose: (t) =>
       base({
-        // trois anneaux sur les six d'`orbit` : la moitie du bouquet suffit a le
+        // trois anneaux sur les six de `RINGS` : la moitie du bouquet suffit a le
         // reconnaitre, et c'est autant d'arcs en moins a rasteriser par image
         arcs: RINGS.slice(0, 3).map((s, i) => ({
           id: `sw${i}`,
