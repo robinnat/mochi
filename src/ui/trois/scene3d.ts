@@ -42,6 +42,7 @@ import { mixHex } from '@/bot/skins'
 import { teintes3d } from '@/ui/rendu'
 import { mesuresPorte, ombresPorte, type Ombre, type PorteId } from '@/bot/portes'
 import { Porte3d } from './porte3d'
+import { lisere } from './lisere'
 import {
   couleurContour,
   eclairagePlat,
@@ -195,6 +196,7 @@ export class Mochi3d {
       // le shader toon sait deriver une normale par facette ; seul le typage ne le declare pas
       if (plat.facettes) (m as unknown as { flatShading: boolean }).flatShading = true
     }
+    lisere(m, plat ? 0.7 : 0.5)
     this.materiaux.set(cle, m)
     return m
   }

@@ -18,6 +18,7 @@ import {
   SphereGeometry,
   TorusGeometry
 } from 'three'
+import { lisere } from './lisere'
 import { mesuresPorte, partiesPorte, rayonVerre, yeuxDe, type Partie, type PorteId } from '@/bot/portes'
 import type { BotFrame } from '@/bot/engine'
 
@@ -53,6 +54,8 @@ export class Porte3d {
       m.color.set(fond)
       m.transparent = false
       m.opacity = 1
+      // le liseré ne se copie pas avec le clone : on le repose, plus discret sur les accessoires
+      lisere(m, 0.4)
       this.matieres.set(fond, m)
     }
     return m
