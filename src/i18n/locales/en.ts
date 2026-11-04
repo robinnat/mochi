@@ -119,16 +119,7 @@ const en: typeof fr = {
     thinking: 'Thinking',
     wink: 'Wink',
     wide: 'Wide eyes',
-    alert: 'Alert',
-    notify: 'Notification',
-    exclaim: 'Exclamation',
     sleep: 'Sleep',
-    egg: 'Egg',
-    hexagon: 'Hexagon',
-    play: 'Play',
-    orbit: 'Orbit',
-    burst: 'Burst',
-    comet: 'Comet',
     swirl: 'Swirl'
   },
 

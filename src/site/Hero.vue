@@ -6,12 +6,12 @@ import type { Block } from '@/bot/cycles'
 
 const reduit = useReduit()
 
-// un repos, un clin d'oeil, une notification, une reflexion : le Mochi du haut de page
+// un repos, un clin d'oeil, des yeux ecarquilles, une reflexion : le Mochi du haut de page
 const cycle: Block[] = [
   { state: 'idle', duration: 3.2 },
   { state: 'wink', duration: 1.6 },
   { state: 'idle', duration: 2.6 },
-  { state: 'notify', duration: 2.2 },
+  { state: 'wide', duration: 1.8 },
   { state: 'idle', duration: 2.6 },
   { state: 'thinking', duration: 2.6 }
 ]
@@ -52,7 +52,7 @@ const cycle: Block[] = [
     <div>
       <h1>Mochi</h1>
       <p class="chapo">
-        A tiny animated avatar engine for the web. One soft shape that morphs through fourteen moods,
+        A tiny animated avatar engine for the web. One soft shape that morphs through five face moods,
         in flat, pixel art, clay and real 3D. Drawn in code, no animation library.
       </p>
       <div class="actions">

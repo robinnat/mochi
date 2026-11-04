@@ -26,11 +26,7 @@ export interface BotFrame {
   bodyAlpha: number
   eyes: RenderedEye[]
   dots: DotRender[]
-  /** true = les points passent derriere le corps (particules de l'eclatement) */
-  dotsBehind: boolean
   arcs: ArcRender[]
-  notif: { x: number; y: number; r: number } | null
-  notch: { x: number; y: number; r: number } | null
 }
 
 /**
@@ -113,10 +109,7 @@ function blendPose(a: Pose, b: Pose, t: number): Pose {
     arcs: [
       ...a.arcs.map((r) => ({ ...r, id: `a${r.id}`, opacity: r.opacity * out })),
       ...b.arcs.map((r) => ({ ...r, id: `b${r.id}`, opacity: r.opacity * t }))
-    ],
-    // la pastille appartient a un seul des deux etats, elle ne se melange pas
-    notif: t < 0.5 ? a.notif : b.notif,
-    dotsBehind: t < 0.5 ? a.dotsBehind : b.dotsBehind
+    ]
   }
 }
 
@@ -403,7 +396,7 @@ export class BotEngine {
    * construction, quel que soit le nombre de changements enchaines.
    *
    * Et SEULEMENT dans ce cas. Figer a chaque changement arreterait net l'animation de
-   * l'etat qu'on quitte pendant tout le fondu — le « ! » d'`alert` se figerait en pleine
+   * l'etat qu'on quitte pendant tout le fondu — le regard de `thinking` ou le rebond de `sleep` se figerait en pleine
    * course — alors qu'il n'y a rien a corriger hors morph : l'etat quitte y est deja
    * exactement l'image affichee. La lecture d'un montage, dont les blocs durent au moins
    * le plus long fondu (`MIN_BLOCK`), ne fige donc jamais rien et rend au bit ce qu'elle
@@ -538,26 +531,16 @@ export class BotEngine {
       .filter((p) => p.opacity > 0.01 && p.r > 0.0005)
       .map((p) => ({ ...p, x: (p.x + offX) * R, y: (p.y + offY) * R, r: p.r * R }))
 
-    // la pastille est posee sur le contour : elle suit donc la forme aussi
-    const nFit = pose.notif ? bodyRadius(pose.notif.x, pose.notif.y) : 1
-    const nx = pose.notif ? (pose.notif.x * nFit + offX) * R : 0
-    const ny = pose.notif ? (pose.notif.y * nFit + offY) * R : 0
-    const notif = pose.notif ? { x: nx, y: ny, r: pose.notif.r * R } : null
-    const notch = pose.notif ? { x: nx, y: ny, r: pose.notif.notch * R } : null
-
     return {
       bodyPath,
       bodyAlpha: pose.bodyAlpha,
       eyes,
       dots,
-      dotsBehind: pose.dotsBehind,
       // Les etats declarent des arcs en unites de rayon de boule ; le moteur
       // est le seul a connaitre l'echelle du viewBox, donc c'est lui qui trace.
       arcs: pose.arcs
         .filter((a) => a.opacity > 0.01)
-        .map((a) => arcRender(a.seed, a.t, R, a.id, a.opacity)),
-      notif,
-      notch
+        .map((a) => arcRender(a.seed, a.t, R, a.id, a.opacity))
     }
   }
 }

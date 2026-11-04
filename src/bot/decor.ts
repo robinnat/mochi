@@ -1,4 +1,4 @@
-import { TAU, clamp, createRng, r2 } from './math'
+import { TAU, createRng, r2 } from './math'
 
 /* ------------------------------------------------------------------ couleurs */
 
@@ -179,107 +179,9 @@ export const RINGS: ArcSeed[] = Array.from({ length: 6 }, (_, i) => ({
   cy: 0.1
 }))
 
-/**
- * Bouquet d'arcs emboites qui balaie le triangle juste avant les orbites.
- * Vus quasiment par la tranche (d'ou la forme en epingle a cheveux), rmax 1.37.
- */
-export const SWOOSH: ArcSeed[] = Array.from({ length: 4 }, (_, i) => ({
-  a: 0.78 + i * 0.2,
-  k: 0.05 + i * 0.02,
-  tilt: -0.62 + i * 0.05,
-  speed: 0.3,
-  phase: 0.06 * i,
-  sweep: 0.4,
-  hue: 95 + i * 62,
-  hueSpan: 100,
-  width: 0.05,
-  cx: 0,
-  cy: -0.12
-}))
-
 /* ------------------------------------------------------------- 3 points */
 
 /** x mesures : -0.557 / -0.013 / +0.532, y = 0. */
 export const DOT_X = [-0.557, -0.013, 0.532] as const
 export const DOT_R = 0.165
 export const DOT_PEAK = 1.25
-
-/* ------------------------------------------------------------ particules */
-
-const P_RNG = createRng(0xbeef)
-
-/** 5 particules, une nouvelle toutes les 0.2 s, duree de vie 0.55 s. */
-const PARTICLES = Array.from({ length: 5 }, (_, i) => ({
-  birth: i * 0.2,
-  angle: P_RNG() * TAU,
-  rho: 0.58 + P_RNG() * 0.18
-}))
-
-/**
- * Les particules ne partent pas en ligne droite : elles spiralent vers le
- * centre (rayon x0.75 par frame, angle +100 deg/s) en grossissant, et passent
- * derriere le noyau ou elles sont avalees.
- */
-export function particles(t: number, scale: number): DotRender[] {
-  const out: DotRender[] = []
-  for (const p of PARTICLES) {
-    const u = t - p.birth
-    if (u < 0 || u > 0.62) continue
-    const rho = p.rho * Math.pow(0.75, u * 10)
-    const a = p.angle + (u * 100 * Math.PI) / 180
-    out.push({
-      x: Math.cos(a) * rho * scale,
-      y: Math.sin(a) * rho * scale,
-      r: (0.04 + 0.028 * clamp(u / 0.55)) * scale,
-      depth: clamp(1 - rho / 0.8),
-      opacity: clamp(u / 0.06) * clamp((0.62 - u) / 0.08)
-    })
-  }
-  return out
-}
-
-/* ------------------------------------------------------------------ comete */
-
-/**
- * Contrairement a l'intuition, le point ne traverse pas l'ecran : il reste au
- * centre et c'est la trainee qui l'orbite. Ellipse a = 0.85, b = 0.15,
- * grand axe incline de +34deg, 4 rubans, ~210 deg/s.
- */
-const COMET_RNG = createRng(0xc0e7)
-export const COMET_RIBBONS: ArcSeed[] = Array.from({ length: 4 }, (_, i) => {
-  const d = i - 1.5
-  return {
-    a: 0.85 * (1 + d * 0.03),
-    // meme aplatissement a +-5 % pres : les rubans forment un faisceau serre
-    k: (0.15 / 0.85) * (1 + d * 0.16),
-    tilt: (34 * Math.PI) / 180 + d * 0.035,
-    speed: 210 / 360,
-    // dephasage mesure : 10 a 20 degres entre rubans, pas davantage
-    phase: -i * 0.045 + COMET_RNG() * 0.012,
-    sweep: 0.34,
-    hue: i * 85 + COMET_RNG() * 20,
-    hueSpan: 80,
-    width: 0.095,
-    cx: 0,
-    cy: 0
-  }
-})
-
-/** Rayon du point de la comete, mesure a 0.129. */
-export const COMET_DOT = 0.129
-
-/* --------------------------------------------------- pastille notification */
-
-/** Bleu releve au pixel. */
-export const NOTIF_BLUE = '#2496e8'
-/** La pastille est posee exactement sur la circonference, a -42deg. */
-export const NOTIF_ANGLE = -42
-export const NOTIF_DIST = 1.003
-/** Rayon au repos ; le pop culmine 14 % au-dessus. */
-export const NOTIF_R = 0.15
-export const NOTIF_POP = 1.14
-/**
- * L'encoche est un disque concentrique a la pastille, soustrait du corps.
- * La marge est constante (0.054 R) et suit l'echelle du corps.
- */
-export const NOTIF_MARGIN = 0.054

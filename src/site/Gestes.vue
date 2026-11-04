@@ -17,7 +17,7 @@ const anim = computed(() => TOUTES.find((a) => a.id === choisi.value) ?? TOUTES[
     <h2 id="t-gestes">Little gestures, so a crowd never moves in lockstep</h2>
     <p class="chapo">
       An optional layer adds small deterministic movements on top of the measured poses: idle gestures
-      every few seconds (picked by a seed), a bounce when touched, sleeping and dejected postures, and seven
+      every few seconds (picked by a seed), a bounce when touched, sleeping and dejected postures, and three
       ways of looking busy. Without it, the image is byte for byte the original.
     </p>
     <div class="duo">

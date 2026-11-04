@@ -3,27 +3,25 @@ import MochiBot from '../src/components/MochiBot.vue'
 import { POSES, STATE_BY_ID, type StateId } from '../src/bot/states'
 
 const mode = new URLSearchParams(location.search).get('mode') ?? 'states'
-const ETATS: StateId[] = ['idle', 'thinking', 'wink', 'wide', 'alert', 'notify', 'exclaim', 'sleep', 'egg', 'hexagon', 'play', 'orbit', 'swirl', 'burst', 'comet'].filter(
-  (e) => e !== 'swirl'
-) as StateId[]
+const ETATS: StateId[] = ['idle', 'thinking', 'wink', 'wide', 'sleep']
 
-// planche : 14 etats, 7 colonnes de 150 px
+// planche : 5 etats, une ligne de 150 px
 function planche() {
   return ETATS.map((id, i) =>
-    h('div', { class: 'c', style: `left:${(i % 7) * 150}px; top:${Math.floor(i / 7) * 150}px` }, [
+    h('div', { class: 'c', style: `left:${i * 150}px; top:0px` }, [
       h(MochiBot, { size: 150, shape: 'cercle', color: 'violet', rendu: 'original', state: id, frozenAt: POSES[id], label: '' })
     ])
   )
 }
 
-// demo : repos, clin d'oeil, orbite, eclatement ; chaque etat depuis le repos, 15 images par seconde
+// demo : repos, clin d'oeil, yeux ecarquilles, sommeil ; chaque etat depuis le repos, 15 images par seconde
 const FPS = 15
 function demo() {
   const segs: [StateId, number][] = [
     ['idle', 1.6],
     ['wink', STATE_BY_ID.get('wink')?.duration ?? 1.4],
-    ['orbit', STATE_BY_ID.get('orbit')?.duration ?? 3],
-    ['burst', STATE_BY_ID.get('burst')?.duration ?? 2]
+    ['wide', STATE_BY_ID.get('wide')?.duration ?? 1.8],
+    ['sleep', STATE_BY_ID.get('sleep')?.duration ?? 2.4]
   ]
   const frames: { id: StateId; t: number }[] = []
   for (const [id, d] of segs) for (let k = 0; k < Math.round(d * FPS); k++) frames.push({ id, t: k / FPS })

@@ -55,5 +55,5 @@ espace.liberer()
 Collisions et files d'attente de cases, cases de hauteurs différentes (le saut prendrait
 l'altitude de départ et d'arrivée), choix du chemin, orientation vers la case visée
 (`orienter`), interactions et état du mochi pendant le déplacement (le moteur a déjà ses
-quatorze états), et les performances à plus de quelques dizaines de mochis animés
+cinq états), et les performances à plus de quelques dizaines de mochis animés
 (instancier ou figer les formes qui ne changent pas).
