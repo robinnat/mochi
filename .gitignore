@@ -1,0 +1,10 @@
+node_modules
+dist
+.DS_Store
+*.local
+
+# carnet de travail interne, en francais et decrivant des bugs non corriges :
+# il vit sur le disque, rien n'en sort
+tasks/
+.vercel
+.env*

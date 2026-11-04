@@ -1,0 +1,204 @@
+# Mochi
+
+Mochi is a small animated avatar engine for the web. One solid shape morphs between 14
+measured states, two eyes move on their own, and the same motion can be drawn as flat
+vector art, pixel art, soft clay, glossy bubble or real 3D. It comes with gestures, job
+accessories, jumping movement and exports (SVG, PNG, GIF, MP4). No animation library.
+
+**Site and playground: https://mochi-red-phi.vercel.app** (the app is at `/app`).  
+**Source: https://github.com/robinnat/mochi**
+
+![A mochi going through idle, wink, orbit and burst](docs/demo.gif)
+
+## Install
+
+```bash
+npm install mochi-bots   # coming soon: the package is NOT published yet
+```
+
+Until then, work from the repository (see [Development](#development)). Heads up: the repo
+has no library entry point yet (no `main` or `exports` in `package.json`, and `"private": true`),
+so even once published the package needs one. What you can build today is the engine alone,
+see "Vanilla" below.
+
+## Usage
+
+### Vue
+
+The component lives in `src/components/MochiBot.vue`.
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import MochiBot from './components/MochiBot.vue'
+
+const state = ref('idle')
+</script>
+
+<template>
+  <MochiBot v-model:state="state" shape="fleur" color="rose" rendu="argile" :size="160" follow />
+  <!-- a frozen frame: no animation loop, the same image every time -->
+  <MochiBot state="orbit" :frozen-at="1.2" :size="96" />
+  <!-- real 3D, with the cartoon outline; Three.js is loaded on demand -->
+  <MochiBot shape="etoile" color="ambre" rendu="3d" contour :size="200" />
+  <!-- a job accessory and the gesture that goes with it -->
+  <MochiBot accessoire="portable" rendu="argile" :size="200" />
+</template>
+```
+
+Ids are the ones of the catalogues, which are in French for now (`etoile` is the star,
+`argile` is clay, `rendu` is the render style).
+
+### Vanilla (engine only, no Vue)
+
+`src/bot/` has no framework and no clock: `engine.sample(t)` is a pure function of time.
+`tools/moteur.ts` is an engine-only entry point. Bundle it once:
+
+```bash
+npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify \
+  --alias:vue=./tools/vue-stub.ts --outfile=mochi-engine.js
+```
+
+Then draw frames yourself. This draws the body and the eyes (rings, particles and the
+notification dot are in `frame.arcs`, `frame.dots` and `frame.notif`, and are not drawn here):
+
+```html
+<svg id="mochi" width="200" height="200"></svg>
+<script type="module">
+  import { BotEngine, SHAPE_BY_ID, COLOR_BY_ID, RAYON, DEMI_VIEWBOX } from './mochi-engine.js'
+
+  const engine = new BotEngine(RAYON, 'idle', SHAPE_BY_ID.get('etoile').radii)
+  const color = COLOR_BY_ID.get('violet').hex
+  const svg = document.getElementById('mochi')
+  const V = DEMI_VIEWBOX
+  svg.setAttribute('viewBox', `${-V} ${-V} ${V * 2} ${V * 2}`)
+
+  function draw(t) {
+    const f = engine.sample(t)
+    // the eyes are holes in a mask, so they clip against the silhouette on their own
+    const eyes = f.eyes
+      .map((e) => `<path d="${e.d}" transform="${e.matrix}" opacity="${e.alpha}" fill="#000"/>`)
+      .join('')
+    svg.innerHTML =
+      `<mask id="m" maskUnits="userSpaceOnUse" x="${-V}" y="${-V}" width="${V * 2}" height="${V * 2}">` +
+      `<path d="${f.bodyPath}" fill="#fff"/>${eyes}</mask>` +
+      `<rect x="${-V}" y="${-V}" width="${V * 2}" height="${V * 2}" fill="${color}" mask="url(#m)" opacity="${f.bodyAlpha}"/>`
+  }
+
+  engine.setState('wink', 2) // at t = 2 s
+  const loop = (ms) => { draw(ms / 1000); requestAnimationFrame(loop) }
+  requestAnimationFrame(loop)
+</script>
+```
+
+Serve the folder over HTTP (ES modules do not load from `file://`). Tested in Chrome.
+Keep the MIT header of `LICENSE` at the top of the bundle you ship.
+
+## What is in it
+
+**Render styles** (`rendu`): `original` (flat), `pixel` (pixel art, `pixel`: `gros` 16,
+`moyen` 24, `fin` 32 px for the ball), `argile` (clay), `bulle` (bubble), `3d` (real 3D).
+The 3D style has materials (`rendu3d`: `doux` by default, plus `aplat`, `toon`,
+`toon-contour`, `lowpoly`, `realiste`), a softness (`douceur`: `leger` or `marque`),
+an optional cartoon outline (`contour`) and a soft highlight (`reflet`). Export always
+serialises the SVG, so a 3D mochi exports as clay.
+
+**Shapes** (11): `cercle`, `galet`, `squircle`, `capsule`, `triangle`, `hexagone`, `nuage`,
+`goutte`, `etoile`, `fleur`, `oeuf`. In 3D the circle is a true sphere, the squircle a
+cube, the triangle a pyramid, and star, flower and hexagon are bevelled extrusions.
+
+**Colours** (12): `encre`, `brun`, `rouge`, `orange`, `ambre`, `vert`, `turquoise`, `bleu`,
+`violet`, `rose`, `gris`, `creme`.
+
+**Expressions** (16): `neutre`, `attentif`, `surpris`, `excite`, `heureux`, `hilare`,
+`colere`, `triste`, `effraye`, `mefiant`, `confus`, `curieux`, `fier`, `timide`, `blase`,
+`somnolent`.
+
+**States** (14, in the order of the reference sequence): `idle`, `thinking`, `wink`, `wide`,
+`alert`, `notify`, `exclaim`, `sleep`, `egg`, `hexagon`, `play`, `orbit`, `burst`, `comet`.
+(`swirl` also exists, as the app's view transition, outside the catalogue.)
+
+**Gestures** (`src/bot/gestes.ts`, optional and deterministic): seven idle gestures
+(`cligne`, `respire`, `saut`, `balance`, `regard`, `hoche`, `etire`) scheduled by a seed with
+`gesteRepos(t, seed)`, a tap `rebond(u)`, `gesteSommeil(t)`, `gesteEchec(t)`, and seven
+activities (`orbite`, `reflexion`, `frappe`, `balayage`, `emission`, `tourbillon`, `jeu`).
+Without a gesture the image is byte for byte the original. See [docs/gestes.md](docs/gestes.md).
+
+**Job accessories** (`src/bot/accessoires.ts`): `carnet`, `portable`, `clap`, `graphique`,
+`avion`, `palette`, `presse-papiers`, `liste`, `engrenage`, each with its gesture;
+`accessoireDuMetier('code')` maps a job name to one. See [docs/accessoires.md](docs/accessoires.md).
+
+**Jumps and movement** (`src/bot/sauts.ts`, `src/ui/trois/iso.ts`): `poseSaut` and
+`poseSurChemin` give squash, stretch, flight and landing with volume conserved;
+`EspaceIso` puts 3D mochis on an isometric grid and makes them hop tile to tile.
+See [docs/iso.md](docs/iso.md).
+
+**Exports**: SVG, PNG, animated SVG, animated GIF, and a whole montage as GIF or MP4
+(the video encoder only loads on first use).
+
+## Main API
+
+```ts
+const engine = new BotEngine(RAYON, 'idle', SHAPE_BY_ID.get('nuage')?.radii, expression)
+engine.setState('orbit', t)        // change state at time t (morphs with the measured curve)
+engine.setShape(radii, t)          // morph to another silhouette
+engine.setExpression(expr, t)      // resting expression
+engine.setLook({ yaw, pitch, mix, wander }, t) // aim the eyes (null to release)
+const frame = engine.sample(t, geste?) // pure: bodyPath, eyes, arcs, dots, notif
+```
+
+`<MochiBot>` props: `size`, `shape`, `color`, `expression`, `paper`, `frozenAt`, `cycle`,
+`follow`, `gaze`, `rendu`, `pixel`, `rendu3d`, `douceur`, `contour`, `reflet`, `geste`,
+`accessoire`, `label`. Models: `block`, `state`, `playing`, `elapsed`. See
+[MochiBot.vue](src/components/MochiBot.vue).
+
+## Why the numbers look arbitrary
+
+They are measured, not chosen: every state was read frame by frame off a reference
+animation (silhouettes by sub-pixel ray casting, eyes by capsule fitting, colours and
+thicknesses by direct sampling). The constants of `src/bot/` are measurements, so rounding
+them loses the accuracy of the motion.
+
+| What you would expect | What the measurement shows |
+|---|---|
+| Eyes tilt like `//` | They tilt like `\\`, about 26 degrees off vertical |
+| The body is a squircle | It is a perfect circle, radial error under 0.7 % |
+| Transitions are springs | They are exponential ease-outs, no overshoot |
+| The comet crosses the screen | The dot stays put, the trail turns around it |
+| The avatar floats at rest | No. Life comes from gaze drift and blinks |
+
+[docs/measurements.md](docs/measurements.md) has the rest.
+
+![The 14 states, frozen side by side](docs/states.png)
+
+## Architecture
+
+| | |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | The engine, radial-profile morphing, eyes as mask holes |
+| [docs/measurements.md](docs/measurements.md) | What was measured, regenerating `profiles.ts` |
+| [docs/styles.md](docs/styles.md) | Render styles: pixel art, clay, bubble, real 3D |
+| [docs/gestes.md](docs/gestes.md) | Gestures and activities |
+| [docs/accessoires.md](docs/accessoires.md) | Job accessories |
+| [docs/iso.md](docs/iso.md) | Jumps and the isometric space |
+| [docs/intro.md](docs/intro.md) | The arrival sequence |
+| [docs/interface.md](docs/interface.md) | App layout and CSS traps |
+| [docs/export.md](docs/export.md) | SVG, PNG, GIF and MP4 export |
+| [docs/i18n.md](docs/i18n.md) | The hand-rolled translation layer |
+
+## Development
+
+```bash
+npx -y pnpm@11.17.0 install
+npx -y pnpm@11.17.0 dev      # http://localhost:5190  (site at /, app at /app.html, lab at /labo.html)
+npx -y pnpm@11.17.0 test     # vitest
+npx -y pnpm@11.17.0 build    # vue-tsc --noEmit && vite build
+```
+
+Vue 3, Vite, TypeScript, Tailwind 4 (app only), Three.js (loaded on demand). `vue-tsc` is the
+only gate: run the build before you conclude. [CHANGELOG.md](CHANGELOG.md) has one entry
+per version.
+
+## License
+
+MIT, see [LICENSE](LICENSE).

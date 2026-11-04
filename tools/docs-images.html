@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  Source de docs/states.png et de docs/demo.gif. Page de dev, hors build : servie par `pnpm dev`
+  a /tools/docs-images.html?mode=states (14 etats figes, 1050x300) ou ?mode=demo (planche de
+  images du GIF, une image par cellule de 300x300), puis capturee par Chrome headless.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mochi docs images</title>
+    <style>
+      html, body { margin: 0; background: #fbfaf7; }
+      #r { position: absolute; left: 0; top: 0; }
+      .c { position: absolute; }
+    </style>
+  </head>
+  <body>
+    <div id="r"></div>
+    <script type="module" src="./docs-images.ts"></script>
+  </body>
+</html>
