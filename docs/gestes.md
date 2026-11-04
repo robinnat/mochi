@@ -46,9 +46,8 @@ corps, et il n'existe que dans cette couche : les états mesurés gardent leurs 
 ## Au travail (`ACTIVITES`)
 
 Chaque activité joue un état du moteur en boucle (`tempsActivite`) et ajoute un geste :
-`orbite` (anneaux, celle de la vidéo), `reflexion` (trois points qui pulsent), `frappe`
-(regard baissé, petites frappes), `balayage` (le regard lit de gauche à droite),
-`emission` (pastille et pulsation), `tourbillon`, `jeu` (arcs qui défilent).
+`reflexion` (trois points qui pulsent), `frappe` (regard baissé, petites frappes) et
+`balayage` (le regard lit de gauche à droite). Elles passent toutes par le visage.
 L'application choisit l'activité de chaque rôle.
 
 ## Moteur seul pour une autre page

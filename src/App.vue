@@ -71,7 +71,7 @@ import { COLOR_BY_ID, DEFAULT_COLOR, DEFAULT_SHAPE, SHAPE_BY_ID } from '@/bot/sk
 import { POSES, SEQUENCE, STATES, type StateId } from '@/bot/states'
 
 /**
- * L'URL pilote la vue : `#etat=orbit&stop` ouvre un etat precis sequence a
+ * L'URL pilote la vue : `#etat=wink&stop` ouvre un etat precis sequence a
  * l'arret, `#planche` affiche la planche. On relit a chaque `hashchange` pour
  * que les boutons precedent/suivant du navigateur fonctionnent vraiment.
  */
@@ -200,7 +200,7 @@ if (initial.named) {
 // Sauf a l'arrivee, qui part du REPOS quel que soit le montage de l'utilisateur :
 // la boule doit PARAITRE deja telle qu'elle restera, sans rien morpher. Prendre
 // le premier bloc du montage ferait dependre la premiere image de ce que
-// l'utilisateur y a range — un eclatement ou une comete se mettraient a morpher
+// l'utilisateur y a range — un sommeil ou une reflexion (corps sans yeux) se mettraient a morpher
 // vers la boule pendant qu'elle apparait.
 const state = ref<StateId>(
   intro.value ? 'idle' : (cycle.value.blocks[block.value]?.state ?? 'idle')
@@ -287,10 +287,10 @@ let ecritParNous = ''
 // push : on ne veut pas un cran d'historique par etat.
 watch([state, playing], ([id, on]) => {
   // L'URL decrit le LECTEUR. Hors de lui, l'etat affiche n'est qu'un decor de
-  // vue — l'orbite par laquelle s'ouvrent les reglages — et n'a rien a faire
+  // vue — le tourbillon par lequel s'ouvrent les reglages — et n'a rien a faire
   // dans un lien partageable. L'y ecrire declenchait en plus un `hashchange`
   // qui replacait la tete de lecture sur les index du montage de l'utilisateur,
-  // alors que la vue joue le sien : le lecteur restait coince sur l'orbite.
+  // alors que la vue joue le sien : le lecteur restait coince sur le tourbillon.
   if (view.value !== 'animations') return
   ecritParNous = `#etat=${id}${on ? '' : '&stop'}`
   location.replace(ecritParNous)
@@ -397,7 +397,7 @@ watch(view, (now, before) => {
     return
   }
   block.value = 0
-  // seuls les reglages jouent quelque chose hors du lecteur : leur orbite d'entree
+  // seuls les reglages jouent quelque chose hors du lecteur : leur tourbillon d'entree
   playing.value = now === 'reglages'
 })
 

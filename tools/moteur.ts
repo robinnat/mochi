@@ -8,7 +8,6 @@
 export { BotEngine } from '../src/bot/engine'
 export { COLOR_BY_ID, SHAPE_BY_ID, mixHex } from '../src/bot/skins'
 export { EXPRESSION_BY_ID } from '../src/bot/expressions'
-export { NOTIF_BLUE } from '../src/bot/decor'
 export { DEMI_VIEWBOX, RAYON } from '../src/bot/repere'
 export { teintes3d } from '../src/ui/rendu'
 export {

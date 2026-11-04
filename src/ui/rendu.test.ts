@@ -18,7 +18,7 @@ import {
 } from './rendu'
 
 /**
- * Le choix du style de rendu. Le moteur et ses quatorze etats ne bougent pas : seul le
+ * Le choix du style de rendu. Le moteur et ses cinq etats ne bougent pas : seul le
  * dessin change, donc ce qui est verrouille ici, c'est le catalogue, sa valeur par defaut
  * et la facon dont une valeur relue du stockage est acceptee ou refusee.
  */

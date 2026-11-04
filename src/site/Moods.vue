@@ -7,17 +7,17 @@ import { ETATS, STATE_LABEL, cycleDe } from './catalog'
 import { POSES, type StateId } from '@/bot/states'
 
 const reduit = useReduit()
-const choisi = ref<StateId>('orbit')
+const choisi = ref<StateId>('wink')
 const cycle = computed(() => cycleDe(choisi.value))
 </script>
 
 <template>
   <section id="moods" class="bloc wrap" aria-labelledby="t-moods">
     <span class="etiquette">Animation</span>
-    <h2 id="t-moods">Fourteen measured moods</h2>
+    <h2 id="t-moods">Five measured face moods</h2>
     <p class="chapo">
-      Each state was measured frame by frame off a reference animation: silhouettes, eye shapes, timings.
-      Pick one to watch it play; states that do not loop go back to rest and replay.
+      Every mood lives on the face: eyes, lids and expression. They were measured frame by frame off a
+      reference animation. Pick one to watch it play; moods that do not loop go back to rest and replay.
     </p>
     <div class="duo">
       <div class="scene">

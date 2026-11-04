@@ -17,8 +17,8 @@ freezes the composite pose and blends from it, which is continuous however many 
 are chained.
 
 **Only when a fade is in progress.** Freezing on every change would stop the outgoing
-state's own animation dead for the whole fade — `alert`'s travelling "!" would halt
-mid-course — and there is nothing to fix outside a fade, where the state being left *is*
+state's own animation dead for the whole fade — `thinking`'s pulsing dots would halt
+mid-pulse — and there is nothing to fix outside a fade, where the state being left *is*
 the displayed frame. Montage playback, whose blocks last at least the longest fade, never
 freezes anything and renders byte for byte what it did before: verified over 1921 frames
 of the default cycle, the 15-state board, and a re-read of an arbitrary date.
@@ -38,7 +38,7 @@ break every measured duration at once.
 
 Hence two floors:
 
-- `MIN_BLOCK`, **derived** from the longest `morph` in the catalogue (`orbit`, 0.6 s),
+- `MIN_BLOCK`, **derived** from the longest `morph` in the catalogue (`wide`, 0.55 s),
   not written by hand — it used to be, and it only worked because 0.6 happened to be
   that maximum.
   It no longer exists to prevent a jump: a state change landing *inside* a fade now
@@ -63,17 +63,15 @@ if it isn't expressible as `r(theta)`.
 `profiles.ts` is generated from the video and drives the animated states.
 `skins.ts` holds the customiser's shapes, built analytically. A shape the user
 picks only replaces the body on states flagged `baseBody`: `idle`, `wink`,
-`wide`, `notify` and `swirl`. Everywhere else the silhouette *is* the animation
+`wide` and `swirl`. Everywhere else the silhouette *is* the animation
 and must not be overwritten.
 
 ## The eyes are holes in a `<mask>`
 
 Not white shapes laid on top. That is what makes them clip themselves against the
-silhouette when they slide towards the edge, with no cropping code. The
-notification pastille's notch uses the same mask.
-
+silhouette when they slide towards the edge, with no cropping code. 
 Because a hole shows whatever is drawn behind it, and the back half of the rings
-and the burst particles *are* drawn behind the body to be occluded by it, the body
+*is* drawn behind the body to be occluded by it, the body
 is backed by an opaque path in the page's `paper` colour. Without it, a ring
 passing behind the ball reappears inside the eyes.
 
@@ -152,7 +150,7 @@ Each of these was written and measured, and each broke something visible:
   cannot move when the expression changes — but on a capsule `neutre` has its eyes high and
   needs to go down while `effraye` has them low and needs to go up. No single translation
   satisfies both, measured: 4 combinations still overflowing.
-- **Giving up when nothing fits.** `wide` has 87-unit gélules and `notify` 50-unit ones; on
+- **Giving up when nothing fits.** `wide` has 87-unit gélules; on
   a triangle or a teardrop they overflow whatever you do, and "no worse than the circle" is
   then satisfied degenerately. The rule is to aim for the least bad, never to leave a real
   overflow unimproved.
@@ -182,8 +180,7 @@ That depth sort is what makes them read as orbits rather than as flat drawing.
 ## Springs are local and deliberate
 
 Transitions are exponential ease-outs (the curve measured on the video) and the
-body never overshoots. The one spring effect is the notification pastille's pop
-(`NOTIF_POP = 1.14`). There is deliberately **no spring engine** in the project;
+body never overshoots. There is no spring effect left (the notification pop left with the non-face states). There is deliberately **no spring engine** in the project;
 a new bouncing effect belongs in the state that needs it.
 
 ## The rest expression is adjustable, the states' silhouettes are not
@@ -205,7 +202,7 @@ below that.
 ## Labels don't live in `src/bot/`
 
 The catalogues (`states.ts`, `skins.ts`, `expressions.ts`) carry **ids**, and the
-display resolves `t('states.orbit')`. The corollary is that their ids are
+display resolves `t('states.wink')`. The corollary is that their ids are
 **literal unions** (`ShapeId`, `ColorId`, `ExpressionId`, `StateId`), not for
 neatness, but because that is what makes the compiler check that every entry has
 its label in all three languages. Adding a shape without its label doesn't

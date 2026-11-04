@@ -17,7 +17,6 @@
  * GIF et MP4 le serialisent et le rasterisent comme l'original, sans code a part.
  */
 
-import { NOTIF_BLUE } from '@/bot/decor'
 import type { BotFrame } from '@/bot/engine'
 import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
 import { mixHex } from '@/bot/skins'
@@ -315,15 +314,9 @@ function peins(
       c.fill(new Path2D(e.d))
       c.restore()
     }
-    if (f.notch) {
-      c.beginPath()
-      c.arc(f.notch.x, f.notch.y, f.notch.r, 0, Math.PI * 2)
-      c.fill()
-    }
   }
 
   arcs('back')
-  if (f.dotsBehind) points()
 
   // le corps et ses yeux dans un calque, pour lui appliquer `bodyAlpha` d'un bloc
   lay.setTransform(1, 0, 0, 1, 0, 0)
@@ -344,14 +337,7 @@ function peins(
   ctx.drawImage(lay.canvas, 0, 0)
   ctx.restore()
 
-  if (!f.dotsBehind) points()
-  if (f.notif) {
-    ctx.globalAlpha = 1
-    ctx.fillStyle = NOTIF_BLUE
-    ctx.beginPath()
-    ctx.arc(f.notif.x, f.notif.y, f.notif.r, 0, Math.PI * 2)
-    ctx.fill()
-  }
+  points()
   arcs('front')
   ctx.globalAlpha = 1
 }
@@ -380,11 +366,6 @@ function masques(lay: CanvasRenderingContext2D, f: BotFrame, g: number) {
     lay.transform(m[0]!, m[1]!, m[2]!, m[3]!, m[4]!, m[5]!)
     lay.fill(new Path2D(e.d))
     lay.restore()
-  }
-  if (f.notch) {
-    lay.beginPath()
-    lay.arc(f.notch.x, f.notch.y, f.notch.r, 0, Math.PI * 2)
-    lay.fill()
   }
   lay.setTransform(1, 0, 0, 1, 0, 0)
   lay.globalCompositeOperation = 'source-over'
@@ -436,4 +417,47 @@ export function pixellise(
     fill: a.fill,
     d: cheminDesCases(a.cases, g)
   }))
+}
+
+/**
+ * Chemins (repere du moteur) en cases de la grille : chaque chemin est rasterise SEUL, une case
+ * est gardee quand plus de la moitie est couverte, et le dernier chemin peint gagne. Sert aux
+ * accessoires portes, qui se re-pixellisent a chaque image comme le corps.
+ */
+export function pixellisePrims(
+  prims: Array<{ d: string; fill?: string; stroke?: string; sw?: number; alpha?: number }>,
+  g: number
+): CouchePixel[] | null {
+  if (!prims.length) return []
+  toile ??= canvasNeuf()
+  const ctx = contexte(toile, g)
+  if (!ctx) return null
+  try {
+    const s = g / (DEMI_VIEWBOX * 2)
+    const cases = new Map<number, string>()
+    for (const p of prims) {
+      if ((p.alpha ?? 1) < 0.3) continue
+      const chemin = new Path2D(p.d)
+      for (const mode of ['fill', 'stroke'] as const) {
+        const couleur = mode === 'fill' ? p.fill : p.stroke
+        if (!couleur) continue
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
+        ctx.clearRect(0, 0, g, g)
+        ctx.setTransform(s, 0, 0, s, DEMI_VIEWBOX * s, DEMI_VIEWBOX * s)
+        ctx.fillStyle = ctx.strokeStyle = '#000'
+        ctx.lineWidth = Math.max(p.sw ?? 2, 1 / s)
+        ctx.lineCap = ctx.lineJoin = 'round'
+        if (mode === 'fill') ctx.fill(chemin)
+        else ctx.stroke(chemin)
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
+        const px = ctx.getImageData(0, 0, g, g).data
+        for (let i = 0; i < g * g; i++) if (px[i * 4 + 3]! >= 128) cases.set(i, couleur)
+      }
+    }
+    const parCouleur = new Map<string, number[]>()
+    for (const [i, c] of cases) (parCouleur.get(c) ?? parCouleur.set(c, []).get(c)!).push(i)
+    return [...parCouleur].map(([fill, liste]) => ({ fill, d: cheminDesCases(liste, g) }))
+  } catch {
+    return null
+  }
 }

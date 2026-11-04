@@ -26,7 +26,7 @@ const VUE_3D = `<!-- 3D: Three.js is loaded on demand, only when this style is u
 <MochiBot accessoire="portable" rendu="argile" :size="200" />
 
 <!-- a frozen frame: no animation loop, same image every time -->
-<MochiBot state="orbit" :frozen-at="1.2" :size="96" />`
+<MochiBot state="wink" :frozen-at="1.2" :size="96" />`
 
 const INSTALL = 'npm install mochi-bots'
 const copie = ref('')

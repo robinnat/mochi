@@ -190,7 +190,7 @@ export function gesteEchec(t: number): Geste {
 
 // ---------------------------------------------------------------- activites (au travail)
 
-export type ActiviteId = 'orbite' | 'reflexion' | 'frappe' | 'balayage' | 'emission' | 'tourbillon' | 'jeu'
+export type ActiviteId = 'reflexion' | 'frappe' | 'balayage'
 
 export interface Activite {
   id: ActiviteId
@@ -203,13 +203,11 @@ export interface Activite {
 }
 
 /**
- * Activites « au travail » : chacune reste lisible comme un travail en cours (un etat anime du
- * moteur, ou un regard occupe), mais se distingue des autres. L'application choisit laquelle
+ * Activites « au travail » : chacune reste lisible comme un travail en cours (un etat du moteur
+ * ou un regard occupe), mais se distingue des autres. L'application choisit laquelle
  * correspond a quel role.
  */
 export const ACTIVITES: Activite[] = [
-  // anneaux en orbite : le travail generique, celui de la video
-  { id: 'orbite', etat: 'orbit', boucle: 3.4, geste: () => ({ ...GESTE_NEUTRE }) },
   // trois points qui pulsent, avec un leger hochement : il ecrit ou il reflechit
   { id: 'reflexion', etat: 'thinking', boucle: 2.6, geste: (t) => g({ dy: 0.012 * Math.sin((t / 1.3) * TAU) }) },
   // petites frappes rapides, regard baisse vers le clavier
@@ -234,13 +232,7 @@ export const ACTIVITES: Activite[] = [
       const ligne = Math.floor(t / 1.6) % 3
       return g({ yaw, pitch: 4 + ligne * 4, dx: yaw * 0.0005 })
     }
-  },
-  // envoi : la pastille de notification revient, le corps pulse a chaque envoi
-  { id: 'emission', etat: 'notify', boucle: 2.2, geste: (t) => { const v = (t % 2.2) / 2.2; return g({ sx: 1 + 0.025 * cloche(v / 0.3), sy: 1 + 0.025 * cloche(v / 0.3) }) } },
-  // tourbillon d'arcs repete, la tete suit
-  { id: 'tourbillon', etat: 'swirl', boucle: 1.3, geste: (t) => g({ roll: 5 * Math.sin((t / 2.6) * TAU) }) },
-  // balayage d'arcs devant le corps (effet de defilement), corps en triangle « lecture »
-  { id: 'jeu', etat: 'play', boucle: 2, geste: (t) => g({ dy: 0.008 * Math.sin((t / 1) * TAU) }) }
+  }
 ]
 
 export const ACTIVITE_BY_ID = new Map(ACTIVITES.map((a) => [a.id, a]))

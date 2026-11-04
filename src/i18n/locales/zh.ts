@@ -122,16 +122,7 @@ const zh: typeof fr = {
     thinking: '思考',
     wink: '眨眼',
     wide: '睁大眼睛',
-    alert: '警示',
-    notify: '通知',
-    exclaim: '感叹号',
     sleep: '休眠',
-    egg: '蛋形',
-    hexagon: '六边形',
-    play: '播放',
-    orbit: '轨道',
-    burst: '爆散',
-    comet: '彗星',
     swirl: '漩涡'
   },
 

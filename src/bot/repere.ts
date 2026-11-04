@@ -23,9 +23,9 @@ export const RAYON = 100
 /**
  * Demi-cote du viewBox affiche. La marge au-dela du rayon loge les anneaux.
  *
- * Ce n'est pas une valeur libre : les anneaux de l'orbite et le swoosh de la comete montent
+ * Ce n'est pas une valeur libre : les anneaux de la transition d'entree montent
  * a 1,4 fois le rayon, soit 140. Rien ne les borne au runtime — c'est le reglage a la main
- * des tableaux `RINGS` et `SWOOSH` (`decor.ts`) qui les tient sous 158, et un test le
+ * du tableau `RINGS` (`decor.ts`) qui les tient sous 158, et un test le
  * verrouille.
  */
 export const DEMI_VIEWBOX = 158

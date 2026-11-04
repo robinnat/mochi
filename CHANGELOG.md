@@ -5,6 +5,26 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Worn accessories** (`src/bot/portes.ts`, `porte` prop): round glasses, sunglasses, mini top hat,
+  straw hat, beanie, bow, crown and headphones. Only glasses, a top hat and a bow are exposed on the site, in 3D; the 2D layer is kept in the engine but switched off (`PORTE_2D`). They are recomputed from every engine frame
+  (body outline and eyes), so they follow squash, hops, shapes, gaze and blinks in flat, pixel
+  art, clay, bubble and real 3D. Hats and headphones are real volumes in 3D and turn with the
+  model; glasses are painted on the 3D face where the eyes are. Lenses are never opaque.
+- **3D section of the site**: drag the model sideways to turn it (inertia, soft return, arrow
+  keys, `touch-action: pan-y` so the page still scrolls), pick a mood, a gesture or a worn
+  accessory. `MochiBot` takes a `yaw` prop.
+
+### Changed
+
+- **Moods are face moods only.** The catalogue now holds `idle`, `thinking`, `wink`, `wide` and
+  `sleep`. `alert`, `notify`, `exclaim`, `egg`, `hexagon`, `play`, `orbit`, `burst` and `comet` are
+  gone, with their decor (bars, particles, comet ribbons, notification dot) and the `orbite`,
+  `emission`, `tourbillon` and `jeu` activities. Stored montages that mention a removed state drop
+  those blocks silently. `swirl` (the app's view transition) stays.
+- A gesture and a job accessory now compose, and the tool follows a body moved by the gesture.
+
 ### Changed
 
 - **Candy extrusions for star, flower, hexagon** (03/11/2026: the inflated/lens versions

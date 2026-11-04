@@ -27,8 +27,8 @@ export interface Cycle {
  * bloc suivant saute a l'image au lieu de se fondre.
  *
  * DERIVE du catalogue et non ecrit a la main. La valeur etait 0,6, ce qui marchait
- * uniquement parce que 0,6 se trouvait etre le plus long `morph` du catalogue — celui
- * d'`orbit`. Rien ne le garantissait : ajouter un etat qui morphe en 0,8 s aurait fait
+ * uniquement parce que 0,6 etait le plus long `morph` du catalogue d'alors (l'orbite, retiree
+ * depuis). Rien ne le garantissait : ajouter un etat qui morphe en 0,8 s aurait fait
  * trembler l'editeur sans qu'aucun test ne bronche. Maintenant le plancher suit.
  */
 export const MIN_BLOCK = Math.max(...STATES.map((s) => s.morph))

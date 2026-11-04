@@ -15,13 +15,8 @@ tidier breaks the resemblance, which is the only success criterion here.
 - The eyes lean like `\\`, not `//`.
 - The body is a **perfect circle**, not a squircle, radial deviation under 0.7%.
 - Transitions are **exponential ease-outs**; the body **never** overshoots. The
-  one spring is local and written into the state concerned (the notification
-  pastille's +14% pop). There is deliberately no spring engine.
-- The vertical `!` has a **tapered** bar (top/bottom = 1.76); the leaning `!` has a
-  **capsule** bar. They are not the same shape.
-- The leaning `!`'s dot is a **teardrop**, round end towards the bar, point away,
-  not a disc.
-- In the comet state the dot **does not move**: the trail orbits it.
+  engine has no spring (the notification pop that used to be the one exception left
+  with the non-face states). There is deliberately no spring engine.
 - At rest the avatar **doesn't float**: the video measures the centre stable to
   ±0.003. The code keeps a deliberate trace of it (a drift of a few thousandths of
   the radius, and a 0.5% breath) purely so the image isn't completely frozen. The
@@ -63,8 +58,8 @@ python tools/extract-profiles.py frames/ > src/bot/profiles.ts
 
 The script composes exact filenames (`h_0164.png` and friends, zero-padded to
 four), so the `h_` prefix and the `fps=10` cut both matter. It extracts the three
-profiles that can't be built analytically (egg, hexagon, triangle), not all 14
-states; the rest are either the measured circle or constructed in `skins.ts`.
+profiles that can't be built analytically (egg, hexagon, triangle), not every
+state (the egg and hexagon profiles are still in `profiles.ts` as generated data); the rest are either the measured circle or constructed in `skins.ts`.
 
 `reference.mp4` and `frames/` are local inputs and are not in the repository.
 

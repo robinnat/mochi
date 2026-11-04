@@ -4,7 +4,7 @@ Réglage « Style » de la vue Personnaliser, persisté comme la forme et la cou
 (`mochi:style`, `mochi:pixel`). Quatre choix : **Original** (par défaut, inchangé),
 **Pixel art**, **3D argile**, **3D bulle**, **3D** (vraie 3D, aplat, contour cartoon en option).
 
-Le moteur ne change pas : `engine.sample(t)` rend la même image et les 14 états, leurs
+Le moteur ne change pas : `engine.sample(t)` rend la même image et les 5 états, leurs
 mesures et leurs durées sont identiques. Seul `MochiBot.vue` peint l'image autrement.
 Le catalogue et le réglage courant vivent dans `src/ui/rendu.ts`.
 
@@ -162,9 +162,7 @@ des formes dans les quatre styles (flat, pixel, pâte, 3D ; `?c=<couleur>`, `?s=
 - Les GIF en 3D pèsent lourd (environ 800 ko pour 3 s) : les dégradés font beaucoup de
   couleurs, le GIF en garde 256.
 - Le reflet et le dégradé 3D sont fixes dans l'espace : sur un état où le corps se déplace
-  ou se réduit (veille, comète), la lumière ne le suit pas exactement.
-- En pixel art, les petites particules (éclatement) font moins d'une case et disparaissent
-  en partie ; les yeux à 16 pixels sont de simples traits.
+  ou se réduit (veille), la lumière ne le suit pas exactement.
+- En pixel art, les yeux à 16 pixels sont de simples traits.
 
-Captures : `docs/variantes/` (planche des 14 états par style, gros plans, écran
-Personnaliser).
+Captures : `docs/variantes/` (gros plans, écran Personnaliser).

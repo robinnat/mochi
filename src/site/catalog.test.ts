@@ -11,8 +11,8 @@ describe('catalogue du site', () => {
       for (const b of a.cycle) expect(b.duration).toBeGreaterThan(0)
     }
   })
-  it('les 14 etats ont un cycle qui revient au repos', () => {
-    expect(ETATS).toHaveLength(14)
+  it('les 5 etats ont un cycle qui revient au repos', () => {
+    expect(ETATS).toHaveLength(5)
     for (const e of ETATS) expect(cycleDe(e).length).toBeGreaterThan(0)
   })
 })

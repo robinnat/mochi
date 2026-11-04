@@ -62,10 +62,9 @@ describe('durees', () => {
   })
 
   it('respecte la mesure des etats qui ont besoin d aboutir', () => {
-    // le "!" revient a 2.0, le corps se recompose a 2.4
-    expect(minDurationOf('alert')).toBe(2)
-    expect(minDurationOf('burst')).toBe(2.4)
-    expect(clampDuration('orbit', 1)).toBe(2.5)
+    // la transition d'entree des reglages doit aller au bout de son tour de regard
+    expect(minDurationOf('swirl')).toBe(1.3)
+    expect(clampDuration('swirl', 1)).toBe(1.3)
     // un etat qui ignore le temps n a que le plancher
     expect(minDurationOf('idle')).toBe(MIN_BLOCK)
   })
@@ -90,7 +89,7 @@ describe('lecture', () => {
     blocks: [
       { state: 'idle', duration: 2 },
       { state: 'wink', duration: 1 },
-      { state: 'egg', duration: 3 }
+      { state: 'sleep', duration: 3 }
     ]
   }
 
@@ -118,9 +117,9 @@ describe('lecture', () => {
 
   it('deplace un bloc sans toucher la liste d origine', () => {
     const blocks = cycle.blocks
-    expect(moveBlock(blocks, 0, 2).map((b) => b.state)).toEqual(['wink', 'egg', 'idle'])
-    expect(moveBlock(blocks, 2, 0).map((b) => b.state)).toEqual(['egg', 'idle', 'wink'])
-    expect(blocks.map((b) => b.state)).toEqual(['idle', 'wink', 'egg'])
+    expect(moveBlock(blocks, 0, 2).map((b) => b.state)).toEqual(['wink', 'sleep', 'idle'])
+    expect(moveBlock(blocks, 2, 0).map((b) => b.state)).toEqual(['sleep', 'idle', 'wink'])
+    expect(blocks.map((b) => b.state)).toEqual(['idle', 'wink', 'sleep'])
   })
 })
 
@@ -140,7 +139,7 @@ describe('relecture du stockage', () => {
 
   it('ramene les durees aberrantes dans leurs bornes', () => {
     const raw = '[{"id":"c1","name":"A","blocks":[{"state":"idle","duration":-4},' +
-      '{"state":"egg","duration":9999}]}]'
+      '{"state":"sleep","duration":9999}]}]'
     expect(parseCycles(raw)[0]!.blocks.map((b) => b.duration)).toEqual([MIN_BLOCK, MAX_BLOCK])
   })
 
@@ -175,7 +174,7 @@ describe('relecture du stockage', () => {
   /*
    * Le plancher est DERIVE du plus long `morph`, il n'est plus ecrit a la main. Ce test
    * garde le lien visible : il valait 0,6 en dur, ce qui ne marchait que parce que 0,6
-   * etait justement le morph d'`orbit`. Un etat qui morphe plus lentement le suit.
+   * etait justement le plus long morph du catalogue. Un etat qui morphe plus lentement le suit.
    */
   it('le plancher de bloc couvre le plus long fondu du catalogue', () => {
     const plusLong = Math.max(...STATES.map((s) => s.morph))
@@ -186,10 +185,10 @@ describe('relecture du stockage', () => {
 
   it('borne aussi l ajout depuis l editeur, pas seulement la relecture', () => {
     let blocs = Array.from({ length: MAX_BLOCS }, () => makeBlock('idle'))
-    expect(blocksWith(blocs, 'egg')).toHaveLength(MAX_BLOCS)
+    expect(blocksWith(blocs, 'sleep')).toHaveLength(MAX_BLOCS)
     // et il reste possible d'ajouter juste en dessous de la borne
     blocs = blocs.slice(0, MAX_BLOCS - 1)
-    expect(blocksWith(blocs, 'egg')).toHaveLength(MAX_BLOCS)
+    expect(blocksWith(blocs, 'sleep')).toHaveLength(MAX_BLOCS)
   })
 
   it('borne le nombre de montages relus', () => {
@@ -209,6 +208,18 @@ describe('relecture du stockage', () => {
    * construit qu'a partir de la palette, donc elle ne peut arriver ici que par un stockage
    * bricole a la main — et on l'y refuse comme partout ailleurs.
    */
+  /*
+   * Les etats retires du catalogue (orbit, burst, exclaim...) peuvent encore dormir dans le
+   * stockage d'un visiteur : ils sont ecartes bloc par bloc, sans casser le reste du montage.
+   */
+  it('ecarte les etats retires du catalogue sans casser le montage', () => {
+    const raw = '[{"id":"c1","name":"A","blocks":[{"state":"orbit","duration":3},' +
+      '{"state":"wink","duration":2},{"state":"comet","duration":2},{"state":"notify","duration":2}]}]'
+    expect(parseCycles(raw)[0]!.blocks.map((b) => b.state)).toEqual(['wink'])
+    // un montage fait UNIQUEMENT d'etats retires tombe : l'application retrouve le montage par defaut
+    expect(parseCycles('[{"id":"c1","name":"A","blocks":[{"state":"burst","duration":2}]}]')).toEqual([])
+  })
+
   it('refuse un etat hors catalogue, `swirl` compris', () => {
     const raw = '[{"id":"c1","name":"A","blocks":[{"state":"swirl","duration":2},' +
       '{"state":"idle","duration":2}]}]'

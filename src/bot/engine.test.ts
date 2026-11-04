@@ -31,12 +31,7 @@ function footprint(d: string) {
 const EMPREINTES: Array<[StateId, number, number, number, number]> = [
   // etat,        date,  largeur, hauteur, tolerance
   ['idle', 0.5, 2.0, 2.0, 0.05],
-  ['egg', 0.9, 1.653, 2.0, 0.06],
-  ['hexagon', 0.9, 1.82, 2.01, 0.07],
-  ['exclaim', 0.9, 0.263, 0.842, 0.03],
-  ['alert', 0.8, 0.421, 0.753, 0.04],
-  ['sleep', 0.6, 0.317, 0.317, 0.03],
-  ['comet', 1.0, 0.258, 0.258, 0.03]
+  ['sleep', 0.6, 0.317, 0.317, 0.03]
 ]
 
 describe('silhouettes', () => {
@@ -55,18 +50,12 @@ describe('silhouettes', () => {
     expect(Math.abs(w - h)).toBeLessThan(0.03)
   })
 
-  it('le triangle est plus large que haut, pointe en haut', () => {
-    const e = new BotEngine(100, 'play')
-    const { w, h } = footprint(e.sample(0.9).bodyPath)
-    expect(w).toBeGreaterThan(h)
-    expect(Math.abs(w - 1.99)).toBeLessThan(0.08)
-  })
 })
 
 describe('moteur', () => {
   it('est une fonction pure du temps : deux lectures a la meme date sont identiques', () => {
-    const a = new BotEngine(100, 'orbit')
-    const b = new BotEngine(100, 'orbit')
+    const a = new BotEngine(100, 'thinking')
+    const b = new BotEngine(100, 'thinking')
     expect(a.sample(1.3).bodyPath).toBe(b.sample(1.3).bodyPath)
     // et relire une date deja passee redonne la meme image
     const first = a.sample(0.7).bodyPath
@@ -78,7 +67,7 @@ describe('moteur', () => {
     // le piege : purger l'etat precedent une fois le fondu fini rend cette
     // date irrecuperable, et le fondu disparait a la relecture
     const e = new BotEngine(100, 'idle')
-    e.setState('egg', 1)
+    e.setState('sleep', 1)
     const pendant = e.sample(1.2).bodyPath
     e.sample(3)
     expect(e.sample(1.2).bodyPath).toBe(pendant)
@@ -88,7 +77,7 @@ describe('moteur', () => {
     // avant le changement, il n'y a rien a fondre : on doit voir l'etat sortant
     const e = new BotEngine(100, 'idle')
     const avant = e.sample(0.5).bodyPath
-    e.setState('egg', 1)
+    e.setState('sleep', 1)
     expect(e.sample(0.5).bodyPath).toBe(avant)
   })
 
@@ -100,14 +89,14 @@ describe('moteur', () => {
 
   it('interpole la silhouette pendant une transition, sans saut', () => {
     const e = new BotEngine(100, 'idle')
-    e.setState('egg', 1)
+    e.setState('sleep', 1)
     const largeurs = [1, 1.1, 1.2, 1.3, 1.4].map((t) => footprint(e.sample(t).bodyPath).w)
-    // strictement decroissant : la boule se retrecit vers l'oeuf
+    // strictement decroissant : la boule se retrecit vers la petite boule du sommeil
     for (let i = 1; i < largeurs.length; i++) {
       expect(largeurs[i]!).toBeLessThan(largeurs[i - 1]!)
     }
     expect(largeurs[0]!).toBeCloseTo(2, 1)
-    expect(footprint(e.sample(2).bodyPath).w).toBeCloseTo(1.65, 1)
+    expect(footprint(e.sample(2).bodyPath).w).toBeCloseTo(0.317, 1)
   })
 
   it('ne fait jamais depasser le corps du viewBox', () => {
@@ -135,7 +124,7 @@ describe('forme personnalisee', () => {
   })
 
   it('laisse intacts les etats qui dessinent leur propre forme', () => {
-    for (const id of ['exclaim', 'alert', 'sleep', 'egg', 'hexagon'] as const) {
+    for (const id of ['thinking', 'sleep'] as const) {
       const nu = new BotEngine(100, id)
       const habille = new BotEngine(100, id, radii('goutte'))
       expect(habille.sample(1).bodyPath).toBe(nu.sample(1).bodyPath)
@@ -187,15 +176,22 @@ describe('forme personnalisee', () => {
 
 describe('etats', () => {
   /**
-   * La sequence est le CATALOGUE : les 14 etats releves sur la video, ceux que
+   * La sequence est le CATALOGUE : les 5 etats a visage releves sur la video, ceux que
    * la palette propose et que la planche montre. Tout etat hors sequence est une
    * transition d'interface, choisie et non mesuree — il ne doit donc jamais
    * apparaitre dans le catalogue, et le rester est precisement ce qu'on verifie.
    */
-  it('garde les 14 etats de la video dans la sequence, et rien d autre', () => {
-    expect(SEQUENCE).toHaveLength(14)
-    expect(new Set(SEQUENCE).size).toBe(14)
+  it('garde les 5 etats a visage dans la sequence, et rien d autre', () => {
+    expect(SEQUENCE).toHaveLength(5)
+    expect(new Set(SEQUENCE).size).toBe(5)
     for (const id of SEQUENCE) expect(STATES.some((s) => s.id === id), id).toBe(true)
+  })
+
+  it('trace les anneaux de la transition d entree devant ET derriere le corps', () => {
+    const f = new BotEngine(100, 'swirl').sample(0.6)
+    expect(f.arcs.length).toBeGreaterThan(1)
+    expect(f.arcs.some((a) => a.back.length > 0)).toBe(true)
+    expect(f.arcs.some((a) => a.front.length > 0)).toBe(true)
   })
 
   it('tient les transitions d interface hors du catalogue', () => {
@@ -204,37 +200,10 @@ describe('etats', () => {
   })
 
   it('montre le visage sur les etats a visage, le cache sur les autres', () => {
-    const avec: StateId[] = ['idle', 'wink', 'wide', 'notify', 'egg', 'hexagon']
-    const sans: StateId[] = ['thinking', 'alert', 'exclaim', 'sleep']
+    const avec: StateId[] = ['idle', 'wink', 'wide']
+    const sans: StateId[] = ['thinking', 'sleep']
     for (const id of avec) expect(new BotEngine(100, id).sample(0.9).eyes.length).toBe(2)
     for (const id of sans) expect(new BotEngine(100, id).sample(0.9).eyes.length).toBe(0)
-  })
-
-  it('creuse une encoche autour de la pastille de notification', () => {
-    const f = new BotEngine(100, 'notify').sample(1)
-    expect(f.notif).not.toBeNull()
-    expect(f.notch).not.toBeNull()
-    // marge constante mesuree : 0.054 rayon
-    expect((f.notch!.r - f.notif!.r) / 100).toBeCloseTo(0.054, 2)
-    // la pastille est posee sur la circonference
-    expect(Math.hypot(f.notif!.x, f.notif!.y) / 100).toBeCloseTo(1.003, 1)
-  })
-
-  it('trace les anneaux devant ET derriere le corps', () => {
-    const f = new BotEngine(100, 'orbit').sample(1.4)
-    expect(f.arcs.length).toBeGreaterThan(3)
-    expect(f.arcs.some((a) => a.back.length > 0)).toBe(true)
-    expect(f.arcs.some((a) => a.front.length > 0)).toBe(true)
-  })
-
-  it('fait spiraler les particules vers le centre pendant l eclatement', () => {
-    const e = new BotEngine(100, 'burst')
-    const rayon = (t: number) => {
-      const d = e.sample(t).dots[0]
-      return d ? Math.hypot(d.x, d.y) : 0
-    }
-    expect(rayon(0.15)).toBeGreaterThan(rayon(0.45))
-    expect(rayon(0.45)).toBeGreaterThan(0)
   })
 })
 
@@ -413,14 +382,14 @@ describe('robustesse du regard', () => {
 describe('reset', () => {
   it('oublie l etat precedent, la ou setState le garde pour le fondre', () => {
     const avecFondu = new BotEngine(100, 'idle')
-    avecFondu.setState('egg', 0)
+    avecFondu.setState('sleep', 0)
     const remis = new BotEngine(100, 'idle')
-    remis.reset('egg', 0)
+    remis.reset('sleep', 0)
 
-    // au debut du morph, l'un melange encore le repos, l'autre est deja l'oeuf
+    // au debut du morph, l'un melange encore le repos, l'autre est deja la petite boule
     expect(avecFondu.sample(0).bodyPath).not.toBe(remis.sample(0).bodyPath)
-    // et l'oeuf seul est bien ce qu'un moteur neuf sur `egg` rend
-    expect(remis.sample(0).bodyPath).toBe(new BotEngine(100, 'egg').sample(0).bodyPath)
+    // et le sommeil seul est bien ce qu'un moteur neuf sur `sleep` rend
+    expect(remis.sample(0).bodyPath).toBe(new BotEngine(100, 'sleep').sample(0).bodyPath)
   })
 
   /*
@@ -430,17 +399,17 @@ describe('reset', () => {
    */
   it('date l etat ou on le lui dit', () => {
     const tot = new BotEngine(100, 'idle')
-    tot.reset('alert', 0)
+    tot.reset('sleep', 0)
     const tard = new BotEngine(100, 'idle')
-    tard.reset('alert', 5)
-    // le "!" traverse : a la meme date absolue, l'un en est a 5 s et l'autre au debut
+    tard.reset('sleep', 5)
+    // le rebond du sommeil est periodique : a la meme date absolue, l'un en est a 5 s et l'autre au debut
     expect(tot.sample(5).bodyPath).not.toBe(tard.sample(5).bodyPath)
-    expect(tard.state).toBe('alert')
+    expect(tard.state).toBe('sleep')
   })
 
   it('laisse sample une fonction pure du temps', () => {
     const e = new BotEngine(100, 'idle')
-    e.reset('orbit', 0)
+    e.reset('thinking', 0)
     const tot = e.sample(0.3).bodyPath
     e.sample(9)
     expect(e.sample(0.3).bodyPath).toBe(tot)
@@ -506,9 +475,9 @@ describe('changement d etat pendant un fondu', () => {
     const suite: Array<[StateId, number]> = [
       ['wide', 0.5],
       ['idle', 0.55],
-      ['egg', 0.6],
-      ['orbit', 0.65],
-      ['notify', 0.7]
+      ['sleep', 0.6],
+      ['thinking', 0.65],
+      ['wink', 0.7]
     ]
     for (const [, at] of suite.slice(1)) {
       expect(sautApres(suite, at), `changement a ${at}s`).toBeLessThan(NORMAL)
@@ -524,7 +493,7 @@ describe('changement d etat pendant un fondu', () => {
     const suite: Array<[StateId, number]> = [
       ['thinking', 1],
       ['wink', 2],
-      ['alert', 3]
+      ['sleep', 3]
     ]
     const avecHistorique = new BotEngine(100, 'idle')
     let i = 0
@@ -536,7 +505,7 @@ describe('changement d etat pendant un fondu', () => {
       }
       images.push(avecHistorique.sample(t).bodyPath)
     }
-    // aucune image vide, et le "!" d'`alert` bouge encore pendant qu'il se fond
+    // aucune image vide, et le rebond de `sleep` bouge encore pendant qu'il se fond
     expect(images.every((p) => p.length > 0)).toBe(true)
     expect(new Set(images.slice(-12)).size).toBeGreaterThan(1)
   })

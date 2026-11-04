@@ -463,3 +463,8 @@ footer.pied {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+.sous {
+  font-size: 1.15rem;
+  margin-top: 40px;
+}

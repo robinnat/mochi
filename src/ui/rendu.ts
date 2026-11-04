@@ -1,7 +1,7 @@
 /**
  * Style de RENDU du bot : original, pixel art, ou 3D douce (argile, bulle).
  *
- * Seul le dessin change. Le moteur (`src/bot/`), ses quatorze etats et toutes ses
+ * Seul le dessin change. Le moteur (`src/bot/`), ses cinq etats et toutes ses
  * mesures restent identiques : `engine.sample(t)` rend la meme image, c'est `MochiBot.vue`
  * qui la peint autrement. D'ou ce module dans `src/ui/` et pas dans `src/bot/`.
  *

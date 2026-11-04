@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, triggerRef, watch } from 'vue'
-import { NOTIF_BLUE } from '@/bot/decor'
 import { BotEngine, type BotFrame } from '@/bot/engine'
 import { clamp, easings } from '@/bot/math'
 import { t } from '@/i18n'
@@ -19,9 +18,10 @@ import {
 import { blockAt, defaultCycle, offsetOf, type Block } from '@/bot/cycles'
 import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
 import { STATE_BY_ID, type StateId } from '@/bot/states'
+import { dessinPorte, porteSvg, type PorteId } from '@/bot/portes'
 import { ACCESSOIRE_BY_ID, ancreDuCorps, type AccessoireId } from '@/bot/accessoires'
-import type { Geste } from '@/bot/gestes'
-import { pixellise } from '@/ui/pixel'
+import { composer, type Geste } from '@/bot/gestes'
+import { pixellise, pixellisePrims } from '@/ui/pixel'
 import { DOUCEUR_DEFAUT, RENDU_3D_DEFAUT, type Douceur, type Rendu3d } from '@/ui/trois/rendu3d'
 import {
   contourCourant,
@@ -91,6 +91,11 @@ const props = withDefaults(
     /** Petit reflet doux en haut a gauche de la matiere 3D `doux` (defaut : oui). */
     reflet?: boolean
     /**
+     * Angle du corps autour de l'axe vertical, en radians (vraie 3D seulement). 0 = de face.
+     * Les yeux sont peints sur la face avant : de dos, il n'y en a plus.
+     */
+    yaw?: number
+    /**
      * Geste (`src/bot/gestes.ts`) : petits ecarts ajoutes a la pose, fonction du temps de la
      * scene. Absent, l'image est identique a celle d'avant.
      */
@@ -100,6 +105,12 @@ const props = withDefaults(
      * va avec (sauf si `geste` est passe). Sans effet en pixel art.
      */
     accessoire?: AccessoireId | null
+    /**
+     * Accessoire PORTE (`src/bot/portes.ts`) : lunettes, chapeau, noeud, couronne, casque. Pose
+     * sur le corps et recalcule a chaque image, il suit le corps, les yeux et l'humeur dans tous
+     * les rendus (en 3D : volumes fixes au maillage, lunettes peintes sur le visage).
+     */
+    porte?: PorteId | null
     /** Texte alternatif ; absent, le libelle traduit de l'application. */
     label?: string
   }>(),
@@ -119,8 +130,10 @@ const props = withDefaults(
     douceur: DOUCEUR_DEFAUT,
     contour: undefined,
     reflet: true,
+    yaw: 0,
     geste: null,
     accessoire: null,
+    porte: null,
     label: undefined
   }
 )
@@ -179,7 +192,24 @@ const ancre = computed(() =>
   acc.value ? ancreDuCorps(new BotEngine(R, 'idle', shapeRadii.value, null).sample(1).bodyPath) : undefined
 )
 const gesteA = (t: number): Geste | undefined =>
-  props.geste ? props.geste(t) : acc.value ? acc.value.geste(t, { ancre: ancre.value }) : undefined
+  // un geste choisi ET un accessoire de metier se composent : le corps fait les deux, l'objet le suit
+  props.geste
+    ? acc.value
+      ? composer(props.geste(t), acc.value.geste(t, { ancre: ancre.value }))
+      : props.geste(t)
+    : acc.value
+      ? acc.value.geste(t, { ancre: ancre.value })
+      : undefined
+/**
+ * Quand un geste deplace le corps (saut, ecrasement), l'objet de metier le suit : on le decale
+ * de l'ecart entre le point d'appui de l'image courante et celui de repos. Sans geste, le corps
+ * ne bouge pas et l'objet s'adapte lui-meme (inchange).
+ */
+const objetDecalage = computed(() => {
+  if (!acc.value || !props.geste || !ancre.value || vraie3d.value) return ''
+  const a = ancreDuCorps(frame.value.bodyPath)
+  return `translate(${Math.round((a.x - ancre.value.x) * 10) / 10} ${Math.round((a.y - ancre.value.y) * 10) / 10})`
+})
 const objetSvg = computed(() => {
   const a = acc.value
   if (!a) return ''
@@ -200,6 +230,21 @@ const objetSvg = computed(() => {
  */
 const pixels = computed(() =>
   rendu.value === 'pixel' ? pixellise(frame.value, ink.value, props.paper, grille.value) : null
+)
+
+/**
+ * Accessoire porte, recalcule sur l'image courante. En vraie 3D il devient un volume (voir
+ * `scene3d.ts`) : le calque SVG ne sert alors qu'au repli sans WebGL, et au pixel art, ou les
+ * memes chemins sont rasterises sur la grille.
+ */
+const PORTE_2D = false
+const porteTexte = computed(() => {
+  // les accessoires portes ne sont exposes qu'en 3D ; le calque 2D reste en attente (repli sans WebGL)
+  if (!props.porte || pixels.value || vraie3d.value || !PORTE_2D) return ''
+  return porteSvg(props.porte, frame.value)
+})
+const portePixels = computed(() =>
+  PORTE_2D && props.porte && rendu.value === 'pixel' ? pixellisePrims(dessinPorte(props.porte, frame.value), grille.value) : null
 )
 
 let raf = 0
@@ -324,14 +369,17 @@ watch(
   { immediate: true }
 )
 
+/** Les points de `thinking` restent a plat devant le corps : ils s'effacent quand il se tourne. */
+const decorAlpha = computed(() => (vraie3d.value && props.yaw ? Math.max(0, Math.cos(props.yaw)) ** 3 : 1))
+
 function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
-  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, props.rendu3d, contourEffectif.value, props.douceur, props.reflet, props.shape)
+  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, props.rendu3d, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte)
 }
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image
-watch([frame, vraie3d, toile, ink, pxToile, () => props.rendu3d, () => props.douceur, () => props.reflet, () => contourEffectif.value], dessiner3d, { flush: 'post' })
+watch([frame, vraie3d, toile, ink, pxToile, () => props.rendu3d, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, () => contourEffectif.value], dessiner3d, { flush: 'post' })
 
 /* ------------------------------------------------------- regard qui suit */
 
@@ -374,7 +422,7 @@ function release() {
  */
 function aim() {
   // Le regard ne se pilote que sur les etats a VISAGE DE REPOS. Ailleurs la pose
-  // du regard EST l'animation relevee — l'orbite, par laquelle s'ouvre la vue,
+  // du regard EST l'animation relevee — le tourbillon, par lequel s'ouvre la vue,
   // fait deja filer les yeux autour de la sphere — et s'y superposer la
   // brouillerait.
   if (!STATE_BY_ID.get(state.value)?.baseFace) {
@@ -599,7 +647,7 @@ function detach() {
 }
 
 // geste ou accessoire change : une image figee se redessine (en lecture, la boucle s'en charge)
-watch([() => props.accessoire, () => props.geste], redrawFrozen)
+watch([() => props.accessoire, () => props.geste, () => props.porte], redrawFrozen)
 
 onMounted(() => {
   if (props.frozenAt !== undefined) {
@@ -645,7 +693,7 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
     :viewBox="`${-VB} ${-VB} ${VB * 2} ${VB * 2}`"
     role="img"
     :aria-label="props.label ?? t('app.botAria')"
-    :style="acc ? 'overflow: visible' : undefined"
+    :style="acc || props.porte ? 'overflow: visible' : undefined"
   >
     <!--
       Pixel art : l'image du moteur rasterisee sur une grille basse resolution, un
@@ -677,13 +725,6 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
           :d="eye.d"
           :transform="eye.matrix"
           :opacity="eye.alpha"
-          fill="#000"
-        />
-        <circle
-          v-if="frame.notch"
-          :cx="frame.notch.x"
-          :cy="frame.notch.y"
-          :r="frame.notch.r"
           fill="#000"
         />
       </mask>
@@ -769,15 +810,6 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
       />
     </g>
 
-    <!-- particules de l'eclatement : elles passent derriere le noyau -->
-    <g v-if="frame.dotsBehind">
-      <component
-        :is="dot.d ? 'path' : 'circle'"
-        v-for="(dot, i) in frame.dots"
-        :key="`pb${i}`"
-        v-bind="dotAttrs(dot)"
-      />
-    </g>
 
     <!--
       Vraie 3D : le corps et les yeux sont rendus par WebGL dans ce canvas, cale sur le
@@ -809,8 +841,7 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
         Les yeux sont des TROUS perces dans le corps, pas des formes blanches
         posees dessus : c'est ce qui les fait rogner tout seuls au bord de la
         silhouette, et ca ne change pas. Mais un trou laisse voir ce qui est
-        dessine derriere — or la moitie arriere des anneaux et les particules de
-        l'eclatement le sont justement, pour etre occultees par le corps. Sans ce
+        dessine derriere — or la moitie arriere des anneaux du tourbillon l'est justement, pour etre occultees par le corps. Sans ce
         fond, un anneau qui passe derriere la boule reapparait DANS les yeux.
 
         Rempli avec `paper` et non en blanc pur : c'est exactement ce que les yeux
@@ -872,7 +903,7 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
       </g>
     </g>
 
-    <g v-if="!frame.dotsBehind">
+    <g :opacity="decorAlpha">
       <component
         :is="dot.d ? 'path' : 'circle'"
         v-for="(dot, i) in frame.dots"
@@ -880,14 +911,6 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
         v-bind="dotAttrs(dot)"
       />
     </g>
-
-    <circle
-      v-if="frame.notif"
-      :cx="frame.notif.x"
-      :cy="frame.notif.y"
-      :r="frame.notif.r"
-      :fill="NOTIF_BLUE"
-    />
 
     <!-- moitie avant des orbites -->
     <g fill="none" stroke-linecap="round">
@@ -901,8 +924,13 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
       />
     </g>
 
-    <!-- accessoire de metier : SVG texte produit par `accessoires.ts`, devant le corps -->
-    <g v-if="objetSvg" v-html="objetSvg" />
+
+    <g v-if="objetSvg" :opacity="decorAlpha" :transform="objetDecalage || undefined" v-html="objetSvg" />
     </template>
+    <!-- accessoire porte : meme description pour tous les rendus (`portes.ts`) -->
+    <g v-if="porteTexte" data-porte="1" v-html="porteTexte" />
+    <g v-if="portePixels" data-porte="1" shape-rendering="crispEdges">
+      <path v-for="(c, i) in portePixels" :key="i" :d="c.d" :fill="c.fill" />
+    </g>
   </svg>
 </template>

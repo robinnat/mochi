@@ -10,7 +10,7 @@ accessories, jumping movement and exports (SVG, PNG, GIF, MP4). No animation lib
 **Site and playground: https://mochi-red-phi.vercel.app** (the app is at `/app`).  
 **Source: https://github.com/robinnat/mochi**
 
-![A mochi going through idle, wink, orbit and burst](docs/demo.gif)
+![A mochi going through idle, wink, wide eyes and sleep](docs/demo.gif)
 
 ## Install
 
@@ -40,7 +40,7 @@ const state = ref('idle')
 <template>
   <MochiBot v-model:state="state" shape="fleur" color="rose" rendu="argile" :size="160" follow />
   <!-- a frozen frame: no animation loop, the same image every time -->
-  <MochiBot state="orbit" :frozen-at="1.2" :size="96" />
+  <MochiBot state="wink" :frozen-at="1.2" :size="96" />
   <!-- real 3D, with the cartoon outline; Three.js is loaded on demand -->
   <MochiBot shape="etoile" color="ambre" rendu="3d" contour :size="200" />
   <!-- a job accessory and the gesture that goes with it -->
@@ -116,15 +116,22 @@ cube, the triangle a pyramid, and star, flower and hexagon are bevelled extrusio
 `colere`, `triste`, `effraye`, `mefiant`, `confus`, `curieux`, `fier`, `timide`, `blase`,
 `somnolent`.
 
-**States** (14, in the order of the reference sequence): `idle`, `thinking`, `wink`, `wide`,
-`alert`, `notify`, `exclaim`, `sleep`, `egg`, `hexagon`, `play`, `orbit`, `burst`, `comet`.
-(`swirl` also exists, as the app's view transition, outside the catalogue.)
+**States** (5 face moods, in the order of the reference sequence): `idle`, `thinking`, `wink`,
+`wide`, `sleep`. They all live on the face (eyes, lids, expression). (`swirl` also exists, as the
+app's view transition, outside the catalogue.)
 
 **Gestures** (`src/bot/gestes.ts`, optional and deterministic): seven idle gestures
 (`cligne`, `respire`, `saut`, `balance`, `regard`, `hoche`, `etire`) scheduled by a seed with
-`gesteRepos(t, seed)`, a tap `rebond(u)`, `gesteSommeil(t)`, `gesteEchec(t)`, and seven
-activities (`orbite`, `reflexion`, `frappe`, `balayage`, `emission`, `tourbillon`, `jeu`).
+`gesteRepos(t, seed)`, a tap `rebond(u)`, `gesteSommeil(t)`, `gesteEchec(t)`, and three
+activities (`reflexion`, `frappe`, `balayage`).
 Without a gesture the image is byte for byte the original. See [docs/gestes.md](docs/gestes.md).
+
+**Worn accessories** (`src/bot/portes.ts`, `porte` prop): `lunettes`, `soleil`, `haut-de-forme`,
+`paille`, `bonnet`, `noeud`, `couronne`, `casque`. Placed on the body again at every frame, in every
+style including 3D (`<MochiBot porte="bonnet" />`). See [docs/accessoires.md](docs/accessoires.md).
+
+**3D controls**: `<MochiBot rendu="3d" :yaw="angle" />` turns the model around its vertical axis
+(radians; the eyes are painted on the front face only). The site's 3D section drives it by drag.
 
 **Job accessories** (`src/bot/accessoires.ts`): `carnet`, `portable`, `clap`, `graphique`,
 `avion`, `palette`, `presse-papiers`, `liste`, `engrenage`, each with its gesture;
@@ -142,7 +149,7 @@ See [docs/iso.md](docs/iso.md).
 
 ```ts
 const engine = new BotEngine(RAYON, 'idle', SHAPE_BY_ID.get('nuage')?.radii, expression)
-engine.setState('orbit', t)        // change state at time t (morphs with the measured curve)
+engine.setState('wink', t)        // change state at time t (morphs with the measured curve)
 engine.setShape(radii, t)          // morph to another silhouette
 engine.setExpression(expr, t)      // resting expression
 engine.setLook({ yaw, pitch, mix, wander }, t) // aim the eyes (null to release)
@@ -166,12 +173,11 @@ them loses the accuracy of the motion.
 | Eyes tilt like `//` | They tilt like `\\`, about 26 degrees off vertical |
 | The body is a squircle | It is a perfect circle, radial error under 0.7 % |
 | Transitions are springs | They are exponential ease-outs, no overshoot |
-| The comet crosses the screen | The dot stays put, the trail turns around it |
 | The avatar floats at rest | No. Life comes from gaze drift and blinks |
 
 [docs/measurements.md](docs/measurements.md) has the rest.
 
-![The 14 states, frozen side by side](docs/states.png)
+![The 5 face moods, frozen side by side](docs/states.png)
 
 ## Architecture
 

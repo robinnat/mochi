@@ -144,16 +144,7 @@ export default {
     thinking: 'Réflexion',
     wink: "Clin d'œil",
     wide: 'Yeux écarquillés',
-    alert: 'Alerte',
-    notify: 'Notification',
-    exclaim: 'Exclamation',
     sleep: 'Veille',
-    egg: 'Œuf',
-    hexagon: 'Hexagone',
-    play: 'Lecture',
-    orbit: 'Orbite',
-    burst: 'Éclatement',
-    comet: 'Comète',
     swirl: 'Tourbillon'
   },
 
