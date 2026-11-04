@@ -15,7 +15,10 @@
  * passage au repere Three (y vers le haut) se fait au remplissage des tampons.
  */
 
+import { BotEngine } from '@/bot/engine'
+import { RAYON } from '@/bot/repere'
 import type { Point } from '@/bot/shape'
+import { SHAPE_BY_ID } from '@/bot/skins'
 
 /** Points intermediaires evalues sur chaque cubique du contour. */
 export const SOUS_PAS = 3
@@ -309,26 +312,21 @@ export function indexDuVolume(n: number, anneaux = ANNEAUX): Uint32Array {
 
 const GRILLE = 112
 
-interface ChampCoussin {
+export interface ChampCoussin {
   /** solution normalisee (0 au bord, 1 au maximum), GRILLE x GRILLE, lignes de haut en bas */
   u: Float32Array
+  /** coin de la grille et taille d'une case, dans le repere du contour d'ou le champ a ete resolu */
   x0: number
   y0: number
   pas: number
+  /** boite de ce contour : sert a normaliser n'importe quel contour de la meme forme (ecrase, decale) */
+  bx0: number
+  by0: number
+  bw: number
+  bh: number
 }
 
 const champs = new Map<string, ChampCoussin>()
-
-/** Contour normalise a sa boite, arrondi : deux contours quasi identiques (ecrasement, respiration) partagent le meme champ. */
-function cleChamp(pts: Point[], x0: number, y0: number, w: number, h: number): string {
-  const pas = Math.max(1, Math.floor(pts.length / 24))
-  let k = `${Math.round((w / h) * 20)}`
-  for (let i = 0; i < pts.length; i += pas) {
-    const p = pts[i]!
-    k += `|${Math.round(((p.x - x0) / w) * 30)},${Math.round(((p.y - y0) / h) * 30)}`
-  }
-  return k
-}
 
 /** Point dans le polygone (lancer de rayon). */
 function dedans(pts: Point[], x: number, y: number): boolean {
@@ -342,10 +340,14 @@ function dedans(pts: Point[], x: number, y: number): boolean {
 }
 
 /**
- * Resout ∇²u = -1 dans le contour (u = 0 dehors) sur une grille, par surrelaxation. Resultat mis en
- * cache par forme (cle = contour normalise) : le calcul se fait une fois par forme, pas a chaque image.
+ * Resout \u2207\u00b2u = -1 dans le contour (u = 0 dehors) sur une grille, par surrelaxation, et garde le
+ * resultat sous `cle`. Le champ est calcule UNE fois, sur le contour de REPOS de la forme (voir
+ * `champDeRepos`) ; ensuite tout contour de la meme forme, ecrase ou decale par un geste, le reutilise
+ * en normalisant ses coordonnees par sa propre boite (`hauteurNorm`).
  */
-export function champCoussin(pts: Point[]): ChampCoussin {
+export function champCoussin(pts: Point[], cle: string): ChampCoussin {
+  const deja = champs.get(cle)
+  if (deja) return deja
   let mx0 = Infinity
   let mx1 = -Infinity
   let my0 = Infinity
@@ -358,17 +360,9 @@ export function champCoussin(pts: Point[]): ChampCoussin {
   }
   const w = Math.max(1e-6, mx1 - mx0)
   const h = Math.max(1e-6, my1 - my0)
-  const cle = cleChamp(pts, mx0, my0, w, h)
   const pas = Math.max(w, h) / (GRILLE - 4)
   const x0 = mx0 - pas * 2
   const y0 = my0 - pas * 2
-  const deja = champs.get(cle)
-  if (deja) {
-    champs.delete(cle)
-    champs.set(cle, deja)
-    // le champ est normalise par la boite du contour : on le recale sur celle du contour courant
-    return { u: deja.u, x0, y0, pas }
-  }
   const N = GRILLE
   const masque = new Uint8Array(N * N)
   for (let j = 0; j < N; j++) {
@@ -389,14 +383,32 @@ export function champCoussin(pts: Point[]): ChampCoussin {
   let max = 1e-9
   for (let k = 0; k < N * N; k++) if (u[k]! > max) max = u[k]!
   for (let k = 0; k < N * N; k++) u[k] = u[k]! / max
-  const champ = { u, x0, y0, pas }
-  champs.set(cle, { ...champ, x0: 0, y0: 0 })
-  if (champs.size > 12) champs.delete(champs.keys().next().value!)
+  const champ: ChampCoussin = { u, x0, y0, pas, bx0: mx0, by0: my0, bw: w, bh: h }
+  champs.set(cle, champ)
+  if (champs.size > 16) champs.delete(champs.keys().next().value!)
   return champ
 }
 
-/** Hauteur normalisee (0..1) du coussin en (x, y), interpolation bilineaire du champ. */
-export function hauteurCoussin(c: ChampCoussin, x: number, y: number): number {
+/** Champ du contour de REPOS d'une forme du catalogue (id), resolu une seule fois. */
+export function champDeRepos(forme: string): ChampCoussin | null {
+  const cle = `forme:${forme}`
+  const deja = champs.get(cle)
+  if (deja) return deja
+  const f = SHAPE_BY_ID.get(forme)
+  if (!f) return null
+  const repos = contourDuCorps(new BotEngine(RAYON, 'idle', f.radii, null).sample(1).bodyPath)
+  return repos.length > 8 ? champCoussin(repos, cle) : null
+}
+
+/** Id de forme d'un profil du catalogue (le profil est un objet partage), ou null s'il est personnalise. */
+export function formeDuProfil(profil: ProfilVolume): string | null {
+  for (const [id, p] of Object.entries(PROFILS)) if (p === profil) return id
+  return null
+}
+
+const EXPOSANT = 0.45
+
+function echantillon(c: ChampCoussin, x: number, y: number): number {
   const N = GRILLE
   const fx = (x - c.x0) / c.pas - 0.5
   const fy = (y - c.y0) / c.pas - 0.5
@@ -409,7 +421,19 @@ export function hauteurCoussin(c: ChampCoussin, x: number, y: number): number {
   const d = c.u[(j + 1) * N + i]!
   const e = c.u[(j + 1) * N + i + 1]!
   const u = a * (1 - tx) * (1 - ty) + b * tx * (1 - ty) + d * (1 - tx) * ty + e * tx * ty
-  return Math.pow(Math.max(0, u), 0.45)
+  return Math.pow(Math.max(0, u), EXPOSANT)
+}
+
+/** Hauteur normalisee (0..1) du coussin au point (x, y) du repere dans lequel le champ a ete resolu. */
+export const hauteurCoussin = echantillon
+
+/**
+ * Hauteur normalisee en coordonnees NORMALISEES (a, b) de la boite d'un contour de la meme forme :
+ * un geste qui ecrase ou etire le corps ne fait que mettre cette boite a l'echelle, le champ ne
+ * change pas et n'est jamais recalcule.
+ */
+export function hauteurNorm(c: ChampCoussin, a: number, b: number): number {
+  return echantillon(c, c.bx0 + a * c.bw, c.by0 + b * c.bh)
 }
 
 /** Etendue du contour sur la droite `y = v` (axe `v`) ou `x = v` (axe `h`) : [min, max] ou null. */
@@ -523,18 +547,32 @@ export function gonfler(
     return v
   }
   if (profil.coussin) {
-    // gonflage « coussin » : memes anneaux que la sphere, hauteur = champ de Poisson du contour
-    const champ = champCoussin(pts)
+    // gonflage « coussin » : memes anneaux que la sphere, hauteur = champ de Poisson du contour de repos,
+    // normalise par la boite du contour courant (aucun recalcul pendant une animation)
+    const nom = formeDuProfil(profil)
+    let bx0 = Infinity
+    let bx1 = -Infinity
+    let by0 = Infinity
+    let by1 = -Infinity
+    for (const p of pts) {
+      bx0 = Math.min(bx0, p.x)
+      bx1 = Math.max(bx1, p.x)
+      by0 = Math.min(by0, p.y)
+      by1 = Math.max(by1, p.y)
+    }
+    const bw = Math.max(1e-6, bx1 - bx0)
+    const bh = Math.max(1e-6, by1 - by0)
+    const champ = (nom && champDeRepos(nom)) || champCoussin(pts, `contour:${pts.length}:${Math.round(bw)}x${Math.round(bh)}`)
     const Hc = H
-    const zDe = (x: number, y: number) => Hc * hauteurCoussin(champ, x, y)
+    const zDe = (x: number, y: number) => Hc * hauteurNorm(champ, (x - bx0) / bw, (y - by0) / bh)
     const z0 = zDe(c.x, c.y)
     pose(0, c.x, c.y, z0, true)
     pose(idx.centreArriere, c.x, c.y, -z0, false)
     for (let k = 0; k < n; k++) {
       const p = pts[k]!
       for (let a = 1; a <= ANNEAUX_N; a++) {
-        const th = (a / ANNEAUX_N) * (Math.PI / 2)
-        const f = a === ANNEAUX_N ? 1 : Math.sin(th)
+        // anneaux serres pres du bord (la surface y est la plus courbee), espaces au centre
+        const f = a === ANNEAUX_N ? 1 : 1 - (1 - a / ANNEAUX_N) ** 2
         const x = c.x + (p.x - c.x) * f
         const y = c.y + (p.y - c.y) * f
         const z = a === ANNEAUX_N ? 0 : zDe(x, y)

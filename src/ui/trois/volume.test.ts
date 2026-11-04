@@ -7,6 +7,8 @@ import {
   ANNEAUX,
   centreDe,
   champCoussin,
+  champDeRepos,
+  hauteurNorm,
   hauteurCoussin,
   contourDuCorps,
   yeuxDeFace,
@@ -295,7 +297,7 @@ describe('gonflage coussin', () => {
 
   it.each(['etoile', 'hexagone', 'nuage', 'fleur'])('%s : champ lisse, nul dehors, maximal a l interieur', (id) => {
     const pts = contour(id)
-    const champ = champCoussin(pts)
+    const champ = champCoussin(pts, `test:${id}`)
     let cx = 0
     let cy = 0
     for (const p of pts) {
@@ -317,11 +319,16 @@ describe('gonflage coussin', () => {
     expect(pire).toBeLessThan(0.12)
   })
 
-  it('un contour ecrase de peu reutilise le champ calcule (cache)', () => {
-    const pts = contour('etoile')
-    const a = champCoussin(pts)
-    const b = champCoussin(pts.map((p) => ({ x: p.x * 1.01, y: p.y * 1.01 })))
-    expect(b.u).toBe(a.u)
+  it('le champ est calcule une fois sur le contour de repos, puis reutilise pour un contour ecrase ou decale', () => {
+    const repos = champDeRepos('etoile')!
+    expect(repos).toBe(champDeRepos('etoile'))
+    // un contour ecrase (gestes) et decale : aucun nouveau champ, memes valeurs normalisees
+    const pts = contour('etoile').map((p) => ({ x: p.x * 1.15 + 6, y: p.y * 0.8 - 4 }))
+    const t0 = performance.now()
+    for (let i = 0; i < 20; i++) gonfler(pts, DEMI_VIEWBOX, undefined, undefined, profilDe('etoile'))
+    expect((performance.now() - t0) / 20).toBeLessThan(15)
+    expect(champDeRepos('etoile')).toBe(repos)
+    expect(hauteurNorm(repos, 0.5, 0.55)).toBeGreaterThan(0.6)
   })
 
   it("le volume d'une forme coussin a le meme nombre de sommets et reste ferme", () => {

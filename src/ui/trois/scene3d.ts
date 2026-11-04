@@ -60,6 +60,7 @@ import {
 } from './rendu3d'
 import { peindreReflet, REFLET_DEFAUT, type Reflet } from './reflet'
 import {
+  champDeRepos,
   contourDuCorps,
   demiEtendueOeil,
   gonfler,
@@ -237,6 +238,8 @@ export class Mochi3d {
   /** Dit quelle forme est rendue : son profil de volume (cube, prisme, dome...) en depend. */
   setForme(forme: string) {
     this.forme = forme
+    // forme « coussin » : le champ de hauteur se resout ici, une fois, plutot qu'au milieu d'une animation
+    if (profilDe(forme).coussin) champDeRepos(forme)
   }
 
   /** Le maillage du contour courant : relu du cache, sinon calcule (en recyclant le plus ancien). */
@@ -379,7 +382,7 @@ export class Mochi3d {
     // Soft sur une forme « coussin » : quelques passes aussi, pour fondre la ligne de raccord entre l'avant et l'arriere
     const lissePlat = !!plat && !plat.lisse && !plat.facettes
     if ((lissePlat || (this.profil.coussin && !plat?.facettes)) && geo.index) {
-      lisserNormales(geo.attributes.normal as BufferAttribute, geo.index.array, lissePlat ? 14 : 8)
+      lisserNormales(geo.attributes.normal as BufferAttribute, geo.index.array, lissePlat ? 14 : 20)
       souderNormales(geo.attributes.normal!.array as Float32Array, pts.length, finesseDe(this.rendu).anneaux)
     }
     geo.computeBoundingSphere()
