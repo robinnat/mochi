@@ -131,6 +131,13 @@ export interface ProfilVolume {
   pyramide?: boolean
   /** Sphere geometrique : anneaux a angle polaire regulier, rayon z = rayon moyen du contour. */
   sphere?: boolean
+  /**
+   * Solide de revolution : le corps est un volume de section circulaire autour de l'axe vertical
+   * (`v` : cone, goutte, oeuf) ou horizontal (`h` : capsule couchee). La profondeur en chaque point
+   * vaut la demi-largeur du contour a cette hauteur (ou a cette abscisse) : le corps est donc
+   * credible sous tous les angles, sans mur ni extrusion plate.
+   */
+  revolution?: 'v' | 'h'
 }
 
 /** Un coussin a plateau : sert aux formes sans profil connu (silhouettes relevees, etc.). */
@@ -139,24 +146,24 @@ export const PROFIL_DEFAUT: ProfilVolume = { profondeur: 0.8, arrondi: 0.75, arr
 export const PROFILS: Record<string, ProfilVolume> = {
   // boules : tout est arrondi, le cercle est une VRAIE sphere (le corps de la video)
   cercle: { profondeur: 1, arrondi: 1, arriere: 1, sphere: true },
-  oeuf: { profondeur: 0.95, arrondi: 1, arriere: 0.9 },
+  oeuf: { profondeur: 1, arrondi: 1, arriere: 1, revolution: 'v' },
   galet: { profondeur: 0.9, arrondi: 1, arriere: 0.9 },
-  goutte: { profondeur: 0.9, arrondi: 1, arriere: 0.9 },
+  goutte: { profondeur: 1, arrondi: 1, arriere: 1, revolution: 'v' },
   // la capsule est un tube couche : aussi profond que haut
-  capsule: { profondeur: 1, arrondi: 1, arriere: 1 },
+  capsule: { profondeur: 1, arrondi: 1, arriere: 1, revolution: 'h' },
   // le carre est un CUBE : aussi profond que large, face plane, cotes droits, aretes rondes
-  squircle: { profondeur: 1, arrondi: 0.42, arriere: 1 },
+  squircle: { profondeur: 1, arrondi: 0.78, arriere: 1 },
   // pyramide a base carree vue par une face : la profondeur croit de la pointe a la base
-  triangle: { profondeur: 0.9, arrondi: 0.4, arriere: 1, pyramide: true },
+  triangle: { profondeur: 1, arrondi: 1, arriere: 1, revolution: 'v' },
   // hexagone : ecrou doux, meme extrusion biseautee
-  hexagone: { profondeur: 0.45, arrondi: 0.95, arriere: 1 },
+  hexagone: { profondeur: 0.8, arrondi: 0.82, arriere: 1 },
   // extrusion a gros biseau (reference : icones 3D epaisses et douces) : faces plates, bords
   // ENTIEREMENT arrondis comme un bonbon, epaisseur ~0,45 x la largeur
-  etoile: { profondeur: 0.45, arrondi: 0.95, arriere: 1 },
+  etoile: { profondeur: 0.85, arrondi: 0.98, arriere: 1 },
   // fleur : cinq petales ronds extrudes, meme biseau
-  fleur: { profondeur: 0.45, arrondi: 0.95, arriere: 1 },
+  fleur: { profondeur: 0.85, arrondi: 0.98, arriere: 1 },
   // nuage : coussin bombe, valide tel quel
-  nuage: { profondeur: 0.85, arrondi: 0.85, arriere: 0.95 }
+  nuage: { profondeur: 1, arrondi: 1, arriere: 1 }
 }
 
 export const profilDe = (forme?: string | null): ProfilVolume =>
@@ -291,6 +298,25 @@ export function indexDuVolume(n: number, anneaux = ANNEAUX): Uint32Array {
   return out
 }
 
+/** Etendue du contour sur la droite `y = v` (axe `v`) ou `x = v` (axe `h`) : [min, max] ou null. */
+function corde(pts: Point[], v: number, axe: 'v' | 'h'): [number, number] | null {
+  let a = Infinity
+  let b = -Infinity
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i]!
+    const q = pts[(i + 1) % pts.length]!
+    const pu = axe === 'v' ? p.y : p.x
+    const qu = axe === 'v' ? q.y : q.x
+    if (pu > v !== qu > v) {
+      const t = (v - pu) / (qu - pu)
+      const w = axe === 'v' ? p.x + t * (q.x - p.x) : p.y + t * (q.y - p.y)
+      if (w < a) a = w
+      if (w > b) b = w
+    }
+  }
+  return a === Infinity ? null : [a, b]
+}
+
 /** Coordonnee de texture d'un point du viewBox : (0,0) en bas a gauche, comme Three. */
 const uvDe = (x: number, y: number, vb: number) => [(x + vb) / (2 * vb), 1 - (y + vb) / (2 * vb)]
 
@@ -372,6 +398,39 @@ export function gonfler(
         const x = c.x + (p.x - c.x) * f
         const y = c.y + (p.y - c.y) * f
         const z = a === ANNEAUX_N ? 0 : rc * Math.cos(th)
+        pose(idx.avant(a, k), x, y, z, true)
+        pose(idx.arriere(a, k), x, y, -z, false)
+      }
+      pose(idx.mur(k), p.x, p.y, 0, false)
+    }
+    v.bas = bas
+    v.centre = c
+    v.mesures = { ...mesures, H: rc, b: rc, zw: 0 }
+    return v
+  }
+  if (profil.revolution) {
+    // solide de revolution : memes anneaux que la sphere, mais la profondeur de chaque point est la
+    // demi-largeur du contour a sa hauteur (axe vertical) ou a son abscisse (axe horizontal)
+    const axe = profil.revolution
+    const zDe = (x: number, y: number) => {
+      const ch = corde(pts, axe === 'v' ? y : x, axe)
+      if (!ch) return 0
+      const mid = (ch[0] + ch[1]) / 2
+      const hw = (ch[1] - ch[0]) / 2
+      const t = ((axe === 'v' ? x : y) - mid) / Math.max(hw, 1e-6)
+      return hw * Math.sqrt(Math.max(0, 1 - t * t)) * profil.profondeur
+    }
+    const z0 = zDe(c.x, c.y)
+    pose(0, c.x, c.y, z0, true)
+    pose(idx.centreArriere, c.x, c.y, -z0, false)
+    for (let k = 0; k < n; k++) {
+      const p = pts[k]!
+      for (let a = 1; a <= ANNEAUX_N; a++) {
+        const th = (a / ANNEAUX_N) * (Math.PI / 2)
+        const f = a === ANNEAUX_N ? 1 : Math.sin(th)
+        const x = c.x + (p.x - c.x) * f
+        const y = c.y + (p.y - c.y) * f
+        const z = a === ANNEAUX_N ? 0 : zDe(x, y)
         pose(idx.avant(a, k), x, y, z, true)
         pose(idx.arriere(a, k), x, y, -z, false)
       }

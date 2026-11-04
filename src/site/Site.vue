@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Hero from './Hero.vue'
-import Styles2d from './Styles2d.vue'
 import Volumes3d from './Volumes3d.vue'
 import Moods from './Moods.vue'
 import Gestes from './Gestes.vue'
@@ -15,7 +14,6 @@ import Install from './Install.vue'
     <div class="wrap">
       <strong>Mochi</strong>
       <div class="nav-liens">
-        <a href="#styles">2D</a>
         <a href="#volumes">3D</a>
         <a href="#moods">Moods</a>
         <a href="#gestures">Gestures</a>
@@ -28,7 +26,6 @@ import Install from './Install.vue'
   </nav>
   <main>
     <Hero />
-    <Styles2d />
     <Volumes3d />
     <Moods />
     <Gestes />

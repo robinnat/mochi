@@ -43,6 +43,8 @@ import { teintes3d } from '@/ui/rendu'
 import { mesuresPorte, ombresPorte, type Ombre, type PorteId } from '@/bot/portes'
 import { Porte3d } from './porte3d'
 import { lisere } from './lisere'
+import { leverSombre, luminance, palettePixel, quantifier } from './pixel3d'
+import { TEINTES_PORTES } from '@/bot/portes'
 import {
   couleurContour,
   eclairagePlat,
@@ -56,7 +58,7 @@ import {
   type Rendu3d,
   RENDU_3D_DEFAUT
 } from './rendu3d'
-import { peindreReflet, REFLET_DEFAUT, refletDuCorps, type Reflet } from './reflet'
+import { peindreReflet, REFLET_DEFAUT, type Reflet } from './reflet'
 import {
   contourDuCorps,
   demiEtendueOeil,
@@ -129,7 +131,8 @@ export class Mochi3d {
   private rendu: Rendu3d = RENDU_3D_DEFAUT
   private douceur: Douceur = DOUCEUR_DEFAUT
   /** petit reflet doux en haut a gauche (matiere `doux` seulement) */
-  private reflet = REFLET_DEFAUT
+  /** reflet doux en shader : 1 = actif (uniform partage par les materiaux de ce corps) */
+  private readonly uReflet = { value: 1 }
   /** demi-epaisseur du contour, en unites du moteur (uniform de la coque) */
   private readonly epaisseur = { value: 4.5 }
   /** derniers contour et visage peints : inchanges d'une image a l'autre, on ne refait rien */
@@ -196,7 +199,8 @@ export class Mochi3d {
       // le shader toon sait deriver une normale par facette ; seul le typage ne le declare pas
       if (plat.facettes) (m as unknown as { flatShading: boolean }).flatShading = true
     }
-    lisere(m, plat ? 0.7 : 0.5, plat ? 0.32 : 0.22)
+    // l'ombrage continu (AO, liseres, reflet) n'a de sens que pour la matiere douce : les styles a aplats gardent leurs tons nets
+    if (!plat || plat.lisse) lisere(m, plat ? 0.7 : 0.5, plat ? 0.32 : 0.22, { reflet: this.uReflet, ao: 1 })
     this.materiaux.set(cle, m)
     return m
   }
@@ -205,7 +209,7 @@ export class Mochi3d {
   setRendu(r: Rendu3d, contour = false, douceur: Douceur = DOUCEUR_DEFAUT, reflet = REFLET_DEFAUT) {
     this.rendu = r
     this.douceur = douceur
-    this.reflet = reflet
+    this.uReflet.value = reflet && reglagePlat(r, douceur)?.lisse ? 1 : 0
     this.mesh.material = this.materiau(r, douceur)
     // le contour cartoon est une option des variantes plates (jamais du realiste)
     this.coque.visible = !!reglagePlat(r, douceur) && (contour || !!reglagePlat(r, douceur)?.contour)
@@ -259,6 +263,8 @@ export class Mochi3d {
 
   /** Recopie l'image `frame` du moteur dans le maillage et la texture. */
   maj(frame: BotFrame, couleur: string, papier: string) {
+    // Flat et Pixel : une couleur quasi noire garde du relief (voir `leverSombre`)
+    if (this.rendu === 'toon' || this.rendu === 'toon-contour' || this.rendu === 'pixel') couleur = leverSombre(couleur)
     this.mesh.visible = frame.bodyPath.length > 10 && frame.bodyAlpha > 0.01
     if (!this.mesh.visible) return
     const mat = this.mesh.material
@@ -283,19 +289,13 @@ export class Mochi3d {
     const frameCorps = frame
     // les yeux de la 3D : pile en face, sur la face avant
     frame = this.yeuxSurLaFace(frame)
-    this.porte3d.maj(this.porte, frameCorps, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y))
+    const plat0 = reglagePlat(this.rendu, this.douceur)
+    this.porte3d.reglages = plat0?.lisse ? { force: 0.7, haut: 0.32, ao: 1, reflet: this.uReflet } : null
+    this.porte3d.maj(this.porte, frameCorps, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y), (y, sg) => this.bordX(y, sg))
     const ombres: Ombre[] = this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []
-    // reflet : seulement la matiere `doux` (ombrage lisse), pose selon la forme du moment
-    const reflet = plat?.lisse
-      ? refletDuCorps(
-          contourDuCorps(frame.bodyPath, 3),
-          frame.eyes.map((e) => {
-            const [, , , , x, y] = lireMatrice(e.matrix)
-            return { x: x!, y: y! }
-          }),
-          this.reflet
-        )
-      : null
+    // le reflet doux est un effet de matiere (shader, repere de la vue) : plus rien n'est peint dans la
+    // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
+    const reflet = null as Reflet | null
     const cleReflet = reflet ? [reflet.x, reflet.y, reflet.rx].map((v) => Math.round(v * 2)).join(',') : '-'
     const cleVisage = `${this.rendu}|${this.douceur}|${couleur}|${papier}|${JSON.stringify(frame.eyes)}|${cleReflet}|${this.porte ?? ''}|${ombres.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
     if (cleVisage !== this.cleVisage) {
@@ -303,6 +303,17 @@ export class Mochi3d {
       // le flat garde la couleur choisie telle quelle (pas de pastel), sans creux d'oeil
       this.peindre(frame, plat ? couleur : m.base, papier, m.creux, !plat, reflet, ombres)
     }
+  }
+
+  /** Abscisse du bord du corps (cote `sg` : -1 gauche, 1 droite) a la hauteur `y` du moteur. */
+  private bordX(y: number, sg: number): number {
+    const P = this.mesh.geometry.attributes.position
+    if (!P) return 0
+    let x = 0
+    for (let i = 0; i < P.count; i++) {
+      if (Math.abs(P.getY(i) + y) < 5) x = sg > 0 ? Math.max(x, P.getX(i)) : Math.min(x, P.getX(i))
+    }
+    return x
   }
 
   /** Profondeur (z) de la face avant du corps a (x, y) du moteur : le sommet le plus avance du voisinage. */
@@ -363,6 +374,12 @@ export class Mochi3d {
     geo.attributes.uv!.needsUpdate = true
     geo.computeVertexNormals()
     souderNormales(geo.attributes.normal!.array as Float32Array, pts.length, finesseDe(this.rendu).anneaux)
+    // Flat et Pixel : des paliers nets sur des normales irregulieres font des taches (nuage, fleur,
+    // etoile). On lisse les normales avant de couper en tons : les limites deviennent des courbes propres.
+    if (plat && !plat.lisse && !plat.facettes && geo.index) {
+      lisserNormales(geo.attributes.normal as BufferAttribute, geo.index.array, 14)
+      souderNormales(geo.attributes.normal!.array as Float32Array, pts.length, finesseDe(this.rendu).anneaux)
+    }
     geo.computeBoundingSphere()
     mt.bas = -v.bas
   }
@@ -379,21 +396,6 @@ export class Mochi3d {
     c.globalAlpha = 1
     c.fillStyle = base
     c.fillRect(0, 0, T, T)
-    // ombrage de studio : le corps s'assombrit doucement vers le bas et sur les bords (type
-    // occlusion ambiante), dans une teinte de la couleur du corps et jamais en noir pur
-    {
-      const ombre = mixHex(creux, '#000000', 0.35)
-      const g = c.createLinearGradient(0, T * 0.35, 0, T * 0.98)
-      g.addColorStop(0, hexA(ombre, 0))
-      g.addColorStop(1, hexA(ombre, 0.3))
-      c.fillStyle = g
-      c.fillRect(0, 0, T, T)
-      const r = c.createRadialGradient(T * 0.46, T * 0.44, T * 0.2, T * 0.5, T * 0.5, T * 0.5)
-      r.addColorStop(0, hexA(ombre, 0))
-      r.addColorStop(1, hexA(ombre, 0.2))
-      c.fillStyle = r
-      c.fillRect(0, 0, T, T)
-    }
     // le reflet est peint AVANT les yeux : ils le recouvrent, il ne les touche jamais
     if (reflet) peindreReflet(c, reflet, k, VB)
     const trous: Array<{ chemin: Path2D; m: number[]; alpha: number }> = frame.eyes.map((e) => ({
@@ -461,6 +463,39 @@ export class Mochi3d {
     this.texture.dispose()
     this.textureYeux.dispose()
   }
+}
+
+/**
+ * Quelques passes de moyenne des normales avec celles des sommets voisins (via les triangles),
+ * pour effacer les plis de triangulation qui se lisent comme des taches sous un ombrage a paliers.
+ */
+function lisserNormales(nor: BufferAttribute, index: ArrayLike<number>, passes: number) {
+  const n = nor.count
+  const acc = new Float32Array(n * 3)
+  const A = nor.array as Float32Array
+  for (let p = 0; p < passes; p++) {
+    acc.fill(0)
+    for (let t = 0; t < index.length; t += 3) {
+      const a = index[t]!
+      const b = index[t + 1]!
+      const c = index[t + 2]!
+      for (let d = 0; d < 3; d++) {
+        acc[a * 3 + d]! += A[b * 3 + d]! + A[c * 3 + d]!
+        acc[b * 3 + d]! += A[a * 3 + d]! + A[c * 3 + d]!
+        acc[c * 3 + d]! += A[a * 3 + d]! + A[b * 3 + d]!
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      const x = A[i * 3]! * 2 + acc[i * 3]!
+      const y = A[i * 3 + 1]! * 2 + acc[i * 3 + 1]!
+      const z = A[i * 3 + 2]! * 2 + acc[i * 3 + 2]!
+      const l = Math.hypot(x, y, z) || 1
+      A[i * 3] = x / l
+      A[i * 3 + 1] = y / l
+      A[i * 3 + 2] = z / l
+    }
+  }
+  nor.needsUpdate = true
 }
 
 /** Materiau du contour : une coque inversee, gonflee le long des normales. */
@@ -620,9 +655,12 @@ export function rendreAvatar(
   // l'instance est partagee : l'angle est remis a chaque image, jamais garde d'un avatar a l'autre
   mochi.mesh.rotation.y = yaw
   const px = cible.width
-  mochi.calerContour(px / (2 * VB))
+  // pixel : on rend 4 fois plus grand puis on reduit (moyenne) avant de ramener a la palette
+  const pixel = rendu3d === 'pixel'
+  const pxRendu = pixel ? px * 4 : px
+  mochi.calerContour(pxRendu / (2 * VB))
   const taille = renderer.domElement.width
-  if (taille !== px) renderer.setSize(px, px, false)
+  if (taille !== pxRendu) renderer.setSize(pxRendu, pxRendu, false)
   mochi.maj(frame, couleur, papier)
   renderer.render(scene, camera)
   const c = cible.getContext('2d')
@@ -630,6 +668,18 @@ export function rendreAvatar(
   c.setTransform(1, 0, 0, 1, 0, 0)
   c.clearRect(0, 0, px, px)
   if (!mochi.mesh.visible) return
+  if (pixel) {
+    c.imageSmoothingEnabled = true
+    c.imageSmoothingQuality = 'high'
+    c.drawImage(renderer.domElement, 0, 0, px, px)
+    const im = c.getImageData(0, 0, px, px)
+    const t = porte ? TEINTES_PORTES[porte] : null
+    const accessoires = porte === 'lunettes' || porte === 'soleil' ? ['#26222f'] : t ? [t.fond, t.accent] : []
+    const corps = leverSombre(couleur)
+    quantifier(im.data, px, px, palettePixel(corps, accessoires), luminance(corps) < 0.62)
+    c.putImageData(im, 0, 0)
+    return
+  }
   const k = px / (2 * VB)
   // ombre au sol : ellipse sous le point le plus bas, couleur de l'argile
   const bas = -mochi.bas

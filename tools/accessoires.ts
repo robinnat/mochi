@@ -19,9 +19,20 @@ const cols = mode === 'job' ? 1 : etats.length
 const racine = document.getElementById('r')!
 racine.style.gridTemplateColumns = `repeat(${choisis ? ids.length * etats.length : cols * (mode === 'job' ? 4 : 1)}, ${taille + 24}px)`
 
+const formesListe = q.get('formes')?.split(',')
+const porteUnique = (q.get('ids') ?? 'aucun').split(',')[0]!
+if (formesListe) racine.style.gridTemplateColumns = `repeat(${Math.min(formesListe.length, Number(q.get('cols') ?? 6))}, ${taille + 24}px)`
+
 createApp({
   render: () =>
-    mode === 'job'
+    formesListe
+      ? formesListe.map((f, i) =>
+          h('div', { class: 'c' }, [
+            h(MochiBot, { size: taille, shape: f, color: couleur ?? COULEURS[i % 9], rendu: rendu as never, state: etats[0]!, porte: (porteUnique === 'aucun' ? null : porteUnique) as never, frozenAt: POSES[etats[0]!], yaw, label: f }),
+            h('div', { class: 't' }, f)
+          ])
+        )
+      : mode === 'job'
       ? ids.map((id, i) =>
           h('div', { class: 'c' }, [
             h(MochiBot, { size: taille, shape: forme, color: COULEURS[i % 9], rendu: rendu as never, accessoire: id as never, frozenAt: 2.2, yaw, label: id }),

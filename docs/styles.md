@@ -1,14 +1,45 @@
 # Styles de rendu
 
-Réglage « Style » de la vue Personnaliser, persisté comme la forme et la couleur
-(`mochi:style`, `mochi:pixel`). Quatre choix : **Original** (par défaut, inchangé),
-**Pixel art**, **3D argile**, **3D bulle**, **3D** (vraie 3D, aplat, contour cartoon en option).
+Depuis la refonte « 3D seule », l'interface ne propose plus que trois styles, tous en VRAIE 3D
+(Three.js, import dynamique, un seul contexte WebGL partagé) :
+
+| Style | id `rendu` | Principe |
+|---|---|---|
+| **Soft** (défaut) | `3d` | matière douce : ombrage lisse, lueurs et reflet calculés en shader dans le repère de la vue |
+| **Flat** | `flat3d` | `toon` : trois tons nets, contour optionnel (`contour`) |
+| **Pixel** | `pixel3d` | rendu à basse résolution (grille de `pixel`), réduit à une palette courte (3 tons du corps, tons des accessoires, blanc des yeux), contour de 1 px, agrandi avec `image-rendering: pixelated` (`src/ui/trois/pixel3d.ts`) |
+
+Les anciens styles SVG (`original`, `pixel`, `argile`, `bulle`) ne sont plus proposés ni
+relus du stockage (un ancien réglage retombe sur Soft). Le code SVG de `MochiBot.vue` ne sert
+plus que de repli sans WebGL et pour les exports SVG/PNG/GIF/MP4, qui sérialisent encore le
+SVG : tant qu'il n'y a pas d'export 3D, un mochi 3D s'exporte « argile ». Les sections
+ci-dessous décrivent ces anciens dessins (historique).
+
+## Ombrage continu sur 360 degrés (`src/ui/trois/lisere.ts`)
+
+L'ombrage n'est PAS peint dans la texture de visage (c'est ce qui assombrissait le dos et les
+flancs et laissait une couture) : tout est calculé dans le shader, en repère de la vue, sur tout
+le volume. Ombrage doux (AO) vers le bas et les bords, lueur bas-droite (4 h), lueur légère
+haut-gauche (10 h), reflet doux. La texture ne porte que la couleur et les yeux.
+
+## Formes 3D
+
+Les 11 formes du catalogue ont un vrai volume sous tous les angles : sphère (cercle), galet
+(ellipsoïde), squircle (galet-cube très arrondi), capsule (tube couché), triangle (cône arrondi),
+hexagone (profond), nuage, goutte, étoile, fleur, œuf. Goutte, œuf, triangle et capsule sont des
+solides de révolution (`ProfilVolume.revolution`) : la profondeur d'un point est la demi-largeur
+du contour à sa hauteur.
 
 Le moteur ne change pas : `engine.sample(t)` rend la même image et les 5 états, leurs
 mesures et leurs durées sont identiques. Seul `MochiBot.vue` peint l'image autrement.
 Le catalogue et le réglage courant vivent dans `src/ui/rendu.ts`.
 
-## Pixel art (`src/ui/pixel.ts`)
+> **LEGACY, NON DISPONIBLE** : les sections « Pixel art (`src/ui/pixel.ts`) », « 3D douce » et
+> « Vraie 3D » plus bas decrivent l'ancien rendu SVG et l'historique de la 3D. Elles ne sont plus
+> proposees dans l'interface et ne sont gardees que comme memoire du code encore present (repli sans
+> WebGL, exports). Pour les styles actuels, voir le tableau et les trois sections ci-dessus.
+
+## [LEGACY] Pixel art SVG (`src/ui/pixel.ts`)
 
 Chaque image du moteur est rasterisée sur une petite grille (boule de 16, 24 ou 32 pixels,
 réglage « Taille des pixels »), puis chaque case reçoit une couleur :
@@ -25,7 +56,7 @@ code à part. L'animation SVG exportée est un feuilletage (`svgFeuilletage`, `a
 les images identiques consécutives fusionnées. Sans canvas (tests `node`, `happy-dom`),
 le composant retombe sur l'original.
 
-## 3D douce
+## [LEGACY] 3D douce en SVG
 
 Tout est dans le SVG : dégradé radial (lumière en haut à gauche), reflet flou, ombre
 portée colorée et floue, ombre interne légère, et le corps percé décalé et flou derrière
@@ -37,7 +68,7 @@ continue de fonctionner tel quel.
   ombre interne plus marquée, mat ;
 - **bulle** (le « dot » d'OpenAI) : couleur saturée, reflet net, lumière renvoyée en bas.
 
-## Vraie 3D (WebGL, Three.js)
+## [LEGACY] Vraie 3D, historique (WebGL, Three.js)
 
 Le style `3d` (`src/ui/trois/`) rend le corps en volume réel, avec une caméra et une
 lumière, là où la 3D douce n'est qu'un dessin de dégradés. Le moteur ne change pas : on

@@ -103,13 +103,13 @@ const star = normalize(
     profileFromPolygon(
       Array.from({ length: 10 }, (_, i) => {
         const a = -Math.PI / 2 + (i * Math.PI) / 5
-        const r = i % 2 === 0 ? 1 : 0.5
+        const r = i % 2 === 0 ? 1 : 0.6
         return { x: Math.cos(a) * r, y: Math.sin(a) * r }
       }),
       0,
       0
     ),
-    1.0
+    2.0
   ),
   1.1
 )
@@ -147,7 +147,7 @@ export const SHAPES: BotShape[] = [
   { id: 'galet', radii: pebble },
   // 1.15 et pas 1.02 : sur une superellipse le rayon maximal est la diagonale,
   // donc normaliser dessus donne une forme qui parait plus petite que le cercle.
-  { id: 'squircle', radii: normalize(superellipseProfile(4.2), 1.15) },
+  { id: 'squircle', radii: normalize(superellipseProfile(3.3), 1.15) },
   { id: 'capsule', radii: capsule },
   // -90deg : un sommet vers le haut de l'ecran (y est oriente vers le bas)
   { id: 'triangle', radii: regularPolygonProfile(3, 1.12, 0.34, -90) },

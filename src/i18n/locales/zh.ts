@@ -131,7 +131,9 @@ const zh: typeof fr = {
     pixel: '像素风',
     argile: '3D 黏土',
     bulle: '3D 气泡',
-    '3d': '3D'
+    '3d': '柔和',
+    flat3d: '扁平',
+    pixel3d: '像素'
   },
 
   pixelSizes: {

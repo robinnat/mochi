@@ -27,6 +27,7 @@ import {
   contourCourant,
   est3d,
   estVraie3d,
+  matiere3dDe,
   grillePixel,
   pixelEffectif,
   renduEffectif,
@@ -351,7 +352,9 @@ const toile = ref<HTMLCanvasElement | null>(null)
 const vraie3d = computed(() => estVraie3d(rendu.value) && m3d.value !== null)
 /** Cote du canvas en pixels physiques : net sur un ecran Retina, borne a 2x. */
 const pxToile = computed(() =>
-  Math.round(props.size * Math.min(2, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1))
+  rendu.value === 'pixel3d'
+    ? grille.value
+    : Math.round(props.size * Math.min(2, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1))
 )
 
 watch(
@@ -372,14 +375,16 @@ watch(
 /** Les points de `thinking` restent a plat devant le corps : ils s'effacent quand il se tourne. */
 const decorAlpha = computed(() => (vraie3d.value && props.yaw ? Math.max(0, Math.cos(props.yaw)) ** 3 : 1))
 
+const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3d))
+
 function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
-  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, props.rendu3d, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte)
+  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte)
 }
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image
-watch([frame, vraie3d, toile, ink, pxToile, () => props.rendu3d, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, () => contourEffectif.value], dessiner3d, { flush: 'post' })
+watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, () => contourEffectif.value], dessiner3d, { flush: 'post' })
 
 /* ------------------------------------------------------- regard qui suit */
 
@@ -822,6 +827,7 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
         :width="pxToile"
         :height="pxToile"
         data-vraie3d="1"
+        :style="rendu === 'pixel3d' ? 'image-rendering: pixelated' : undefined"
         style="display: block; width: 100%; height: 100%"
       />
     </foreignObject>

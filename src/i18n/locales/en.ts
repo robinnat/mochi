@@ -128,7 +128,9 @@ const en: typeof fr = {
     pixel: 'Pixel art',
     argile: '3D clay',
     bulle: '3D bubble',
-    '3d': '3D'
+    '3d': 'Soft',
+    flat3d: 'Flat',
+    pixel3d: 'Pixel'
   },
 
   pixelSizes: {

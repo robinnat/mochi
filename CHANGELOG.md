@@ -5,6 +5,19 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed (3D only)
+
+- **Three styles, all real 3D**: Soft (default), Flat (`toon`, optional outline) and Pixel (low
+  resolution, short palette, 1 px outline). The SVG styles (original, pixel art, clay, bubble) are
+  no longer offered; the SVG body stays as the no-WebGL fallback and for the exports.
+- **Continuous shading when the model turns**: AO, bottom-right and top-left rim glows and the
+  soft highlight are computed in view space in the material, not painted in the face texture
+  (which darkened the back and sides and left a seam).
+- **Eleven real 3D shapes**: rounder squircle, rounded cone for the triangle, solids of revolution
+  for drop, egg and capsule, deeper hexagon, star, flower and cloud.
+- **Glasses** sit in front of the face with a real gap, with temples that follow the head to its
+  sides; worn accessories share the body's light play in every style.
+
 ### Added
 
 - **Worn accessories** (`src/bot/portes.ts`, `porte` prop): round glasses, sunglasses, mini top hat,

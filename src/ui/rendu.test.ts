@@ -23,17 +23,24 @@ import {
  * et la facon dont une valeur relue du stockage est acceptee ou refusee.
  */
 describe('catalogue des styles', () => {
-  it("garde l'original par defaut, pour ne rien changer a qui n'a rien choisi", () => {
-    expect(RENDU_DEFAUT).toBe('original')
-    expect(RENDUS[0]).toBe('original')
+  it('garde la 3D douce (Soft) par defaut', () => {
+    expect(RENDU_DEFAUT).toBe('3d')
+    expect(RENDUS[0]).toBe('3d')
   })
 
-  it('propose le pixel art, les deux 3D douces et la vraie 3D', () => {
-    expect(RENDUS).toEqual(['original', 'pixel', 'argile', 'bulle', '3d'])
+  it('ne propose que trois styles, tous en vraie 3D : Soft, Flat, Pixel', () => {
+    expect(RENDUS).toEqual(['3d', 'flat3d', 'pixel3d'])
+    for (const r of RENDUS) expect(estVraie3d(r)).toBe(true)
+  })
+
+  it("refuse les anciens styles 2D relus du stockage : l'application retombe sur Soft", () => {
+    for (const ancien of ['original', 'pixel', 'argile', 'bulle']) expect(estRendu(ancien)).toBe(false)
   })
 
   it("exporte la vraie 3D en argile, sa version SVG", () => {
     expect(renduExportable('3d')).toBe('argile')
+    expect(renduExportable('flat3d')).toBe('argile')
+    expect(renduExportable('pixel3d')).toBe('argile')
     expect(renduExportable('pixel')).toBe('pixel')
     expect(estVraie3d('3d')).toBe(true)
     expect(estVraie3d('argile')).toBe(false)
@@ -47,11 +54,11 @@ describe('catalogue des styles', () => {
   })
 
   it('suit le reglage courant quand le composant ne recoit pas de style', () => {
-    renduCourant.value = 'bulle'
-    expect(renduEffectif(undefined)).toBe('bulle')
-    expect(renduEffectif('pixel')).toBe('pixel')
+    renduCourant.value = 'flat3d'
+    expect(renduEffectif(undefined)).toBe('flat3d')
+    expect(renduEffectif('pixel3d')).toBe('pixel3d')
     renduCourant.value = RENDU_DEFAUT
-    expect(renduEffectif(undefined)).toBe('original')
+    expect(renduEffectif(undefined)).toBe('3d')
   })
 
   it("n'ajoute rien au nom de fichier pour l'original", () => {

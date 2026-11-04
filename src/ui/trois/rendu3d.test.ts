@@ -32,11 +32,11 @@ describe('liste des matieres', () => {
   it('le defaut est doux marque (choix de design, 03/11), aplat reste dans le code, le realiste reste disponible', () => {
     expect(RENDU_3D_DEFAUT).toBe('doux')
     expect(DOUCEUR_DEFAUT).toBe('marque')
-    expect(RENDUS_3D).toEqual(['realiste', 'toon', 'toon-contour', 'lowpoly', 'aplat', 'doux'])
+    expect(RENDUS_3D).toEqual(['realiste', 'toon', 'toon-contour', 'lowpoly', 'aplat', 'doux', 'pixel'])
     expect(RENDUS_3D.every(estRendu3d)).toBe(true)
     expect(estRendu3d('plastique')).toBe(false)
     expect(estPlat('realiste')).toBe(false)
-    expect(RENDUS_3D.filter(estPlat)).toHaveLength(5)
+    expect(RENDUS_3D.filter(estPlat)).toHaveLength(6)
     expect(reglagePlat('realiste')).toBeNull()
   })
 

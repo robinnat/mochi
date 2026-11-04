@@ -22,9 +22,9 @@
 
 import { FINESSE_DEFAUT, type Finesse } from './volume'
 
-export type Rendu3d = 'realiste' | 'toon' | 'toon-contour' | 'lowpoly' | 'aplat' | 'doux'
+export type Rendu3d = 'realiste' | 'toon' | 'toon-contour' | 'lowpoly' | 'aplat' | 'doux' | 'pixel'
 
-export const RENDUS_3D: Rendu3d[] = ['realiste', 'toon', 'toon-contour', 'lowpoly', 'aplat', 'doux']
+export const RENDUS_3D: Rendu3d[] = ['realiste', 'toon', 'toon-contour', 'lowpoly', 'aplat', 'doux', 'pixel']
 
 /**
  * Reglage de la matiere `doux` (ombrage lisse et mat) : `leger` ou `marque`. Ne concerne
@@ -118,6 +118,16 @@ const PLATS: Record<Exclude<Rendu3d, 'realiste' | 'doux'>, ReglagePlat> = {
     tons: [0.7, 1, 1.12],
     facettes: false,
     contour: true,
+    organique: false,
+    finesse: null,
+    reduction: 1
+  },
+  // pixel : trois tons nets comme `toon`, puis ramene a une palette courte (`pixel3d.ts`)
+  pixel: {
+    seuils: [0.2, 0.86],
+    tons: [0.7, 1, 1.12],
+    facettes: false,
+    contour: false,
     organique: false,
     finesse: null,
     reduction: 1

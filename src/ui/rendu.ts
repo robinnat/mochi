@@ -14,12 +14,18 @@ import { ref } from 'vue'
 import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
 import { mixHex } from '@/bot/skins'
 
-export type RenduId = 'original' | 'pixel' | 'argile' | 'bulle' | '3d'
+/**
+ * `3d` (Soft), `flat3d` (Flat) et `pixel3d` (Pixel) sont les trois styles proposes : tous en vraie
+ * 3D. `original`, `pixel`, `argile` et `bulle` sont les anciens dessins SVG ; ils ne sont plus
+ * proposes (ni stockes) et ne servent plus que de REPLI quand WebGL manque et pour les exports.
+ */
+export type RenduId = 'original' | 'pixel' | 'argile' | 'bulle' | '3d' | 'flat3d' | 'pixel3d'
 
-export const RENDUS: RenduId[] = ['original', 'pixel', 'argile', 'bulle', '3d']
+/** Les styles proposes dans l'interface. */
+export const RENDUS: RenduId[] = ['3d', 'flat3d', 'pixel3d']
 
-/** L'original par defaut : qui n'a rien choisi ne voit rien changer. */
-export const RENDU_DEFAUT: RenduId = 'original'
+/** Soft par defaut : la 3D douce validee. */
+export const RENDU_DEFAUT: RenduId = '3d'
 
 export const estRendu = (v: string): v is RenduId => (RENDUS as string[]).includes(v)
 
@@ -30,13 +36,17 @@ export const est3d = (r: RenduId): r is 'argile' | 'bulle' => r === 'argile' || 
  * La vraie 3D (WebGL, `src/ui/trois/`). Chargee a la demande ; tant qu'elle n'est pas la,
  * ou si le navigateur n'a pas de WebGL, le bot est dessine en argile, sa version SVG.
  */
-export const estVraie3d = (r: RenduId): r is '3d' => r === '3d'
+export const estVraie3d = (r: RenduId): r is '3d' | 'flat3d' | 'pixel3d' => r === '3d' || r === 'flat3d' || r === 'pixel3d'
+
+/** Matiere 3D d'un style : Soft = celle choisie (`doux` par defaut), Flat = trois tons, Pixel = basse resolution + palette. */
+export const matiere3dDe = <T extends string>(r: RenduId, soft: T): T | 'toon' | 'pixel' =>
+  r === 'flat3d' ? 'toon' : r === 'pixel3d' ? 'pixel' : soft
 
 /**
  * Style d'un EXPORT. Les exports serialisent le SVG ; le canvas WebGL n'y passe pas, donc
  * un export en 3D sort en argile (et son nom de fichier le dit).
  */
-export const renduExportable = (r: RenduId): Exclude<RenduId, '3d'> => (r === '3d' ? 'argile' : r)
+export const renduExportable = (r: RenduId): Exclude<RenduId, '3d' | 'flat3d' | 'pixel3d'> => (estVraie3d(r) ? 'argile' : r)
 
 /* ----------------------------------------------------------------- pixel art */
 

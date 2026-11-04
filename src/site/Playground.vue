@@ -23,6 +23,8 @@ import {
 import { POSES, type StateId } from '@/bot/states'
 import { TAILLES_PIXEL, type RenduId, type TaillePixelId } from '@/ui/rendu'
 import type { AccessoireId } from '@/bot/accessoires'
+import { STYLES_SITE } from './style'
+import { extraitCode } from './extrait'
 import type { PorteId } from '@/bot/portes'
 import en from '@/i18n/locales/en'
 
@@ -30,7 +32,7 @@ const reduit = useReduit()
 
 const forme = ref('etoile')
 const couleur = ref('violet')
-const rendu = ref<RenduId>('argile')
+const rendu = ref<RenduId>('3d')
 const pixel = ref<TaillePixelId>('moyen')
 const contour = ref(false)
 const reflet = ref(true)
@@ -39,13 +41,7 @@ const mouvement = ref('state:idle')
 const accessoire = ref<AccessoireId | ''>('')
 const porte = ref<PorteId | ''>('')
 
-const RENDUS: { id: RenduId; label: string }[] = [
-  { id: 'original', label: 'Flat' },
-  { id: 'pixel', label: 'Pixel art' },
-  { id: 'argile', label: 'Clay' },
-  { id: 'bulle', label: 'Bubble' },
-  { id: '3d', label: '3D' }
-]
+const RENDUS = STYLES_SITE
 const EXPRESSIONS = Object.entries(en.expressions as Record<string, string>)
 
 // un mouvement = un etat du moteur, ou un geste, ou une activite
@@ -61,20 +57,22 @@ const geste = computed(() => gesteChoisi.value?.geste ?? null)
 const exprEff = computed(() => gesteChoisi.value?.expression ?? expression.value)
 const cle = computed(() => [forme.value, rendu.value, mouvement.value, accessoire.value, porte.value].join('|'))
 
-const trois = computed(() => rendu.value === '3d')
+const trois = computed(() => true)
 
-const extrait = computed(() => {
-  const lignes = [`<MochiBot`, `  shape="${forme.value}"`, `  color="${couleur.value}"`]
-  if (rendu.value !== 'original') lignes.push(`  rendu="${rendu.value}"`)
-  if (rendu.value === 'pixel') lignes.push(`  pixel="${pixel.value}"`)
-  if (trois.value && contour.value) lignes.push('  contour')
-  if (trois.value && !reflet.value) lignes.push('  :reflet="false"')
-  if (expression.value !== 'neutre') lignes.push(`  expression="${expression.value}"`)
-  if (accessoire.value) lignes.push(`  accessoire="${accessoire.value}"`)
-  if (trois.value && porte.value) lignes.push(`  porte="${porte.value}"`)
-  if (mouvement.value.startsWith('state:') && etat.value !== 'idle') lignes.push(`  state="${etat.value}"`)
-  return lignes.join('\n') + '\n  :playing="true"\n/>'
-})
+const extrait = computed(() =>
+  extraitCode({
+    forme: forme.value,
+    couleur: couleur.value,
+    rendu: rendu.value,
+    pixel: pixel.value,
+    contour: contour.value,
+    reflet: reflet.value,
+    expression: expression.value,
+    accessoire: accessoire.value,
+    porte: porte.value,
+    etat: mouvement.value.startsWith('state:') ? etat.value : 'idle'
+  })
+)
 
 const copie = ref(false)
 async function copier() {
@@ -127,14 +125,14 @@ async function copier() {
           <div class="chips" role="group" aria-label="Render style">
             <button v-for="r in RENDUS" :key="r.id" type="button" class="chip" :aria-pressed="rendu === r.id" @click="rendu = r.id">{{ r.label }}</button>
           </div>
-          <div v-if="rendu === 'pixel'" class="chips" style="margin-top: 8px" role="group" aria-label="Pixel size">
+          <div v-if="rendu === 'pixel3d'" class="chips" style="margin-top: 8px" role="group" aria-label="Pixel size">
             <button v-for="p in TAILLES_PIXEL" :key="p.id" type="button" class="chip" :aria-pressed="pixel === p.id" @click="pixel = p.id">
               {{ p.id === 'gros' ? 'Large' : p.id === 'moyen' ? 'Medium' : 'Fine' }} pixels
             </button>
           </div>
           <div v-if="trois" style="margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap">
-            <label class="case"><input v-model="contour" type="checkbox" /> Cartoon outline</label>
-            <label class="case"><input v-model="reflet" type="checkbox" /> Soft highlight</label>
+            <label v-if="rendu === 'flat3d'" class="case"><input v-model="contour" type="checkbox" /> Outline</label>
+            <label v-if="rendu === '3d'" class="case"><input v-model="reflet" type="checkbox" /> Soft highlight</label>
           </div>
         </div>
 
