@@ -43,7 +43,7 @@ import { teintes3d } from '@/ui/rendu'
 import { mesuresPorte, ombresPorte, type Ombre, type PorteId } from '@/bot/portes'
 import { Porte3d } from './porte3d'
 import { lisere } from './lisere'
-import { palettePixel, quantifier } from './pixel3d'
+import { leverSombre, luminance, palettePixel, quantifier } from './pixel3d'
 import { TEINTES_PORTES } from '@/bot/portes'
 import {
   couleurContour,
@@ -263,6 +263,8 @@ export class Mochi3d {
 
   /** Recopie l'image `frame` du moteur dans le maillage et la texture. */
   maj(frame: BotFrame, couleur: string, papier: string) {
+    // Flat et Pixel : une couleur quasi noire garde du relief (voir `leverSombre`)
+    if (this.rendu === 'toon' || this.rendu === 'toon-contour' || this.rendu === 'pixel') couleur = leverSombre(couleur)
     this.mesh.visible = frame.bodyPath.length > 10 && frame.bodyAlpha > 0.01
     if (!this.mesh.visible) return
     const mat = this.mesh.material
@@ -634,7 +636,8 @@ export function rendreAvatar(
     const im = c.getImageData(0, 0, px, px)
     const t = porte ? TEINTES_PORTES[porte] : null
     const accessoires = porte === 'lunettes' || porte === 'soleil' ? ['#26222f'] : t ? [t.fond, t.accent] : []
-    quantifier(im.data, px, px, palettePixel(couleur, accessoires))
+    const corps = leverSombre(couleur)
+    quantifier(im.data, px, px, palettePixel(corps, accessoires), luminance(corps) < 0.62)
     c.putImageData(im, 0, 0)
     return
   }

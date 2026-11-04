@@ -24,6 +24,7 @@ import { POSES, type StateId } from '@/bot/states'
 import { TAILLES_PIXEL, type RenduId, type TaillePixelId } from '@/ui/rendu'
 import type { AccessoireId } from '@/bot/accessoires'
 import { STYLES_SITE } from './style'
+import { extraitCode } from './extrait'
 import type { PorteId } from '@/bot/portes'
 import en from '@/i18n/locales/en'
 
@@ -58,18 +59,20 @@ const cle = computed(() => [forme.value, rendu.value, mouvement.value, accessoir
 
 const trois = computed(() => true)
 
-const extrait = computed(() => {
-  const lignes = [`<MochiBot`, `  shape="${forme.value}"`, `  color="${couleur.value}"`]
-  if (rendu.value !== '3d') lignes.push(`  rendu="${rendu.value}"`)
-  if (rendu.value === 'pixel') lignes.push(`  pixel="${pixel.value}"`)
-  if (rendu.value === 'flat3d' && contour.value) lignes.push('  contour')
-  if (rendu.value === '3d' && !reflet.value) lignes.push('  :reflet="false"')
-  if (expression.value !== 'neutre') lignes.push(`  expression="${expression.value}"`)
-  if (accessoire.value) lignes.push(`  accessoire="${accessoire.value}"`)
-  if (trois.value && porte.value) lignes.push(`  porte="${porte.value}"`)
-  if (mouvement.value.startsWith('state:') && etat.value !== 'idle') lignes.push(`  state="${etat.value}"`)
-  return lignes.join('\n') + '\n  :playing="true"\n/>'
-})
+const extrait = computed(() =>
+  extraitCode({
+    forme: forme.value,
+    couleur: couleur.value,
+    rendu: rendu.value,
+    pixel: pixel.value,
+    contour: contour.value,
+    reflet: reflet.value,
+    expression: expression.value,
+    accessoire: accessoire.value,
+    porte: porte.value,
+    etat: mouvement.value.startsWith('state:') ? etat.value : 'idle'
+  })
+)
 
 const copie = ref(false)
 async function copier() {

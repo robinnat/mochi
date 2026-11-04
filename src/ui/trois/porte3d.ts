@@ -144,22 +144,21 @@ export class Porte3d {
         v.position.set(o.x, -o.y, z - tube * 0.4)
       }
     }
-    // branches : du bord exterieur de la monture jusqu'aux cotes de la tete, en arriere
+    // branches : elles partent de la charniere (bord exterieur de la monture) et RENTRENT dans la
+    // tete par l'arriere ; de face elles sont cachees par le corps, seule la charniere se voit.
+    // Elles ressortent sur le cote de la tete (a la hauteur des yeux) : on les voit en tournant.
     for (const [o, sg] of [[a, -1], [b, 1]] as const) {
       const xo = o.x + sg * (r + tube * 0.5)
       const xe = bordX ? bordX(o.y, sg) : xo + sg * 0.8 * r
       const y = -o.y + 0.1 * r
-      // la branche epouse la tete : elle part de la monture (devant) puis suit la surface, juste
-      // au-dessus, jusqu'au bord ; elle ne traverse pas le corps et ne flotte pas
-      const pts: Vector3[] = []
-      for (const t of [0, 0.12, 0.26, 0.42, 0.58, 0.74, 0.88, 1]) {
-        const x = xo + (xe - xo) * t
-        const surf = zFace(x - sg * 2 * t, o.y) + tube * 1.4
-        const m = Math.min(1, t / 0.4)
-        const zt = z * (1 - m * m * (3 - 2 * m)) + surf * (m * m * (3 - 2 * m))
-        pts.push(new Vector3(x + sg * 1.5 * t, y, Math.max(zt, surf * 0.9)))
-      }
-      const courbe = new CatmullRomCurve3(pts)
+      const dedans = (x: number, k: number) => Math.min(z, zFace(x - sg * 2, o.y)) - tube * k - 0.3 * r
+      const courbe = new CatmullRomCurve3([
+        new Vector3(xo, y, z),
+        new Vector3(xo + (xe - xo) * 0.06, y, dedans(xo, 1.2)),
+        new Vector3(xo + (xe - xo) * 0.5, y, dedans(xo + (xe - xo) * 0.5, 2.5) * 0.6),
+        // sort au bord de la silhouette, un rien en arriere du plan median
+        new Vector3(xe - sg * tube * 0.3, y, -0.05 * r)
+      ])
       this.mesh(new TubeGeometry(courbe, 24, tube * 0.7, 10), noir, base)
     }
   }

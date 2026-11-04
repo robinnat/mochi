@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { palettePixel, quantifier, tonsDe } from './pixel3d'
+import { leverSombre, luminance, palettePixel, quantifier, tonsDe } from './pixel3d'
 
 describe('style pixel 3D', () => {
   it('la palette du corps a trois tons du plus sombre au plus clair, plus le blanc des yeux', () => {
@@ -28,5 +28,21 @@ describe('style pixel 3D', () => {
     const bord = (1 * w + 1) * 4
     expect(data[bord]!).toBeLessThan(base[0]!)
     expect(data[3]).toBe(0)
+  })
+
+  it('eclaircit une couleur quasi noire pour que les trois tons se distinguent, sans toucher aux autres', () => {
+    const noir = leverSombre('#0a0a0c')
+    expect(luminance(noir)).toBeGreaterThan(0.2)
+    const [ombre, , clair] = tonsDe(noir)
+    expect(clair![0]! - ombre![0]!).toBeGreaterThan(20)
+    expect(leverSombre('#7b6cd9')).toBe('#7b6cd9')
+  })
+
+  it('le blanc des yeux est prioritaire sur les tons de corps et d accessoires', () => {
+    const w = 3
+    const data = new Uint8ClampedArray(w * 3 * 4)
+    for (let i = 0; i < w * 3; i++) data.set([225, 215, 200, 255], i * 4)
+    quantifier(data, w, 3, palettePixel('#7b6cd9', ['#f49ab0']))
+    expect(Array.from(data.slice(16, 19))).toEqual([255, 255, 255])
   })
 })

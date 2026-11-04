@@ -34,7 +34,12 @@ Le moteur ne change pas : `engine.sample(t)` rend la même image et les 5 états
 mesures et leurs durées sont identiques. Seul `MochiBot.vue` peint l'image autrement.
 Le catalogue et le réglage courant vivent dans `src/ui/rendu.ts`.
 
-## Pixel art (`src/ui/pixel.ts`)
+> **LEGACY, NON DISPONIBLE** : les sections « Pixel art (`src/ui/pixel.ts`) », « 3D douce » et
+> « Vraie 3D » plus bas decrivent l'ancien rendu SVG et l'historique de la 3D. Elles ne sont plus
+> proposees dans l'interface et ne sont gardees que comme memoire du code encore present (repli sans
+> WebGL, exports). Pour les styles actuels, voir le tableau et les trois sections ci-dessus.
+
+## [LEGACY] Pixel art SVG (`src/ui/pixel.ts`)
 
 Chaque image du moteur est rasterisée sur une petite grille (boule de 16, 24 ou 32 pixels,
 réglage « Taille des pixels »), puis chaque case reçoit une couleur :
@@ -51,7 +56,7 @@ code à part. L'animation SVG exportée est un feuilletage (`svgFeuilletage`, `a
 les images identiques consécutives fusionnées. Sans canvas (tests `node`, `happy-dom`),
 le composant retombe sur l'original.
 
-## 3D douce
+## [LEGACY] 3D douce en SVG
 
 Tout est dans le SVG : dégradé radial (lumière en haut à gauche), reflet flou, ombre
 portée colorée et floue, ombre interne légère, et le corps percé décalé et flou derrière
@@ -63,7 +68,7 @@ continue de fonctionner tel quel.
   ombre interne plus marquée, mat ;
 - **bulle** (le « dot » d'OpenAI) : couleur saturée, reflet net, lumière renvoyée en bas.
 
-## Vraie 3D (WebGL, Three.js)
+## [LEGACY] Vraie 3D, historique (WebGL, Three.js)
 
 Le style `3d` (`src/ui/trois/`) rend le corps en volume réel, avec une caméra et une
 lumière, là où la 3D douce n'est qu'un dessin de dégradés. Le moteur ne change pas : on

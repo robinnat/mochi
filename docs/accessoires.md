@@ -58,19 +58,21 @@ La planche `accessoires.png` ci-dessus montre encore la première version.
 
 ## Accessoires portes (`portes.ts`)
 
-Huit accessoires posés sur le corps : `lunettes`, `soleil`, `haut-de-forme`, `paille`, `bonnet`,
+Huit accessoires posés sur le corps (seuls `lunettes`, `haut-de-forme` et `noeud` sont exposés sur le site ; les autres restent dans le moteur, en attente) : `lunettes`, `soleil`, `haut-de-forme`, `paille`, `bonnet`,
 `noeud`, `couronne`, `casque`. Prop `porte` de `MochiBot`. Contrairement aux objets de métier, ils
 ne sont pas animés pour eux-mêmes : ils sont recalculés à CHAQUE image depuis `bodyPath` et les
 yeux de cette image (`mesuresPorte`, `lunettesDe`). Un saut, un écrasement, une autre forme, un
 regard ou un clin d'œil les déplacent donc avec le corps, sans réglage.
 
-- Une seule description (`partiesPorte`, en unités du moteur) sert tous les rendus : SVG pour
-  original, argile et bulle ; cases de la grille pour le pixel art (`pixellisePrims`) ; volumes
+- Une seule description (`partiesPorte`, en unités du moteur) sert la 3D (Soft, Flat, Pixel : les
+  teintes passent par le matériau du corps). Les sorties SVG (`porteSvg`) et cases de grille
+  (`pixellisePrims`) sont LEGACY, coupées par `PORTE_2D = false` dans `MochiBot.vue` et non disponibles ; volumes
   pour la vraie 3D (`ui/trois/porte3d.ts`, enfants du maillage donc tournés avec lui).
-- En 3D, les lunettes sont PEINTES sur le visage, à la place des yeux 3D (toujours de face), et un
-  verre teinté assombrit aussi la carte d'émission de l'œil.
-- Les verres ne sont jamais opaques (0,12 pour les lunettes, 0,55 pour le soleil) : le clin d'œil
-  et les yeux écarquillés se lisent au travers. Sans visage (`thinking`, `sleep`) les lunettes
+- Les lunettes sont une vraie monture 3D en tube épais, posée DEVANT les yeux 3D (toujours de face) avec un
+  écart ; leurs branches rentrent dans la tête, d'où elles ressortent à la hauteur des côtés. Une ombre
+  douce est peinte sur le visage sous chaque verre.
+- Pas de verre dans la version 3D : les yeux restent entièrement visibles (clin d'œil, yeux
+  écarquillés). Sans visage (`thinking`, `sleep`) les lunettes
   disparaissent ; le chapeau reste.
 - Limites : pas de contour cartoon sur les pièces 3D ; la planche `tools/accessoires.html` permet
   de comparer les rendus (`?mode=porte|job&rendu=...&etats=...&yaw=...`).

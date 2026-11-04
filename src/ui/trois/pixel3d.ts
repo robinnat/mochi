@@ -24,6 +24,26 @@ const versSrgb = (l: number) => {
   return Math.round(Math.min(1, Math.max(0, v)) * 255)
 }
 
+/** Luminance relative approchee (0 = noir, 1 = blanc), sur les valeurs sRGB. */
+export function luminance(hex: string): number {
+  const [r, g, b] = hexVersRgb(hex)
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+}
+
+/**
+ * Les styles a tons nets (Flat, Pixel) n'ont plus de relief sur une couleur quasi noire (l'encre
+ * par defaut de l'application) : trois tons de noir sont trois noirs. On eclaircit donc les
+ * couleurs sombres vers un gris-bleu lisible avant de poser les tons ; les autres ne bougent pas.
+ */
+export function leverSombre(hex: string): string {
+  const l = luminance(hex)
+  if (l >= 0.28) return hex
+  const k = Math.min(0.5, ((0.28 - l) / 0.28) * 0.5)
+  const [r, g, b] = hexVersRgb(hex)
+  const m = (c: number) => Math.round(c + (255 - c) * k)
+  return '#' + [m(r), m(g), m(b)].map((c) => c.toString(16).padStart(2, '0')).join('')
+}
+
 /** Les trois tons de l'ombrage (ombre, base, clair) : le meme multiple de la couleur, en lineaire, que le shader toon. */
 export const TONS_PIXEL = [0.7, 1, 1.12]
 
@@ -44,7 +64,7 @@ const dist = (a: Rgb, r: number, g: number, b: number) => ((a[0] - r) ** 2 + (a[
  * Ramene chaque pixel a la couleur la plus proche de la palette, durcit le canal alpha (une case
  * est pleine ou vide), puis trace un contour de 1 px autour de la forme. Modifie `data` en place.
  */
-export function quantifier(data: Uint8ClampedArray, w: number, h: number, palette: Rgb[]) {
+export function quantifier(data: Uint8ClampedArray, w: number, h: number, palette: Rgb[], blancPrioritaire = true) {
   const plein = new Uint8Array(w * h)
   for (let i = 0; i < w * h; i++) {
     if (data[i * 4 + 3]! < 128) {
@@ -52,6 +72,13 @@ export function quantifier(data: Uint8ClampedArray, w: number, h: number, palett
       continue
     }
     plein[i] = 1
+    // le blanc des yeux est prioritaire : un bord d'oeil a moitie fondu dans le corps reste blanc, les yeux
+    // gardent des blocs nets au lieu de pixels de la teinte du corps
+    if (blancPrioritaire && Math.min(data[i * 4]!, data[i * 4 + 1]!, data[i * 4 + 2]!) >= 180) {
+      data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = 255
+      data[i * 4 + 3] = 255
+      continue
+    }
     let meilleur = palette[0]!
     let d = Infinity
     for (const p of palette) {

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.1",
   "type": "module",
-  "description": "Mochi : animated avatar engine in SVG. One shape morphing through 14 measured states, with flat, pixel art and clay styles, gestures, job accessories and exports.",
+  "description": "Mochi : animated avatar engine for the web. One shape morphing through five measured face moods, in real 3D (Soft, Flat, Pixel), with gestures, job accessories and exports.",
   "license": "MIT",
   "author": "SYGEN SAS",
   "repository": {
@@ -15,7 +15,8 @@
     "url": "https://github.com/robinnat/mochi/issues"
   },
   "keywords": [
-    "svg",
+    "3d",
+    "threejs",
     "animation",
     "avatar",
     "vue",
