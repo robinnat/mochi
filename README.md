@@ -1,5 +1,7 @@
 # Mochi
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochi-red-phi.vercel.app)
+
 Mochi is a small animated avatar engine for the web. One solid shape morphs between 14
 measured states, two eyes move on their own, and the same motion can be drawn as flat
 vector art, pixel art, soft clay, glossy bubble or real 3D. It comes with gestures, job
