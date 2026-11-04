@@ -6,6 +6,8 @@ import { useReduit } from './reduced'
 import {
   ACCESSOIRE_IDS,
   ACCESSOIRE_LABEL,
+  PORTE_IDS_SITE,
+  PORTE_LABEL,
   ACTIVITES_SITE,
   COULEUR_IDS,
   COLOR_LABEL,
@@ -21,6 +23,7 @@ import {
 import { POSES, type StateId } from '@/bot/states'
 import { TAILLES_PIXEL, type RenduId, type TaillePixelId } from '@/ui/rendu'
 import type { AccessoireId } from '@/bot/accessoires'
+import type { PorteId } from '@/bot/portes'
 import en from '@/i18n/locales/en'
 
 const reduit = useReduit()
@@ -34,6 +37,7 @@ const reflet = ref(true)
 const expression = ref('neutre')
 const mouvement = ref('state:idle')
 const accessoire = ref<AccessoireId | ''>('')
+const porte = ref<PorteId | ''>('')
 
 const RENDUS: { id: RenduId; label: string }[] = [
   { id: 'original', label: 'Flat' },
@@ -53,9 +57,9 @@ const gesteChoisi = computed<Animation | null>(() => {
 })
 const etat = computed<StateId>(() => (mouvement.value.startsWith('state:') ? (mouvement.value.slice(6) as StateId) : 'idle'))
 const cycle = computed(() => gesteChoisi.value?.cycle ?? cycleDe(etat.value))
-const geste = computed(() => (accessoire.value ? null : (gesteChoisi.value?.geste ?? null)))
+const geste = computed(() => gesteChoisi.value?.geste ?? null)
 const exprEff = computed(() => gesteChoisi.value?.expression ?? expression.value)
-const cle = computed(() => [forme.value, rendu.value, mouvement.value, accessoire.value].join('|'))
+const cle = computed(() => [forme.value, rendu.value, mouvement.value, accessoire.value, porte.value].join('|'))
 
 const trois = computed(() => rendu.value === '3d')
 
@@ -67,6 +71,7 @@ const extrait = computed(() => {
   if (trois.value && !reflet.value) lignes.push('  :reflet="false"')
   if (expression.value !== 'neutre') lignes.push(`  expression="${expression.value}"`)
   if (accessoire.value) lignes.push(`  accessoire="${accessoire.value}"`)
+  if (porte.value) lignes.push(`  porte="${porte.value}"`)
   if (mouvement.value.startsWith('state:') && etat.value !== 'idle') lignes.push(`  state="${etat.value}"`)
   return lignes.join('\n') + '\n  :playing="true"\n/>'
 })
@@ -103,6 +108,7 @@ async function copier() {
               :reflet="reflet"
               :expression="exprEff"
               :accessoire="accessoire || null"
+              :porte="porte || null"
               :geste="geste"
               :state="reduit ? etat : undefined"
               :cycle="cycle"
@@ -178,7 +184,14 @@ async function copier() {
             </select>
           </div>
           <div>
-            <h3>Accessory</h3>
+            <h3>Worn</h3>
+            <select v-model="porte" aria-label="Worn accessory">
+              <option value="">None</option>
+              <option v-for="id in PORTE_IDS_SITE" :key="id" :value="id">{{ PORTE_LABEL[id] }}</option>
+            </select>
+          </div>
+          <div>
+            <h3>Tool</h3>
             <select v-model="accessoire" aria-label="Accessory">
               <option value="">None</option>
               <option v-for="id in ACCESSOIRE_IDS" :key="id" :value="id">{{ ACCESSOIRE_LABEL[id] }}</option>

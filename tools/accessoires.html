@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Planche des accessoires (portes ou de metier) sur plusieurs humeurs, dans un rendu au choix.
+  Page de dev, hors build : servie par `pnpm dev` a
+  /tools/accessoires.html?mode=porte|job&rendu=argile|original|pixel|3d&etats=idle,wink,wide&yaw=0
+  Chaque cellule est un MochiBot fige a un instant exact : la planche se capture avec Chrome headless.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mochi accessories board</title>
+    <style>
+      html, body { margin: 0; background: #fbfaf7; font: 11px system-ui, sans-serif; color: #6b6f7e; }
+      #r { display: grid; gap: 0; padding: 6px; width: max-content; }
+      .c { text-align: center; }
+      .t { padding: 2px 0 6px; }
+      svg { overflow: visible; }
+    </style>
+  </head>
+  <body>
+    <div id="r"></div>
+    <script type="module" src="./accessoires.ts"></script>
+  </body>
+</html>

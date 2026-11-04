@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { FORMES_3D } from './catalog'
+import Studio3d from './Studio3d.vue'
 
 const contour = ref(false)
 const reflet = ref(true)
@@ -14,10 +15,11 @@ const reflet = ref(true)
     <h2 id="t-3d">Real 3D, with a soft material</h2>
     <p class="chapo">
       Sphere, rounded cube, pyramid, bevelled star, flower and hexagon, built from the same outline as
-      the 2D shapes. The eyes always face you. Three.js loads only when you scroll here, and every card
+      the 2D shapes. The eyes always face you. Turn the model with your finger or mouse, and give it a mood or a gesture. Three.js loads only when you scroll here, and every card
       below draws through one shared WebGL context.
     </p>
-    <div class="chips" style="margin-top: 18px">
+    <Studio3d />
+    <div class="chips" style="margin-top: 26px">
       <label class="case"><input v-model="contour" type="checkbox" /> Cartoon outline</label>
       <label class="case" style="margin-left: 14px"><input v-model="reflet" type="checkbox" /> Soft highlight</label>
     </div>

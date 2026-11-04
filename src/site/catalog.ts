@@ -16,6 +16,7 @@ import {
   rebond,
   type Geste
 } from '@/bot/gestes'
+import { PORTE_IDS, type PorteId } from '@/bot/portes'
 import { COLOR_BY_ID, SHAPES } from '@/bot/skins'
 import { SEQUENCE, STATE_BY_ID, type StateId } from '@/bot/states'
 import type { Block } from '@/bot/cycles'
@@ -27,7 +28,7 @@ export const FORME_IDS = SHAPES.map((s) => s.id)
 export const COULEUR_IDS = Object.keys(COLOR_LABEL)
 export const hexDe = (id: string) => COLOR_BY_ID.get(id)?.hex ?? '#8b5cf6'
 
-/** Les 14 etats du catalogue, dans l'ordre de la sequence mesuree. */
+/** Les 5 etats du catalogue, tous portes par le visage, dans l'ordre de la sequence. */
 export const ETATS: StateId[] = [...SEQUENCE]
 
 /** Un etat joue puis un retour au repos, en boucle : c'est ce qui le fait rejouer. */
@@ -60,13 +61,9 @@ const LABEL_REPOS: Record<string, string> = {
 }
 
 const LABEL_ACTIVITE: Record<string, string> = {
-  orbite: 'Working: orbit',
   reflexion: 'Working: thinking',
   frappe: 'Working: typing',
-  balayage: 'Working: reading',
-  emission: 'Working: sending',
-  tourbillon: 'Working: swirl',
-  jeu: 'Working: playing'
+  balayage: 'Working: reading'
 }
 
 const idle = (): Block[] => [{ state: 'idle', duration: 4 }]
@@ -113,6 +110,19 @@ export const ACCESSOIRE_LABEL: Record<AccessoireId, string> = {
 }
 
 export const ACCESSOIRE_IDS = ACCESSOIRES.map((a) => a.id)
+
+/** Accessoires portes : posés sur le corps, ils suivent les yeux et l'humeur dans tous les rendus. */
+export const PORTE_LABEL: Record<PorteId, string> = {
+  lunettes: 'Round glasses',
+  soleil: 'Sunglasses',
+  'haut-de-forme': 'Mini top hat',
+  paille: 'Straw hat',
+  bonnet: 'Beanie',
+  noeud: 'Bow',
+  couronne: 'Crown',
+  casque: 'Headphones'
+}
+export const PORTE_IDS_SITE = PORTE_IDS
 
 /** Nom de la forme 3D tel qu'on la voit : le moteur n'a qu'un profil par forme. */
 export const FORMES_3D: { id: string; label: string; couleur: string }[] = [

@@ -40,6 +40,8 @@ import type { BotFrame } from '@/bot/engine'
 import { DEMI_VIEWBOX } from '@/bot/repere'
 import { mixHex } from '@/bot/skins'
 import { teintes3d } from '@/ui/rendu'
+import { lunettesDe, type Prim, type PorteId } from '@/bot/portes'
+import { Porte3d } from './porte3d'
 import {
   couleurContour,
   eclairagePlat,
@@ -109,6 +111,9 @@ export class Mochi3d {
   private readonly ctxYeux: CanvasRenderingContext2D
   private readonly textureYeux: CanvasTexture
   private readonly maillages = new Map<string, Maillage>()
+  /** accessoire porte : chapeau et casque en volumes fixes au maillage, lunettes peintes sur le visage */
+  private porte: PorteId | null = null
+  private readonly porte3d = new Porte3d()
   /** forme du mochi (`squircle`, `etoile`...) : fixe son profil de volume et ses yeux */
   private forme = ''
   /** profil impose (option de labo) ; sinon celui de la forme */
@@ -148,6 +153,7 @@ export class Mochi3d {
     this.coque = new Mesh(this.mesh.geometry, coqueMateriau(this.epaisseur))
     this.coque.visible = false
     this.mesh.add(this.coque)
+    this.mesh.add(this.porte3d.groupe)
   }
 
   /** Materiau d'une variante, cree a la demande et garde. */
@@ -217,6 +223,11 @@ export class Mochi3d {
     this.profilImpose = p
   }
 
+  /** Choisit l'accessoire porte (`null` = aucun). Appele avant `maj`. */
+  setPorte(id: PorteId | null) {
+    this.porte = id
+  }
+
   /** Dit quelle forme est rendue : son profil de volume (cube, prisme, dome...) en depend. */
   setForme(forme: string) {
     this.forme = forme
@@ -262,8 +273,14 @@ export class Mochi3d {
       cm.transparent = mat.transparent
       cm.opacity = mat.opacity
     }
+    // chapeau, casque : replaces depuis le contour de cette image, au milieu de l'epaisseur du corps
+    const geo = this.mesh.geometry
+    if (!geo.boundingBox) geo.computeBoundingBox()
+    const bb = geo.boundingBox
+    this.porte3d.maj(this.porte, frame, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0)
     // les yeux de la 3D : pile en face, sur la face avant
     frame = this.yeuxSurLaFace(frame)
+    const lunettes = this.porte === 'lunettes' || this.porte === 'soleil' ? lunettesDe(this.porte, frame) : []
     // reflet : seulement la matiere `doux` (ombrage lisse), pose selon la forme du moment
     const reflet = plat?.lisse
       ? refletDuCorps(
@@ -276,11 +293,11 @@ export class Mochi3d {
         )
       : null
     const cleReflet = reflet ? [reflet.x, reflet.y, reflet.rx].map((v) => Math.round(v * 2)).join(',') : '-'
-    const cleVisage = `${this.rendu}|${this.douceur}|${couleur}|${papier}|${JSON.stringify(frame.eyes)}|${JSON.stringify(frame.notch ?? null)}|${cleReflet}`
+    const cleVisage = `${this.rendu}|${this.douceur}|${couleur}|${papier}|${JSON.stringify(frame.eyes)}|${cleReflet}|${this.porte ?? ''}|${lunettes.map((p) => p.d).join('')}`
     if (cleVisage !== this.cleVisage) {
       this.cleVisage = cleVisage
       // le flat garde la couleur choisie telle quelle (pas de pastel), sans creux d'oeil
-      this.peindre(frame, plat ? couleur : m.base, papier, m.creux, !plat, reflet)
+      this.peindre(frame, plat ? couleur : m.base, papier, m.creux, !plat, reflet, lunettes)
     }
   }
 
@@ -339,7 +356,7 @@ export class Mochi3d {
    * Le visage : la couleur du corps, et les yeux en couleur du fond (des trous), avec une
    * ombre interne sur le rebord haut gauche, comme le creux de l'argile.
    */
-  private peindre(frame: BotFrame, base: string, papier: string, creux: string, creuser = true, reflet: Reflet | null = null) {
+  private peindre(frame: BotFrame, base: string, papier: string, creux: string, creuser = true, reflet: Reflet | null = null, lunettes: Prim[] = []) {
     const c = this.ctx
     const T = this.toile.width
     const k = T / (2 * VB)
@@ -354,11 +371,6 @@ export class Mochi3d {
       m: lireMatrice(e.matrix),
       alpha: e.alpha
     }))
-    if (frame.notch) {
-      const p = new Path2D()
-      p.arc(frame.notch.x, frame.notch.y, frame.notch.r, 0, Math.PI * 2)
-      trous.push({ chemin: p, m: [1, 0, 0, 1, 0, 0], alpha: 1 })
-    }
     const y = this.ctxYeux
     y.setTransform(1, 0, 0, 1, 0, 0)
     y.globalAlpha = 1
@@ -390,6 +402,32 @@ export class Mochi3d {
       c.fill(cadre, 'evenodd')
       c.restore()
     }
+    // lunettes : peintes sur le visage, a la place des yeux 3D. Un verre teinte assombrit aussi
+    // l'oeil (carte d'emission), qui reste lisible au travers.
+    for (const p of lunettes) {
+      const chemin = new Path2D(p.d)
+      const a = p.alpha ?? 1
+      c.setTransform(k, 0, 0, k, k * VB, k * VB)
+      c.globalAlpha = a
+      if (p.fill) {
+        c.fillStyle = p.fill
+        c.fill(chemin)
+        if (p.fill !== '#ffffff') {
+          y.setTransform(k, 0, 0, k, k * VB, k * VB)
+          y.globalAlpha = a
+          y.fillStyle = '#000'
+          y.fill(chemin)
+        }
+      }
+      if (p.stroke) {
+        c.strokeStyle = p.stroke
+        c.lineWidth = p.sw ?? 2
+        c.lineCap = c.lineJoin = 'round'
+        c.stroke(chemin)
+      }
+    }
+    y.setTransform(1, 0, 0, 1, 0, 0)
+    y.globalAlpha = 1
     c.setTransform(1, 0, 0, 1, 0, 0)
     c.globalAlpha = 1
     this.texture.needsUpdate = true
@@ -402,6 +440,7 @@ export class Mochi3d {
     for (const m of this.materiaux.values()) m.dispose()
     for (const r of this.rampes) r.dispose()
     this.coque.material.dispose()
+    this.porte3d.liberer()
     this.texture.dispose()
     this.textureYeux.dispose()
   }
@@ -531,7 +570,8 @@ export function webglDisponible(): boolean {
 
 /**
  * Dessine `frame` dans le canvas `cible` (carre, en pixels physiques) : ombre au sol
- * (floue en realiste, en aplat dans les variantes flat), puis le corps 3D.
+ * (floue en realiste, en aplat dans les variantes flat), puis le corps 3D. `yaw` (radians)
+ * fait tourner le corps sur lui-meme autour de l'axe vertical, la camera et la lumiere restent fixes.
  */
 export function rendreAvatar(
   cible: HTMLCanvasElement,
@@ -542,7 +582,9 @@ export function rendreAvatar(
   contour = false,
   douceur: Douceur = DOUCEUR_DEFAUT,
   reflet = REFLET_DEFAUT,
-  forme = ''
+  forme = '',
+  yaw = 0,
+  porte: PorteId | null = null
 ) {
   const ctx3 = contexte()
   const { renderer, scene, camera, mochi } = ctx3
@@ -557,6 +599,9 @@ export function rendreAvatar(
   }
   mochi.setRendu(rendu3d, contour, douceur, reflet)
   mochi.setForme(forme)
+  mochi.setPorte(porte)
+  // l'instance est partagee : l'angle est remis a chaque image, jamais garde d'un avatar a l'autre
+  mochi.mesh.rotation.y = yaw
   const px = cible.width
   mochi.calerContour(px / (2 * VB))
   const taille = renderer.domElement.width
