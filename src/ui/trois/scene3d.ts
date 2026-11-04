@@ -43,6 +43,8 @@ import { teintes3d } from '@/ui/rendu'
 import { mesuresPorte, ombresPorte, type Ombre, type PorteId } from '@/bot/portes'
 import { Porte3d } from './porte3d'
 import { lisere } from './lisere'
+import { palettePixel, quantifier } from './pixel3d'
+import { TEINTES_PORTES } from '@/bot/portes'
 import {
   couleurContour,
   eclairagePlat,
@@ -197,7 +199,8 @@ export class Mochi3d {
       // le shader toon sait deriver une normale par facette ; seul le typage ne le declare pas
       if (plat.facettes) (m as unknown as { flatShading: boolean }).flatShading = true
     }
-    lisere(m, plat ? 0.7 : 0.5, plat ? 0.32 : 0.22, { reflet: this.uReflet, ao: 1 })
+    // l'ombrage continu (AO, liseres, reflet) n'a de sens que pour la matiere douce : les styles a aplats gardent leurs tons nets
+    if (!plat || plat.lisse) lisere(m, plat ? 0.7 : 0.5, plat ? 0.32 : 0.22, { reflet: this.uReflet, ao: 1 })
     this.materiaux.set(cle, m)
     return m
   }
@@ -611,9 +614,12 @@ export function rendreAvatar(
   // l'instance est partagee : l'angle est remis a chaque image, jamais garde d'un avatar a l'autre
   mochi.mesh.rotation.y = yaw
   const px = cible.width
-  mochi.calerContour(px / (2 * VB))
+  // pixel : on rend 4 fois plus grand puis on reduit (moyenne) avant de ramener a la palette
+  const pixel = rendu3d === 'pixel'
+  const pxRendu = pixel ? px * 4 : px
+  mochi.calerContour(pxRendu / (2 * VB))
   const taille = renderer.domElement.width
-  if (taille !== px) renderer.setSize(px, px, false)
+  if (taille !== pxRendu) renderer.setSize(pxRendu, pxRendu, false)
   mochi.maj(frame, couleur, papier)
   renderer.render(scene, camera)
   const c = cible.getContext('2d')
@@ -621,6 +627,17 @@ export function rendreAvatar(
   c.setTransform(1, 0, 0, 1, 0, 0)
   c.clearRect(0, 0, px, px)
   if (!mochi.mesh.visible) return
+  if (pixel) {
+    c.imageSmoothingEnabled = true
+    c.imageSmoothingQuality = 'high'
+    c.drawImage(renderer.domElement, 0, 0, px, px)
+    const im = c.getImageData(0, 0, px, px)
+    const t = porte ? TEINTES_PORTES[porte] : null
+    const accessoires = porte === 'lunettes' || porte === 'soleil' ? ['#26222f'] : t ? [t.fond, t.accent] : []
+    quantifier(im.data, px, px, palettePixel(couleur, accessoires))
+    c.putImageData(im, 0, 0)
+    return
+  }
   const k = px / (2 * VB)
   // ombre au sol : ellipse sous le point le plus bas, couleur de l'argile
   const bas = -mochi.bas

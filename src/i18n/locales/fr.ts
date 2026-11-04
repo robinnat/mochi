@@ -153,7 +153,9 @@ export default {
     pixel: 'Pixel art',
     argile: '3D argile',
     bulle: '3D bulle',
-    '3d': '3D'
+    '3d': 'Doux',
+    flat3d: 'Plat',
+    pixel3d: 'Pixel'
   },
 
   pixelSizes: {

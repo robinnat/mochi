@@ -26,7 +26,7 @@ const PREVIEW_AT = 1
       montre le bot dans SON style, les autres grilles suivent le style retenu.
     -->
     <h2 class="text-sm font-semibold">{{ t('panel.style') }}</h2>
-    <div class="mt-2 grid grid-cols-4 gap-1.5">
+    <div class="mt-2 grid grid-cols-3 gap-1.5">
       <BotTile
         v-for="r in RENDUS"
         :key="r"
@@ -42,8 +42,8 @@ const PREVIEW_AT = 1
       />
     </div>
 
-    <!-- la taille des pixels n'a de sens qu'en pixel art -->
-    <div v-if="rendu === 'pixel'" class="mt-3">
+    <!-- la taille des pixels n'a de sens qu'en style Pixel -->
+    <div v-if="rendu === 'pixel3d'" class="mt-3">
       <h3 id="taille-pixels" class="text-xs text-[var(--muted)]">{{ t('panel.pixelSize') }}</h3>
       <div class="mt-1.5 grid grid-cols-3 gap-1.5" role="group" aria-labelledby="taille-pixels">
         <button
@@ -64,8 +64,8 @@ const PREVIEW_AT = 1
       </div>
     </div>
 
-    <!-- le contour cartoon n'a de sens qu'en 3D -->
-    <label v-if="rendu === '3d'" class="mt-3 flex cursor-pointer items-center gap-2 text-xs">
+    <!-- le contour cartoon : style Flat -->
+    <label v-if="rendu === 'flat3d'" class="mt-3 flex cursor-pointer items-center gap-2 text-xs">
       <input v-model="contour" type="checkbox" class="size-4 cursor-pointer accent-[var(--ink)]" />
       {{ t('panel.contour') }}
     </label>
