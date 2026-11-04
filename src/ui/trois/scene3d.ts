@@ -284,7 +284,9 @@ export class Mochi3d {
     const frameCorps = frame
     // les yeux de la 3D : pile en face, sur la face avant
     frame = this.yeuxSurLaFace(frame)
-    this.porte3d.maj(this.porte, frameCorps, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y))
+    const plat0 = reglagePlat(this.rendu, this.douceur)
+    this.porte3d.reglages = plat0?.lisse ? { force: 0.7, haut: 0.32, ao: 1, reflet: this.uReflet } : null
+    this.porte3d.maj(this.porte, frameCorps, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y), (y, sg) => this.bordX(y, sg))
     const ombres: Ombre[] = this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []
     // le reflet doux est un effet de matiere (shader, repere de la vue) : plus rien n'est peint dans la
     // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
@@ -296,6 +298,17 @@ export class Mochi3d {
       // le flat garde la couleur choisie telle quelle (pas de pastel), sans creux d'oeil
       this.peindre(frame, plat ? couleur : m.base, papier, m.creux, !plat, reflet, ombres)
     }
+  }
+
+  /** Abscisse du bord du corps (cote `sg` : -1 gauche, 1 droite) a la hauteur `y` du moteur. */
+  private bordX(y: number, sg: number): number {
+    const P = this.mesh.geometry.attributes.position
+    if (!P) return 0
+    let x = 0
+    for (let i = 0; i < P.count; i++) {
+      if (Math.abs(P.getY(i) + y) < 5) x = sg > 0 ? Math.max(x, P.getX(i)) : Math.min(x, P.getX(i))
+    }
+    return x
   }
 
   /** Profondeur (z) de la face avant du corps a (x, y) du moteur : le sommet le plus avance du voisinage. */

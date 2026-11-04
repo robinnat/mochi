@@ -16,7 +16,10 @@ import {
   type MeshStandardMaterial,
   type MeshToonMaterial,
   SphereGeometry,
-  TorusGeometry
+  TorusGeometry,
+  TubeGeometry,
+  CatmullRomCurve3,
+  Vector3
 } from 'three'
 import { lisere } from './lisere'
 import { mesuresPorte, partiesPorte, rayonVerre, yeuxDe, type Partie, type PorteId } from '@/bot/portes'
@@ -33,6 +36,8 @@ export class Porte3d {
   /** matiere du corps, clonee par teinte : les pieces se lisent comme le corps (meme eclairage) */
   private readonly matieres = new Map<string, Materiau>()
   private source: Materiau | null = null
+  /** memes jeux de lumiere que le corps (liseres, ombrage doux, reflet) : poses par `Mochi3d` */
+  reglages: { force: number; haut: number; ao: number; reflet?: { value: number } } | null = null
 
   constructor() {
     this.groupe.visible = false
@@ -54,8 +59,9 @@ export class Porte3d {
       m.color.set(fond)
       m.transparent = false
       m.opacity = 1
-      // le liseré ne se copie pas avec le clone : on le repose, plus discret sur les accessoires
-      lisere(m, 0.4)
+      // le clone ne garde pas les effets de matiere du corps : on les repose, les memes
+      const g = this.reglages
+      if (g) lisere(m, g.force, g.haut, { ao: g.ao, reflet: g.reflet })
       this.matieres.set(fond, m)
     }
     return m
@@ -68,9 +74,9 @@ export class Porte3d {
   }
 
   /** Replace les pieces de `id` sur le corps de `frame` ; `zc` = milieu de l'epaisseur du corps. */
-  maj(id: PorteId | null, frame: BotFrame, base: Materiau, zc: number, yeux?: BotFrame, zFace?: (x: number, y: number) => number) {
+  maj(id: PorteId | null, frame: BotFrame, base: Materiau, zc: number, yeux?: BotFrame, zFace?: (x: number, y: number) => number, bordX?: (y: number, sg: number) => number) {
     if (id === 'lunettes' || id === 'soleil') {
-      this.lunettes(id, base, yeux ?? frame, zFace)
+      this.lunettes(id, base, yeux ?? frame, zFace, bordX)
       return
     }
     const g = id ? mesuresPorte(frame) : null
@@ -99,7 +105,7 @@ export class Porte3d {
    * Vraie monture en tube rond epais, noir doux, posee DEVANT les yeux 3D (de face) : plus
    * grande que l'oeil, elle deborde, et ses branches partent en arriere de chaque cote.
    */
-  private lunettes(id: 'lunettes' | 'soleil', base: Materiau, frame: BotFrame, zFace?: (x: number, y: number) => number) {
+  private lunettes(id: 'lunettes' | 'soleil', base: Materiau, frame: BotFrame, zFace?: (x: number, y: number) => number, bordX?: (y: number, sg: number) => number) {
     const ye = yeuxDe(frame)
     if (ye.length !== 2 || !zFace) {
       this.groupe.visible = false
@@ -115,7 +121,8 @@ export class Porte3d {
       for (let k = 0; k < 8; k++) z = Math.max(z, zFace(o.x + Math.cos((k / 8) * Math.PI * 2) * r, o.y + Math.sin((k / 8) * Math.PI * 2) * r * 1.1))
       z = Math.max(z, zFace(o.x, o.y))
     }
-    z += 0.12 * r
+    // posees DEVANT : un vrai ecart avec le visage, on voit l'espace et l'ombre portee quand on tourne
+    z += 0.42 * r
     const cle = `${id}|${base.uuid}|${[a.x, a.y, b.x, b.y, r, z].map((v) => Math.round(v * 2)).join(',')}`
     this.groupe.visible = true
     if (cle === this.cle) return
@@ -137,12 +144,23 @@ export class Porte3d {
         v.position.set(o.x, -o.y, z - tube * 0.4)
       }
     }
+    // branches : du bord exterieur de la monture jusqu'aux cotes de la tete, en arriere
     for (const [o, sg] of [[a, -1], [b, 1]] as const) {
-      const x = o.x + sg * (r + tube * 0.5)
-      const br = this.mesh(new CylinderGeometry(tube * 0.8, tube * 0.8, 0.9 * r * 1.6, 14), noir, base)
-      br.rotation.x = Math.PI / 2
-      br.rotation.z = sg * 0.12
-      br.position.set(x + sg * 0.06 * r, -o.y + 0.1 * r, z - 0.8 * r)
+      const xo = o.x + sg * (r + tube * 0.5)
+      const xe = bordX ? bordX(o.y, sg) : xo + sg * 0.8 * r
+      const y = -o.y + 0.1 * r
+      // la branche epouse la tete : elle part de la monture (devant) puis suit la surface, juste
+      // au-dessus, jusqu'au bord ; elle ne traverse pas le corps et ne flotte pas
+      const pts: Vector3[] = []
+      for (const t of [0, 0.12, 0.26, 0.42, 0.58, 0.74, 0.88, 1]) {
+        const x = xo + (xe - xo) * t
+        const surf = zFace(x - sg * 2 * t, o.y) + tube * 1.4
+        const m = Math.min(1, t / 0.4)
+        const zt = z * (1 - m * m * (3 - 2 * m)) + surf * (m * m * (3 - 2 * m))
+        pts.push(new Vector3(x + sg * 1.5 * t, y, Math.max(zt, surf * 0.9)))
+      }
+      const courbe = new CatmullRomCurve3(pts)
+      this.mesh(new TubeGeometry(courbe, 24, tube * 0.7, 10), noir, base)
     }
   }
 
