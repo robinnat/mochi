@@ -16,8 +16,7 @@ export default defineConfig({
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         app: fileURLToPath(new URL('./app.html', import.meta.url)),
         labo: fileURLToPath(new URL('./labo.html', import.meta.url)),
-        rendus: fileURLToPath(new URL('./labo-rendus.html', import.meta.url)),
-        peluche: fileURLToPath(new URL('./labo-peluche.html', import.meta.url))
+        rendus: fileURLToPath(new URL('./labo-rendus.html', import.meta.url))
       }
     }
   },

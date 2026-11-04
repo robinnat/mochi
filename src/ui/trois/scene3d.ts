@@ -40,7 +40,7 @@ import type { BotFrame } from '@/bot/engine'
 import { DEMI_VIEWBOX } from '@/bot/repere'
 import { mixHex } from '@/bot/skins'
 import { teintes3d } from '@/ui/rendu'
-import { lunettesDe, type Prim, type PorteId } from '@/bot/portes'
+import { mesuresPorte, ombresPorte, type Ombre, type PorteId } from '@/bot/portes'
 import { Porte3d } from './porte3d'
 import {
   couleurContour,
@@ -273,14 +273,16 @@ export class Mochi3d {
       cm.transparent = mat.transparent
       cm.opacity = mat.opacity
     }
-    // chapeau, casque : replaces depuis le contour de cette image, au milieu de l'epaisseur du corps
+    // accessoire porte : replace depuis le contour de cette image (chapeau, noeud) ou depuis les
+    // yeux 3D (lunettes, vraie monture en tube), et petite ombre douce qu'il pose sur le corps
     const geo = this.mesh.geometry
-    if (!geo.boundingBox) geo.computeBoundingBox()
+    geo.computeBoundingBox()
     const bb = geo.boundingBox
-    this.porte3d.maj(this.porte, frame, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0)
+    const frameCorps = frame
     // les yeux de la 3D : pile en face, sur la face avant
     frame = this.yeuxSurLaFace(frame)
-    const lunettes = this.porte === 'lunettes' || this.porte === 'soleil' ? lunettesDe(this.porte, frame) : []
+    this.porte3d.maj(this.porte, frameCorps, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y))
+    const ombres: Ombre[] = this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []
     // reflet : seulement la matiere `doux` (ombrage lisse), pose selon la forme du moment
     const reflet = plat?.lisse
       ? refletDuCorps(
@@ -293,12 +295,23 @@ export class Mochi3d {
         )
       : null
     const cleReflet = reflet ? [reflet.x, reflet.y, reflet.rx].map((v) => Math.round(v * 2)).join(',') : '-'
-    const cleVisage = `${this.rendu}|${this.douceur}|${couleur}|${papier}|${JSON.stringify(frame.eyes)}|${cleReflet}|${this.porte ?? ''}|${lunettes.map((p) => p.d).join('')}`
+    const cleVisage = `${this.rendu}|${this.douceur}|${couleur}|${papier}|${JSON.stringify(frame.eyes)}|${cleReflet}|${this.porte ?? ''}|${ombres.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
     if (cleVisage !== this.cleVisage) {
       this.cleVisage = cleVisage
       // le flat garde la couleur choisie telle quelle (pas de pastel), sans creux d'oeil
-      this.peindre(frame, plat ? couleur : m.base, papier, m.creux, !plat, reflet, lunettes)
+      this.peindre(frame, plat ? couleur : m.base, papier, m.creux, !plat, reflet, ombres)
     }
+  }
+
+  /** Profondeur (z) de la face avant du corps a (x, y) du moteur : le sommet le plus avance du voisinage. */
+  private zFace(x: number, y: number): number {
+    const P = this.mesh.geometry.attributes.position
+    if (!P) return 0
+    let z = -Infinity
+    for (let i = 0; i < P.count; i++) {
+      if (Math.abs(P.getX(i) - x) < 7 && Math.abs(P.getY(i) + y) < 7) z = Math.max(z, P.getZ(i))
+    }
+    return z === -Infinity ? (this.mesh.geometry.boundingBox?.max.z ?? 0) : z
   }
 
   /**
@@ -356,7 +369,7 @@ export class Mochi3d {
    * Le visage : la couleur du corps, et les yeux en couleur du fond (des trous), avec une
    * ombre interne sur le rebord haut gauche, comme le creux de l'argile.
    */
-  private peindre(frame: BotFrame, base: string, papier: string, creux: string, creuser = true, reflet: Reflet | null = null, lunettes: Prim[] = []) {
+  private peindre(frame: BotFrame, base: string, papier: string, creux: string, creuser = true, reflet: Reflet | null = null, ombres: Ombre[] = []) {
     const c = this.ctx
     const T = this.toile.width
     const k = T / (2 * VB)
@@ -364,6 +377,21 @@ export class Mochi3d {
     c.globalAlpha = 1
     c.fillStyle = base
     c.fillRect(0, 0, T, T)
+    // ombrage de studio : le corps s'assombrit doucement vers le bas et sur les bords (type
+    // occlusion ambiante), dans une teinte de la couleur du corps et jamais en noir pur
+    {
+      const ombre = mixHex(creux, '#000000', 0.35)
+      const g = c.createLinearGradient(0, T * 0.35, 0, T * 0.98)
+      g.addColorStop(0, hexA(ombre, 0))
+      g.addColorStop(1, hexA(ombre, 0.3))
+      c.fillStyle = g
+      c.fillRect(0, 0, T, T)
+      const r = c.createRadialGradient(T * 0.46, T * 0.44, T * 0.2, T * 0.5, T * 0.5, T * 0.5)
+      r.addColorStop(0, hexA(ombre, 0))
+      r.addColorStop(1, hexA(ombre, 0.2))
+      c.fillStyle = r
+      c.fillRect(0, 0, T, T)
+    }
     // le reflet est peint AVANT les yeux : ils le recouvrent, il ne les touche jamais
     if (reflet) peindreReflet(c, reflet, k, VB)
     const trous: Array<{ chemin: Path2D; m: number[]; alpha: number }> = frame.eyes.map((e) => ({
@@ -402,29 +430,16 @@ export class Mochi3d {
       c.fill(cadre, 'evenodd')
       c.restore()
     }
-    // lunettes : peintes sur le visage, a la place des yeux 3D. Un verre teinte assombrit aussi
-    // l'oeil (carte d'emission), qui reste lisible au travers.
-    for (const p of lunettes) {
-      const chemin = new Path2D(p.d)
-      const a = p.alpha ?? 1
-      c.setTransform(k, 0, 0, k, k * VB, k * VB)
-      c.globalAlpha = a
-      if (p.fill) {
-        c.fillStyle = p.fill
-        c.fill(chemin)
-        if (p.fill !== '#ffffff') {
-          y.setTransform(k, 0, 0, k, k * VB, k * VB)
-          y.globalAlpha = a
-          y.fillStyle = '#000'
-          y.fill(chemin)
-        }
-      }
-      if (p.stroke) {
-        c.strokeStyle = p.stroke
-        c.lineWidth = p.sw ?? 2
-        c.lineCap = c.lineJoin = 'round'
-        c.stroke(chemin)
-      }
+    // ombres douces des accessoires, posees sur le corps (degrade radial, sans bord)
+    for (const o of ombres) {
+      c.setTransform(k * o.rx, 0, 0, k * o.ry, k * (o.x + VB), k * (o.y + VB))
+      const g = c.createRadialGradient(0, 0, 0, 0, 0, 1)
+      const ombre = mixHex(creux, '#000000', 0.45)
+      g.addColorStop(0, hexA(ombre, o.a))
+      g.addColorStop(1, hexA(ombre, 0))
+      c.globalAlpha = 1
+      c.fillStyle = g
+      c.fillRect(-1, -1, 2, 2)
     }
     y.setTransform(1, 0, 0, 1, 0, 0)
     y.globalAlpha = 1
@@ -617,7 +632,7 @@ export function rendreAvatar(
   // ombre au sol : ellipse sous le point le plus bas, couleur de l'argile
   const bas = -mochi.bas
   const box = mochi.mesh.geometry.boundingSphere
-  const large = (box?.radius ?? 100) * 0.62
+  const large = (box?.radius ?? 100) * 0.72
   const cx = (box?.center.x ?? 0) + 6
   const plat = reglagePlat(rendu3d, douceur)
   c.save()
@@ -630,8 +645,8 @@ export function rendreAvatar(
   if (plat?.lisse) {
     // doux : ombre au sol lisse, un degrade tres leger sans bord net
     const g = c.createRadialGradient(0, 0, 0, 0, 0, k * large)
-    g.addColorStop(0, hexA(portee, 0.2))
-    g.addColorStop(0.6, hexA(portee, 0.1))
+    g.addColorStop(0, hexA(portee, 0.34))
+    g.addColorStop(0.6, hexA(portee, 0.17))
     g.addColorStop(1, hexA(portee, 0))
     c.fillStyle = g
   } else if (plat) {

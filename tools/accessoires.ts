@@ -31,7 +31,7 @@ createApp({
       : ids.flatMap((id, i) =>
           etats.map((e) =>
             h('div', { class: 'c' }, [
-              h(MochiBot, { size: taille, shape: forme, color: couleur ?? COULEURS[i % 9], rendu: rendu as never, state: e, porte: id as never, frozenAt: POSES[e], yaw, label: id }),
+              h(MochiBot, { size: taille, shape: forme, color: couleur ?? COULEURS[i % 9], rendu: rendu as never, state: e, porte: (id === 'aucun' ? null : id) as never, frozenAt: POSES[e], yaw, label: id }),
               h('div', { class: 't' }, `${id} / ${e}`)
             ])
           )

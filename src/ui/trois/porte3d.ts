@@ -18,7 +18,7 @@ import {
   SphereGeometry,
   TorusGeometry
 } from 'three'
-import { mesuresPorte, partiesPorte, type Partie, type PorteId } from '@/bot/portes'
+import { mesuresPorte, partiesPorte, rayonVerre, yeuxDe, type Partie, type PorteId } from '@/bot/portes'
 import type { BotFrame } from '@/bot/engine'
 
 type Materiau = MeshStandardMaterial | MeshToonMaterial
@@ -65,8 +65,12 @@ export class Porte3d {
   }
 
   /** Replace les pieces de `id` sur le corps de `frame` ; `zc` = milieu de l'epaisseur du corps. */
-  maj(id: PorteId | null, frame: BotFrame, base: Materiau, zc: number) {
-    const g = id && id !== 'lunettes' && id !== 'soleil' ? mesuresPorte(frame) : null
+  maj(id: PorteId | null, frame: BotFrame, base: Materiau, zc: number, yeux?: BotFrame, zFace?: (x: number, y: number) => number) {
+    if (id === 'lunettes' || id === 'soleil') {
+      this.lunettes(id, base, yeux ?? frame, zFace)
+      return
+    }
+    const g = id ? mesuresPorte(frame) : null
     if (!id || !g) {
       this.groupe.visible = false
       this.cle = ''
@@ -86,6 +90,57 @@ export class Porte3d {
     this.inner.position.set(px, py, zc)
     this.inner.rotation.x = penche ? 0.2 : 0
     for (const c of this.inner.children) c.position.set(c.position.x - px, c.position.y - py, c.position.z - zc)
+  }
+
+  /**
+   * Vraie monture en tube rond epais, noir doux, posee DEVANT les yeux 3D (de face) : plus
+   * grande que l'oeil, elle deborde, et ses branches partent en arriere de chaque cote.
+   */
+  private lunettes(id: 'lunettes' | 'soleil', base: Materiau, frame: BotFrame, zFace?: (x: number, y: number) => number) {
+    const ye = yeuxDe(frame)
+    if (ye.length !== 2 || !zFace) {
+      this.groupe.visible = false
+      this.cle = ''
+      return
+    }
+    const [a, b] = ye as [(typeof ye)[0], (typeof ye)[0]]
+    // verres tangents l'un a l'autre (comme sur la reference) : monture comprise, pas de chevauchement
+    const r = Math.min(rayonVerre(a, b) * 1.05, (b.x - a.x) / 2 / 1.17)
+    // la face avant peut etre penchee (pyramide) : on se pose devant le point le plus avance du pourtour
+    let z = -Infinity
+    for (const o of [a, b]) {
+      for (let k = 0; k < 8; k++) z = Math.max(z, zFace(o.x + Math.cos((k / 8) * Math.PI * 2) * r, o.y + Math.sin((k / 8) * Math.PI * 2) * r * 1.1))
+      z = Math.max(z, zFace(o.x, o.y))
+    }
+    z += 0.12 * r
+    const cle = `${id}|${base.uuid}|${[a.x, a.y, b.x, b.y, r, z].map((v) => Math.round(v * 2)).join(',')}`
+    this.groupe.visible = true
+    if (cle === this.cle) return
+    this.cle = cle
+    this.vide()
+    this.inner.position.set(0, 0, 0)
+    this.inner.rotation.set(0, 0, 0)
+    const noir = id === 'soleil' ? '#15131c' : '#26222f'
+    const tube = 0.17 * r
+    for (const o of [a, b]) {
+      const t = this.mesh(new TorusGeometry(r, tube, 22, 64), noir, base)
+      // verre un peu plus haut que large : il entoure l'oeil en pastille
+      t.scale.set(1, Math.min(1.55, Math.max(1.12, (Math.max(a.r, b.r) * 1.2) / r)), 1)
+      t.position.set(o.x, -o.y, z)
+      if (id === 'soleil') {
+        const v = this.mesh(new CylinderGeometry(r, r, tube * 1.2, 40), noir, base)
+        v.rotation.x = Math.PI / 2
+        v.scale.y = 1
+        v.position.set(o.x, -o.y, z - tube * 0.4)
+      }
+    }
+    for (const [o, sg] of [[a, -1], [b, 1]] as const) {
+      const x = o.x + sg * (r + tube * 0.5)
+      const br = this.mesh(new CylinderGeometry(tube * 0.8, tube * 0.8, 0.9 * r * 1.6, 14), noir, base)
+      br.rotation.x = Math.PI / 2
+      br.rotation.z = sg * 0.12
+      br.position.set(x + sg * 0.06 * r, -o.y + 0.1 * r, z - 0.8 * r)
+    }
   }
 
   private mesh(geo: BufferGeometry, fond: string, base: Materiau) {

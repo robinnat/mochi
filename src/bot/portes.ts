@@ -246,9 +246,40 @@ function partieEnPrims(p: Partie, sw: number): Prim[] {
   }
 }
 
+/** Une ombre douce posee sur le corps (ellipse, repere du moteur) : rx, ry, intensite 0..1. */
+export interface Ombre {
+  x: number
+  y: number
+  rx: number
+  ry: number
+  a: number
+}
+
+/** Rayon d'un verre rond d'apres les deux yeux (3D : yeux de face, centres, de meme taille). */
+export function rayonVerre(a: Oeil, b: Oeil): number {
+  const ecart = b.x - a.x
+  return Math.max(Math.min(ecart * 0.5 * 0.98, Math.max(a.r, b.r) * 1.3 + 6), 10)
+}
+
+/**
+ * Ombres que l'accessoire projette sur le corps (lumiere en haut a gauche : l'ombre tombe vers
+ * le bas et la droite). Douces, sans bord : elles ne servent qu'a poser l'objet sur la peau.
+ */
+export function ombresPorte(id: PorteId, frame: BotFrame, g: Geo | null): Ombre[] {
+  if (id === 'lunettes' || id === 'soleil') {
+    const ye = yeuxDe(frame)
+    if (ye.length !== 2) return []
+    const r = rayonVerre(ye[0]!, ye[1]!)
+    return ye.map((o) => ({ x: o.x + 0.2 * r, y: o.y + 0.42 * r, rx: 1.15 * r, ry: 1.1 * r, a: 0.26 }))
+  }
+  if (!g) return []
+  if (id === 'noeud') return [{ x: g.cx + 0.55 * g.rb, y: g.hautA(g.cx + 0.5 * g.rb) + 0.55 * g.rb, rx: 0.8 * g.rb, ry: 0.45 * g.rb, a: 0.22 }]
+  return [{ x: g.cx + 0.1 * g.rb, y: g.by + 0.14 * g.rb, rx: 1.0 * g.rb, ry: 0.32 * g.rb, a: 0.26 }]
+}
+
 /* ------------------------------------------------------------------ lunettes */
 
-interface Oeil {
+export interface Oeil {
   x: number
   y: number
   /** demi-etendue maximale de l'oeil a l'ecran */
@@ -256,7 +287,7 @@ interface Oeil {
   alpha: number
 }
 
-function yeuxDe(frame: BotFrame): Oeil[] {
+export function yeuxDe(frame: BotFrame): Oeil[] {
   const out: Oeil[] = []
   for (const e of frame.eyes) {
     const n = e.matrix.match(/-?\d+\.?\d*(?:e-?\d+)?/g)?.map(Number)
