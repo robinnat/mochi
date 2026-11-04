@@ -6,6 +6,8 @@ import {
   aireSignee,
   ANNEAUX,
   centreDe,
+  champCoussin,
+  hauteurCoussin,
   contourDuCorps,
   yeuxDeFace,
   demiEtendueOeil,
@@ -285,5 +287,50 @@ describe('pyramide', () => {
     expect(haut).toBeLessThan(milieu)
     expect(milieu).toBeLessThan(bas)
     expect(bas).toBeGreaterThan(0.35 * (pts.reduce((m, p) => Math.max(m, p.x), 0) * 2))
+  })
+})
+
+describe('gonflage coussin', () => {
+  const contour = (id: string) => contourDuCorps(image(id).bodyPath)
+
+  it.each(['etoile', 'hexagone', 'nuage', 'fleur'])('%s : champ lisse, nul dehors, maximal a l interieur', (id) => {
+    const pts = contour(id)
+    const champ = champCoussin(pts)
+    let cx = 0
+    let cy = 0
+    for (const p of pts) {
+      cx += p.x / pts.length
+      cy += p.y / pts.length
+    }
+    expect(hauteurCoussin(champ, cx, cy)).toBeGreaterThan(0.6)
+    // loin du contour, la hauteur est nulle
+    expect(hauteurCoussin(champ, champ.x0 + 1, champ.y0 + 1)).toBe(0)
+    // pas de saut : deux points voisins different peu (surface continue, sans arete)
+    const pas = champ.pas
+    let pire = 0
+    for (let k = 0; k < 40; k++) {
+      const p = pts[(k * 7) % pts.length]!
+      const x = cx + (p.x - cx) * 0.5
+      const y = cy + (p.y - cy) * 0.5
+      pire = Math.max(pire, Math.abs(hauteurCoussin(champ, x + pas, y) - hauteurCoussin(champ, x, y)))
+    }
+    expect(pire).toBeLessThan(0.12)
+  })
+
+  it('un contour ecrase de peu reutilise le champ calcule (cache)', () => {
+    const pts = contour('etoile')
+    const a = champCoussin(pts)
+    const b = champCoussin(pts.map((p) => ({ x: p.x * 1.01, y: p.y * 1.01 })))
+    expect(b.u).toBe(a.u)
+  })
+
+  it("le volume d'une forme coussin a le meme nombre de sommets et reste ferme", () => {
+    for (const id of ['etoile', 'hexagone', 'nuage', 'fleur']) {
+      const v = gonfler(contour(id), DEMI_VIEWBOX, undefined, undefined, profilDe(id))
+      expect(v.positions.every(Number.isFinite)).toBe(true)
+      let zmax = 0
+      for (let i = 2; i < v.positions.length; i += 3) zmax = Math.max(zmax, Math.abs(v.positions[i]!))
+      expect(zmax).toBeGreaterThan(20)
+    }
   })
 })

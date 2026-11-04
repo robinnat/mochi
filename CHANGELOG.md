@@ -5,6 +5,13 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed (pillow shapes)
+
+- Star, hexagon, cloud and flower are inflated like a cushion: the height is the solution of a Poisson
+  equation inside the outline, solved once per shape and cached. No ridge along the medial axis, no
+  crease between lobes, no groove on the edge; normals are smoothed. Silhouettes, sizes and ids are
+  unchanged.
+
 ### Changed (3D only)
 
 - **Three styles, all real 3D**: Soft (default), Flat (`toon`, optional outline) and Pixel (low

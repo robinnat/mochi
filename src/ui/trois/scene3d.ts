@@ -376,8 +376,10 @@ export class Mochi3d {
     souderNormales(geo.attributes.normal!.array as Float32Array, pts.length, finesseDe(this.rendu).anneaux)
     // Flat et Pixel : des paliers nets sur des normales irregulieres font des taches (nuage, fleur,
     // etoile). On lisse les normales avant de couper en tons : les limites deviennent des courbes propres.
-    if (plat && !plat.lisse && !plat.facettes && geo.index) {
-      lisserNormales(geo.attributes.normal as BufferAttribute, geo.index.array, 14)
+    // Soft sur une forme « coussin » : quelques passes aussi, pour fondre la ligne de raccord entre l'avant et l'arriere
+    const lissePlat = !!plat && !plat.lisse && !plat.facettes
+    if ((lissePlat || (this.profil.coussin && !plat?.facettes)) && geo.index) {
+      lisserNormales(geo.attributes.normal as BufferAttribute, geo.index.array, lissePlat ? 14 : 8)
       souderNormales(geo.attributes.normal!.array as Float32Array, pts.length, finesseDe(this.rendu).anneaux)
     }
     geo.computeBoundingSphere()
