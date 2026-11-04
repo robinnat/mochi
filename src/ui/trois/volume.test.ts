@@ -124,7 +124,7 @@ describe('gonflage', () => {
     expect(sortant).toBe(pts.length)
   })
 
-  it('le carre est un cube : profond comme large, face plane, mur droit', () => {
+  it('le carre est un galet-cube : profond comme large, aretes tres arrondies, encore un plateau', () => {
     const pts = contourDuCorps(image('squircle').bodyPath)
     const v = gonfler(pts, DEMI_VIEWBOX, undefined, undefined, profilDe('squircle'))
     let zmin = Infinity
@@ -143,8 +143,9 @@ describe('gonflage', () => {
     }
     const largeur = Math.min(x1 - x0, y1 - y0)
     expect((zmax - zmin) / largeur).toBeCloseTo(1, 1)
-    // un mur droit : le bord est a +zw devant et -zw derriere, avec zw > 0
-    expect(v.mesures.zw).toBeGreaterThan(0.3 * v.mesures.H)
+    // arrondi genereux (0,78 de la demi-profondeur) mais pas une boule : il reste un mur et un plateau
+    expect(v.mesures.zw).toBeGreaterThan(0.1 * v.mesures.H)
+    expect(v.mesures.zw).toBeLessThan(0.4 * v.mesures.H)
     // la face avant est plane : le plateau est a la hauteur maximale
     const sommetsAuMax = Array.from({ length: v.positions.length / 3 }, (_, i) => v.positions[i * 3 + 2]!).filter(
       (z) => Math.abs(z - zmax) < 1e-3
