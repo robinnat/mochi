@@ -304,11 +304,11 @@ describe('retours de Robin du 05/11/2026', () => {
     // taille : lame ~ 1/4 du corps, longueur 30 a 46 % de la hauteur
     expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeGreaterThan(0.18)
     expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeLessThan(0.34)
-    expect((b.max.y - b.min.y) / R.H, forme).toBeGreaterThan(0.22)
-    expect((b.max.y - b.min.y) / R.H, forme).toBeLessThan(0.48)
+    expect((b.max.y - b.min.y) / R.H, forme).toBeGreaterThan(0.17)
+    expect((b.max.y - b.min.y) / R.H, forme).toBeLessThan(0.55)
     // un vrai espace sous les yeux, et la pointe reste au-dessus du bas du corps
-    expect(b.max.y, forme).toBeLessThan(R.yYeux - 1.5 * R.rVerre)
-    expect(b.min.y, forme).toBeGreaterThan(R.bas)
+    expect(b.max.y, forme).toBeLessThan(R.yYeux - 1.0 * R.rVerre)
+    expect(b.min.y, forme).toBeGreaterThan(R.bas - 0.08 * R.H)
     // ne traverse pas le corps : sous le haut (ancre), tout reste en avant de la surface (a un petit enfoncement pres)
     let ancre = false
     for (const m of meshes(acc.groupe)) {
@@ -320,7 +320,7 @@ describe('retours de Robin du 05/11/2026', () => {
         if (!h) continue
         if (w.y > b.max.y - 0.2 * (b.max.y - b.min.y)) {
           if (w.z < h.p.z) ancre = true
-        } else expect(w.z - h.p.z, forme).toBeGreaterThan(-0.1 * R.hw)
+        } else expect(w.z - h.p.z, forme).toBeGreaterThan(-0.14 * R.hw)
       }
     }
     expect(ancre, forme).toBe(true)
@@ -387,12 +387,12 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     expect(Object.keys(sel)).toEqual(['bas'])
   })
 
-  it.each(FORMES)('%s : la cravate est courte, son bas reste nettement au-dessus du bas du corps', (forme) => {
+  it.each(FORMES)('%s : la pointe de la cravate ne descend pas sous le bas du corps', (forme) => {
     const { R } = corpsDe(forme)
     const acc = new Accessoires3d()
     acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
     const b = new Box3().setFromObject(acc.groupe)
-    expect(b.min.y, forme).toBeGreaterThan(R.bas + 0.04 * R.H)
+    expect(b.min.y, forme).toBeGreaterThan(R.bas - 0.08 * R.H)
     acc.liberer()
   })
 

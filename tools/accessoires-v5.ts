@@ -250,17 +250,19 @@ function planCravate() {
   const couleurs = ['turquoise', 'ambre', 'rose', 'vert', 'violet', 'orange', 'bleu', 'turquoise', 'ambre', 'rose', 'vert']
   const vues = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }]
   const cell = 300
-  const { c, ctx } = nouvelle(cell * 3, 130 + formes.length * (cell + 8) + 200)
-  texte(ctx, 'Cravate v10', 40, 70, 54, ENCRE, true)
-  texte(ctx, 'Pièce plane et rigide, verticale · 11 formes · face, 3/4, profil', 40, 108, 24, GRIS)
+  const { c, ctx } = nouvelle(cell * 3, 170 + formes.length * (cell + 8) + 200)
+  texte(ctx, 'Cravate v11', 40, 70, 54, ENCRE, true)
+  texte(ctx, 'Triangle + losange bombés, même technique que le nœud papillon', 40, 108, 22, GRIS)
+  cellule(ctx, cell * 3 - 190, 0, 190, { forme: 'cercle', couleur: hexDe('turquoise'), sel: { bas: 'papillon' }, yaw: 0, cadre: 150 })
+  texte(ctx, 'papillon (référence)', cell * 3 - 95, 150, 16, GRIS, false, 'center')
   formes.forEach((f, i) => {
-    const y = 130 + i * (cell + 8)
+    const y = 170 + i * (cell + 8)
     vues.forEach((v, k) => {
       cellule(ctx, k * cell, y, cell, { forme: f, couleur: hexDe(couleurs[i]!), sel: { bas: 'cravate' }, yaw: v.yaw, cadre: 185 })
       texte(ctx, `${NOMS_FORMES[f]} · ${v.nom}`, k * cell + cell / 2, y + cell - 4, 19, GRIS, false, 'center')
     })
   })
-  const y0 = 130 + formes.length * (cell + 8)
+  const y0 = 170 + formes.length * (cell + 8)
   texte(ctx, 'Lisibilité en 64 px (taille réelle)', 40, y0 + 40, 30, ENCRE, true)
   const petits = ['cercle', 'squircle', 'triangle', 'etoile', 'goutte', 'nuage']
   petits.forEach((f, j) => cellule(ctx, 40 + j * 110, y0 + 70, 64, { forme: f, couleur: hexDe(couleurs[formes.indexOf(f)]!), sel: { bas: 'cravate' }, yaw: 0, cadre: 150 }))

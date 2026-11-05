@@ -43,10 +43,18 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { lisere } from './lisere'
 import type { Ombre } from '@/bot/portes'
 import { mixHex } from '@/bot/skins'
-import { EMPLACEMENTS, RETIRES, resoudre, couleursDe, type Emplacement, type Selection } from '@/bot/emplacements'
+import { COULEURS, EMPLACEMENTS, RETIRES, resoudre, couleursDe, type Emplacement, type Selection } from '@/bot/emplacements'
 import type { OeilScene, Reperes } from './ancres'
 
 type Materiau = MeshStandardMaterial | MeshToonMaterial
+
+/** Distance entre deux couleurs hex (RGB). */
+const distanceHex = (a: string, b: string) => {
+  const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
+  const x = p(a)
+  const y = p(b)
+  return Math.hypot(x[0]! - y[0]!, x[1]! - y[1]!, x[2]! - y[2]!)
+}
 
 const V = (x = 0, y = 0, z = 0) => new Vector3(x, y, z)
 const Z = V(0, 0, 1)
@@ -65,6 +73,8 @@ interface Ctx {
   a: OeilScene
   b: OeilScene
   rv: number
+  /** couleur du corps (hex), pour choisir une couleur par defaut qui contraste */
+  corps?: string
 }
 
 /* ------------------------------------------------------------------ outils */
@@ -981,38 +991,35 @@ const BAS: Record<string, Gen> = {
     papillon3d(c, g, s, c.c1, c.c1)
   },
   cravate(c) {
-    // Cravate : UNE piece rigide et plane (comme le noeud papillon d'Alfred), dans un plan vertical face camera,
-    // symetrique et droite. Un petit noeud trapeze (c2) devant, puis une lame (c1) qui s'elargit et finit en
-    // pointe, avec un cran entre les deux. Le corps ne la deforme pas : elle est posee d'un bloc, son haut un peu
-    // enfonce dans le ventre, et inclinee d'UN seul angle pour rester au contact en haut sans traverser le corps.
+    // Cravate dans l'esprit du noeud papillon d'Alfred : meme technique (triangles aux coins arrondis, extrusion
+    // gonflee aux normales lissees, donc BOMBEES), deux volumes rigides dans un plan vertical, droits et symetriques :
+    // 1. le NOEUD : un triangle pointe en bas ; 2. la LAME : un losange etire vers le haut (rapport ~2,7), dont la
+    // pointe haute part de la pointe du noeud. Rien ne suit la courbure du ventre : le haut est enfonce dans le
+    // corps, la piece prend UN seul angle (le plus petit qui evite de traverser le corps), le bas peut se decoller.
     const { hw, A, H } = c.R
     const f = visage(c)
-    // le haut du noeud est sous la bouche : un vrai espace sous les yeux
-    const yTop = Math.min(c.R.yBas + 0.3 * hw, f.yBouche + 0.25 * f.rv, c.R.yYeux - 2.2 * c.R.rVerre)
-    const place = yTop - c.R.bas - 0.07 * H
-    const L = Math.min(0.43 * H, place) // longueur totale (noeud + lame)
+    const yTop = Math.min(c.R.yBas + 0.3 * hw, f.yBouche + 0.25 * f.rv, c.R.yYeux - 1.8 * c.R.rVerre)
+    const place = yTop - c.R.bas - 0.05 * H
+    const L = Math.min(0.5 * H, place) // longueur totale (noeud + lame)
     if (L < 0.2 * hw) return
-    const hk = 0.2 * L // hauteur du noeud
-    const lame = L - hk * 0.8
-    const wl = 0.25 * hw // demi-largeur max de la lame (~1/4 de la largeur du corps)
-    const rc = 0.03 * hw
-    const noeud = polygoneArrondi([[-0.2 * hw, 0], [0.2 * hw, 0], [0.12 * hw, -hk], [-0.12 * hw, -hk]], rc, 8)
-    const y1 = -hk * 0.8
-    const blade = polygoneArrondi(
-      [[-0.09 * hw, y1], [0.09 * hw, y1], [wl, y1 - 0.45 * lame], [0.015 * hw, y1 - lame], [-0.015 * hw, y1 - lame], [-wl, y1 - 0.45 * lame]],
-      rc,
-      8
-    )
+    const hk = 0.27 * L // hauteur du noeud
+    const lame = L - hk // la pointe haute de la lame touche la pointe du noeud
+    const wl = Math.min(lame / 2.4 / 2, 0.3 * hw) // demi-largeur de la lame
+    const kw = Math.max(0.26 * hw, 1.2 * wl) // demi-largeur du noeud
+    const rc = 0.09 * hw
+    const bomb = 0.045 * hw
+    const ep = 0.07 * hw
+    const noeud = polygoneArrondi([[-kw, 0], [kw, 0], [0, -hk]], rc, 12)
+    const blade = polygoneArrondi([[0, -hk * 0.92], [wl, -hk - 0.5 * lame], [0, -hk - lame], [-wl, -hk - 0.5 * lame]], rc, 12)
     // contact avec le ventre : plus petite pente (z par unite de descente) pour que la piece ne traverse jamais le corps
     const enfonce = 0.05 * hw
-    const ep = 0.05 * hw
     const z0 = (A.avant(0, yTop)?.p.z ?? c.R.zc + hw) - enfonce
     let pente = -0.5
     for (let k = 4; k <= 10; k++) {
       const d = (L * k) / 10
       for (const x of [-wl, 0, wl]) {
         const h = A.avant(x * (d / L > 0.4 ? 1 : 0.4), yTop - d)
-        if (h) pente = Math.max(pente, (h.p.z + 0.012 * hw + ep * 0.5 - z0) / d)
+        if (h) pente = Math.max(pente, (h.p.z + 0.012 * hw + ep * 0.5 + bomb - z0) / d)
       }
     }
     pente = Math.min(pente, 0.9)
@@ -1020,11 +1027,17 @@ const BAS: Record<string, Gen> = {
     g.position.set(0, yTop, z0)
     g.rotation.x = -Math.atan(pente)
     c.g.add(g)
+    // couleur par defaut : rouge, ou bleu si le corps est proche du rouge (elle ne disparait pas sur le corps)
+    const ROUGE = COULEURS.rouge
+    const BLEU = '#2f6fe0'
+    let c1 = c.c1
+    let c2 = c.c2
+    if (c1 === ROUGE && c2 === ROUGE && c.corps && distanceHex(c.corps, ROUGE) < distanceHex(c.corps, BLEU)) c1 = c2 = BLEU
     for (const [pts, hex, dz] of [
-      [blade, c.c1, 0],
-      [noeud, c.c2, ep * 0.9]
+      [blade, c1, 0],
+      [noeud, c2, 0.02 * hw]
     ] as const) {
-      const m = add(c, extrusion(formeDePoints(pts as Array<[number, number]>), ep, 0.02 * hw, 5, true), hex, g, 1, true)
+      const m = add(c, extrusion(formeDePoints(pts as Array<[number, number]>), ep, bomb, 12, true), hex, g, 1, true)
       m.position.z = dz
     }
   },
@@ -1337,6 +1350,8 @@ export class Accessoires3d {
   ombres: Ombre[] = []
   /** couleurs utilisees (palette du pixel art) */
   couleurs: string[] = []
+  /** couleur du corps (hex), posee par `Mochi3d` : sert aux couleurs par defaut qui doivent contraster */
+  corps?: string
 
   constructor() {
     this.groupe.visible = false
@@ -1386,7 +1401,7 @@ export class Accessoires3d {
       this.couleurs = []
       return
     }
-    const cle = `${cleCorps}|${base.uuid}|${JSON.stringify(sel)}|${this.reglages ? 'l' : 'p'}`
+    const cle = `${cleCorps}|${base.uuid}|${this.corps ?? ''}|${JSON.stringify(sel)}|${this.reglages ? 'l' : 'p'}`
     this.groupe.visible = true
     if (cle === this.cle) return
     this.cle = cle
@@ -1422,7 +1437,8 @@ export class Accessoires3d {
         geos: this.geos,
         a: ye[0],
         b: ye[1],
-        rv: R.rVerre
+        rv: R.rVerre,
+        corps: this.corps
       }
       gen(ctx)
       this.ombres.push(...ombresDe(e, g, R))

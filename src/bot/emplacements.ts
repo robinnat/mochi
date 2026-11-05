@@ -88,7 +88,7 @@ export const CATALOGUE: AccessoireDef[] = [
   // bas
   def('bas', 'moustache', 'Moustache', C.noir, C.noir),
   def('bas', 'papillon', 'Nœud papillon', C.noir, C.noir),
-  def('bas', 'cravate', 'Cravate', '#2f6fe0', '#2f6fe0'),
+  def('bas', 'cravate', 'Cravate', C.rouge, C.rouge),
   def('bas', 'echarpe', 'Écharpe', C.orange, C.orange),
   def('bas', 'perles', 'Collier de perles', C.creme, C.creme),
   def('bas', 'fleurs', 'Collier de fleurs', C.rose, C.jaune),

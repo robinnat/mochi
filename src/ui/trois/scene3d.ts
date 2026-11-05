@@ -345,6 +345,7 @@ export class Mochi3d {
     this.porte3d.maj(this.porte, frameCorps, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y), (y, sg) => this.bordX(y, sg))
     // accessoires par emplacements : ancres sur le volume de CE corps, recalcules quand le corps change
     this.acc3d.reglages = this.porte3d.reglages
+    this.acc3d.corps = couleur
     const cleCorps = `${this.rendu}|${this.forme}|${frameCorps.bodyPath}|${JSON.stringify(frame.eyes)}`
     this.acc3d.maj(this.accs, cleCorps, this.mesh.material, () => {
       const ye = yeuxDe(frame)
