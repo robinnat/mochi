@@ -130,14 +130,14 @@ function nomsDe(sel: Selection) {
 
 function plancheCombos() {
   const defs = [
-    combo('cercle', hexDe('turquoise'), { tete: 'casquette', yeux: 'soleil', visage: 'moustache', bas: 'papillon' }),
-    combo('etoile', hexDe('ambre'), { tete: 'couronne', yeux: 'coeur', visage: 'joues', bas: 'medaille', dos: 'ailes' }),
-    combo('squircle', hexDe('rose'), { tete: 'haut-de-forme', yeux: 'monocle', visage: 'moustache', bas: 'cravate' }),
-    combo('nuage', hexDe('bleu'), { tete: 'bonnet', yeux: 'ski', visage: 'rousseur', bas: 'echarpe' }),
-    combo('goutte', hexDe('vert'), { tete: 'fleur', yeux: 'rondes', visage: 'pansement', bas: 'perles' }),
-    combo('hexagone', hexDe('orange'), { tete: 'oreilles', yeux: 'sommeil', visage: 'chat', bas: 'clochette' }),
-    combo('triangle', hexDe('violet'), { tete: 'paille', yeux: 'carrees', visage: 'grain', bas: 'bandana' }),
-    combo('oeuf', hexDe('creme'), { tete: 'fete', yeux: 'domino', visage: 'larme', bas: 'fleurs', dos: 'cape' })
+    combo('cercle', hexDe('turquoise'), { tete: 'casque', yeux: 'rondes', visage: 'joues', bas: 'papillon', dos: 'cape' }),
+    combo('etoile', hexDe('ambre'), { tete: 'fleur', yeux: 'soleil', visage: 'rousseur', bas: 'cravate', dos: 'sac' }),
+    combo('squircle', hexDe('rose'), { tete: 'casque', yeux: 'coeur', visage: 'chat', bas: 'echarpe', dos: 'sac' }),
+    combo('nuage', hexDe('bleu'), { tete: 'haut-de-forme', yeux: 'monocle', visage: 'moustache', bas: 'perles', dos: 'ailes' }),
+    combo('goutte', hexDe('vert'), { tete: 'couronne', yeux: 'carrees', visage: 'rousseur', bas: 'fleurs', dos: 'queue' }),
+    combo('hexagone', hexDe('orange'), { tete: 'casque', yeux: 'soleil', visage: 'grain', bas: 'papillon', dos: 'sac' }),
+    combo('triangle', hexDe('violet'), { tete: 'paille', yeux: 'etoile', visage: 'joues', bas: 'bandana', dos: 'diable' }),
+    combo('oeuf', hexDe('creme'), { tete: 'antenne', yeux: 'sommeil', visage: 'moustache', bas: 'cravate', dos: 'cape' })
   ]
   const cell = 540
   const lh = 215
@@ -167,27 +167,30 @@ function plancheCombos() {
 }
 
 function planchevues() {
-  const trois: Array<{ nom: string; sel: Selection; forme: string; couleur: string }> = [
-    { nom: 'Haut-de-forme', sel: { tete: 'haut-de-forme' }, forme: 'cercle', couleur: hexDe('turquoise') },
-    { nom: 'Lunettes de soleil', sel: { yeux: 'soleil' }, forme: 'etoile', couleur: hexDe('ambre') },
-    { nom: 'Écharpe', sel: { bas: 'echarpe' }, forme: 'squircle', couleur: hexDe('rose') }
+  const lignes: Array<{ nom: string; sel: Selection; forme: string; couleur: string }> = [
+    { nom: 'Casque de musique', sel: { tete: 'casque' }, forme: 'cercle', couleur: hexDe('turquoise') },
+    { nom: 'Écharpe', sel: { bas: 'echarpe' }, forme: 'squircle', couleur: hexDe('rose') },
+    { nom: 'Cravate', sel: { bas: 'cravate' }, forme: 'cercle', couleur: hexDe('orange') },
+    { nom: 'Sac à dos', sel: { dos: 'sac' }, forme: 'etoile', couleur: hexDe('turquoise') },
+    { nom: 'Cape', sel: { dos: 'cape' }, forme: 'oeuf', couleur: hexDe('bleu') }
   ]
   const vues = [
     { yaw: 0, nom: 'face' },
     { yaw: 0.62, nom: '3/4' },
-    { yaw: 1.5708, nom: 'profil' }
+    { yaw: 1.5708, nom: 'profil' },
+    { yaw: 3.1416, nom: 'dos' }
   ]
-  const cell = 360
-  const ligne = cell + 70
-  const { c, ctx } = nouvelle(W, 190 + trois.length * ligne + 30)
-  texte(ctx, 'Vraie 3D : face, 3/4, profil', 40, 78, 54, ENCRE, true)
+  const cell = 270
+  const ligne = cell + 60
+  const { c, ctx } = nouvelle(W, 150 + lignes.length * ligne + 20)
+  texte(ctx, 'Vraie 3D : face, 3/4, profil, dos', 40, 78, 52, ENCRE, true)
   texte(ctx, 'Le corps tourne, la lumière reste en haut à gauche', 40, 122, 28, GRIS)
-  trois.forEach((t, i) => {
-    const y0 = 160 + i * ligne
-    texte(ctx, t.nom, 40, y0 + 34, 36, ENCRE, true)
+  lignes.forEach((t, i) => {
+    const y0 = 150 + i * ligne
+    texte(ctx, t.nom, 40, y0 + 30, 32, ENCRE, true)
     vues.forEach((v, k) => {
-      cellule(ctx, k * cell, y0 + 40, cell, { forme: t.forme, couleur: t.couleur, sel: t.sel, yaw: v.yaw, cadre: 175 })
-      texte(ctx, v.nom, k * cell + cell / 2, y0 + ligne - 6, 22, GRIS, false, 'center')
+      cellule(ctx, k * cell, y0 + 34, cell, { forme: t.forme, couleur: t.couleur, sel: t.sel, yaw: v.yaw, cadre: t.sel.dos ? 245 : 185 })
+      texte(ctx, v.nom, k * cell + cell / 2, y0 + ligne - 4, 20, GRIS, false, 'center')
     })
   })
   return c

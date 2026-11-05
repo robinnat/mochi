@@ -66,8 +66,8 @@ export const CATALOGUE: AccessoireDef[] = [
   def('tete', 'couronne', 'Couronne', C.or, C.rouge),
   def('tete', 'paille', 'Chapeau de paille', C.paille, C.rouge),
   def('tete', 'bob', 'Bob', C.jaune, C.creme),
-  def('tete', 'oreilles', 'Serre-tête à oreilles', C.rose, C.creme),
   def('tete', 'antenne', 'Antenne', C.noir, C.rouge),
+  def('tete', 'casque', 'Casque de musique', C.rouge, C.creme),
   def('tete', 'ruban', 'Nœud ruban', C.rose, C.rose),
   def('tete', 'fleur', 'Fleur', C.rose, C.jaune),
   def('tete', 'fete', 'Chapeau de fête', C.violet, C.jaune),
@@ -80,24 +80,18 @@ export const CATALOGUE: AccessoireDef[] = [
   def('yeux', 'etoile', 'Lunettes étoile', C.or, C.or),
   def('yeux', 'monocle', 'Monocle', C.or, C.creme),
   def('yeux', 'sommeil', 'Masque de sommeil', C.violet, C.creme),
-  def('yeux', 'ski', 'Lunettes de ski', C.orange, C.bleu),
-  def('yeux', 'domino', 'Masque de héros', C.rouge, C.creme),
   // visage
   def('visage', 'moustache', 'Moustache', C.noir, C.noir),
   def('visage', 'chat', 'Moustaches de chat', C.noir, C.rose),
-  def('visage', 'pansement', 'Pansement', C.creme, C.rose),
   def('visage', 'rousseur', 'Taches de rousseur', '#c8733a', '#c8733a'),
   def('visage', 'joues', 'Joues roses', C.rose, C.rose),
   def('visage', 'grain', 'Grain de beauté', C.noir, C.noir),
-  def('visage', 'larme', 'Larme', C.bleu, C.bleu),
   // bas
   def('bas', 'papillon', 'Nœud papillon', C.rouge, C.rouge),
   def('bas', 'cravate', 'Cravate', C.bleu, C.marine),
   def('bas', 'echarpe', 'Écharpe', C.orange, C.creme),
-  def('bas', 'perles', 'Collier de perles', C.creme, C.rose),
+  def('bas', 'perles', 'Collier de perles', C.creme, C.creme),
   def('bas', 'bandana', 'Bandana', C.rouge, C.creme),
-  def('bas', 'medaille', 'Médaille', C.or, C.rouge),
-  def('bas', 'clochette', 'Collier à clochette', C.turquoise, C.or),
   def('bas', 'fleurs', 'Collier de fleurs', C.rose, C.jaune),
   // dos
   def('dos', 'ailes', 'Ailes d’ange', C.creme, C.or),
@@ -105,6 +99,22 @@ export const CATALOGUE: AccessoireDef[] = [
   def('dos', 'sac', 'Sac à dos', C.orange, C.marine),
   def('dos', 'cape', 'Cape', C.rouge, C.or),
   def('dos', 'queue', 'Queue', C.orange, C.creme)
+]
+
+
+/**
+ * Accessoires RETIRES du catalogue (retour de Robin, 05/11/2026) : ils n'apparaissent plus ni dans le
+ * catalogue ni sur les planches. Les definitions et les generateurs 3D restent dans le depot : pour en
+ * remettre un, le recopier dans `CATALOGUE`.
+ */
+export const RETIRES: AccessoireDef[] = [
+  def('tete', 'oreilles', 'Serre-tête à oreilles', C.rose, C.creme),
+  def('yeux', 'ski', 'Lunettes de ski', C.orange, C.bleu),
+  def('yeux', 'domino', 'Masque de héros', C.rouge, C.creme),
+  def('visage', 'pansement', 'Pansement', C.creme, C.rose),
+  def('visage', 'larme', 'Larme', C.bleu, C.bleu),
+  def('bas', 'medaille', 'Médaille', C.or, C.rouge),
+  def('bas', 'clochette', 'Collier à clochette', C.turquoise, C.or),
 ]
 
 export const PAR_ID = new Map(CATALOGUE.map((a) => [`${a.emplacement}:${a.id}`, a]))

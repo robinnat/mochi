@@ -11,6 +11,7 @@ import {
   couleursDe,
   parEmplacement,
   resoudre,
+  RETIRES,
   type Emplacement,
   type Selection
 } from '@/bot/emplacements'
@@ -240,5 +241,86 @@ describe('combinaison des emplacements', () => {
 describe('liste des emplacements', () => {
   it('cinq emplacements dans un ordre stable', () => {
     expect(EMPLACEMENTS).toEqual(['tete', 'yeux', 'visage', 'bas', 'dos'] as Emplacement[])
+  })
+})
+
+describe('retours de Robin du 05/11/2026', () => {
+  it('les sept accessoires retires ne sont plus au catalogue ni resolus, mais restent listes dans RETIRES', () => {
+    expect(RETIRES.map((r) => `${r.emplacement}:${r.id}`).sort()).toEqual(
+      ['bas:clochette', 'bas:medaille', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski'].sort()
+    )
+    for (const r of RETIRES) {
+      expect(CATALOGUE.some((a) => a.emplacement === r.emplacement && a.id === r.id)).toBe(false)
+      expect(resoudre(r.emplacement, r.id)).toBeNull()
+    }
+  })
+
+  it('le collier de perles ne porte plus de pendentif : que des spheres identiques', () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ bas: 'perles' }, 'p', mat(), () => R)
+    const rayons = new Set(meshes(acc.groupe).map((m) => m.geometry.uuid))
+    expect(rayons.size).toBe(1)
+    acc.liberer()
+  })
+
+  it.each(FORMES)('%s : le casque de musique a un arceau au-dessus de la tete et deux coques sur les flancs, enfoncees dans le corps', (forme) => {
+    const { R } = corpsDe(forme)
+    const acc = new Accessoires3d()
+    acc.maj({ tete: 'casque' }, forme, mat(), () => R)
+    const b = new Box3().setFromObject(acc.groupe)
+    expect(sommetsFinis(acc.groupe)).toBe(true)
+    // l'arceau passe au-dessus de l'oeil, jusqu'au haut du corps
+    expect(b.max.y).toBeGreaterThan(R.yYeux + 0.3 * R.H)
+    // les coques depassent a gauche et a droite de la largeur du corps a hauteur des yeux
+    const g = R.A.cote(R.yYeux, R.zc, -1)!
+    const d = R.A.cote(R.yYeux, R.zc, 1)!
+    expect(b.min.x).toBeLessThan(g.p.x)
+    expect(b.max.x).toBeGreaterThan(d.p.x)
+    // symetrique : autant a gauche qu'a droite, a peu pres
+    expect(Math.abs(b.min.x + b.max.x)).toBeLessThan(0.25 * R.hw)
+    // une coque rentre dans le corps (comme les lunettes) : son extremite interieure est en dedans du bord
+    expect(b.min.x).toBeLessThan(g.p.x - 1)
+    acc.liberer()
+  })
+
+  it('le casque occupe l emplacement tete : il ne se cumule pas avec un chapeau (documente), mais avec tous les autres', () => {
+    const { R } = corpsDe('squircle')
+    const acc = new Accessoires3d()
+    acc.maj({ tete: 'casque', yeux: 'soleil', visage: 'moustache', bas: 'echarpe', dos: 'sac' }, 'x', mat(), () => R)
+    expect(acc.groupe.children.map((c) => c.name)).toEqual(EMPLACEMENTS)
+    for (const g of acc.groupe.children) expect(sommetsFinis(g)).toBe(true)
+    acc.liberer()
+  })
+
+  it('la cravate se decolle du corps : son bas est plus en avant que le corps a la meme hauteur', () => {
+    for (const forme of ['cercle', 'squircle', 'etoile']) {
+      const { R } = corpsDe(forme)
+      const acc = new Accessoires3d()
+      acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
+      const b = new Box3().setFromObject(acc.groupe)
+      const surfaceBas = R.A.avant(0, b.min.y + 0.15 * (b.max.y - b.min.y))
+      expect(surfaceBas, forme).not.toBeNull()
+      expect(b.max.z, forme).toBeGreaterThan(surfaceBas!.p.z + 0.05 * R.hw)
+      acc.liberer()
+    }
+  })
+
+  it('les bretelles du sac suivent le corps : tous leurs sommets sont a la surface ou juste au-dessus (pas de vol libre)', () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ dos: 'sac' }, 's', mat(), () => R)
+    const tubes = meshes(acc.groupe).filter((m) => m.geometry.type === 'TubeGeometry')
+    expect(tubes.length).toBe(2)
+    for (const t of tubes) {
+      const P = t.geometry.attributes.position!
+      let maxD = 0
+      for (let i = 0; i < P.count; i += 7) {
+        const dist = Math.hypot(P.getX(i), P.getY(i), P.getZ(i) - R.zc)
+        maxD = Math.max(maxD, dist)
+      }
+      expect(maxD).toBeLessThan(R.hw * 1.35)
+    }
+    acc.liberer()
   })
 })
