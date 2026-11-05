@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BufferAttribute, BufferGeometry, Box3, MeshStandardMaterial, type Mesh, type Object3D } from 'three'
+import { BufferAttribute, BufferGeometry, Box3, MeshStandardMaterial, Vector3, type Mesh, type Object3D } from 'three'
 import { BotEngine } from '@/bot/engine'
 import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
 import { SHAPES } from '@/bot/skins'
@@ -293,25 +293,37 @@ describe('retours de Robin du 05/11/2026', () => {
     acc.liberer()
   })
 
-  it.each(FORMES)('%s : la cravate est plaquee contre le ventre, rien ne flotte ni ne pointe vers l avant', (forme) => {
+  it.each(FORMES)('%s : la cravate est une piece droite, symetrique, ancree en haut, qui ne traverse pas le corps', (forme) => {
     const { R } = corpsDe(forme)
     const acc = new Accessoires3d()
     acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
     expect(meshes(acc.groupe).length).toBe(2)
+    const b = new Box3().setFromObject(acc.groupe)
+    // symetrique : centree sur l'axe du corps
+    expect(Math.abs(b.max.x + b.min.x), forme).toBeLessThan(0.03 * R.hw)
+    // taille : lame ~ 1/4 du corps, longueur 30 a 46 % de la hauteur
+    expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeGreaterThan(0.18)
+    expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeLessThan(0.34)
+    expect((b.max.y - b.min.y) / R.H, forme).toBeGreaterThan(0.22)
+    expect((b.max.y - b.min.y) / R.H, forme).toBeLessThan(0.48)
+    // un vrai espace sous les yeux, et la pointe reste au-dessus du bas du corps
+    expect(b.max.y, forme).toBeLessThan(R.yYeux - 1.5 * R.rVerre)
+    expect(b.min.y, forme).toBeGreaterThan(R.bas)
+    // ne traverse pas le corps : sous le haut (ancre), tout reste en avant de la surface (a un petit enfoncement pres)
+    let ancre = false
     for (const m of meshes(acc.groupe)) {
+      m.updateWorldMatrix(true, false)
       const P = m.geometry.attributes.position!
-      for (let i = 0; i < P.count; i += 3) {
-        const x = P.getX(i)
-        const y = P.getY(i)
-        const h = R.A.avant(x, y)
-        // au-dessus du corps de quelques pour cent de sa largeur au plus (la lame tombe a peine)
-        if (h) expect(P.getZ(i) - h.p.z, forme).toBeLessThan(0.16 * R.hw)
+      for (let i = 0; i < P.count; i += 2) {
+        const w = new Vector3(P.getX(i), P.getY(i), P.getZ(i)).applyMatrix4(m.matrixWorld)
+        const h = R.A.avant(w.x, w.y)
+        if (!h) continue
+        if (w.y > b.max.y - 0.2 * (b.max.y - b.min.y)) {
+          if (w.z < h.p.z) ancre = true
+        } else expect(w.z - h.p.z, forme).toBeGreaterThan(-0.1 * R.hw)
       }
     }
-    // largeur de la lame : 1/6 a 1/4 de la largeur du corps
-    const b = new Box3().setFromObject(acc.groupe)
-    expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeGreaterThan(0.12)
-    expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeLessThan(0.3)
+    expect(ancre, forme).toBe(true)
     acc.liberer()
   })
 

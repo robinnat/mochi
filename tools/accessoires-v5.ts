@@ -244,30 +244,26 @@ function planCapeCravate() {
   return c
 }
 
-/** Cravate : les 11 formes en clair (face, 3/4, profil), puis une rangee en sombre sur 3 formes. */
+/** Cravate : les 11 formes en clair (face, 3/4, profil), puis une rangee de 4 formes en 64 px (lisibilite). */
 function planCravate() {
   const formes = SHAPES.map((s) => s.id)
   const couleurs = ['turquoise', 'ambre', 'rose', 'vert', 'violet', 'orange', 'bleu', 'turquoise', 'ambre', 'rose', 'vert']
   const vues = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }]
   const cell = 300
-  const sombres = ['cercle', 'etoile', 'triangle']
-  const { c, ctx } = nouvelle(cell * 3, 130 + formes.length * (cell + 8) + 70 + sombres.length * (cell + 8) + 20)
-  texte(ctx, 'Cravate v9', 40, 70, 54, ENCRE, true)
-  texte(ctx, 'Nœud trapèze, lame en pointe collée au ventre · 11 formes · face, 3/4, profil', 40, 108, 24, GRIS)
-  const ligne = (f: string, i: number, y: number, th: 'light' | 'dark') => {
-    if (th === 'dark') {
-      ctx.fillStyle = '#121212'
-      ctx.fillRect(0, y, cell * 3, cell + 8)
-    }
+  const { c, ctx } = nouvelle(cell * 3, 130 + formes.length * (cell + 8) + 200)
+  texte(ctx, 'Cravate v10', 40, 70, 54, ENCRE, true)
+  texte(ctx, 'Pièce plane et rigide, verticale · 11 formes · face, 3/4, profil', 40, 108, 24, GRIS)
+  formes.forEach((f, i) => {
+    const y = 130 + i * (cell + 8)
     vues.forEach((v, k) => {
-      cellule(ctx, k * cell, y, cell, { forme: f, couleur: hexDe(couleurs[i]!), theme: th, sel: { bas: 'cravate' }, yaw: v.yaw, cadre: 185 })
-      texte(ctx, `${NOMS_FORMES[f]} · ${v.nom}`, k * cell + cell / 2, y + cell - 4, 19, th === 'dark' ? '#cfcbd6' : GRIS, false, 'center')
+      cellule(ctx, k * cell, y, cell, { forme: f, couleur: hexDe(couleurs[i]!), sel: { bas: 'cravate' }, yaw: v.yaw, cadre: 185 })
+      texte(ctx, `${NOMS_FORMES[f]} · ${v.nom}`, k * cell + cell / 2, y + cell - 4, 19, GRIS, false, 'center')
     })
-  }
-  formes.forEach((f, i) => ligne(f, i, 130 + i * (cell + 8), 'light'))
+  })
   const y0 = 130 + formes.length * (cell + 8)
-  texte(ctx, 'En sombre', 40, y0 + 44, 36, ENCRE, true)
-  sombres.forEach((f, j) => ligne(f, formes.indexOf(f), y0 + 70 + j * (cell + 8), 'dark'))
+  texte(ctx, 'Lisibilité en 64 px (taille réelle)', 40, y0 + 40, 30, ENCRE, true)
+  const petits = ['cercle', 'squircle', 'triangle', 'etoile', 'goutte', 'nuage']
+  petits.forEach((f, j) => cellule(ctx, 40 + j * 110, y0 + 70, 64, { forme: f, couleur: hexDe(couleurs[formes.indexOf(f)]!), sel: { bas: 'cravate' }, yaw: 0, cadre: 150 }))
   return c
 }
 

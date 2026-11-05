@@ -981,52 +981,52 @@ const BAS: Record<string, Gen> = {
     papillon3d(c, g, s, c.c1, c.c1)
   },
   cravate(c) {
-    // Cravate dans l'esprit du noeud papillon d'Alfred : tout a plat, formes simples aux coins arrondis, collee
-    // au ventre (chaque sommet recoit la hauteur de la surface), JAMAIS de partie qui flotte ou qui pointe en avant.
-    // Un petit noeud trapeze (large en haut), puis une lame un peu plus large qui descend jusqu'aux deux tiers de
-    // la place sous le noeud et finit en pointe (losange tronque). Le noeud est en c2, la lame en c1.
-    const { hw, A } = c.R
+    // Cravate : UNE piece rigide et plane (comme le noeud papillon d'Alfred), dans un plan vertical face camera,
+    // symetrique et droite. Un petit noeud trapeze (c2) devant, puis une lame (c1) qui s'elargit et finit en
+    // pointe, avec un cran entre les deux. Le corps ne la deforme pas : elle est posee d'un bloc, son haut un peu
+    // enfonce dans le ventre, et inclinee d'UN seul angle pour rester au contact en haut sans traverser le corps.
+    const { hw, A, H } = c.R
     const f = visage(c)
-    // le noeud part du bas du visage : sous la bouche, jamais a hauteur du nez ou des lunettes
-    const yTop = Math.min(c.R.yBas + 0.3 * hw, f.yBouche + 0.15 * f.rv)
-    const place = yTop - c.R.bas - 0.08 * c.R.H // place disponible sous le haut du noeud
-    if (place < 0.25 * hw) return
-    const hk = Math.min(0.24 * hw, 0.3 * place) // hauteur du noeud
-    const lame = Math.min(0.66 * place, 1.3 * hw) // hauteur de la lame sous le noeud
-    if (lame < 0.1 * hw) return
-    const wl = 0.2 * hw // demi-largeur max de la lame : ~1/5 de la largeur du corps
+    // le haut du noeud est sous la bouche : un vrai espace sous les yeux
+    const yTop = Math.min(c.R.yBas + 0.3 * hw, f.yBouche + 0.25 * f.rv, c.R.yYeux - 2.2 * c.R.rVerre)
+    const place = yTop - c.R.bas - 0.07 * H
+    const L = Math.min(0.43 * H, place) // longueur totale (noeud + lame)
+    if (L < 0.2 * hw) return
+    const hk = 0.2 * L // hauteur du noeud
+    const lame = L - hk * 0.8
+    const wl = 0.25 * hw // demi-largeur max de la lame (~1/4 de la largeur du corps)
     const rc = 0.03 * hw
-    const noeud = polygoneArrondi([[-0.17 * hw, 0], [0.17 * hw, 0], [0.1 * hw, -hk], [-0.1 * hw, -hk]], rc, 8)
-    const y1 = -hk * 0.9
+    const noeud = polygoneArrondi([[-0.2 * hw, 0], [0.2 * hw, 0], [0.12 * hw, -hk], [-0.12 * hw, -hk]], rc, 8)
+    const y1 = -hk * 0.8
     const blade = polygoneArrondi(
-      [
-        [-0.11 * hw, y1],
-        [0.11 * hw, y1],
-        [wl, y1 - 0.4 * lame],
-        [0.02 * hw, y1 - lame],
-        [-0.02 * hw, y1 - lame],
-        [-wl, y1 - 0.4 * lame]
-      ],
+      [[-0.09 * hw, y1], [0.09 * hw, y1], [wl, y1 - 0.45 * lame], [0.015 * hw, y1 - lame], [-0.015 * hw, y1 - lame], [-wl, y1 - 0.45 * lame]],
       rc,
       8
     )
-    const ep = 0.03 * hw
-    const bis = 0.016 * hw
-    const yBot = yTop - hk * 0.9 - lame - 0.05 * hw
-    const zs = grille(c, -0.4 * hw, 0.4 * hw, yBot, yTop + 0.1 * hw, 21, 36)
-    const tombe = (y: number) => 0.015 * hw * Math.min(1, Math.max(0, (yTop - y) / (hk + lame))) ** 2
-    for (const [pts, hex, sur] of [
-      [blade, c.c1, 0],
-      [noeud, c.c2, 0.9 * ep]
-    ] as const) {
-      const geo = extrusion(formeDePoints(pts as Array<[number, number]>), ep, bis, 5, true)
-      geo.translate(0, yTop, 0)
-      // entre deux lobes (fleur), la piece se pose sur le plus bas des points voisins : elle ne flotte jamais au-dessus d'un creux
-      const bas = (x: number, y: number) => Math.min(zs(x, y), zs(x - 0.16 * hw, y), zs(x + 0.16 * hw, y))
-      epouser(geo, (x, y) => bas(x, y) + tombe(y), bis + 0.3 * ep + sur)
-      add(c, geo, hex, c.g, 1, true)
+    // contact avec le ventre : plus petite pente (z par unite de descente) pour que la piece ne traverse jamais le corps
+    const enfonce = 0.05 * hw
+    const ep = 0.05 * hw
+    const z0 = (A.avant(0, yTop)?.p.z ?? c.R.zc + hw) - enfonce
+    let pente = -0.5
+    for (let k = 4; k <= 10; k++) {
+      const d = (L * k) / 10
+      for (const x of [-wl, 0, wl]) {
+        const h = A.avant(x * (d / L > 0.4 ? 1 : 0.4), yTop - d)
+        if (h) pente = Math.max(pente, (h.p.z + 0.012 * hw + ep * 0.5 - z0) / d)
+      }
     }
-    void A
+    pente = Math.min(pente, 0.9)
+    const g = new Group()
+    g.position.set(0, yTop, z0)
+    g.rotation.x = -Math.atan(pente)
+    c.g.add(g)
+    for (const [pts, hex, dz] of [
+      [blade, c.c1, 0],
+      [noeud, c.c2, ep * 0.9]
+    ] as const) {
+      const m = add(c, extrusion(formeDePoints(pts as Array<[number, number]>), ep, 0.02 * hw, 5, true), hex, g, 1, true)
+      m.position.z = dz
+    }
   },
   echarpe(c) {
     const hw = c.R.hw
