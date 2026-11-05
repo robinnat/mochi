@@ -136,6 +136,11 @@ const props = withDefaults(
     /** Salut a l'apparition (`coucou`), joue une fois au montage. */
     coucou?: boolean
     /**
+     * Ordinateur portable 3D du mood `travaille` (vu de dos, devant le corps) : affiche par defaut des que le mood est
+     * `travaille`, il pousse et rétrécit en douceur a l'entree et a la sortie. `false` le masque. 3D seulement.
+     */
+    ordinateur?: boolean
+    /**
      * Plafond d'images par seconde de la boucle (tableau de bord : 12). Absent : une image par image du
      * navigateur. L'horloge, elle, ne ralentit pas : seul le nombre de redessins baisse.
      */
@@ -168,6 +173,7 @@ const props = withDefaults(
     mood: null,
     interactions: true,
     coucou: false,
+    ordinateur: true,
     fps: undefined,
     label: undefined
   }
@@ -446,6 +452,29 @@ watch(
 /** Les points de `thinking` restent a plat devant le corps : ils s'effacent quand il se tourne. */
 const decorAlpha = computed(() => (vraie3d.value && props.yaw ? Math.max(0, Math.cos(props.yaw)) ** 3 : 1))
 
+/* ------------------------------------------------- ordinateur du mood « travaille » */
+
+/** Progression de l'apparition de l'ordinateur (0 = absent, 1 = en place) et son sens. */
+let ordiK = 0
+let ordiVers = 0
+const ordiVoulu = () => props.ordinateur !== false && humeurs.mood === 'travaille'
+/** Fait avancer la progression de `dt` secondes (0,45 s pour un trajet complet) ; `net` : saute au but. */
+function avancerOrdi(dt: number, net = false) {
+  const cible = ordiVoulu() ? 1 : 0
+  if (cible !== ordiVers) ordiVers = cible
+  ordiK = net ? cible : Math.min(1, Math.max(0, ordiK + Math.sign(cible - ordiK) * Math.min(Math.abs(cible - ordiK), dt / 0.45)))
+}
+/** Echelle dessinee : pousse avec un leger rebond (~106 %), rétrécit en douceur. */
+function ordiEchelle(): number {
+  const k = ordiK
+  if (k <= 0) return 0
+  if (ordiVers >= 1 || k >= 1) {
+    const c1 = 1.2
+    return 1 + (c1 + 1) * (k - 1) ** 3 + c1 * (k - 1) ** 2
+  }
+  return k * k * (3 - 2 * k)
+}
+
 const themeEff = computed<Theme>(() => props.theme ?? themeCourant.value)
 
 const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3d))
@@ -453,7 +482,7 @@ const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3
 function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
-  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte, props.accessoires ?? {}, undefined, themeEff.value)
+  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle())
 }
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image
@@ -757,6 +786,7 @@ function tick(ms: number) {
   if (!doitRedessiner(ms, dernierDessin, props.fps)) return
   dernierDessin = ms
   temps.value = clock
+  avancerOrdi(dt)
   frame.value = engine.sample(clock, gesteA(clock))
   triggerRef(frame)
 }
@@ -765,6 +795,7 @@ function tick(ms: number) {
 function redrawFrozen() {
   if (props.frozenAt === undefined) return
   temps.value = props.frozenAt
+  avancerOrdi(0, true)
   frame.value = engine.sample(props.frozenAt, gesteA(props.frozenAt))
   triggerRef(frame)
 }

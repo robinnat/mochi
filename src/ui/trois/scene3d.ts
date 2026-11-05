@@ -126,6 +126,10 @@ export class Mochi3d {
   /** accessoires par emplacements (tete, yeux, visage, bas, dos), combinables */
   private accs: Selection = {}
   private readonly acc3d = new Accessoires3d()
+  /** ordinateur du mood `travaille` : echelle de 0 (cache) a ~1 (pousse), posee par le composant */
+  private ordi = 0
+  /** sol de chaque forme : le point le plus bas vu pendant les rebonds (l'ordinateur ne saute pas avec le corps) */
+  private readonly sols = new Map<string, number>()
   /** theme : `light` (yeux blancs, defaut) ou `dark` (yeux noirs) */
   private theme: Theme = THEME_DEFAUT
   /** contraste minimal oeil noir / corps en sombre (en dessous, le corps est eclairci) ; 0 = jamais */
@@ -257,6 +261,11 @@ export class Mochi3d {
   }
 
   /** Choisit les accessoires par emplacement (un au plus par emplacement, tous cumulables). Appele avant `maj`. */
+  /** Echelle de l'ordinateur (0 = absent). */
+  setOrdinateur(k: number) {
+    this.ordi = k
+  }
+
   setAccessoires(sel: Selection) {
     this.accs = this.theme === 'dark' ? accessoiresSombres(sel) : sel
   }
@@ -324,6 +333,7 @@ export class Mochi3d {
     const mt = this.maillage(frame)
     this.mesh.geometry = this.coque.geometry = mt.geo
     this.bas = mt.bas
+    this.sols.set(this.forme, Math.min(this.sols.get(this.forme) ?? Infinity, mt.bas))
     if (this.coque.visible) {
       const cm = this.coque.material
       cm.color.set(couleurContour(couleur))
@@ -351,7 +361,7 @@ export class Mochi3d {
       const ye = yeuxDe(frame)
       const sc = ye.map((o) => ({ x: o.x, y: -o.y, r: o.r }))
       return mesurerReperes(this.mesh.geometry, sc, ye.length === 2 ? rayonVerre(ye[0]!, ye[1]!) : 22)
-    })
+    }, { k: this.ordi, sol: this.sols.get(this.forme) ?? mt.bas, cle: `${this.rendu}|${this.forme}` })
     const ombres: Ombre[] = [...(this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []), ...this.acc3d.ombres]
     // le reflet doux est un effet de matiere (shader, repere de la vue) : plus rien n'est peint dans la
     // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
@@ -772,7 +782,9 @@ export function rendreAvatar(
   /** `light` (defaut, rendu d'avant) ou `dark` : les yeux deviennent noirs */
   theme: Theme = THEME_DEFAUT,
   /** sombre : contraste minimal oeil noir / corps (defaut 3, 0 = ne jamais eclaircir le corps) */
-  contrasteOeil = CONTRASTE_OEIL_MIN
+  contrasteOeil = CONTRASTE_OEIL_MIN,
+  /** ordinateur du mood `travaille` : echelle de 0 (absent) a ~1 */
+  ordinateur = 0
 ) {
   couleur = corpsPourTheme(couleur, theme, contrasteOeil)
   const ctx3 = contexte()
@@ -791,6 +803,7 @@ export function rendreAvatar(
   mochi.setPorte(porte)
   mochi.setTheme(theme, contrasteOeil)
   mochi.setAccessoires(accessoires)
+  mochi.setOrdinateur(ordinateur)
   if (camera.right !== cadre) {
     camera.left = -cadre
     camera.right = cadre

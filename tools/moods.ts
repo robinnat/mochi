@@ -79,6 +79,7 @@ type Evt =
   | { t: number; i: number; type: 'relacher' }
   | { t: number; i: number; type: 'regarder'; nx: number; ny: number }
   | { t: number; i: number; type: 'lacher' }
+  | { t: number; i: number; type: 'mood'; id: string }
 
 interface Anim {
   id: string
@@ -95,6 +96,8 @@ interface Anim {
   /** angle de la vue 3D de chaque Mochi a la date t */
   yaw?: (i: number, t: number) => number
   visible?: (i: number, t: number) => boolean
+  /** echelle de l'ordinateur (0 a ~1) a la date t */
+  ordi?: (i: number, t: number) => number
   /** demi-largeur du cadre (grandes courses : sauts, chapeaux) ; defaut 150 */
   cadre?: number
   /** surimpression : curseur, doigts */
@@ -262,6 +265,29 @@ ANIMS.push({
   visible: (i, t) => t >= ARRIVEES[i]!
 })
 
+/* --- travail : l'ordinateur pousse a l'entree dans le mood, il rétrécit a la sortie */
+const ENTREE = [0.3, 0.5, 0.7]
+const SORTIE = 5.4
+const progression = (t: number, i: number) => {
+  const k = Math.min(1, Math.max(0, (t - ENTREE[i]!) / 0.45))
+  if (t < SORTIE + 0.2 * i) return k
+  return Math.max(0, 1 - (t - SORTIE - 0.2 * i) / 0.45)
+}
+ANIMS.push({
+  id: 'travail', groupe: 'humeur', nom: 'Travaille (ordinateur)', code: "setMood('travaille')", duree: 7, cle: 1.0, mood: 'repos', cadre: 200,
+  phase: [0, 0.31, 0.62],
+  evts: ENTREE.flatMap((t, i) => [{ t, i, type: 'mood', id: 'travaille' }, { t: SORTIE + 0.2 * i, i, type: 'mood', id: 'repos' }] as Evt[]),
+  yaw: (i, t) => [0.35, -0.3, 0.2][i]! + 0.1 * Math.sin(t * 0.8 + i),
+  ordi: (i, t) => {
+    const k = progression(t, i)
+    if (k <= 0) return 0
+    const montee = t < SORTIE + 0.2 * i
+    if (montee && k >= 1) return 1
+    if (montee) return 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2
+    return k * k * (3 - 2 * k)
+  }
+})
+
 const REACTION_NOMS = REACTIONS.map((r) => r.id)
 void REACTION_NOMS
 
@@ -290,6 +316,7 @@ function appliquer(a: Anim, i: number, h: Humeurs, t: number) {
     const d = e.t + a.phase[i]!
     if (e.type === 'react') h.react(e.id, d)
     else if (e.type === 'relacher') h.relacher(d)
+    else if (e.type === 'mood') h.setMood(e.id, d)
     else if (e.type === 'regarder') h.regarder({ nx: e.nx, ny: e.ny }, d)
     else h.regarder(null, d)
   }
@@ -322,7 +349,7 @@ function mochi(c: CanvasRenderingContext2D, a: Anim, i: number, p: Perso, t: num
   const pixel = p.style.rendu === 'pixel'
   tuile.width = tuile.height = pixel ? Math.round((grillePixel('fin') * CADRE) / DEMI_VIEWBOX) : taille
   const yaw = a.yaw ? a.yaw(i, t) : 0
-  rendreAvatar(tuile, frame, p.couleur, PAPIER, p.style.rendu, false, 'marque', true, p.forme, yaw, null, p.sel, CADRE, p.theme)
+  rendreAvatar(tuile, frame, p.couleur, PAPIER, p.style.rendu, false, 'marque', true, p.forme, yaw, null, p.sel, CADRE, p.theme, undefined, a.ordi ? a.ordi(i, t) : 0)
   c.imageSmoothingEnabled = !pixel
   c.drawImage(tuile, x0, y0, taille, taille)
   c.imageSmoothingEnabled = true
@@ -387,6 +414,46 @@ function planche(): HTMLCanvasElement {
   return cv
 }
 
+/** Planche de l'ordinateur : les 11 formes (3/4 puis face, clair) et 3 formes en sombre, en train d'ecrire. */
+function planOrdinateur(): HTMLCanvasElement {
+  CADRE = 200
+  const cell = 300
+  const cols = 4
+  const entete = 120
+  const rowsClair = Math.ceil(FORMES.length / 2)
+  const sombres = ['cercle', 'etoile', 'triangle']
+  const rowsSombre = Math.ceil(sombres.length / 2)
+  const cv = document.createElement('canvas')
+  cv.width = cols * cell
+  cv.height = entete + rowsClair * (cell + 8) + 70 + rowsSombre * (cell + 8) + 20
+  const c = cv.getContext('2d')!
+  c.fillStyle = FOND
+  c.fillRect(0, 0, cv.width, cv.height)
+  texte(c, 'Mochi travaille : ordinateur portable 3D', 40, 62, 44, ENCRE, true)
+  texte(c, "Vu de dos, devant le corps · 3/4 puis face", 40, 100, 20, GRIS)
+  const dessiner = (forme: string, k: number, x: number, y: number, theme: Theme) => {
+    const couleur = hexDe(COULEURS[FORMES.indexOf(forme) % COULEURS.length]!)
+    if (theme === 'dark') {
+      c.fillStyle = '#15141b'
+      c.fillRect(x, y, cell * 2, cell + 8)
+    }
+    ;[0.55, 0].forEach((yaw, v) => {
+      const h = new Humeurs('travaille')
+      const t = 0.85 + (k % 5) * 0.11
+      const frame = moteur(forme).sample(t, h.sample(t))
+      tuile.width = tuile.height = cell
+      rendreAvatar(tuile, frame, couleur, PAPIER, 'doux', false, 'marque', true, forme, yaw, null, k % 3 === 1 ? { tete: 'casquette', yeux: 'rondes' } : {}, CADRE, theme, undefined, 1)
+      c.drawImage(tuile, x + v * cell, y, cell, cell)
+    })
+    texte(c, NOMS_FORMES[forme] ?? forme, x + 10, y + 26, 20, theme === 'dark' ? '#cfcbd6' : GRIS, true)
+  }
+  FORMES.forEach((f, k) => dessiner(f, k, (k % 2) * 2 * cell, entete + Math.floor(k / 2) * (cell + 8), 'light'))
+  const y0 = entete + rowsClair * (cell + 8)
+  texte(c, 'En sombre', 40, y0 + 46, 34, ENCRE, true)
+  sombres.forEach((f, k) => dessiner(f, k + 3, (k % 2) * 2 * cell, y0 + 70 + Math.floor(k / 2) * (cell + 8), 'dark'))
+  return cv
+}
+
 async function envoyer(nom: string, c: HTMLCanvasElement, type = 'image/jpeg') {
   const dest = q.get('save')
   if (!dest) return
@@ -401,6 +468,15 @@ async function main() {
     await envoyer('moods.png', c, 'image/png')
     const dest = q.get('save')
     if (dest) await fetch(`${dest}?name=DONE-planche`, { method: 'POST', body: 'ok' })
+    if (!q.get('save')) document.body.appendChild(c)
+    document.title = 'fini'
+    return
+  }
+  if (q.get('ordinateur')) {
+    const c = planOrdinateur()
+    await envoyer('ordinateur.png', c, 'image/png')
+    const dest = q.get('save')
+    if (dest) await fetch(`${dest}?name=DONE-ordinateur`, { method: 'POST', body: 'ok' })
     if (!q.get('save')) document.body.appendChild(c)
     document.title = 'fini'
     return

@@ -384,6 +384,42 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
+  it.each(FORMES)('%s : l ordinateur du mood travaille est devant le corps, sous les yeux, symetrique, et pousse avec son echelle', (forme) => {
+    const { R } = corpsDe(forme)
+    const acc = new Accessoires3d()
+    const ordi = (k: number) => ({ k, sol: R.bas, cle: forme })
+    acc.maj({}, forme, mat(), () => R, ordi(1))
+    const og = acc.groupe.children.find((c) => c.name === 'ordinateur')
+    expect(og, forme).toBeDefined()
+    expect(og!.visible).toBe(true)
+    const b = new Box3().setFromObject(og!)
+    // devant le corps, centre, sous les yeux, pose au sol
+    expect(b.max.z, forme).toBeGreaterThan((R.A.avant(0, R.bas + 0.1 * R.H)?.p.z ?? R.A.box.max.z) + 0.1 * R.hw)
+    expect(Math.abs(b.max.x + b.min.x), forme).toBeLessThan(0.05 * R.hw)
+    expect(b.max.y, forme).toBeLessThan(R.yYeux)
+    expect(b.min.y, forme).toBeGreaterThan(R.bas - 0.03 * R.H)
+    expect(sommetsFinis(acc.groupe)).toBe(true)
+    // a mi-pousse il est plus petit, a zero il disparait
+    acc.maj({}, forme, mat(), () => R, ordi(0.5))
+    expect(og!.scale.x).toBeCloseTo(0.5, 6)
+    acc.maj({ tete: 'casquette' }, forme, mat(), () => R, ordi(0))
+    expect(acc.groupe.children.some((c) => c.name === 'ordinateur' && c.visible)).toBe(false)
+    acc.liberer()
+  })
+
+  it('l ordinateur se cumule avec les accessoires et ne s affiche pas sans le mood', () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    const m = mat()
+    acc.maj({ tete: 'casquette', yeux: 'rondes', bas: 'papillon' }, 'c', m, () => R, { k: 1, sol: R.bas, cle: 'c' })
+    const noms = acc.groupe.children.filter((c) => c.visible).map((c) => c.name)
+    expect(noms).toContain('ordinateur')
+    expect(noms).toContain('tete')
+    acc.maj({ tete: 'casquette' }, 'c', m, () => R)
+    expect(acc.groupe.children.some((c) => c.name === 'ordinateur' && c.visible)).toBe(false)
+    acc.liberer()
+  })
+
   it.each(FORMES)('%s : la calotte couvre le haut du corps (aucune pointe ne depasse)', (forme) => {
     const { R } = corpsDe(forme)
     const acc = new Accessoires3d()

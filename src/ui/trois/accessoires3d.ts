@@ -1338,6 +1338,72 @@ export const IDS_IMPLEMENTES = (e: Emplacement) => Object.keys(GENERATEURS[e]).f
 
 /* ------------------------------------------------------------------ classe */
 
+/* ------------------------------------------------------------------ ordinateur portable (mood « travaille ») */
+
+/** Couleurs de l'ordinateur : coque gris clair argent, petit logo rond un peu plus clair. */
+export const ORDI_COULEURS = { coque: '#c7cad4', logo: '#eceef3' } as const
+
+/** Mesures de l'ordinateur (unites du moteur), figees par forme pour qu'il ne bouge pas avec les rebonds du corps. */
+interface MesuresOrdi {
+  l: number
+  hs: number
+  prof: number
+  zH: number
+  sol: number
+}
+
+function mesurerOrdi(R: Reperes, sol: number): MesuresOrdi {
+  const { A, hw, H } = R
+  // l'ecran arrive sous les yeux : on voit toujours le visage par-dessus
+  const haut = R.yYeux - 2.3 * R.rVerre
+  const hs = Math.min(0.5 * H, Math.max(0.12 * H, haut - sol))
+  const l = Math.min(1.5 * hs, 1.55 * hw)
+  const prof = 0.78 * hs
+  // face avant du corps vers le bas : le bord arriere du clavier y entre un peu
+  let zb = -Infinity
+  for (const x of [-0.4 * hw, -0.2 * hw, 0, 0.2 * hw, 0.4 * hw]) {
+    const h = A.avant(x, sol + 0.1 * H)
+    if (h) zb = Math.max(zb, h.p.z)
+  }
+  if (zb === -Infinity) zb = A.box.max.z
+  return { l, hs, prof, zH: zb + prof - 0.1 * hw, sol }
+}
+
+/**
+ * Portable tres simplifie, vu DE DOS : le dos de l'ecran regarde la camera, l'ecran regarde le Mochi, le clavier part de la
+ * charniere vers le corps. Memes formes que le noeud papillon d'Alfred : rectangles aux coins arrondis, extrusion bombee a
+ * normales lisses. L'ordinateur est pose au sol (l'origine du groupe est le sol, sous le milieu du clavier) : on le met a
+ * l'echelle autour de ce point pour le faire pousser.
+ */
+function construireOrdinateur(c: Ctx, m: MesuresOrdi): Group {
+  const og = new Group()
+  og.name = 'ordinateur'
+  const { l, hs, prof, zH, sol } = m
+  const zc = zH - prof / 2
+  og.position.set(0, sol, zc)
+  const rc = 0.07 * hs
+  const bis = 0.018 * hs
+  // clavier : plaque plate posee au sol, bord avant (cote camera) a la charniere
+  const tb = 0.06 * hs
+  const clav = add(c, extrusion(formeDePoints(polygoneArrondi([[-l / 2, 0], [l / 2, 0], [l / 2, prof], [-l / 2, prof]], rc, 8)), tb, bis, 8, true), ORDI_COULEURS.coque, og, 1, true)
+  clav.rotation.x = -Math.PI / 2
+  clav.position.set(0, tb / 2 + bis, prof / 2)
+  // ecran : ouvert a ~105 degres, il se penche de 15 degres vers la camera ; son dos regarde la camera
+  const pente = (15 * Math.PI) / 180
+  const lh = hs / Math.cos(pente)
+  const tl = 0.045 * hs
+  const lid = new Group()
+  lid.position.set(0, tb + 2 * bis, prof / 2)
+  lid.rotation.x = pente
+  og.add(lid)
+  add(c, extrusion(formeDePoints(polygoneArrondi([[-l / 2, 0], [l / 2, 0], [l / 2, lh], [-l / 2, lh]], rc, 8)), tl, bis, 8, true), ORDI_COULEURS.coque, lid, 1, true)
+  // petit logo rond, discret, au dos de l'ecran
+  const r = 0.085 * lh
+  const logo = add(c, extrusion(formeDePoints(polygoneArrondi(Array.from({ length: 16 }, (_, i) => [Math.cos((i / 16) * Math.PI * 2) * r, Math.sin((i / 16) * Math.PI * 2) * r] as [number, number]), 0.3 * r, 6)), 0.006 * hs, 0.014 * hs, 6, true), c.c2, lid, 1, true)
+  logo.position.set(0, 0.56 * lh, tl / 2 + bis * 0.6)
+  return og
+}
+
 export class Accessoires3d {
   readonly groupe = new Group()
   private cle = ''
@@ -1352,6 +1418,11 @@ export class Accessoires3d {
   couleurs: string[] = []
   /** couleur du corps (hex), posee par `Mochi3d` : sert aux couleurs par defaut qui doivent contraster */
   corps?: string
+  /** ordinateur du mood `travaille` : groupe garde d'une reconstruction a l'autre, et ses mesures par forme */
+  private ordiG: Group | null = null
+  private ordiGeos: BufferGeometry[] = []
+  private ordiCle = ''
+  private readonly ordiMesures = new Map<string, MesuresOrdi>()
 
   constructor() {
     this.groupe.visible = false
@@ -1392,22 +1463,29 @@ export class Accessoires3d {
    * Pose la selection sur le corps. `reperes` est appele seulement quand quelque chose change
    * (les tirs de rayons coutent) ; `cleCorps` identifie le corps (contour, forme, yeux).
    */
-  maj(sel: Selection, cleCorps: string, base: Materiau, reperes: () => Reperes | null) {
+  maj(sel: Selection, cleCorps: string, base: Materiau, reperes: () => Reperes | null, ordi?: { k: number; sol: number; cle: string }) {
     const actifs = EMPLACEMENTS.filter((e) => resoudre(e, sel[e]))
-    if (!actifs.length) {
+    const aff = !!ordi && ordi.k > 0.003
+    if (!actifs.length && !aff) {
       this.groupe.visible = false
       this.cle = ''
       this.ombres = []
       this.couleurs = []
       return
     }
-    const cle = `${cleCorps}|${base.uuid}|${this.corps ?? ''}|${JSON.stringify(sel)}|${this.reglages ? 'l' : 'p'}`
+    const cle = `${cleCorps}|${base.uuid}|${this.corps ?? ''}|${JSON.stringify(sel)}|${this.reglages ? 'l' : 'p'}|${aff ? 'o' : ''}`
     this.groupe.visible = true
+    // l'echelle de l'ordinateur change a chaque image sans rien reconstruire
+    if (this.ordiG) {
+      this.ordiG.visible = aff
+      if (ordi) this.ordiG.scale.setScalar(Math.max(ordi.k, 0.001))
+    }
     if (cle === this.cle) return
     this.cle = cle
     this.vide()
     this.ombres = []
     this.couleurs = couleursDe(sel)
+    if (aff) this.couleurs.push(ORDI_COULEURS.coque, ORDI_COULEURS.logo)
     const R = reperes()
     if (!R) {
       this.groupe.visible = false
@@ -1443,10 +1521,45 @@ export class Accessoires3d {
       gen(ctx)
       this.ombres.push(...ombresDe(e, g, R))
     }
+    if (aff && ordi) this.poserOrdi(base, R, ye, ordi)
+  }
+
+  /** Ordinateur du mood `travaille` : construit une fois par forme et par matiere, puis remis dans le groupe. */
+  private poserOrdi(base: Materiau, R: Reperes, ye: [OeilScene, OeilScene], ordi: { k: number; sol: number; cle: string }) {
+    const cleO = `${ordi.cle}|${base.uuid}|${this.corps ?? ''}`
+    if (!this.ordiG || this.ordiCle !== cleO) {
+      for (const g of this.ordiGeos) g.dispose()
+      this.ordiGeos = []
+      let m = this.ordiMesures.get(ordi.cle)
+      if (!m) {
+        m = mesurerOrdi(R, ordi.sol)
+        this.ordiMesures.set(ordi.cle, m)
+      }
+      const ctx: Ctx = {
+        g: new Group(),
+        R,
+        c1: ORDI_COULEURS.coque,
+        c2: ORDI_COULEURS.logo,
+        mat: (hex, o = 1, dbl = false) => this.matiere(base, hex, o, dbl),
+        geos: this.ordiGeos,
+        a: ye[0],
+        b: ye[1],
+        rv: R.rVerre,
+        corps: this.corps
+      }
+      this.ordiG = construireOrdinateur(ctx, m)
+      this.ordiCle = cleO
+    }
+    this.ordiG.visible = true
+    this.ordiG.scale.setScalar(Math.max(ordi.k, 0.001))
+    this.groupe.add(this.ordiG)
   }
 
   liberer() {
     this.vide()
+    for (const g of this.ordiGeos) g.dispose()
+    this.ordiGeos = []
+    this.ordiG = null
     for (const m of this.matieres.values()) m.dispose()
     this.matieres.clear()
   }

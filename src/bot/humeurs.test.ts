@@ -342,3 +342,36 @@ describe('coucou : le Mochi pousse depuis le sol', () => {
     expect(h.sample(0.1)?.sx ?? 1).toBe(1)
   })
 })
+
+describe('travaille : il tape sur son ordinateur', () => {
+  it('rebonds irreguliers, regard baisse pendant la frappe, pause sans rebond, boucle sans saut', () => {
+    const h = new Humeurs('travaille')
+    const t0 = h.sample(0)!
+    const fin = h.sample(3.999)!
+    expect(Math.abs(t0.sy - fin.sy)).toBeLessThan(0.01)
+    expect(Math.abs((t0.rot ?? 0) - (fin.rot ?? 0))).toBeLessThan(0.3)
+    // pendant la frappe le regard est plus bas qu'en pause
+    const frappe = h.sample(0.9)!
+    const pause = h.sample(1.75)!
+    expect((frappe.ey ?? 0)).toBeGreaterThan((pause.ey ?? 0) + 0.08)
+    // les ecrasements ne sont pas regulieres : au moins 5 instants distincts a moins de 0,2 s d'ecart
+    let creux = 0
+    let prev = 1
+    for (let t = 0.2; t < 1.5; t += 0.01) {
+      const sy = h.sample(t)!.sy
+      if (sy < 0.99 && prev >= 0.99) creux++
+      prev = sy
+    }
+    expect(creux).toBeGreaterThanOrEqual(5)
+    // il penche des deux cotes
+    let min = 0
+    let max = 0
+    for (let t = 0.2; t < 3.6; t += 0.01) {
+      const r = h.sample(t)!.rot ?? 0
+      min = Math.min(min, r)
+      max = Math.max(max, r)
+    }
+    expect(min).toBeLessThan(-0.5)
+    expect(max).toBeGreaterThan(0.5)
+  })
+})
