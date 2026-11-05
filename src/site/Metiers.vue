@@ -10,7 +10,7 @@ const COULEURS = ['violet', 'rose', 'turquoise', 'ambre', 'bleu', 'vert', 'orang
 
 <template>
   <section id="jobs" class="bloc wrap" aria-labelledby="t-metiers">
-    <span class="etiquette">Accessories</span>
+    <span class="etiquette">Tools</span>
     <h2 id="t-metiers">A tool for every trade</h2>
     <p class="chapo">
       Nine small animated objects drawn in code, each with the gesture that goes with it: the mochi looks at

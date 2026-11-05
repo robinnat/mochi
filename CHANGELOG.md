@@ -5,6 +5,13 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed (site)
+
+- Landing page: seven moods demo, live interactions (hover, tap, double tap, long press, hello on arrival, which now
+  grows the Mochi out of the floor), slot-based accessory picker with colours, and a light/dark/auto switch
+  (3D eyes turn black in dark). `MochiBot` gains the `accessoires` prop (slot selection) and follows the
+  site theme when `theme` is not set. The tie accessory is retired (kept in `RETIRES`).
+
 ### Added (moods and interactions, proposal)
 
 - Seven looped moods (`repos`, `reflechit`, `travaille`, `attend`, `termine`, `bloque`, `dort`) and six

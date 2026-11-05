@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { cheminEnBoucle, dureeSaut } from '@/bot/sauts'
 import type { EspaceIso } from '@/ui/trois/iso'
 import { useReduit } from './reduced'
+import { themeEffectif } from './theme'
 
 /**
  * Trois mochis sautent de case en case sur une grille isometrique. Three.js n'entre dans la
@@ -66,12 +67,20 @@ function demarrer() {
   raf = requestAnimationFrame(image)
 }
 
+/** Fond de la scene : celui de la carte (`--surface`) dans chaque theme. */
+const FONDS = { light: '#ffffff', dark: '#1e1d27' } as const
+watch(themeEffectif, (t) => {
+  espace?.changerTheme(FONDS[t], t)
+  if (espace && (reduit.value || !raf)) espace.dessiner(tCourant())
+})
+const tCourant = () => t
+
 async function creer() {
   const cv = toile.value
   if (!cv) return
   try {
     const { EspaceIso } = await import('@/ui/trois/iso')
-    espace = new EspaceIso(cv, { largeur: 5, hauteur: 5, vue: 'iso', fond: '#ffffff', douceur: 'marque' })
+    espace = new EspaceIso(cv, { largeur: 5, hauteur: 5, vue: 'iso', fond: FONDS[themeEffectif.value], theme: themeEffectif.value, douceur: 'marque' })
   } catch {
     etat.value = 'indisponible'
     return

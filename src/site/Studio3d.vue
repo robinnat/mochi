@@ -166,7 +166,7 @@ const degres = computed(() => Math.round(((yaw.value * 180) / Math.PI) % 360))
         </div>
       </div>
       <div>
-        <h3>Mood</h3>
+        <h3>State</h3>
         <div class="chips" role="group" aria-label="Mood">
           <button
             v-for="id in ETATS"

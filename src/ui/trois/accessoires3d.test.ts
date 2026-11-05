@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BufferAttribute, BufferGeometry, Box3, MeshStandardMaterial, Vector3, type Mesh, type Object3D } from 'three'
+import { BufferAttribute, BufferGeometry, Box3, MeshStandardMaterial, type Mesh, type Object3D } from 'three'
 import { BotEngine } from '@/bot/engine'
 import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
 import { SHAPES } from '@/bot/skins'

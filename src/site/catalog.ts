@@ -20,6 +20,8 @@ import { PORTE_IDS, type PorteId } from '@/bot/portes'
 import { COLOR_BY_ID, SHAPES } from '@/bot/skins'
 import { SEQUENCE, STATE_BY_ID, type StateId } from '@/bot/states'
 import type { Block } from '@/bot/cycles'
+import { EMPLACEMENTS, parEmplacement, type Emplacement } from '@/bot/emplacements'
+import { MOOD_IDS, type MoodId } from '@/bot/humeurs'
 
 export const SHAPE_LABEL = en.shapes as Record<string, string>
 export const COLOR_LABEL = en.colors as Record<string, string>
@@ -140,3 +142,72 @@ export const FORMES_3D: { id: string; label: string; couleur: string }[] = [
   { id: 'fleur', label: 'Flower', couleur: 'rose' },
   { id: 'oeuf', label: 'Egg', couleur: 'violet' }
 ]
+
+/* ------------------------------------------------------------------ humeurs, interactions, accessoires par emplacements */
+
+
+/** Les sept humeurs : nom et une phrase, en anglais. */
+export const HUMEURS_SITE: { id: MoodId; label: string; texte: string }[] = [
+  { id: 'repos', label: 'Rest', texte: 'Soft breathing, blinks, a gaze that wanders.' },
+  { id: 'reflechit', label: 'Thinking', texte: 'Eyes up, squinting, one a little more closed than the other.' },
+  { id: 'travaille', label: 'Working', texte: 'Focused: the gaze reads line after line, small regular bounces.' },
+  { id: 'attend', label: 'Waiting', texte: 'Looking straight ahead, head tilted, a little impatient.' },
+  { id: 'termine', label: 'Done', texte: 'Happy crescent eyes and two small jumps of joy.' },
+  { id: 'bloque', label: 'Blocked', texte: 'Frowning eyes in mirror and a shake that comes in bursts.' },
+  { id: 'dort', label: 'Asleep', texte: 'Eyes closed, slow breathing.' }
+]
+export const HUMEURS_IDS: MoodId[] = MOOD_IDS
+
+/** Les reactions a l'utilisateur, avec le geste qui les declenche. */
+export const INTERACTIONS_SITE: { geste: string; nom: string; texte: string }[] = [
+  { geste: 'Hover', nom: 'Follows you', texte: 'The gaze and a small head turn follow the pointer.' },
+  { geste: 'Tap', nom: 'Startle', texte: 'A squash and a damped bounce.' },
+  { geste: 'Double tap', nom: 'Laugh', texte: 'Crescent eyes and a shaking body.' },
+  { geste: 'Long press', nom: 'Blush', texte: 'Closes its eyes, content, for as long as you press.' },
+  { geste: 'Shake or spin fast', nom: 'Dizzy', texte: 'Spinning eyes, a swaying body.' },
+  { geste: 'On arrival', nom: 'Hello', texte: 'It grows out of the floor with a small rebound, then waves its head.' }
+]
+
+export const EMPLACEMENT_LABEL: Record<Emplacement, string> = {
+  tete: 'Head',
+  yeux: 'Eyes',
+  visage: 'Face',
+  bas: 'Neck',
+  dos: 'Back'
+}
+export const EMPLACEMENTS_IDS = EMPLACEMENTS
+
+/** Libelles anglais des accessoires du catalogue. */
+const ACC_EN: Record<string, string> = {
+  casquette: 'Cap',
+  beret: 'Beret',
+  'haut-de-forme': 'Top hat',
+  couronne: 'Crown',
+  paille: 'Straw hat',
+  antenne: 'Antenna',
+  casque: 'Headphones',
+  ruban: 'Ribbon bow',
+  fleur: 'Flower',
+  toque: 'Chef hat',
+  rondes: 'Round glasses',
+  carrees: 'Square glasses',
+  soleil: 'Sunglasses',
+  coeur: 'Heart glasses',
+  etoile: 'Star glasses',
+  monocle: 'Monocle',
+  chat: 'Cat whiskers',
+  rousseur: 'Freckles',
+  joues: 'Blush',
+  grain: 'Beauty mark',
+  moustache: 'Moustache',
+  papillon: 'Bow tie',
+  echarpe: 'Scarf',
+  perles: 'Pearl necklace',
+  fleurs: 'Flower necklace',
+  ailes: 'Angel wings',
+  diable: 'Bat wings',
+  sac: 'Backpack',
+  cape: 'Cape'
+}
+export const ACCESSOIRES_SITE = (e: Emplacement) => parEmplacement(e).map((a) => ({ id: a.id, label: ACC_EN[a.id] ?? a.id, c1: a.c1, c2: a.c2 }))
+export const ACC_EN_IDS = Object.keys(ACC_EN)

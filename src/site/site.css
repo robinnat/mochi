@@ -17,6 +17,26 @@
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
+/* Mode sombre : celui de l'appareil par defaut, ou le choix du bouton (data-theme). Les Mochi passent en 3D sombre avec. */
+:root[data-theme='dark'] {
+  --bg: #15141b;
+  --surface: #1e1d27;
+  --ink: #f0eef7;
+  --muted: #a4a1b3;
+  --line: #2f2d3b;
+  --accent: #9a8cf0;
+  --accent-ink: #b9aff7;
+  --accent-soft: #2a2745;
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .bientot {
+  color: #f6d28a;
+  background: #3a2f12;
+}
+:root[data-theme='dark'] .btn.primaire {
+  color: #15141b;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -467,4 +487,99 @@ footer.pied {
 .sous {
   font-size: 1.15rem;
   margin-top: 40px;
+}
+
+/* ------------------------------------------------------------------ choix du theme */
+.theme {
+  display: flex;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px;
+  background: var(--surface);
+}
+.theme-bouton {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--muted);
+}
+.theme-bouton[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.theme-bouton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 1px;
+}
+.nav .wrap {
+  gap: 12px;
+}
+@media (max-width: 560px) {
+  .nav .wrap > strong {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ humeurs, interactions, habillage */
+.texte-humeur {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.texte-humeur strong {
+  color: var(--ink);
+}
+.liste-inter {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.liste-inter li {
+  display: grid;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 0.93rem;
+}
+.liste-inter strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+.liste-inter span {
+  color: var(--muted);
+}
+.scene .btn {
+  margin-top: 8px;
+}
+.slot {
+  display: grid;
+  gap: 8px;
+}
+.slot h3 {
+  margin-bottom: 0;
+}
+.couleurs {
+  display: grid;
+  gap: 6px;
+}
+.pastille.petite {
+  width: 24px;
+  height: 24px;
+}
+code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 1px 5px;
 }

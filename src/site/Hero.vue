@@ -39,6 +39,7 @@ const cycle: Block[] = [
           :cycle="cycle"
           :playing="true"
           follow
+          coucou
           label="A Mochi, a round purple animated avatar"
         />
       </Lazy>
@@ -52,11 +53,13 @@ const cycle: Block[] = [
     <div>
       <h1>Mochi</h1>
       <p class="chapo">
-        A tiny animated avatar engine for the web. One soft shape that morphs through five face moods,
-        in real 3D, in three styles: Soft, Flat and Pixel. Drawn in code, no animation library.
+        A tiny animated avatar engine for the web. One soft shape with seven moods that reacts when you
+        touch it, in real 3D, in three styles: Soft, Flat and Pixel. Light and dark, with accessories you can mix
+        and colour. Drawn in code, no animation library.
       </p>
       <div class="actions">
-        <a class="btn primaire" href="#playground">Try the playground</a>
+        <a class="btn primaire" href="#interactions">Say hello</a>
+        <a class="btn" href="#playground">Playground</a>
         <a class="btn" href="#install">Install</a>
         <a class="btn" href="app.html">Open the app</a>
       </div>

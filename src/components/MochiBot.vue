@@ -24,7 +24,9 @@ import { composer, type Geste } from '@/bot/gestes'
 import { Humeurs, REACTION_DE_EVENEMENT, doitRedessiner, moodDe, type ReactionId } from '@/bot/humeurs'
 import { pixellise, pixellisePrims } from '@/ui/pixel'
 import { DOUCEUR_DEFAUT, RENDU_3D_DEFAUT, type Douceur, type Rendu3d } from '@/ui/trois/rendu3d'
-import { THEME_DEFAUT, type Theme } from '@/ui/trois/theme'
+import { type Theme } from '@/ui/trois/theme'
+import { themeCourant } from '@/ui/trois/themeCourant'
+import type { Selection } from '@/bot/emplacements'
 import {
   contourCourant,
   est3d,
@@ -49,8 +51,10 @@ const props = withDefaults(
     expression?: string
     /** couleur du fond, utilisee pour la brume de profondeur des particules */
     paper?: string
-    /** theme de la 3D : `light` (defaut) ou `dark` (les yeux deviennent noirs) */
+    /** theme de la 3D : `light` ou `dark` (les yeux deviennent noirs) ; absent, le theme courant (`themeCourant`, clair par defaut) */
     theme?: Theme
+    /** accessoires par emplacements (tete, yeux, visage, bas, dos), 3D seulement ; voir `src/bot/emplacements.ts` */
+    accessoires?: Selection | null
     /**
      * Fige le rendu a cette date (en secondes depuis le debut de l'etat).
      * Le moteur etant une fonction pure du temps, on obtient une image
@@ -145,7 +149,8 @@ const props = withDefaults(
     color: DEFAULT_COLOR,
     expression: DEFAULT_EXPRESSION,
     paper: '#f9f9f9',
-    theme: THEME_DEFAUT,
+    theme: undefined,
+    accessoires: null,
     frozenAt: undefined,
     cycle: () => defaultCycle().blocks,
     follow: false,
@@ -441,16 +446,18 @@ watch(
 /** Les points de `thinking` restent a plat devant le corps : ils s'effacent quand il se tourne. */
 const decorAlpha = computed(() => (vraie3d.value && props.yaw ? Math.max(0, Math.cos(props.yaw)) ** 3 : 1))
 
+const themeEff = computed<Theme>(() => props.theme ?? themeCourant.value)
+
 const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3d))
 
 function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
-  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte, {}, undefined, props.theme)
+  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte, props.accessoires ?? {}, undefined, themeEff.value)
 }
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image
-watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, () => props.theme, () => contourEffectif.value], dessiner3d, { flush: 'post' })
+watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, themeEff, () => props.accessoires, () => contourEffectif.value], dessiner3d, { flush: 'post' })
 
 /* ------------------------------------------------------- regard qui suit */
 

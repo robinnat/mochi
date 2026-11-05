@@ -106,12 +106,12 @@ export class EspaceIso {
   private readonly largeur: number
   private readonly hauteur: number
   private readonly vue: 'iso' | 'gros'
-  private readonly papier: string
+  private papier: string
   private readonly rendu3d: Rendu3d
   private readonly contour: boolean
   private readonly douceur: Douceur
   private readonly reflet: boolean
-  private readonly theme: Theme
+  private theme: Theme
   /** pixels (physiques) d'une unite du moteur, pour l'epaisseur du contour */
   private pxParUnite = 0.5
   private readonly plat: ReturnType<typeof reglagePlat>
@@ -362,6 +362,14 @@ export class EspaceIso {
     }
     if (rendre) this.renderer.render(this.scene, this.camera)
     return enCours
+  }
+
+  /** Change le fond de la scene et le theme des corps (le site passe du clair au sombre sans recreer la scene). */
+  changerTheme(fond: string, theme: Theme) {
+    this.papier = fond
+    this.theme = theme
+    this.scene.background = new Color(fond)
+    for (const b of this.mochis.values()) b.corps.setTheme(theme)
   }
 
   liberer() {
