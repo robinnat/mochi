@@ -407,6 +407,42 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
+  it.each(FORMES)('%s : la calotte couvre le haut du corps (aucune pointe ne depasse)', (forme) => {
+    const { R } = corpsDe(forme)
+    const acc = new Accessoires3d()
+    acc.maj({ tete: 'casquette' }, forme, mat(), () => R)
+    const b = new Box3().setFromObject(acc.groupe)
+    expect(b.max.y, forme).toBeGreaterThan(R.haut)
+    acc.liberer()
+  })
+
+  it('la casquette et le casque de musique sont au meme emplacement : le second remplace le premier', () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ tete: 'casque' }, 'x', mat(), () => R)
+    const n1 = meshes(acc.groupe).length
+    acc.maj({ tete: 'casquette' }, 'x', mat(), () => R)
+    const n2 = meshes(acc.groupe).length
+    expect(n2).not.toBe(0)
+    expect(n2).not.toBe(n1 + n2)
+    acc.liberer()
+  })
+
+  it.each(FORMES)('%s : les branches des lunettes restent dans la boite du corps', (forme) => {
+    const { R } = corpsDe(forme)
+    for (const id of ['rondes', 'carrees', 'soleil', 'coeur', 'etoile']) {
+      const acc = new Accessoires3d()
+      acc.maj({ yeux: id }, forme, mat(), () => R)
+      for (const t of meshes(acc.groupe).filter((m) => m.geometry.type === 'TubeGeometry')) {
+        const P = t.geometry.attributes.position!
+        let xmax = -Infinity
+        for (let i = 0; i < P.count; i++) xmax = Math.max(xmax, Math.abs(P.getX(i)))
+        expect(xmax, `${forme} ${id}`).toBeLessThan(R.A.box.max.x + 0.05 * R.hw)
+      }
+      acc.liberer()
+    }
+  })
+
   it.each(FORMES)('%s : le noeud de la cravate est clairement sous les yeux', (forme) => {
     const { R } = corpsDe(forme)
     const acc = new Accessoires3d()

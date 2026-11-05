@@ -195,6 +195,30 @@ function planCasquetteCombos() {
   return c
 }
 
+/** Lunettes : chaque modele sur les 11 formes, en 3/4 et de profil (les branches doivent rentrer dans le corps). */
+function planLunettes() {
+  const modeles = ['rondes', 'carrees', 'soleil', 'coeur', 'etoile', 'monocle']
+  const formes = SHAPES.map((s) => s.id)
+  const vues = [0.62, 1.5708]
+  const cell = 150
+  const { c, ctx } = nouvelle(cell * modeles.length * 2, 150 + formes.length * cell + 20)
+  texte(ctx, 'Lunettes v7 : branches ancrées dans le corps', 40, 78, 52, ENCRE, true)
+  texte(ctx, '6 modèles × 11 formes · 3/4 puis profil pour chaque modèle', 40, 122, 24, GRIS)
+  const couleurs = ['turquoise', 'ambre', 'rose', 'vert', 'violet', 'orange', 'bleu', 'turquoise', 'ambre', 'rose', 'vert']
+  formes.forEach((f, i) => {
+    modeles.forEach((m, mi) =>
+      vues.forEach((yaw, vi) => {
+        const x = (mi * 2 + vi) * cell
+        const y = 150 + i * cell
+        cellule(ctx, x, y, cell, { forme: f, couleur: hexDe(couleurs[i]!), sel: { yeux: { id: m, c1: COULEURS.noir, c2: COULEURS.noir } }, yaw, cadre: 150 })
+      })
+    )
+    texte(ctx, NOMS_FORMES[f] ?? f, 6, 150 + i * cell + 16, 14, GRIS, true)
+  })
+  modeles.forEach((m, mi) => texte(ctx, m, mi * 2 * cell + cell, 144, 18, ENCRE, true, 'center'))
+  return c
+}
+
 /** Vues : face, 3/4, profil, dos pour la cape et la cravate. */
 function planVues() {
   const lignes: Array<{ nom: string; sel: Selection; forme: string; couleur: string; cadre: number }> = [
@@ -261,6 +285,7 @@ async function main() {
   const faire: Array<[string, () => HTMLCanvasElement | Promise<HTMLCanvasElement>]> = [
     ['casquette', planCasquette],
     ['casquette-combos', planCasquetteCombos],
+    ['lunettes', planLunettes],
     ['catalogue', planCatalogue],
     ['vues', planVues],
     ['alfred', planAlfred]

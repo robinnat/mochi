@@ -378,7 +378,9 @@ const TETE: Record<string, Gen> = {
     const { hw, tete: t } = c.R
     const Rx = t.R * 1.28
     const Rz = Math.min(t.rz * 1.28, Rx * 1.2)
-    const haut = 0.78 * Rx // hauteur du dome
+    const yBase = Math.max(t.y - 0.12 * Rx, Math.max(c.a.y, c.b.y) + c.rv * 1.3 + 0.3 * Rx)
+    // hauteur du dome : au moins celle de ce qui depasse de l'assise (pointe de goutte, de pyramide), sans devenir un cone
+    const haut = Math.min(1.45 * Rx, Math.max(0.78 * Rx, c.R.haut - yBase + 0.3 * Rx))
     const jupe = 0.16 * Rx // bord qui descend (cache dans le corps)
     const prof: Vector2[] = [new Vector2(1, -jupe), new Vector2(1, 0)]
     const N = 20
@@ -388,8 +390,7 @@ const TETE: Record<string, Gen> = {
     }
     const g = new Group()
     // jamais sur les yeux : le bord avant reste au-dessus du haut des yeux
-    const yMin = Math.max(c.a.y, c.b.y) + c.rv * 1.3
-    g.position.set(t.cx, Math.max(t.y - 0.12 * Rx, yMin + 0.3 * Rx), t.zc)
+    g.position.set(t.cx, yBase, t.zc)
     g.rotation.x = -0.14
     c.g.add(g)
     const dome = add(c, new LatheGeometry(prof, 56), c.c1, g, 1, true)
@@ -589,18 +590,26 @@ function lunettes(c: Ctx, forme: Forme, o: { verre: string; opacite: number; tub
   for (const [e, sg] of [[c.a, -1], [c.b, 1]] as const) {
     const xo = e.x + sg * (r + tu * 0.4)
     const bord = c.R.A.cote(e.y, c.R.zc, sg)
-    const xe = bord ? bord.p.x : xo + sg * 0.8 * r
-    const dedans = (x: number, k: number) => Math.min(z, c.R.A.avant(x - sg * 2, e.y)?.p.z ?? z) - tu * k - 0.3 * r
-    tube(
-      c,
-      [V(xo, e.y + 0.1 * r, z), V(xo + (xe - xo) * 0.06, e.y + 0.1 * r, dedans(xo, 1.2)), V(xo + (xe - xo) * 0.5, e.y + 0.1 * r, dedans(xo + (xe - xo) * 0.5, 2.5) * 0.6), V(xe - sg * tu * 0.3, e.y + 0.1 * r, -0.05 * r + c.R.zc)],
-      tu * 0.7,
-      tu * 0.7,
-      c.c1,
-      c.g,
-      false,
-      false
-    )
+    const yb = e.y + 0.1 * r
+    // la branche suit la surface du corps, un peu SOUS elle (rayon du tube + marge), de la monture jusqu'au flanc :
+    // jamais a l'air libre ; si le corps est plus etroit que la monture, elle est simplement plus courte
+    const xe = bord ? bord.p.x - sg * tu * 0.5 : xo
+    const prof = Math.max(tu * 1.6, 0.34 * r) // profondeur sous la surface, mesuree le long de la normale
+    const pts: Vector3[] = [V(xo, yb, z)]
+    const N = 7
+    for (let k = 1; k <= N; k++) {
+      const u = k / N
+      const x = xo + (xe - xo) * u
+      const h = c.R.A.avant(x - sg * 1, yb)
+      // surface a cet endroit (au-dela de la silhouette : le flanc, au milieu du corps)
+      const p = h ? h.p.clone().addScaledVector(h.n, -prof) : V(x, yb, c.R.zc)
+      p.y = yb
+      if (k === N) p.z = Math.min(p.z, c.R.zc)
+      pts.push(p)
+    }
+    // premier point juste derriere la monture, dans le corps
+    pts[0] = V(xo, yb, z)
+    tube(c, pts, tu * 0.7, tu * 0.7, c.c1, c.g, false, false)
   }
 }
 
