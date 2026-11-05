@@ -98,6 +98,8 @@ interface Anim {
   visible?: (i: number, t: number) => boolean
   /** echelle de l'ordinateur (0 a ~1) a la date t */
   ordi?: (i: number, t: number) => number
+  /** indice de distribution impose (formes, couleurs, themes) ; defaut : le rang de l'animation */
+  cast?: number
   /** demi-largeur du cadre (grandes courses : sauts, chapeaux) ; defaut 150 */
   cadre?: number
   /** surimpression : curseur, doigts */
@@ -274,10 +276,10 @@ const progression = (t: number, i: number) => {
   return Math.max(0, 1 - (t - SORTIE - 0.2 * i) / 0.45)
 }
 ANIMS.push({
-  id: 'travail', groupe: 'humeur', nom: 'Travaille (ordinateur)', code: "setMood('travaille')", duree: 7, cle: 1.0, mood: 'repos', cadre: 200,
+  id: 'travail', groupe: 'humeur', nom: 'Travaille (ordinateur)', code: "setMood('travaille')", duree: 7, cle: 1.0, mood: 'repos', cadre: 150, cast: 2,
   phase: [0, 0.31, 0.62],
   evts: ENTREE.flatMap((t, i) => [{ t, i, type: 'mood', id: 'travaille' }, { t: SORTIE + 0.2 * i, i, type: 'mood', id: 'repos' }] as Evt[]),
-  yaw: (i, t) => [0.35, -0.3, 0.2][i]! + 0.1 * Math.sin(t * 0.8 + i),
+  yaw: (i, t) => [0.12, -0.08, 0][i]! + 0.05 * Math.sin(t * 0.8 + i),
   ordi: (i, t) => {
     const k = progression(t, i)
     if (k <= 0) return 0
@@ -344,11 +346,13 @@ function mochi(c: CanvasRenderingContext2D, a: Anim, i: number, p: Perso, t: num
   const h = humeursDe(a, i)
   appliquer(a, i, h, t)
   const ts = t + a.phase[i]!
+  const kOrdi = a.ordi ? Math.min(1, a.ordi(i, t)) : 0
+  h.regardOrdi = kOrdi
   const geste = h.sample(ts)
   const frame = moteur(p.forme).sample(ts, geste)
   const pixel = p.style.rendu === 'pixel'
   tuile.width = tuile.height = pixel ? Math.round((grillePixel('fin') * CADRE) / DEMI_VIEWBOX) : taille
-  const yaw = a.yaw ? a.yaw(i, t) : 0
+  const yaw = (a.yaw ? a.yaw(i, t) : 0) + 0.3 * kOrdi
   rendreAvatar(tuile, frame, p.couleur, PAPIER, p.style.rendu, false, 'marque', true, p.forme, yaw, null, p.sel, CADRE, p.theme, undefined, a.ordi ? a.ordi(i, t) : 0)
   c.imageSmoothingEnabled = !pixel
   c.drawImage(tuile, x0, y0, taille, taille)
@@ -364,7 +368,7 @@ function image(a: Anim, t: number): HTMLCanvasElement {
   c.fillStyle = FOND
   c.fillRect(0, 0, W, H)
   CADRE = a.cadre ?? 150
-  const casting = distribution(ANIMS.indexOf(a))
+  const casting = distribution(a.cast ?? ANIMS.indexOf(a))
   texte(c, a.groupe === 'humeur' ? 'HUMEUR' : 'INTERACTION', 44, 58, 22, GRIS, true)
   texte(c, a.nom, 44, 112, 54, ENCRE, true)
   texte(c, a.code, W - 44, 112, 26, GRIS, false, 'right', true)
@@ -421,11 +425,11 @@ function planOrdinateur(): HTMLCanvasElement {
   const cols = 4
   const entete = 120
   const rowsClair = Math.ceil(FORMES.length / 2)
-  const sombres = ['cercle', 'etoile', 'triangle']
+  const sombres: string[] = []
   const rowsSombre = Math.ceil(sombres.length / 2)
   const cv = document.createElement('canvas')
   cv.width = cols * cell
-  cv.height = entete + rowsClair * (cell + 8) + 70 + rowsSombre * (cell + 8) + 20
+  cv.height = entete + rowsClair * (cell + 8) + 20
   const c = cv.getContext('2d')!
   c.fillStyle = FOND
   c.fillRect(0, 0, cv.width, cv.height)
@@ -439,17 +443,17 @@ function planOrdinateur(): HTMLCanvasElement {
     }
     ;[0.55, 0].forEach((yaw, v) => {
       const h = new Humeurs('travaille')
+      h.regardOrdi = 1
       const t = 0.85 + (k % 5) * 0.11
       const frame = moteur(forme).sample(t, h.sample(t))
       tuile.width = tuile.height = cell
-      rendreAvatar(tuile, frame, couleur, PAPIER, 'doux', false, 'marque', true, forme, yaw, null, k % 3 === 1 ? { tete: 'casquette', yeux: 'rondes' } : {}, CADRE, theme, undefined, 1)
+      rendreAvatar(tuile, frame, couleur, PAPIER, 'doux', false, 'marque', true, forme, yaw + 0.3, null, k % 3 === 1 ? { tete: 'casquette', yeux: 'rondes' } : {}, CADRE, theme, undefined, 1)
       c.drawImage(tuile, x + v * cell, y, cell, cell)
     })
     texte(c, NOMS_FORMES[forme] ?? forme, x + 10, y + 26, 20, theme === 'dark' ? '#cfcbd6' : GRIS, true)
   }
   FORMES.forEach((f, k) => dessiner(f, k, (k % 2) * 2 * cell, entete + Math.floor(k / 2) * (cell + 8), 'light'))
   const y0 = entete + rowsClair * (cell + 8)
-  texte(c, 'En sombre', 40, y0 + 46, 34, ENCRE, true)
   sombres.forEach((f, k) => dessiner(f, k + 3, (k % 2) * 2 * cell, y0 + 70 + Math.floor(k / 2) * (cell + 8), 'dark'))
   return cv
 }

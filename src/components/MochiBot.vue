@@ -463,6 +463,11 @@ function avancerOrdi(dt: number, net = false) {
   const cible = ordiVoulu() ? 1 : 0
   if (cible !== ordiVers) ordiVers = cible
   ordiK = net ? cible : Math.min(1, Math.max(0, ordiK + Math.sign(cible - ordiK) * Math.min(Math.abs(cible - ordiK), dt / 0.45)))
+  humeurs.regardOrdi = tourOrdi()
+}
+/** Tournee 3/4 vers l'ordinateur : le corps pivote d'un peu moins de 20 degres, le regard va vers lui. */
+function tourOrdi(): number {
+  return ordiVers >= 1 ? Math.min(1, ordiK * 1.2) : ordiK * ordiK * (3 - 2 * ordiK)
 }
 /** Echelle dessinee : pousse avec un leger rebond (~106 %), rétrécit en douceur. */
 function ordiEchelle(): number {
@@ -482,7 +487,7 @@ const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3
 function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
-  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle())
+  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle())
 }
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image

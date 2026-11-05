@@ -384,7 +384,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it.each(FORMES)('%s : l ordinateur du mood travaille est devant le corps, sous les yeux, symetrique, et pousse avec son echelle', (forme) => {
+  it.each(FORMES)('%s : l ordinateur du mood travaille est devant le corps, en bas a droite, sous les yeux, et pousse avec son echelle', (forme) => {
     const { R } = corpsDe(forme)
     const acc = new Accessoires3d()
     const ordi = (k: number) => ({ k, sol: R.bas, cle: forme })
@@ -395,7 +395,9 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     const b = new Box3().setFromObject(og!)
     // devant le corps, centre, sous les yeux, pose au sol
     expect(b.max.z, forme).toBeGreaterThan((R.A.avant(0, R.bas + 0.1 * R.H)?.p.z ?? R.A.box.max.z) + 0.1 * R.hw)
-    expect(Math.abs(b.max.x + b.min.x), forme).toBeLessThan(0.05 * R.hw)
+    // en bas a droite de l'image (x positif), sans sortir du cadre
+    expect((b.max.x + b.min.x) / 2, forme).toBeGreaterThan(0.25 * R.hw)
+    expect(b.max.x, forme).toBeLessThan(1.6 * R.hw)
     expect(b.max.y, forme).toBeLessThan(R.yYeux)
     expect(b.min.y, forme).toBeGreaterThan(R.bas - 0.03 * R.H)
     expect(sommetsFinis(acc.groupe)).toBe(true)

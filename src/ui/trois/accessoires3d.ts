@@ -1350,23 +1350,28 @@ interface MesuresOrdi {
   prof: number
   zH: number
   sol: number
+  /** abscisse du centre du clavier */
+  x: number
 }
 
 function mesurerOrdi(R: Reperes, sol: number): MesuresOrdi {
   const { A, hw, H } = R
-  // l'ecran arrive sous les yeux : on voit toujours le visage par-dessus
-  const haut = R.yYeux - 2.3 * R.rVerre
-  const hs = Math.min(0.5 * H, Math.max(0.12 * H, haut - sol))
-  const l = Math.min(1.5 * hs, 1.55 * hw)
-  const prof = 0.78 * hs
-  // face avant du corps vers le bas : le bord arriere du clavier y entre un peu
+  // pose en bas a DROITE du corps (a droite de l'image vue de face), tourne vers le Mochi : le visage reste libre
+  const x = 0.5 * hw
+  // un peu plus grand que le premier essai ; l'ecran reste sous le haut des yeux
+  const haut = R.yYeux - 1.6 * R.rVerre
+  const hs0 = Math.min(0.5 * H, Math.max(0.12 * H, R.yYeux - 2.3 * R.rVerre - sol))
+  const hs = Math.max(hs0, Math.min(1.25 * hs0, haut - sol))
+  const l = Math.min(1.6 * hs, 1.4 * hw)
+  const prof = 0.8 * hs
+  // face avant du corps vers le bas, autour de x : le bord arriere du clavier y entre un peu
   let zb = -Infinity
-  for (const x of [-0.4 * hw, -0.2 * hw, 0, 0.2 * hw, 0.4 * hw]) {
-    const h = A.avant(x, sol + 0.1 * H)
+  for (const dx of [-0.3 * hw, -0.15 * hw, 0, 0.15 * hw, 0.3 * hw]) {
+    const h = A.avant(x + dx, sol + 0.1 * H)
     if (h) zb = Math.max(zb, h.p.z)
   }
-  if (zb === -Infinity) zb = A.box.max.z
-  return { l, hs, prof, zH: zb + prof - 0.1 * hw, sol }
+  if (zb === -Infinity) zb = A.box.max.z * 0.7
+  return { l, hs, prof, zH: zb + prof - 0.05 * hw, sol, x }
 }
 
 /**
@@ -1378,9 +1383,11 @@ function mesurerOrdi(R: Reperes, sol: number): MesuresOrdi {
 function construireOrdinateur(c: Ctx, m: MesuresOrdi): Group {
   const og = new Group()
   og.name = 'ordinateur'
-  const { l, hs, prof, zH, sol } = m
+  const { l, hs, prof, zH, sol, x } = m
   const zc = zH - prof / 2
-  og.position.set(0, sol, zc)
+  og.position.set(x, sol, zc)
+  // l'ecran regarde le Mochi (en haut a gauche de l'ordinateur) : on voit son dos de 3/4
+  og.rotation.y = 0.42
   const rc = 0.07 * hs
   const bis = 0.018 * hs
   // clavier : plaque plate posee au sol, bord avant (cote camera) a la charniere

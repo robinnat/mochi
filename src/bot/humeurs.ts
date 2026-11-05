@@ -142,49 +142,33 @@ export const MOODS: MoodDef[] = [
     }
   },
   {
-    // il ecrit sur son ordinateur : le regard baisse vers l'ecran, de petits rebonds rapides et IRREGULIERS (une frappe
-    // = un ecrasement bref), le corps penche un peu a gauche puis a droite en alternance, et des pauses ou il reflechit
+    // concentre : le regard lit ligne apres ligne, petits rebonds reguliers
     id: 'travaille',
     etat: 'idle',
     periode: 4,
     expression: visage('attentif', 4, 5, 0, 16, [eye(0.22, 0.34, 5), eye(0.22, 0.34, -5)]),
-    signature: 0.7,
+    signature: 0.55,
     pose: (u) => {
-      // deux rafales de frappe (0,25 a 1,45 s et 2,05 a 3,6 s) separees de pauses ; rien ne bouge aux jointures de la boucle
-      const GAPS = [0.11, 0.17, 0.09, 0.14, 0.21, 0.1, 0.13, 0.08, 0.19, 0.12, 0.16, 0.09, 0.15, 0.11]
-      const frappes: number[] = []
-      for (const [debut, fin] of [[0.25, 1.45], [2.05, 3.6]] as const) {
-        let t = debut
-        for (let i = 0; t < fin; i++) {
-          frappes.push(t)
-          t += GAPS[(i + frappes.length) % GAPS.length]!
-        }
-      }
-      let bump = 0
-      let gauche = 0
-      let droite = 0
-      frappes.forEach((t, i) => {
-        const d = u - t
-        if (d < 0 || d > 0.13) return
-        const b = Math.sin((Math.PI * d) / 0.13)
-        bump = Math.max(bump, b * (0.75 + 0.25 * ((i * 7) % 3) / 2))
-        // une main puis l'autre : le corps penche du cote qui frappe
-        if (i % 2 === 0) gauche = Math.max(gauche, b)
-        else droite = Math.max(droite, b)
-      })
-      // activite lissee : 1 pendant une rafale, 0 pendant une pause
-      const act = lisse((u - 0.1) / 0.2) * (1 - lisse((u - 1.45) / 0.25)) + lisse((u - 1.95) / 0.2) * (1 - lisse((u - 3.6) / 0.25))
-      const sy = 1 - 0.045 * bump
+      // une ligne par seconde : balayage de gauche a droite, retour vif
+      const v = u % 1
+      const bal = v < 0.82 ? lisse(v / 0.82) : 1 - lisse((v - 0.82) / 0.18)
+      // la ligne descend puis remonte (0, 1, 2, 1) : la boucle se raccorde, sans retour brusque
+      const rang = [0, 1, 2, 1]
+      const k = Math.floor(u) % 4
+      const ligne = lerp(rang[k]!, rang[(k + 1) % 4]!, lisse((v - 0.82) / 0.18))
+      // rebond toutes les 0,5 s : ecrasement bref puis petit saut
+      const p = (u % 0.5) / 0.5
+      const saut = Math.sin(Math.PI * p)
+      // l'impact tombe pile sur la jointure : le creux monte avant et redescend apres, sans marche
+      const creux = p < 0.12 ? 1 - p / 0.12 : p > 0.88 ? (p - 0.88) / 0.12 : 0
+      const sy = 1 + 0.03 * saut - 0.045 * creux
       return g({
-        // regard baisse sur l'ecran pendant la frappe ; en pause il remonte et file de cote (il reflechit)
-        ex: lerp(0.07 * Math.sin(u * TAU * 0.5), -0.02 * Math.sin((u - 1.45) * TAU * 0.5), act),
-        ey: lerp(-0.045, 0.125, act),
-        dy: -0.012 * bump * act + sol(sy),
-        dx: 0.022 * (droite - gauche) * act,
-        rot: 1.6 * (droite - gauche) * act,
+        ex: -0.095 + 0.19 * bal,
+        ey: 0.05 + 0.018 * ligne,
+        dy: -0.04 * saut + sol(sy) * 0.6,
         sy,
         sx: 1 / Math.sqrt(sy),
-        lid: cligne(u, 1.7) * cligne(u, 3.75)
+        lid: cligne(u, 2.4)
       })
     }
   },
@@ -540,6 +524,8 @@ export class Humeurs {
   private regardAt = -10
   /** true = `prefers-reduced-motion` : image fixe, sans mouvement du corps */
   reduit: boolean
+  /** 0 a 1 : le regard de `travaille` se tourne vers l'ordinateur pose en bas a droite (le composant le pose) */
+  regardOrdi = 0
 
   constructor(mood: MoodId | null = null, opts: { reduit?: boolean; base?: BotExpression | null } = {}) {
     this.cur = mood
@@ -645,6 +631,8 @@ export class Humeurs {
     if (!base && !a && w.w < 0.002) return undefined
     // sans humeur, une reaction part du visage de repos de l'application, sans ecart de corps
     base ??= g({ exp: this.base ?? expr('neutre') })
+    // l'ordinateur est en bas a droite : le regard y va un peu, sans toucher a l'animation du corps
+    if (this.regardOrdi > 0 && this.cur === 'travaille') base = { ...base, ex: (base.ex ?? 0) + 0.075 * this.regardOrdi, ey: (base.ey ?? 0) + 0.04 * this.regardOrdi }
     let out: Geste = base
     if (a) {
       const u = now - a.debut
