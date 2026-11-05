@@ -66,13 +66,14 @@ interface Cellule {
   rendu?: Rendu3d
   cadre?: number
   theme?: 'light' | 'dark'
+  ombrage?: boolean
 }
 
 /** Dessine un Mochi (3D temps reel) dans le canvas de la planche, carre de `px` en (x, y). */
 function cellule(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, c: Cellule) {
   const t = document.createElement('canvas')
   t.width = t.height = px
-  rendreAvatar(t, image(c.forme), c.couleur, PAPIER, c.rendu ?? 'doux', false, 'marque', true, c.forme, c.yaw ?? 0, null, c.sel, c.cadre ?? 175, c.theme ?? 'light')
+  rendreAvatar(t, image(c.forme), c.couleur, PAPIER, c.rendu ?? 'doux', false, 'marque', true, c.forme, c.yaw ?? 0, null, c.sel, c.cadre ?? 175, c.theme ?? 'light', undefined, 0, true, c.ombrage ?? true)
   ctx.drawImage(t, x, y)
 }
 
@@ -269,6 +270,28 @@ function planCravate() {
   return c
 }
 
+/** Ombrage du corps : les trois styles, avec et sans, sur trois formes. */
+function planOmbrage() {
+  const styles: Array<{ nom: string; rendu: Rendu3d }> = [{ nom: 'Soft', rendu: 'doux' }, { nom: 'Flat', rendu: 'toon' }, { nom: 'Pixel', rendu: 'pixel' }]
+  const formes = [{ f: 'cercle', c: 'violet' }, { f: 'etoile', c: 'ambre' }, { f: 'squircle', c: 'turquoise' }]
+  const cell = 240
+  const { c, ctx } = nouvelle(cell * 6, 140 + styles.length * (cell + 40))
+  texte(ctx, 'Body shading : avec et sans, dans les trois styles', 40, 66, 44, ENCRE, true)
+  texte(ctx, 'Pour chaque forme : avec ombrage à gauche, sans à droite (corps en aplat, yeux inchangés)', 40, 104, 22, GRIS)
+  styles.forEach((s, i) => {
+    const y = 130 + i * (cell + 40)
+    texte(ctx, s.nom, 12, y + 24, 26, ENCRE, true)
+    formes.forEach((f, k) => {
+      ;[true, false].forEach((om, v) => {
+        const x = (k * 2 + v) * cell
+        cellule(ctx, x, y + 20, cell, { forme: f.f, couleur: hexDe(f.c), rendu: s.rendu, sel: {}, ombrage: om, cadre: 150, yaw: 0.3 })
+        texte(ctx, om ? 'avec' : 'sans', x + cell / 2, y + cell + 30, 18, GRIS, false, 'center')
+      })
+    })
+  })
+  return c
+}
+
 /** Vues : face, 3/4, profil, dos pour la cape et la cravate. */
 function planVues() {
   const lignes: Array<{ nom: string; sel: Selection; forme: string; couleur: string; cadre: number }> = [
@@ -338,6 +361,7 @@ async function main() {
     ['lunettes', planLunettes],
     ['cape-cravate', planCapeCravate],
     ['cravate', planCravate],
+    ['ombrage', planOmbrage],
     ['catalogue', planCatalogue],
     ['vues', planVues],
     ['alfred', planAlfred]
