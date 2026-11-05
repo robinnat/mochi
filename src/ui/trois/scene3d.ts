@@ -62,6 +62,7 @@ import {
   RENDU_3D_DEFAUT
 } from './rendu3d'
 import { peindreReflet, REFLET_DEFAUT, type Reflet } from './reflet'
+import { accessoiresSombres, CONTRASTE_OEIL_MIN, corpsPourTheme, couleurOeil, OEIL_RGB, THEME_DEFAUT, type Theme } from './theme'
 import {
   champDeRepos,
   contourDuCorps,
@@ -124,6 +125,10 @@ export class Mochi3d {
   /** accessoires par emplacements (tete, yeux, visage, bas, dos), combinables */
   private accs: Selection = {}
   private readonly acc3d = new Accessoires3d()
+  /** theme : `light` (yeux blancs, defaut) ou `dark` (yeux noirs) */
+  private theme: Theme = THEME_DEFAUT
+  /** contraste minimal oeil noir / corps en sombre (en dessous, le corps est eclairci) ; 0 = jamais */
+  private contrasteOeil = CONTRASTE_OEIL_MIN
   /** forme du mochi (`squircle`, `etoile`...) : fixe son profil de volume et ses yeux */
   private forme = ''
   /** profil impose (option de labo) ; sinon celui de la forme */
@@ -140,6 +145,8 @@ export class Mochi3d {
   /** petit reflet doux en haut a gauche (matiere `doux` seulement) */
   /** reflet doux en shader : 1 = actif (uniform partage par les materiaux de ce corps) */
   private readonly uReflet = { value: 1 }
+  /** yeux noirs (theme sombre) : 1 = pas d'emission, pas de lueur ajoutee sur les yeux */
+  private readonly uOeil = { value: 0 }
   /** demi-epaisseur du contour, en unites du moteur (uniform de la coque) */
   private readonly epaisseur = { value: 4.5 }
   /** derniers contour et visage peints : inchanges d'une image a l'autre, on ne refait rien */
@@ -166,6 +173,11 @@ export class Mochi3d {
     this.mesh.add(this.coque)
     this.mesh.add(this.porte3d.groupe)
     this.mesh.add(this.acc3d.groupe)
+  }
+
+  /** Intensite d'emission des yeux : celle du materiau en clair, nulle en sombre (l'oeil est noir, il ne s'allume pas). */
+  private emission(m: Materiau): number {
+    return this.theme === 'dark' ? 0 : m instanceof MeshStandardMaterial ? 0.85 : 1
   }
 
   /** Materiau d'une variante, cree a la demande et garde. */
@@ -208,7 +220,8 @@ export class Mochi3d {
       if (plat.facettes) (m as unknown as { flatShading: boolean }).flatShading = true
     }
     // l'ombrage continu (AO, liseres, reflet) n'a de sens que pour la matiere douce : les styles a aplats gardent leurs tons nets
-    if (!plat || plat.lisse) lisere(m, plat ? 0.7 : 0.5, plat ? 0.32 : 0.22, { reflet: this.uReflet, ao: 1 })
+    if (!plat || plat.lisse) lisere(m, plat ? 0.7 : 0.5, plat ? 0.32 : 0.22, { reflet: this.uReflet, ao: 1, oeil: this.uOeil })
+    m.emissiveIntensity = this.emission(m)
     this.materiaux.set(cle, m)
     return m
   }
@@ -244,7 +257,19 @@ export class Mochi3d {
 
   /** Choisit les accessoires par emplacement (un au plus par emplacement, tous cumulables). Appele avant `maj`. */
   setAccessoires(sel: Selection) {
-    this.accs = sel
+    this.accs = this.theme === 'dark' ? accessoiresSombres(sel) : sel
+  }
+
+  /**
+   * Choisit le theme (`dark` = yeux noirs). Appele avant `setAccessoires` et `maj` : le choix des
+   * accessoires et la peinture du visage en dependent.
+   */
+  setTheme(theme: Theme, contrasteOeil = CONTRASTE_OEIL_MIN) {
+    this.theme = theme
+    this.contrasteOeil = contrasteOeil
+    // sombre : le masque des yeux n'allume plus rien (emission a 0) et les lueurs l'evitent
+    this.uOeil.value = theme === 'dark' ? 1 : 0
+    for (const m of this.materiaux.values()) m.emissiveIntensity = this.emission(m)
   }
 
   /** Couleurs des accessoires portes (palette du pixel art). */
@@ -283,6 +308,9 @@ export class Mochi3d {
 
   /** Recopie l'image `frame` du moteur dans le maillage et la texture. */
   maj(frame: BotFrame, couleur: string, papier: string) {
+    // sombre : yeux noirs, et un corps eclairci seulement s'il ne contraste pas assez avec eux
+    couleur = corpsPourTheme(couleur, this.theme, this.contrasteOeil)
+    papier = couleurOeil(this.theme, papier)
     // Flat et Pixel : une couleur quasi noire garde du relief (voir `leverSombre`)
     if (this.rendu === 'toon' || this.rendu === 'toon-contour' || this.rendu === 'pixel') couleur = leverSombre(couleur)
     this.mesh.visible = frame.bodyPath.length > 10 && frame.bodyAlpha > 0.01
@@ -325,11 +353,11 @@ export class Mochi3d {
     // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
     const reflet = null as Reflet | null
     const cleReflet = reflet ? [reflet.x, reflet.y, reflet.rx].map((v) => Math.round(v * 2)).join(',') : '-'
-    const cleVisage = `${this.rendu}|${this.douceur}|${couleur}|${papier}|${JSON.stringify(frame.eyes)}|${cleReflet}|${this.porte ?? ''}|${ombres.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
+    const cleVisage = `${this.rendu}|${this.douceur}|${this.theme}|${couleur}|${papier}|${JSON.stringify(frame.eyes)}|${cleReflet}|${this.porte ?? ''}|${ombres.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
     if (cleVisage !== this.cleVisage) {
       this.cleVisage = cleVisage
       // le flat garde la couleur choisie telle quelle (pas de pastel), sans creux d'oeil
-      this.peindre(frame, plat ? couleur : m.base, papier, m.creux, !plat, reflet, ombres)
+      this.peindre(frame, plat ? couleur : m.base, papier, m.creux, !plat && this.theme === 'light', reflet, ombres)
     }
   }
 
@@ -443,6 +471,8 @@ export class Mochi3d {
       const [a, b, cc, d, e, f] = m as [number, number, number, number, number, number]
       y.setTransform(k * a, k * b, k * cc, k * d, k * (e + VB), k * (f + VB))
       y.globalAlpha = alpha
+      // le masque reste blanc sur l'oeil, aussi en sombre : il n'y allume rien (emission a 0) mais
+      // dit au shader d'y laisser un noir franc (voir `lisere`)
       y.fillStyle = '#fff'
       y.fill(chemin)
       c.setTransform(k * a, k * b, k * cc, k * d, k * (e + VB), k * (f + VB))
@@ -670,8 +700,13 @@ export function rendreAvatar(
   porte: PorteId | null = null,
   accessoires: Selection = {},
   /** demi-largeur du cadre en unites du moteur (par defaut le viewBox) : l'elargir laisse de la place aux grands accessoires */
-  cadre = VB
+  cadre = VB,
+  /** `light` (defaut, rendu d'avant) ou `dark` : les yeux deviennent noirs */
+  theme: Theme = THEME_DEFAUT,
+  /** sombre : contraste minimal oeil noir / corps (defaut 3, 0 = ne jamais eclaircir le corps) */
+  contrasteOeil = CONTRASTE_OEIL_MIN
 ) {
+  couleur = corpsPourTheme(couleur, theme, contrasteOeil)
   const ctx3 = contexte()
   const { renderer, scene, camera, mochi } = ctx3
   if (ctx3.rendu !== rendu3d || ctx3.douceur !== douceur) {
@@ -686,6 +721,7 @@ export function rendreAvatar(
   mochi.setRendu(rendu3d, contour, douceur, reflet)
   mochi.setForme(forme)
   mochi.setPorte(porte)
+  mochi.setTheme(theme, contrasteOeil)
   mochi.setAccessoires(accessoires)
   if (camera.right !== cadre) {
     camera.left = -cadre
@@ -718,7 +754,8 @@ export function rendreAvatar(
     const t = porte ? TEINTES_PORTES[porte] : null
     const teintes = porte === 'lunettes' || porte === 'soleil' ? ['#26222f'] : t ? [t.fond, t.accent] : []
     const corps = leverSombre(couleur)
-    quantifier(im.data, px, px, palettePixel(corps, [...teintes, ...mochi.couleursAccessoires]), luminance(corps) < 0.62)
+    const oeil = theme === 'dark' ? OEIL_RGB : undefined
+    quantifier(im.data, px, px, palettePixel(corps, [...teintes, ...mochi.couleursAccessoires], oeil), !oeil && luminance(corps) < 0.62, oeil)
     c.putImageData(im, 0, 0)
     return
   }

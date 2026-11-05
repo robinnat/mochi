@@ -5,6 +5,17 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added (dark theme, proposal)
+
+- `theme: 'light' | 'dark'` (default `'light'`, rendering unchanged): in `'dark'` the eyes are black
+  (`#0a0a0c`) in the three styles and the 11 shapes, all moods and blinks included. Lighting, rim glows
+  and reflection are the same, but they no longer add light on the eyes. Available as the last arguments
+  of `rendreAvatar(..., theme, contrasteOeil)`, `Mochi3d.setTheme`, `EspaceIso` option `theme` and the
+  `theme` prop of `MochiBot`.
+- Dark theme only: a body whose contrast with the black eye is under 3:1 is lightened just enough to reach
+  3:1 (ink, dark navy and dark grey bodies); other colours are untouched. `contrasteOeil = 0` disables it.
+- Dark theme only: the black lens of the sunglasses becomes slate so it stays distinct from black eyes.
+
 ### Changed (pillow shapes)
 
 - Star, hexagon, cloud and flower are inflated like a cushion: the height is the solution of a Poisson

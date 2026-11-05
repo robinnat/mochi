@@ -49,6 +49,7 @@ import { RAYON } from '@/bot/repere'
 import { poseSaut, SAUT_DEFAUT, type Case, type ParamsSaut } from '@/bot/sauts'
 import { COLOR_BY_ID, SHAPE_BY_ID } from '@/bot/skins'
 import { DOUCEUR_DEFAUT, eclairagePlat, gradientMap, reglagePlat, type Douceur, type Rendu3d, RENDU_3D_DEFAUT } from './rendu3d'
+import { THEME_DEFAUT, type Theme } from './theme'
 import { Mochi3d } from './scene3d'
 
 /** Rayon d'un mochi, en cases : 100 unites du moteur valent 0,42 case. */
@@ -70,6 +71,8 @@ export interface OptionsEspace {
   douceur?: Douceur
   /** petit reflet doux en haut a gauche (matiere `doux`) ; defaut : oui */
   reflet?: boolean
+  /** theme : `light` (defaut) ou `dark` (yeux noirs) */
+  theme?: Theme
 }
 
 export interface OptionsMochiIso {
@@ -108,6 +111,7 @@ export class EspaceIso {
   private readonly contour: boolean
   private readonly douceur: Douceur
   private readonly reflet: boolean
+  private readonly theme: Theme
   /** pixels (physiques) d'une unite du moteur, pour l'epaisseur du contour */
   private pxParUnite = 0.5
   private readonly plat: ReturnType<typeof reglagePlat>
@@ -125,6 +129,7 @@ export class EspaceIso {
     this.contour = opts.contour ?? false
     this.douceur = opts.douceur ?? DOUCEUR_DEFAUT
     this.reflet = opts.reflet ?? true
+    this.theme = opts.theme ?? THEME_DEFAUT
     this.plat = reglagePlat(this.rendu3d, this.douceur)
     this.renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
     this.renderer.outputColorSpace = SRGBColorSpace
@@ -233,6 +238,7 @@ export class EspaceIso {
     const moteur = new BotEngine(RAYON, 'idle', SHAPE_BY_ID.get(o.forme)?.radii ?? null)
     const corps = new Mochi3d(256)
     corps.setRendu(this.rendu3d, this.contour, this.douceur, this.reflet)
+    corps.setTheme(this.theme)
     corps.setForme(o.forme)
     corps.calerContour(this.pxParUnite)
     corps.mesh.castShadow = true

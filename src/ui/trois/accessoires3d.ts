@@ -536,7 +536,8 @@ function lunettes(c: Ctx, forme: Forme, o: { verre: string; opacite: number; tub
 const YEUX: Record<string, Gen> = {
   rondes: (c) => lunettes(c, FORMES.ronde!, { verre: '#ffffff', opacite: 0.16 }),
   carrees: (c) => lunettes(c, FORMES.carree!, { verre: '#ffffff', opacite: 0.16, tube: 0.19 }),
-  soleil: (c) => lunettes(c, FORMES.ronde!, { verre: '#15131c', opacite: 0.9, tube: 0.2 }),
+  // verre noir par defaut ; une couleur d'appoint differente du catalogue le remplace (theme sombre : ardoise)
+  soleil: (c) => lunettes(c, FORMES.ronde!, { verre: c.c2 === '#26222f' ? '#15131c' : c.c2, opacite: 0.9, tube: 0.2 }),
   coeur: (c) => lunettes(c, FORMES.coeur!, { verre: mixHex(c.c1, '#ffffff', 0.35), opacite: 0.5, tube: 0.16, k: 1.15 }),
   etoile: (c) => lunettes(c, FORMES.etoile!, { verre: mixHex(c.c1, '#ffffff', 0.4), opacite: 0.5, tube: 0.16, k: 1.15 }),
   monocle(c) {

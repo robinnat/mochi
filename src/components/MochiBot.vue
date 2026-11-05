@@ -23,6 +23,7 @@ import { ACCESSOIRE_BY_ID, ancreDuCorps, type AccessoireId } from '@/bot/accesso
 import { composer, type Geste } from '@/bot/gestes'
 import { pixellise, pixellisePrims } from '@/ui/pixel'
 import { DOUCEUR_DEFAUT, RENDU_3D_DEFAUT, type Douceur, type Rendu3d } from '@/ui/trois/rendu3d'
+import { THEME_DEFAUT, type Theme } from '@/ui/trois/theme'
 import {
   contourCourant,
   est3d,
@@ -47,6 +48,8 @@ const props = withDefaults(
     expression?: string
     /** couleur du fond, utilisee pour la brume de profondeur des particules */
     paper?: string
+    /** theme de la 3D : `light` (defaut) ou `dark` (les yeux deviennent noirs) */
+    theme?: Theme
     /**
      * Fige le rendu a cette date (en secondes depuis le debut de l'etat).
      * Le moteur etant une fonction pure du temps, on obtient une image
@@ -121,6 +124,7 @@ const props = withDefaults(
     color: DEFAULT_COLOR,
     expression: DEFAULT_EXPRESSION,
     paper: '#f9f9f9',
+    theme: THEME_DEFAUT,
     frozenAt: undefined,
     cycle: () => defaultCycle().blocks,
     follow: false,
@@ -380,11 +384,11 @@ const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3
 function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
-  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte)
+  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte, {}, undefined, props.theme)
 }
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image
-watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, () => contourEffectif.value], dessiner3d, { flush: 'post' })
+watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, () => props.theme, () => contourEffectif.value], dessiner3d, { flush: 'post' })
 
 /* ------------------------------------------------------- regard qui suit */
 
