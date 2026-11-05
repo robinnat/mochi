@@ -247,21 +247,6 @@ function arrondir(pts: Array<[number, number]>, passes = 3): Array<[number, numb
   return cur
 }
 
-/** Noeud papillon / ruban : deux boucles, un noeud, deux pans. Repere local : face vers +z, largeur sur x. */
-function noeud(c: Ctx, parent: Object3D, s: number, hex: string, noeudHex = hex, pans = true) {
-  for (const sg of [-1, 1]) {
-    const boucle = sph(c, hex, 1, [0.62 * s, 0.4 * s, 0.26 * s], V(sg * 0.6 * s, 0, 0), parent)
-    boucle.rotation.z = sg * 0.2
-    // pli au creux de la boucle : petite pastille plus foncee
-    sph(c, mixHex(hex, '#000000', 0.12), 1, [0.34 * s, 0.2 * s, 0.2 * s], V(sg * 0.66 * s, 0, 0.1 * s), parent).rotation.z = sg * 0.2
-    if (pans) {
-      const p = sph(c, hex, 1, [0.17 * s, 0.5 * s, 0.1 * s], V(sg * 0.22 * s, -0.5 * s, -0.04 * s), parent)
-      p.rotation.z = sg * 0.28
-    }
-  }
-  sph(c, noeudHex, 1, [0.26 * s, 0.26 * s, 0.26 * s], V(0, 0, 0.04 * s), parent)
-}
-
 /** Fleur : petales sur un plan face a +z, coeur au centre. */
 function fleur(c: Ctx, parent: Object3D, s: number, petale: string, coeur: string, n = 6) {
   for (let i = 0; i < n; i++) {
@@ -312,18 +297,10 @@ const TETE: Record<string, Gen> = {
     // visiere : pastille plate devant, penchee vers le bas
     const v = sph(c, c.c2, 1, [0.8, 0.13, 0.66], V(0, 0.14, 1.0), g)
     v.rotation.x = 0.3
-    sph(c, c.c2, 0.11, [1, 1, 1], V(0, 0.93, 0), g)
-    // bandeau : tore a la base de la calotte
-    const b = add(c, new TorusGeometry(0.98, 0.06, 12, 48), mixHex(c.c1, '#000000', 0.12), g)
-    b.rotation.x = Math.PI / 2
-    b.position.y = 0.1
   },
   bonnet(c) {
     const g = coiffe(c)
     sph(c, c.c1, 1, [1.02, 1.08, 1.02], V(0, 0.02, 0), g)
-    const r = add(c, new TorusGeometry(0.95, 0.27, 18, 48), c.c2, g)
-    r.rotation.x = Math.PI / 2
-    r.position.y = 0.14
     sph(c, c.c2, 0.32, [1, 1, 1], V(0.04, 1.1, 0), g)
   },
   beret(c) {
@@ -333,7 +310,6 @@ const TETE: Record<string, Gen> = {
     const q = add(c, new CylinderGeometry(0.07, 0.09, 0.2, 14), c.c1, g)
     q.position.set(-0.02, 0.62, 0)
     q.rotation.z = -0.2
-    sph(c, mixHex(c.c1, '#000000', 0.1), 0.11, [1, 0.8, 1], V(-0.05, 0.74, 0), g)
   },
   'haut-de-forme'(c) {
     const g = coiffe(c)
@@ -351,10 +327,6 @@ const TETE: Record<string, Gen> = {
       const k = add(c, new ConeGeometry(0.2, 0.46, 20), c.c1, g)
       k.position.set(px, 0.62, pz)
       sph(c, c.c1, 0.1, [1, 1, 1], V(px, 0.86, pz), g)
-    }
-    for (const a of [Math.PI / 2, Math.PI / 2 + 0.55, Math.PI / 2 - 0.55]) {
-      const p = V(Math.cos(a) * 1.0, 0.2, Math.sin(a) * 1.0)
-      sph(c, a === Math.PI / 2 ? c.c2 : mixHex(c.c2, '#ffffff', 0.25), 0.1, [1, 1, 0.6], p, g)
     }
   },
   paille(c) {
@@ -399,8 +371,6 @@ const TETE: Record<string, Gen> = {
       c.g.add(g)
       // coque, coussin et cache exterieur
       sph(c, c.c1, 1, [0.3 * hw, 0.37 * hw, 0.19 * hw], V(0, 0, 0), g)
-      sph(c, mixHex(c.c2, '#000000', 0.06), 1, [0.23 * hw, 0.29 * hw, 0.06 * hw], V(0, 0, 0.16 * hw), g)
-      sph(c, c.c1, 1, [0.13 * hw, 0.17 * hw, 0.04 * hw], V(0, 0, 0.21 * hw), g)
     }
   },
   oreilles(c) {
@@ -443,7 +413,7 @@ const TETE: Record<string, Gen> = {
     const h = A.dessus(0.4 * hw, t.zc)
     if (!h) return
     const g = poser(c, h.p, h.n, -t.R * 0.1, 0.9, -0.35)
-    noeud(c, g, t.R * 0.95, c.c1, mixHex(c.c1, '#000000', 0.1))
+    papillon3d(c, g, t.R * 0.62, c.c1, c.c1)
   },
   fleur(c) {
     const { A, tete: t, hw } = c.R
@@ -472,9 +442,6 @@ const TETE: Record<string, Gen> = {
       const a = (i / 6) * Math.PI * 2
       sph(c, c.c1, 0.4, [1, 1, 1], V(Math.cos(a) * 0.66, 0.86, Math.sin(a) * 0.66), g)
     }
-    const r = add(c, new TorusGeometry(0.9, 0.04, 8, 40), mixHex(c.c1, '#000000', 0.12), g)
-    r.rotation.x = Math.PI / 2
-    r.position.y = 0.28
   }
 }
 
@@ -537,9 +504,9 @@ const YEUX: Record<string, Gen> = {
   rondes: (c) => lunettes(c, FORMES.ronde!, { verre: '#ffffff', opacite: 0.16 }),
   carrees: (c) => lunettes(c, FORMES.carree!, { verre: '#ffffff', opacite: 0.16, tube: 0.19 }),
   // verre noir par defaut ; une couleur d'appoint differente du catalogue le remplace (theme sombre : ardoise)
-  soleil: (c) => lunettes(c, FORMES.ronde!, { verre: c.c2 === '#26222f' ? '#15131c' : c.c2, opacite: 0.9, tube: 0.2 }),
-  coeur: (c) => lunettes(c, FORMES.coeur!, { verre: mixHex(c.c1, '#ffffff', 0.35), opacite: 0.5, tube: 0.16, k: 1.15 }),
-  etoile: (c) => lunettes(c, FORMES.etoile!, { verre: mixHex(c.c1, '#ffffff', 0.4), opacite: 0.5, tube: 0.16, k: 1.15 }),
+  soleil: (c) => lunettes(c, FORMES.ronde!, { verre: c.c2, opacite: 0.9, tube: 0.2 }),
+  coeur: (c) => lunettes(c, FORMES.coeur!, { verre: c.c1, opacite: 0.3, tube: 0.16, k: 1.15 }),
+  etoile: (c) => lunettes(c, FORMES.etoile!, { verre: c.c1, opacite: 0.3, tube: 0.16, k: 1.15 }),
   monocle(c) {
     const r = rayonMonture(c, 1.2) * 1.1
     const e = c.b
@@ -548,15 +515,6 @@ const YEUX: Record<string, Gen> = {
     tube(c, courbeForme(FORMES.ronde!, r).map((p) => p.add(V(e.x, e.y, z))), tu, tu, c.c1, c.g, true, false)
     const lens = add(c, new ShapeGeometry(new Shape(courbeForme(FORMES.ronde!, r * 0.98).map((p) => new Vector2(p.x, p.y))), 24), '#ffffff', c.g, 0.16, true)
     lens.position.set(e.x, e.y, z - tu * 0.3)
-    // chaine : suit la surface en descendant vers le bas
-    const pts: Vector3[] = []
-    for (let k = 0; k <= 5; k++) {
-      const x = e.x + r * (0.95 + 0.38 * k)
-      const y = e.y - r * (0.7 + 1.0 * k)
-      const h = c.R.A.avant(x, y)
-      if (h) pts.push(h.p.clone().addScaledVector(h.n, tu * 0.2))
-    }
-    if (pts.length >= 3) tube(c, pts, tu * 0.5, tu * 0.5, c.c2)
   },
   sommeil(c) {
     const r = c.rv
@@ -569,19 +527,14 @@ const YEUX: Record<string, Gen> = {
     pad.rotation.z = Math.PI / 2
     pad.scale.z = 0.4
     pad.position.set((c.a.x + c.b.x) / 2, y, z)
-    // yeux fermes brodes : deux arcs doux et des cils
+    // yeux fermes : deux arcs doux, sans cils
     for (const e of [c.a, c.b]) {
       const pts: Vector3[] = []
       for (let k = 0; k <= 8; k++) {
         const u = (k / 8) * 2 - 1
         pts.push(V(e.x + u * 0.62 * r, e.y - 0.12 * r + 0.3 * r * (u * u - 0.5) * -1, z + 0.4 * 1.25 * r))
       }
-      tube(c, pts, 0.07 * r, 0.07 * r, c.c2)
-      for (const u of [-0.5, 0, 0.5]) {
-        const x = e.x + u * 0.62 * r
-        const y0 = e.y - 0.12 * r - 0.3 * r * (u * u - 0.5)
-        tube(c, [V(x, y0, z + 0.5 * r), V(x + u * 0.2 * r, y0 - 0.26 * r, z + 0.5 * r)], 0.05 * r, 0.04 * r, c.c2)
-      }
+      tube(c, pts, 0.09 * r, 0.09 * r, c.c2)
     }
   },
   ski(c) {
@@ -777,12 +730,14 @@ const libre = (c: Ctx) => Math.max(8, c.R.yBas - c.R.bas - 0.04 * c.R.H)
  * dos plat) refermees sur les bords. Le haut est colle au corps, puis le pan se decolle (`gap`, courbe en
  * t^1.5) et se balance de `swing` : rien n'est plaque. `t0..t1` limite la piece (rayures).
  */
-function pendant(c: Ctx, W: (t: number) => number, hex: string, o: { x0: number; yTop: number; L: number; ep: number; gap: number; swing: number; decal: number; t0?: number; t1?: number; plus?: number; wmax: number }) {
+function pendant(c: Ctx, W: (t: number) => number, hex: string, o: { x0: number; yTop: number; L: number; ep: number; gap: number; swing: number; decal: number; t0?: number; t1?: number; plus?: number; wmax: number; tombe?: boolean }) {
   const { x0, yTop, L, ep, gap, swing, decal, wmax } = o
   const t0 = o.t0 ?? 0
   const t1 = o.t1 ?? 1
   const plus = o.plus ?? 0
   const zs = grille(c, x0 - wmax - 6, x0 + wmax + 6 + Math.abs(swing), yTop - L - 6, yTop + 8, 15, 13)
+  // « tombe » : le pan pend droit sous son noeud, il ne suit pas la courbure du corps (le bas se decolle)
+  const z0 = o.tombe ? zs(x0, yTop) : -Infinity
   const nt = Math.max(3, Math.round(14 * (t1 - t0)))
   const nu = 10
   const pos: number[] = []
@@ -797,7 +752,7 @@ function pendant(c: Ctx, W: (t: number) => number, hex: string, o: { x0: number;
         const x = x0 + u * w + swing * t * t
         const y = yTop - t * L
         const bomb = face ? (ep + plus) * (1 - u * u) ** 0.55 * fin : 0
-        pos.push(x, y, zs(x, y) + decal + gap * t ** 1.5 + bomb)
+        pos.push(x, y, Math.max(zs(x, y), z0) + decal + gap * t ** 1.5 + bomb)
       }
     }
   }
@@ -862,59 +817,71 @@ function bande(c: Ctx, y: number, larg: number, hex: string, o: { e0: number; eb
 /** Aile de noeud papillon : triangle aux coins arrondis, pointe vers le centre, extrude en volume doux. `sg` = cote. */
 function aileNoeud(c: Ctx, parent: Object3D, s: number, hex: string, sg: number) {
   // miroir par les points (pas par un `scale` negatif, qui retournerait les normales)
-  const pts: Array<[number, number]> = sg > 0 ? [[0.1 * s, 0], [1.05 * s, 0.6 * s], [1.05 * s, -0.6 * s]] : [[-0.1 * s, 0], [-1.05 * s, -0.6 * s], [-1.05 * s, 0.6 * s]]
-  const geo = extrusion(formeDePoints(arrondir(pts, 2)), 0.14 * s, 0.1 * s, 8)
+  const pts: Array<[number, number]> = sg > 0 ? [[0.04 * s, 0], [1.05 * s, 0.6 * s], [1.05 * s, -0.6 * s]] : [[-0.04 * s, 0], [-1.05 * s, -0.6 * s], [-1.05 * s, 0.6 * s]]
+  const geo = extrusion(formeDePoints(arrondir(pts, 3)), 0.2 * s, 0.13 * s, 8)
   const m = add(c, geo, hex, parent, 1, true)
   m.position.z = -0.02 * s
 }
 
-/** Noeud papillon classique : deux triangles arrondis, pointes vers le centre, petit noeud central rectangulaire arrondi. */
+/**
+ * Noeud papillon d'Alfred : deux triangles aux bords arrondis, un peu bombes, centre pince avec un tout petit
+ * noeud, rien qui pende. Une seule couleur (`noeudHex` = `hex` par defaut).
+ */
 function papillon3d(c: Ctx, parent: Object3D, s: number, hex: string, noeudHex: string) {
   aileNoeud(c, parent, s, hex, -1)
   aileNoeud(c, parent, s, hex, 1)
-  const k = arrondir([[-0.17 * s, -0.3 * s], [0.17 * s, -0.3 * s], [0.17 * s, 0.3 * s], [-0.17 * s, 0.3 * s]], 2)
-  const m = add(c, extrusion(formeDePoints(k), 0.2 * s, 0.1 * s, 8), noeudHex, parent)
-  m.position.z = 0.02 * s
+  const k = arrondir([[-0.04 * s, -0.14 * s], [0.04 * s, -0.14 * s], [0.04 * s, 0.14 * s], [-0.04 * s, 0.14 * s]], 2)
+  const m = add(c, extrusion(formeDePoints(k), 0.14 * s, 0.06 * s, 8), noeudHex, parent)
+  m.position.z = 0.04 * s
 }
 
 const BAS: Record<string, Gen> = {
   papillon(c) {
-    const h = devant(c)
+    // pose TOUT EN BAS du corps (comme sur Alfred) : il depasse un peu sous la silhouette ; sur une forme pointue
+    // on remonte jusqu'a trouver une coupe assez large pour le porter
+    const { A, hw, bas, H } = c.R
+    const s = hw * 0.5
+    let y = bas + 0.55 * s - 0.03 * H
+    let h = null
+    for (let k = 0; k < 24; k++, y += 0.02 * H) {
+      const sec = A.section(y)
+      if (sec && sec.x1 - sec.x0 >= 2.05 * s) {
+        h = surf(c, 0, y)
+        if (h) break
+      }
+    }
+    h ??= devant(c)
     if (!h) return
-    const s = c.R.hw * 0.46
-    const g = poser(c, h.p, h.n, -s * 0.12, 0.6)
-    papillon3d(c, g, s, c.c1, mixHex(c.c1, '#000000', 0.12))
+    const g = poser(c, h.p, h.n, -s * 0.12, 0.8)
+    papillon3d(c, g, s, c.c1, c.c1)
   },
   cravate(c) {
     const hw = c.R.hw
-    const w = hw * 0.29
+    const w = hw * 0.15
     // le noeud part clairement du bas du visage : sous la bouche, jamais a hauteur du nez ou des lunettes
     const f = visage(c)
     const yTop = Math.min(c.R.yBas + 0.3 * hw, f.yBouche - 0.25 * f.rv)
     const h = surf(c, 0, yTop)
     if (!h) return
-    const L = Math.max(0.34 * hw, Math.min(0.78 * hw, yTop - c.R.bas - 0.03 * c.R.H))
-    // lame de cravate : fine au noeud, large en bas, bout en pointe ; elle se decolle du corps
-    const W = (t: number) => (t < 0.12 ? w * (0.4 + 0.2 * (t / 0.12)) : t < 0.8 ? w * (0.6 + 0.4 * ((t - 0.12) / 0.68) ** 0.9) : w * Math.sqrt(Math.max(0, 1 - ((t - 0.8) / 0.2) ** 2)) * 1.0)
-    const o = { x0: 0, yTop, L, ep: 0.2 * w, gap: 0.3 * hw, swing: 0.05 * hw, decal: 0.03 * hw, wmax: w }
-    pendant(c, W, c.c1, o)
-    for (const [t0, t1] of [[0.42, 0.5], [0.58, 0.66]] as const) pendant(c, W, c.c2, { ...o, t0, t1, plus: 0.05 * w, decal: o.decal + 0.004 * hw })
-    // noeud : volume serre au sommet de la lame
-    const g = poser(c, h.p, h.n, -0.18 * w, 0.4)
-    g.add(sph(c, mixHex(c.c1, '#000000', 0.15), 1, [0.58 * w, 0.5 * w, 0.46 * w], V(0, 0, 0)))
+    const L = Math.max(0.4 * hw, Math.min(1.1 * hw, yTop - c.R.bas + 0.1 * c.R.H))
+    // cravate longue et fine, une seule couleur : cou etroit, lame un peu plus large, bout en pointe ; elle PEND
+    // droit sous son noeud, donc le bas se decolle du corps (plus de forme de cloche)
+    const W = (t: number) => (t < 0.08 ? w * 0.5 : t < 0.5 ? w * (0.5 + 0.5 * ((t - 0.08) / 0.42)) : t < 0.9 ? w : w * Math.sqrt(Math.max(0, 1 - ((t - 0.9) / 0.1) ** 2)))
+    pendant(c, W, c.c1, { x0: 0, yTop, L, ep: 0.2 * w, gap: 0.1 * hw, swing: 0.05 * hw, decal: 0.03 * hw, wmax: w, tombe: true })
+    // petit noeud sous la bouche
+    const g = poser(c, h.p, h.n, -0.1 * w, 0.4)
+    g.add(sph(c, c.c1, 1, [0.62 * w, 0.5 * w, 0.5 * w], V(0, 0, 0)))
   },
   echarpe(c) {
     const hw = c.R.hw
     const larg = hw * 0.36
     // col epais, bombe, qui epouse le contour du corps (aucun anneau libre)
     if (!bande(c, c.R.yBas + 0.2 * hw, larg, c.c1, { e0: -0.03 * hw, eb: 0.15 * hw, incl: dip(c), ronde: true, rows: 7 })) return
-    // deux pans qui tombent du nœud, decolles du corps, avec leurs rayures
+    // deux pans qui tombent du nœud, decolles du corps, sans rayures
     const yTop = c.R.yBas + 0.2 * hw - 0.12 * larg
     const mk = (x0: number, L: number, w: number, gap: number, decal: number, swing: number) => {
       const W = (t: number) => w * (t > 0.9 ? Math.sqrt(Math.max(0, 1 - ((t - 0.9) / 0.1) ** 2)) * 0.4 + 0.6 : 1)
-      const o = { x0, yTop, L, ep: 0.45 * w, gap, swing, decal, wmax: w }
-      pendant(c, W, c.c1, o)
-      for (const [t0, t1] of [[0.55, 0.64], [0.74, 0.83]] as const) pendant(c, W, c.c2, { ...o, t0, t1, plus: 0.05 * w, decal: decal + 0.004 * hw })
+      pendant(c, W, c.c1, { x0, yTop, L, ep: 0.45 * w, gap, swing, decal, wmax: w })
     }
     const Lmax = yTop - c.R.bas - 0.04 * c.R.H
     mk(0.26 * hw, Math.min(0.9 * hw, Lmax), 0.16 * hw, 0.3 * hw, 0.05 * hw, 0.05 * hw)
@@ -992,16 +959,15 @@ const BAS: Record<string, Gen> = {
     const N = 84
     const cp = c.R.A.coupe(c.R.yBas + dip(c), N, 0, c.R.zc, dip(c))
     if (cp.length < N) return
-    tube(c, cp.map((q) => q.p.clone().addScaledVector(q.n, hw * 0.015)), hw * 0.035, hw * 0.035, '#4caf7a', c.g, true, false)
-    // beaucoup de fleurs, serrees : une fleur tous les 3 points, alternance de deux tailles et de deux teintes
-    const nf = 30
+    // fleurs serrees (aucune tige) : petales c1, coeur c2, alternance de deux tailles
+    const nf = 26
     for (let i = 0; i < nf; i++) {
       const q = cp[Math.round((i / nf) * N) % N]!
       const g = new Group()
       g.position.copy(q.p).addScaledVector(q.n, hw * 0.025)
       orienter(g, q.n.clone().lerp(Z, 0.25), i * 0.7)
       c.g.add(g)
-      fleur(c, g, hw * (i % 2 ? 0.15 : 0.18), i % 3 === 0 ? mixHex(c.c1, '#ffffff', 0.35) : c.c1, c.c2, 5)
+      fleur(c, g, hw * (i % 2 ? 0.15 : 0.18), c.c1, c.c2, 5)
     }
   }
 }
@@ -1069,8 +1035,7 @@ const DOS: Record<string, Gen> = {
         s.quadraticCurveTo(0.4, 0.36, 0.32, 0.0)
         s.quadraticCurveTo(0.15, 0.1, 0, 0)
       },
-      c.c1,
-      c.c2
+      c.c1
     )
   },
   sac(c) {
@@ -1086,11 +1051,6 @@ const DOS: Record<string, Gen> = {
     g.position.copy(h.p).addScaledVector(V(0, 0, -1), d * 0.36)
     c.g.add(g)
     add(c, sac, c.c1, g)
-    // poche
-    const poche = extrusion(formeDePoints(arrondir([[-w * 0.3, -hh * 0.18], [w * 0.3, -hh * 0.18], [w * 0.3, hh * 0.05], [-w * 0.3, hh * 0.05]], 3)), d * 0.1, d * 0.12)
-    const pm = add(c, poche, c.c2, g)
-    pm.position.set(0, -hh * 0.12, -d * 0.45)
-    pm.rotation.y = Math.PI
     // bretelles : chaque point est TIRE sur la surface du corps (rayon horizontal), du haut du sac, autour du flanc
     // (l'epaule). Elles s'arretent sur le cote et ne traversent jamais le devant : pas de trait qui barre le corps
     const zc = c.R.zc
@@ -1117,18 +1077,19 @@ const DOS: Record<string, Gen> = {
   },
   cape(c) {
     const { A, hw, H, bas, zc } = c.R
-    // cape rouge unie : elle part des epaules (haut du corps), pas de la taille ; un col bombe la tient au cou
+    // cape SIMPLE : un seul morceau de tissu uni qui part des epaules et tombe derriere, en depassant un peu sur
+    // les cotes de face. Pas de col, rien d'autre.
     const yBas = c.R.yBas + 0.22 * hw
-    const larg = hw * 0.3
-    const incl = dip(c)
-    if (!bande(c, yBas, larg, c.c1, { e0: -0.03 * hw, eb: 0.15 * hw, incl, ronde: true })) return
     const yHemDos = Math.max(bas + 0.05 * H, yBas - 0.85 * hw)
     // epaules : le haut de la cape monte derriere et sur les cotes, jusqu'au haut du corps
-    const yEpaule = Math.max(yBas + 0.45 * hw, c.R.haut - 0.34 * H)
-    const nA = 33
+    const yEpaule = Math.max(yBas + 0.45 * hw, c.R.haut - 0.3 * H)
+    const nA = 37
     const nR = 9
-    const a0 = Math.PI / 2 + 0.5
-    const a1 = Math.PI / 2 + Math.PI * 2 - 0.5
+    // le tissu commence sur les EPAULES (cote du corps, 66 degres de la face) et fait le tour par le dos : rien ne
+    // passe devant la poitrine, de face on ne voit que le tissu qui depasse sur les cotes
+    const dev = 1.0
+    const a0 = Math.PI / 2 + dev
+    const a1 = Math.PI / 2 + Math.PI * 2 - dev
     const pos: number[] = []
     const L0 = 2 * hw + 120
     const prev: Array<Vector3 | null> = new Array(nA).fill(null)
@@ -1138,18 +1099,20 @@ const DOS: Record<string, Gen> = {
         const a = a0 + ((a1 - a0) * i) / (nA - 1)
         const dx = Math.cos(a)
         const dz = Math.sin(a)
-        // t : 0 devant, 1 derriere
-        const t0 = Math.min(1, Math.max(0, (0.1 - dz) / 0.9))
+        // t : 0 sur l'epaule (cote), 1 derriere
+        const ap = a - Math.PI / 2
+        const phi = Math.min(ap, Math.PI * 2 - ap)
+        const t0 = Math.min(1, Math.max(0, (phi - dev) / (Math.PI - dev)))
         const t = t0 * t0 * (3 - 2 * t0)
-        const yTop = yBas + 0.3 * larg + incl * (1 - dz) + (yEpaule - yBas - 0.3 * larg) * t
+        const yTop = yEpaule - 0.12 * hw * (1 - t)
         // l'ourlet remonte sur les cotes : une cape, pas une jupe
-        const yH = Math.min(yTop - 0.12 * hw, yHemDos + 0.4 * hw * (1 - t))
-        const y = yTop + (yH - yTop) * v + 0.04 * hw * Math.sin(a * 4) * v * t
+        const yH = Math.min(yTop - 0.12 * hw, yHemDos + 0.45 * hw * (1 - t))
+        const y = yTop + (yH - yTop) * v
         const q = A.tir(V(dx * L0, y, zc + dz * L0), V(-dx, 0, -dz))
         const base = q ? q.p : prev[i] ? V(prev[i]!.x, y, prev[i]!.z) : V(dx * hw * 0.5, y, zc + dz * hw * 0.5)
         prev[i] = base.clone()
         // elle sort du corps depuis les epaules, depasse un peu sur les cotes, tombe derriere
-        const ext = 0.05 * hw + (0.1 + 0.24 * t) * hw * v ** 0.8 + 0.035 * hw * Math.sin(a * 5) * v
+        const ext = 0.07 * hw + (0.2 + 0.22 * t) * hw * v ** 0.7
         pos.push(base.x + dx * ext, y, base.z + dz * ext)
       }
     }
@@ -1169,23 +1132,23 @@ const DOS: Record<string, Gen> = {
   queue(c) {
     const { A, hw, H, haut, zc } = c.R
     const y = haut - 0.76 * H
-    // la queue part du bas du dos, sort sur le cote (+x) en courbe et remonte : visible de face et de 3/4
-    const cote = A.cote(y, zc - 0.25 * hw, 1)
-    const xs = cote ? cote.p.x : hw
+    // queue COURTE, cote gauche du Mochi vu de face (x negatif) : elle part du bas du dos, sort sur le cote et
+    // remonte un peu ; visible de face et de 3/4. Une couleur (le bout peut en prendre une seconde).
+    const cote = A.cote(y, zc - 0.25 * hw, -1)
+    const xs = cote ? cote.p.x : -hw
     const h = A.arriere(0.4 * xs, y)
     if (!h) return
     const p = h.p.clone().addScaledVector(h.n, -hw * 0.06)
     const pts = [
       p,
-      V(xs * 0.62, y + 0.1 * hw, p.z - 0.08 * hw),
-      V(xs + 0.22 * hw, y + 0.26 * hw, zc - 0.3 * hw),
-      V(xs + 0.56 * hw, y + 0.55 * hw, zc - 0.12 * hw),
-      V(xs + 0.62 * hw, y + 0.92 * hw, zc + 0.02 * hw)
+      V(xs * 0.62, y + 0.04 * hw, p.z - 0.04 * hw),
+      V(xs - 0.2 * hw, y + 0.16 * hw, zc - 0.1 * hw),
+      V(xs - 0.4 * hw, y + 0.38 * hw, zc)
     ]
     tube(c, pts, hw * 0.1, hw * 0.17, c.c1)
-    const e = pts[4]!
-    const tip = sph(c, c.c2, hw * 0.24, [1, 1.3, 1], e.clone().add(V(0, hw * 0.1, 0)))
-    tip.rotation.z = 0.1
+    const e = pts[3]!
+    const tip = sph(c, c.c2, hw * 0.21, [1, 1.2, 1], e.clone().add(V(-0.01 * hw, hw * 0.07, 0)))
+    tip.rotation.z = 0.2
   }
 }
 

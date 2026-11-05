@@ -4,6 +4,10 @@
  * papillon et des ailes en meme temps.
  *
  * Ce fichier ne contient que le catalogue (noms, couleurs) : aucune geometrie, aucun `three`.
+ *
+ * REGLE DE ROBIN (05/11/2026) : chaque accessoire est tres simplifie, UNE couleur (`c1`), DEUX au
+ * maximum (`c2`, par exemple fleur : petales + coeur). Les deux sont reglables par l'API
+ * (`{ id, c1, c2 }`, voir `Choix`) ; `c2` egal a `c1` veut dire « une seule couleur ».
  * Les volumes sont construits dans `ui/trois/accessoires3d.ts`, ancres sur le corps 3D.
  *
  * Emplacements, chacun sur sa propre zone du corps pour ne pas entrer en collision :
@@ -59,24 +63,24 @@ const def = (emplacement: Emplacement, id: string, nom: string, c1: string, c2: 
 
 export const CATALOGUE: AccessoireDef[] = [
   // tete
-  def('tete', 'casquette', 'Casquette', C.rouge, '#b33a45'),
+  def('tete', 'casquette', 'Casquette', C.rouge, C.rouge),
   def('tete', 'bonnet', 'Bonnet à pompon', C.turquoise, C.creme),
-  def('tete', 'beret', 'Béret', C.marine, C.marine),
+  def('tete', 'beret', 'Béret', C.noir, C.noir),
   def('tete', 'haut-de-forme', 'Haut-de-forme', C.noir, C.rouge),
-  def('tete', 'couronne', 'Couronne', C.or, C.rouge),
+  def('tete', 'couronne', 'Couronne', C.or, C.or),
   def('tete', 'paille', 'Chapeau de paille', C.paille, C.rouge),
   def('tete', 'antenne', 'Antenne', C.noir, C.rouge),
-  def('tete', 'casque', 'Casque de musique', C.rouge, C.creme),
+  def('tete', 'casque', 'Casque de musique', C.rouge, C.rouge),
   def('tete', 'ruban', 'Nœud ruban', C.rose, C.rose),
   def('tete', 'fleur', 'Fleur', C.rose, C.jaune),
   def('tete', 'toque', 'Toque de chef', C.creme, C.creme),
   // yeux
-  def('yeux', 'rondes', 'Lunettes rondes', C.noir, C.creme),
-  def('yeux', 'carrees', 'Lunettes carrées', C.marine, C.creme),
+  def('yeux', 'rondes', 'Lunettes rondes', C.noir, C.noir),
+  def('yeux', 'carrees', 'Lunettes carrées', C.marine, C.marine),
   def('yeux', 'soleil', 'Lunettes de soleil', C.noir, C.noir),
   def('yeux', 'coeur', 'Lunettes cœur', C.rose, C.rose),
   def('yeux', 'etoile', 'Lunettes étoile', C.or, C.or),
-  def('yeux', 'monocle', 'Monocle', C.or, C.creme),
+  def('yeux', 'monocle', 'Monocle', C.or, C.or),
   def('yeux', 'sommeil', 'Masque de sommeil', C.violet, C.creme),
   // visage
   def('visage', 'moustache', 'Moustache', C.noir, C.noir),
@@ -85,17 +89,17 @@ export const CATALOGUE: AccessoireDef[] = [
   def('visage', 'joues', 'Joues roses', C.rose, C.rose),
   def('visage', 'grain', 'Grain de beauté', C.noir, C.noir),
   // bas
-  def('bas', 'papillon', 'Nœud papillon', C.rouge, C.rouge),
-  def('bas', 'cravate', 'Cravate', C.bleu, C.marine),
-  def('bas', 'echarpe', 'Écharpe', C.orange, C.creme),
+  def('bas', 'papillon', 'Nœud papillon', C.noir, C.noir),
+  def('bas', 'cravate', 'Cravate', C.marine, C.marine),
+  def('bas', 'echarpe', 'Écharpe', C.orange, C.orange),
   def('bas', 'perles', 'Collier de perles', C.creme, C.creme),
   def('bas', 'fleurs', 'Collier de fleurs', C.rose, C.jaune),
   // dos
-  def('dos', 'ailes', 'Ailes d’ange', C.creme, C.or),
-  def('dos', 'diable', 'Ailes de chauve-souris', C.violet, C.rose),
+  def('dos', 'ailes', 'Ailes d’ange', C.creme, C.creme),
+  def('dos', 'diable', 'Ailes de chauve-souris', C.violet, C.violet),
   def('dos', 'sac', 'Sac à dos', C.orange, C.marine),
   def('dos', 'cape', 'Cape', C.rouge, C.rouge),
-  def('dos', 'queue', 'Queue', C.orange, C.creme)
+  def('dos', 'queue', 'Queue', C.orange, C.orange)
 ]
 
 

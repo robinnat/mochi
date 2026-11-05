@@ -173,7 +173,7 @@ describe('combinaison des emplacements', () => {
       expect(meshes(g).length).toBeGreaterThan(0)
       expect(sommetsFinis(g)).toBe(true)
     }
-    expect(acc.couleurs.length).toBeGreaterThan(3)
+    expect(acc.couleurs.length).toBeGreaterThanOrEqual(3)
     // chaque emplacement ne produit qu'un groupe : un seul accessoire par emplacement
     expect(new Set(acc.groupe.children.map((c) => c.name)).size).toBe(5)
     acc.liberer()
@@ -299,7 +299,8 @@ describe('retours de Robin du 05/11/2026', () => {
       const acc = new Accessoires3d()
       acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
       const b = new Box3().setFromObject(acc.groupe)
-      const surfaceBas = R.A.avant(0, b.min.y + 0.15 * (b.max.y - b.min.y))
+      // la cravate PEND droit : le bas peut depasser sous le corps, on compare a la surface juste au-dessus du bas
+      const surfaceBas = R.A.avant(0, Math.max(b.min.y + 0.15 * (b.max.y - b.min.y), R.bas + 0.1 * R.H))
       expect(surfaceBas, forme).not.toBeNull()
       expect(b.max.z, forme).toBeGreaterThan(surfaceBas!.p.z + 0.05 * R.hw)
       acc.liberer()
@@ -336,7 +337,8 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     expect(sommetsFinis(acc.groupe)).toBe(true)
     expect(Math.abs(b.min.x + b.max.x)).toBeLessThan(0.15 * R.hw)
     expect(b.max.x - b.min.x).toBeGreaterThan(0.6 * R.hw)
-    expect(b.max.z).toBeGreaterThan(R.A.avant(0, R.yBas)!.p.z)
+    // devant le corps a la hauteur du noeud (tout en bas depuis la v4)
+    expect(b.max.z).toBeGreaterThan(R.A.avant(0, (b.min.y + b.max.y) / 2)!.p.z)
     acc.liberer()
   })
 
@@ -350,13 +352,15 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it.each(FORMES)('%s : la queue depasse sur le cote du corps (visible de face)', (forme) => {
+  it.each(FORMES)('%s : la queue depasse sur le cote gauche du corps (visible de face)', (forme) => {
     const { R } = corpsDe(forme)
     const acc = new Accessoires3d()
     acc.maj({ dos: 'queue' }, forme, mat(), () => R)
     const b = new Box3().setFromObject(acc.groupe)
-    const cote = R.A.cote(R.haut - 0.76 * R.H, R.zc, 1)!
-    expect(b.max.x).toBeGreaterThan(cote.p.x + 0.3 * R.hw)
+    // v4 : cote GAUCHE vu de face (x negatif), plus courte
+    const cote = R.A.cote(R.haut - 0.76 * R.H, R.zc, -1)!
+    expect(b.min.x).toBeLessThan(cote.p.x - 0.3 * R.hw)
+    expect(b.max.x).toBeLessThan(R.hw * 0.9)
     acc.liberer()
   })
 
@@ -381,3 +385,83 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
   })
 })
 
+
+describe('accessoires v4 : simples, une ou deux couleurs, personnalisables (Robin, 05/11/2026)', () => {
+  const hexMat = (m: Mesh) => (m.material as unknown as { color: { getHexString(): string } }).color.getHexString()
+  /** couleurs des pieces opaques (le verre translucide d'une lunette n'est pas une couleur de l'accessoire) */
+  const couleursOpaques = (o: Object3D) =>
+    new Set(meshes(o).filter((m) => (m.material as unknown as { opacity: number }).opacity >= 1).map(hexMat))
+
+  it.each(CATALOGUE.map((a) => [a.emplacement, a.id] as const))('%s:%s a au plus deux couleurs, sur une forme ronde et sur une etoile', (e, id) => {
+    for (const forme of ['cercle', 'etoile']) {
+      const { R } = corpsDe(forme)
+      const acc = new Accessoires3d()
+      acc.maj({ [e]: id } as Selection, forme, mat(), () => R)
+      expect(couleursOpaques(acc.groupe).size, `${forme} ${e}:${id}`).toBeLessThanOrEqual(2)
+      acc.liberer()
+    }
+  })
+
+  it.each(CATALOGUE.map((a) => [a.emplacement, a.id, a.c1, a.c2] as const))('%s:%s se personnalise : c1 et c2 imposes se retrouvent sur les pieces', (e, id, d1, d2) => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ [e]: { id, c1: '#123456', c2: '#654321' } } as Selection, 'p', mat(), () => R)
+    const cs = [...couleursOpaques(acc.groupe)]
+    expect(cs).toContain('123456')
+    // aucune couleur du catalogue ne reste quand c1 est impose (sauf c2 impose)
+    for (const c of cs) expect(['123456', '654321']).toContain(c)
+    expect(d1).toMatch(/^#/)
+    expect(d2).toMatch(/^#/)
+    acc.liberer()
+  })
+
+  it('une couleur par defaut sobre : papillon noir, cape rouge, c2 = c1 quand une seule couleur', () => {
+    expect(resoudre('bas', 'papillon')!.c1).toBe(COULEURS.noir)
+    expect(resoudre('dos', 'cape')!.c1).toBe(COULEURS.rouge)
+    for (const id of ['papillon', 'cravate', 'echarpe']) {
+      const d = resoudre('bas', id)!
+      expect(d.c2, id).toBe(d.c1)
+    }
+  })
+
+  it.each(FORMES)('%s : le noeud papillon est tout en bas du corps, noir, une couleur', (forme) => {
+    const { R } = corpsDe(forme)
+    const acc = new Accessoires3d()
+    acc.maj({ bas: 'papillon' }, forme, mat(), () => R)
+    expect(couleursOpaques(acc.groupe).size).toBe(1)
+    const b = new Box3().setFromObject(acc.groupe)
+    // centre dans le tiers bas du corps, nettement sous la hauteur du cou d'avant
+    expect((b.min.y + b.max.y) / 2).toBeLessThan(R.bas + 0.4 * R.H)
+    acc.liberer()
+  })
+
+  it('la cape est un seul morceau : un seul maillage, sans col (aucun tube)', () => {
+    for (const forme of ['cercle', 'oeuf']) {
+      const { R } = corpsDe(forme)
+      const acc = new Accessoires3d()
+      acc.maj({ dos: 'cape' }, forme, mat(), () => R)
+      expect(meshes(acc.groupe)).toHaveLength(1)
+      acc.liberer()
+    }
+  })
+
+  it('la cravate est une seule couleur, sans rayures : un pan et un noeud', () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ bas: 'cravate' }, 'c', mat(), () => R)
+    expect(meshes(acc.groupe)).toHaveLength(2)
+    expect(couleursOpaques(acc.groupe).size).toBe(1)
+    acc.liberer()
+  })
+
+  it("l'echarpe n'a plus de rayures et le collier de fleurs n'a que deux couleurs", () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ bas: 'echarpe' }, 'e', mat(), () => R)
+    expect(couleursOpaques(acc.groupe).size).toBe(1)
+    acc.liberer()
+    acc.maj({ bas: 'fleurs' }, 'f', mat(), () => R)
+    expect(couleursOpaques(acc.groupe).size).toBe(2)
+    acc.liberer()
+  })
+})
