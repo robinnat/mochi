@@ -17,7 +17,7 @@ const humeur = computed(() => HUMEURS_SITE.find((h) => h.id === choisi.value)!)
     <h2 id="t-moods">Seven moods, one soft body</h2>
     <p class="chapo">
       A mood changes the face and the way the body moves, and it plays on a loop until you change it. Set one with
-      <code>mood="working"</code>, or call <code>setMood()</code> from your code. Pick one to watch it.
+      <code>mood="travaille"</code>, or call <code>setMood()</code> from your code. The ids are French (<code>repos</code>, <code>reflechit</code>, <code>travaille</code>, <code>attend</code>, <code>termine</code>, <code>bloque</code>, <code>dort</code>); English names such as <code>working</code> work too. Pick one to watch it.
     </p>
     <div class="duo">
       <div class="scene">

@@ -111,7 +111,7 @@ const MAILLAGES_GARDES = 24
 type Materiau = MeshStandardMaterial | MeshToonMaterial
 
 export class Mochi3d {
-  readonly mesh: Mesh<BufferGeometry, Materiau>
+  readonly mesh: Mesh<BufferGeometry, Materiau | MeshBasicMaterial>
   private readonly toile: HTMLCanvasElement
   private readonly ctx: CanvasRenderingContext2D
   private readonly texture: CanvasTexture
@@ -126,6 +126,9 @@ export class Mochi3d {
   /** accessoires par emplacements (tete, yeux, visage, bas, dos), combinables */
   private accs: Selection = {}
   private readonly acc3d = new Accessoires3d()
+  /** modele du volume (ombrage, liseres) : oui par defaut ; non = corps en aplat de couleur, yeux inchanges */
+  private ombrage = true
+  private matAplat: MeshBasicMaterial | null = null
   /** ordinateur du mood `travaille` : echelle de 0 (cache) a ~1 (pousse), posee par le composant */
   private ordi = 0
   /** sol de chaque forme : le point le plus bas vu pendant les rebonds (l'ordinateur ne saute pas avec le corps) */
@@ -231,12 +234,23 @@ export class Mochi3d {
     return m
   }
 
+  /** Corps sans modele : la texture seule (couleur du corps, yeux peints), aucune lumiere ne l'ombre. */
+  private aplat(): MeshBasicMaterial {
+    this.matAplat ??= new MeshBasicMaterial({ map: this.texture })
+    return this.matAplat
+  }
+
+  /** Active ou coupe l'ombrage du volume (Soft, Flat et Pixel). Appele avant `setRendu`. */
+  setOmbrage(oui: boolean) {
+    this.ombrage = oui
+  }
+
   /** Choisit la matiere : materiau, maillage et contour. Appele avant `maj`. */
   setRendu(r: Rendu3d, contour = false, douceur: Douceur = DOUCEUR_DEFAUT, reflet = REFLET_DEFAUT) {
     this.rendu = r
     this.douceur = douceur
     this.uReflet.value = reflet && reglagePlat(r, douceur)?.lisse ? 1 : 0
-    this.mesh.material = this.materiau(r, douceur)
+    this.mesh.material = this.ombrage ? this.materiau(r, douceur) : this.aplat()
     // le contour cartoon est une option des variantes plates (jamais du realiste)
     this.coque.visible = !!reglagePlat(r, douceur) && (contour || !!reglagePlat(r, douceur)?.contour)
   }
@@ -352,12 +366,12 @@ export class Mochi3d {
     frame = this.yeuxSurLaFace(frame)
     const plat0 = reglagePlat(this.rendu, this.douceur)
     this.porte3d.reglages = plat0?.lisse ? { force: 0.7, haut: 0.32, ao: 1, reflet: this.uReflet } : null
-    this.porte3d.maj(this.porte, frameCorps, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y), (y, sg) => this.bordX(y, sg))
+    this.porte3d.maj(this.porte, frameCorps, this.materiau(this.rendu, this.douceur), bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y), (y, sg) => this.bordX(y, sg))
     // accessoires par emplacements : ancres sur le volume de CE corps, recalcules quand le corps change
     this.acc3d.reglages = this.porte3d.reglages
     this.acc3d.corps = couleur
     const cleCorps = `${this.rendu}|${this.forme}|${frameCorps.bodyPath}|${JSON.stringify(frame.eyes)}`
-    this.acc3d.maj(this.accs, cleCorps, this.mesh.material, () => {
+    this.acc3d.maj(this.accs, cleCorps, this.materiau(this.rendu, this.douceur), () => {
       const ye = yeuxDe(frame)
       const sc = ye.map((o) => ({ x: o.x, y: -o.y, r: o.r }))
       return mesurerReperes(this.mesh.geometry, sc, ye.length === 2 ? rayonVerre(ye[0]!, ye[1]!) : 22)
@@ -369,11 +383,11 @@ export class Mochi3d {
     const cleReflet = reflet ? [reflet.x, reflet.y, reflet.rx].map((v) => Math.round(v * 2)).join(',') : '-'
     const yeuxPeints = frameVisage ?? frame
     const joues = frameVisage?.visage?.joues ?? 0
-    const cleVisage = `${this.rendu}|${this.douceur}|${this.theme}|${couleur}|${papier}|${JSON.stringify(yeuxPeints.eyes)}|${joues.toFixed(2)}|${cleReflet}|${this.porte ?? ''}|${ombres.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
+    const cleVisage = `${this.rendu}|${this.douceur}|${this.ombrage}|${this.theme}|${couleur}|${papier}|${JSON.stringify(yeuxPeints.eyes)}|${joues.toFixed(2)}|${cleReflet}|${this.porte ?? ''}|${ombres.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
     if (cleVisage !== this.cleVisage) {
       this.cleVisage = cleVisage
       // le flat garde la couleur choisie telle quelle (pas de pastel), sans creux d'oeil
-      this.peindre(yeuxPeints, plat ? couleur : m.base, papier, m.creux, !plat && this.theme === 'light', reflet, ombres, joues)
+      this.peindre(yeuxPeints, plat ? couleur : m.base, papier, m.creux, !plat && this.theme === 'light' && this.ombrage, reflet, ombres, joues)
     }
   }
 
@@ -786,7 +800,9 @@ export function rendreAvatar(
   /** ordinateur du mood `travaille` : echelle de 0 (absent) a ~1 */
   ordinateur = 0,
   /** ombre portee au sol sous le corps (defaut : oui) */
-  ombre = true
+  ombre = true,
+  /** modele du volume (ombrage du corps) : oui par defaut ; non = aplat de couleur */
+  ombrage = true
 ) {
   couleur = corpsPourTheme(couleur, theme, contrasteOeil)
   const ctx3 = contexte()
@@ -800,6 +816,7 @@ export function rendreAvatar(
     ctx3.rendu = rendu3d
     ctx3.douceur = douceur
   }
+  mochi.setOmbrage(ombrage)
   mochi.setRendu(rendu3d, contour, douceur, reflet)
   mochi.setForme(forme)
   mochi.setPorte(porte)

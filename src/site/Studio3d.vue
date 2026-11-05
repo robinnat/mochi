@@ -4,7 +4,7 @@ import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { useReduit } from './reduced'
 import { FORMES_3D } from './catalog'
-import { contourSite, ombreSite, refletSite, styleSite } from './style'
+import { contourSite, ombrageSite, refletSite, styleSite } from './style'
 
 /**
  * Le modele 3D que l'on tourne a la main et auquel on donne une humeur ou un geste.
@@ -141,7 +141,7 @@ const degres = computed(() => Math.round(((yaw.value * 180) / Math.PI) % 360))
             mood="repos"
             :contour="contourSite"
             :reflet="refletSite"
-            :ombre="ombreSite"
+            :ombrage="ombrageSite"
             :frozen-at="reduit ? 1 : undefined"
             :label="libelle"
           />

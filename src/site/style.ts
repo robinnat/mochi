@@ -11,5 +11,5 @@ export const styleSite = ref<RenduId>('3d')
 
 /** Reglages de rendu partages par la section 3D (le modele a tourner et les vignettes des formes). */
 export const contourSite = ref(false)
-export const ombreSite = ref(true)
+export const ombrageSite = ref(true)
 export const refletSite = ref(true)

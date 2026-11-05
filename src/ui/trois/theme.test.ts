@@ -160,15 +160,25 @@ describe('theme : peinture du visage (Mochi3d)', () => {
     expect(s.masque).toContain('#fff')
   })
 
+  it.each(['doux', 'toon', 'pixel'] as const)('%s : sans ombrage, le corps est un aplat (matiere sans lumiere) ; avec, la matiere d avant', (rendu) => {
+    const m = new Mochi3d(32)
+    m.setOmbrage(false)
+    m.setRendu(rendu)
+    expect(m.mesh.material.type).toBe('MeshBasicMaterial')
+    m.setOmbrage(true)
+    m.setRendu(rendu)
+    expect(m.mesh.material.type).not.toBe('MeshBasicMaterial')
+  })
+
   it.each(['doux', 'toon', 'realiste'] as const)('%s : l oeil sombre ne s allume pas (emission nulle), l oeil clair oui', (rendu) => {
     const m = new Mochi3d(32)
     m.setRendu(rendu)
-    expect(m.mesh.material.emissiveIntensity).toBeGreaterThan(0)
+    expect((m.mesh.material as { emissiveIntensity: number }).emissiveIntensity).toBeGreaterThan(0)
     m.setTheme('dark')
     m.setRendu(rendu)
-    expect(m.mesh.material.emissiveIntensity).toBe(0)
+    expect((m.mesh.material as { emissiveIntensity: number }).emissiveIntensity).toBe(0)
     m.setTheme('light')
-    expect(m.mesh.material.emissiveIntensity).toBeGreaterThan(0)
+    expect((m.mesh.material as { emissiveIntensity: number }).emissiveIntensity).toBeGreaterThan(0)
   })
 
   it.each(SHAPES.map((x) => x.id))('forme %s : yeux noirs en sombre', (forme) => {

@@ -662,3 +662,19 @@ code {
 .eteint {
   opacity: 0.55;
 }
+
+/* ------------------------------------------------------------------ vitrine d'accessoires */
+.vitrine {
+  display: grid;
+  gap: 12px;
+  margin-top: 26px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 760px) {
+  .vitrine {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.vitrine .carte {
+  padding: 14px 8px 12px;
+}

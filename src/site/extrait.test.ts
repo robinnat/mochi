@@ -6,7 +6,7 @@ const base: OptionsExtrait = {
   couleur: 'violet',
   rendu: '3d',
   contour: false,
-  ombre: true,
+  ombrage: true,
   reflet: true,
   mood: 'repos',
   accessoires: {},
@@ -19,15 +19,15 @@ describe('extrait de code de la personnalisation', () => {
     const e = extraitCode(base)
     expect(e).toContain("import MochiBot from './components/MochiBot.vue'")
     expect(e).toContain('<MochiBot\n    shape="etoile"\n    color="violet"\n    mood="repos"\n    :size="260"\n  />')
-    for (const absent of ['rendu=', 'contour', 'ombre', 'accessoires', 'theme', 'ordinateur']) expect(e).not.toContain(absent)
+    for (const absent of ['rendu=', 'contour', 'ombrage', 'accessoires', 'theme', 'ordinateur']) expect(e).not.toContain(absent)
   })
 
-  it('le contour est propre a Flat, le reflet a Soft, l ombre se coupe', () => {
+  it('le contour est propre a Flat, le reflet a Soft, l ombrage du corps se coupe', () => {
     expect(extraitCode({ ...base, rendu: 'flat3d', contour: true })).toContain('    contour')
     expect(extraitCode({ ...base, contour: true })).not.toContain('contour')
     expect(extraitCode({ ...base, reflet: false })).toContain(':reflet="false"')
     expect(extraitCode({ ...base, rendu: 'flat3d', reflet: false })).not.toContain('reflet')
-    expect(extraitCode({ ...base, ombre: false })).toContain(':ombre="false"')
+    expect(extraitCode({ ...base, ombrage: false })).toContain(':ombrage="false"')
     expect(extraitCode({ ...base, rendu: 'pixel3d' })).toContain('rendu="pixel3d"')
     expect(extraitCode({ ...base, rendu: 'pixel3d' })).not.toContain('pixel=')
   })

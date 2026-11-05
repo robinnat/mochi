@@ -3,7 +3,7 @@ import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { FORMES_3D } from './catalog'
 import Studio3d from './Studio3d.vue'
-import { STYLES_SITE, contourSite, ombreSite, refletSite, styleSite } from './style'
+import { STYLES_SITE, contourSite, ombrageSite, refletSite, styleSite } from './style'
 </script>
 
 <template>
@@ -11,14 +11,14 @@ import { STYLES_SITE, contourSite, ombreSite, refletSite, styleSite } from './st
     <span class="etiquette">3D</span>
     <h2 id="t-3d">Real 3D, in three styles</h2>
     <p class="chapo">
-      Eleven shapes, all with a real volume you can look at from any side. The eyes always face you. Turn the model with your finger or mouse, and set how it is drawn: style, shadow and outline. Three.js loads only when you scroll here, and every card
+      Eleven shapes, all with a real volume you can look at from any side. The eyes always face you. Turn the model with your finger or mouse, and set how it is drawn: style, body shading and outline. Three.js loads only when you scroll here, and every card
       below draws through one shared WebGL context.
     </p>
     <div class="chips" style="margin-top: 18px" role="group" aria-label="3D style">
       <button v-for="s in STYLES_SITE" :key="s.id" type="button" class="chip" :aria-pressed="styleSite === s.id" @click="styleSite = s.id">
         {{ s.label }}
       </button>
-      <label class="case" style="margin-left: 14px"><input v-model="ombreSite" type="checkbox" /> Shadow</label>
+      <label class="case" style="margin-left: 14px"><input v-model="ombrageSite" type="checkbox" /> Body shading</label>
       <label class="case" :class="{ eteint: styleSite !== 'flat3d' }" style="margin-left: 14px">
         <input v-model="contourSite" type="checkbox" :disabled="styleSite !== 'flat3d'" /> Outline<span v-if="styleSite !== 'flat3d'" class="note"> (Flat)</span>
       </label>
@@ -35,7 +35,7 @@ import { STYLES_SITE, contourSite, ombreSite, refletSite, styleSite } from './st
             :rendu="styleSite"
             :contour="contourSite"
             :reflet="refletSite"
-            :ombre="ombreSite"
+            :ombrage="ombrageSite"
             :frozen-at="1.2"
             :label="`${f.label}, 3D`"
           />

@@ -6,9 +6,10 @@ import MochiBot from './MochiBot.vue'
 describe('MochiBot : options de rendu 3D', () => {
   const props = (MochiBot as unknown as { props: Record<string, { default?: unknown }> }).props
   it('ombre au sol, contour cartoon, reflet et theme sont des props', () => {
-    for (const nom of ['ombre', 'contour', 'reflet', 'theme', 'accessoires', 'ordinateur', 'mood']) expect(props, nom).toHaveProperty(nom)
+    for (const nom of ['ombre', 'ombrage', 'contour', 'reflet', 'theme', 'accessoires', 'ordinateur', 'mood']) expect(props, nom).toHaveProperty(nom)
   })
   it("l'ombre est active par defaut (le rendu d'avant ne change pas)", () => {
     expect(props.ombre!.default).toBe(true)
+    expect(props.ombrage!.default).toBe(true)
   })
 })

@@ -6,7 +6,8 @@ export interface OptionsExtrait {
   couleur: string
   rendu: RenduId
   contour: boolean
-  ombre: boolean
+  /** ombrage du volume du corps (Soft, Flat, Pixel) */
+  ombrage: boolean
   reflet: boolean
   mood: string
   /** accessoires par emplacement, avec leurs couleurs */
@@ -43,7 +44,7 @@ export function extraitCode(o: OptionsExtrait): string {
   if (o.rendu !== '3d') l.push(`    rendu="${o.rendu}"`)
   if (o.rendu === 'flat3d' && o.contour) l.push('    contour')
   if (o.rendu === '3d' && !o.reflet) l.push('    :reflet="false"')
-  if (!o.ombre) l.push('    :ombre="false"')
+  if (!o.ombrage) l.push('    :ombrage="false"')
   l.push(`    mood="${o.mood}"`)
   if (o.mood === 'travaille' && !o.ordinateur) l.push('    :ordinateur="false"')
   const acc = accessoiresEnCode(o.accessoires)
