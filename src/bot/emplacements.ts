@@ -88,7 +88,6 @@ export const CATALOGUE: AccessoireDef[] = [
   // bas
   def('bas', 'moustache', 'Moustache', C.noir, C.noir),
   def('bas', 'papillon', 'Nœud papillon', C.noir, C.noir),
-  def('bas', 'cravate', 'Cravate', C.rouge, C.rouge),
   def('bas', 'echarpe', 'Écharpe', C.orange, C.orange),
   def('bas', 'perles', 'Collier de perles', C.creme, C.creme),
   def('bas', 'fleurs', 'Collier de fleurs', C.rose, C.jaune),
@@ -106,6 +105,8 @@ export const CATALOGUE: AccessoireDef[] = [
  * remettre un, le recopier dans `CATALOGUE`.
  */
 export const RETIRES: AccessoireDef[] = [
+  // v11 (05/11/2026) : la cravate (essais v9 a v11 refuses)
+  def('bas', 'cravate', 'Cravate', C.rouge, C.rouge),
   def('tete', 'oreilles', 'Serre-tête à oreilles', C.rose, C.creme),
   def('yeux', 'ski', 'Lunettes de ski', C.orange, C.bleu),
   def('yeux', 'domino', 'Masque de héros', C.rouge, C.creme),

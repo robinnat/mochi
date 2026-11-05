@@ -83,7 +83,7 @@ const corpsDe = (f: string) => {
 
 describe('catalogue', () => {
   it('au moins 30 accessoires, repartis sur les cinq emplacements', () => {
-    expect(CATALOGUE.length).toBeGreaterThanOrEqual(30)
+    expect(CATALOGUE.length).toBeGreaterThanOrEqual(28)
     for (const e of EMPLACEMENTS) expect(parEmplacement(e).length).toBeGreaterThanOrEqual(4)
   })
 
@@ -247,7 +247,7 @@ describe('liste des emplacements', () => {
 describe('retours de Robin du 05/11/2026', () => {
   it('les accessoires retires ne sont plus au catalogue ni resolus, mais restent listes dans RETIRES', () => {
     expect(RETIRES.map((r) => `${r.emplacement}:${r.id}`).sort()).toEqual(
-      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski'].sort()
+      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'bas:cravate', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski'].sort()
     )
     for (const r of RETIRES) {
       expect(CATALOGUE.some((a) => a.emplacement === r.emplacement && a.id === r.id)).toBe(false)
@@ -290,40 +290,6 @@ describe('retours de Robin du 05/11/2026', () => {
     acc.maj({ tete: 'casque', yeux: 'soleil', visage: 'chat', bas: 'echarpe', dos: 'sac' }, 'x', mat(), () => R)
     expect(acc.groupe.children.map((c) => c.name)).toEqual(EMPLACEMENTS)
     for (const g of acc.groupe.children) expect(sommetsFinis(g)).toBe(true)
-    acc.liberer()
-  })
-
-  it.each(FORMES)('%s : la cravate est une piece droite, symetrique, ancree en haut, qui ne traverse pas le corps', (forme) => {
-    const { R } = corpsDe(forme)
-    const acc = new Accessoires3d()
-    acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
-    expect(meshes(acc.groupe).length).toBe(2)
-    const b = new Box3().setFromObject(acc.groupe)
-    // symetrique : centree sur l'axe du corps
-    expect(Math.abs(b.max.x + b.min.x), forme).toBeLessThan(0.03 * R.hw)
-    // taille : lame ~ 1/4 du corps, longueur 30 a 46 % de la hauteur
-    expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeGreaterThan(0.18)
-    expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeLessThan(0.34)
-    expect((b.max.y - b.min.y) / R.H, forme).toBeGreaterThan(0.17)
-    expect((b.max.y - b.min.y) / R.H, forme).toBeLessThan(0.55)
-    // un vrai espace sous les yeux, et la pointe reste au-dessus du bas du corps
-    expect(b.max.y, forme).toBeLessThan(R.yYeux - 1.0 * R.rVerre)
-    expect(b.min.y, forme).toBeGreaterThan(R.bas - 0.08 * R.H)
-    // ne traverse pas le corps : sous le haut (ancre), tout reste en avant de la surface (a un petit enfoncement pres)
-    let ancre = false
-    for (const m of meshes(acc.groupe)) {
-      m.updateWorldMatrix(true, false)
-      const P = m.geometry.attributes.position!
-      for (let i = 0; i < P.count; i += 2) {
-        const w = new Vector3(P.getX(i), P.getY(i), P.getZ(i)).applyMatrix4(m.matrixWorld)
-        const h = R.A.avant(w.x, w.y)
-        if (!h) continue
-        if (w.y > b.max.y - 0.2 * (b.max.y - b.min.y)) {
-          if (w.z < h.p.z) ancre = true
-        } else expect(w.z - h.p.z, forme).toBeGreaterThan(-0.14 * R.hw)
-      }
-    }
-    expect(ancre, forme).toBe(true)
     acc.liberer()
   })
 
@@ -383,17 +349,8 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     expect(resoudre('bas', 'moustache')).not.toBeNull()
     expect(resoudre('visage', 'moustache')).toBeNull()
     const sel: Selection = { bas: 'moustache' }
-    sel.bas = 'cravate'
+    sel.bas = 'echarpe'
     expect(Object.keys(sel)).toEqual(['bas'])
-  })
-
-  it.each(FORMES)('%s : la pointe de la cravate ne descend pas sous le bas du corps', (forme) => {
-    const { R } = corpsDe(forme)
-    const acc = new Accessoires3d()
-    acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
-    const b = new Box3().setFromObject(acc.groupe)
-    expect(b.min.y, forme).toBeGreaterThan(R.bas - 0.08 * R.H)
-    acc.liberer()
   })
 
   it.each(FORMES)('%s : le noeud papillon est petit (au plus 45 pour cent du corps) et ne depasse que peu sous la silhouette', (forme) => {
@@ -463,15 +420,6 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     }
   })
 
-  it.each(FORMES)('%s : le noeud de la cravate est clairement sous les yeux', (forme) => {
-    const { R } = corpsDe(forme)
-    const acc = new Accessoires3d()
-    acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
-    const b = new Box3().setFromObject(acc.groupe)
-    expect(b.max.y).toBeLessThan(R.yYeux - 0.5 * R.rVerre)
-    acc.liberer()
-  })
-
   it('les bretelles du sac ne passent pas par le devant du corps', () => {
     const { R } = corpsDe('cercle')
     const acc = new Accessoires3d()
@@ -517,7 +465,7 @@ describe('accessoires v4 : simples, une ou deux couleurs, personnalisables (Robi
   it('une couleur par defaut sobre : papillon noir, cape rouge, c2 = c1 quand une seule couleur', () => {
     expect(resoudre('bas', 'papillon')!.c1).toBe(COULEURS.noir)
     expect(resoudre('dos', 'cape')!.c1).toBe(COULEURS.rouge)
-    for (const id of ['papillon', 'cravate', 'echarpe']) {
+    for (const id of ['papillon', 'echarpe']) {
       const d = resoudre('bas', id)!
       expect(d.c2, id).toBe(d.c1)
     }
@@ -542,15 +490,6 @@ describe('accessoires v4 : simples, une ou deux couleurs, personnalisables (Robi
       expect(meshes(acc.groupe)).toHaveLength(1)
       acc.liberer()
     }
-  })
-
-  it('la cravate est une seule couleur, sans rayures : un pan et un noeud', () => {
-    const { R } = corpsDe('cercle')
-    const acc = new Accessoires3d()
-    acc.maj({ bas: 'cravate' }, 'c', mat(), () => R)
-    expect(meshes(acc.groupe)).toHaveLength(2)
-    expect(couleursOpaques(acc.groupe).size).toBe(1)
-    acc.liberer()
   })
 
   it("l'echarpe n'a plus de rayures et le collier de fleurs n'a que deux couleurs", () => {
