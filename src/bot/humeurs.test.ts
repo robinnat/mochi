@@ -10,6 +10,8 @@ import {
   REACTION_DE_EVENEMENT,
   REACTION_IDS,
   REGARD_X,
+  COUCOU_POUSSE,
+  coucouEchelle,
   doitRedessiner,
   melanger,
   moodDe
@@ -304,5 +306,39 @@ describe('humeurs : cadence', () => {
     expect(compte(12)).toBeGreaterThanOrEqual(11)
     expect(compte(12)).toBeLessThanOrEqual(13)
     expect(compte(0)).toBe(compte())
+  })
+})
+
+describe('coucou : le Mochi pousse depuis le sol', () => {
+  it('part de presque rien, depasse un peu (105 a 108 %) puis revient a 100 % en 0,4 a 0,6 s', () => {
+    expect(COUCOU_POUSSE).toBeGreaterThanOrEqual(0.4)
+    expect(COUCOU_POUSSE).toBeLessThanOrEqual(0.6)
+    expect(coucouEchelle(0)).toBeLessThan(0.05)
+    let max = 0
+    for (let i = 0; i <= 100; i++) max = Math.max(max, coucouEchelle((i / 100) * COUCOU_POUSSE))
+    expect(max).toBeGreaterThan(1.05)
+    expect(max).toBeLessThan(1.09)
+    expect(coucouEchelle(COUCOU_POUSSE)).toBeCloseTo(1, 6)
+  })
+
+  it('le bas du corps reste pose sur le sol pendant la pousse, et le geste habituel suit', () => {
+    const h = new Humeurs('repos')
+    h.react('coucou', 0)
+    for (const t of [0.05, 0.15, 0.3, 0.45]) {
+      const g = h.sample(t)!
+      expect(g.sy, String(t)).toBeCloseTo(coucouEchelle(t), 2)
+      expect(g.sx).toBeCloseTo(coucouEchelle(t), 2)
+      // dy = (1 - sy) * 0.92 : le centre descend autant que le corps raccourcit
+      expect(g.dy).toBeCloseTo((1 - g.sy) * 0.92, 1)
+    }
+    // apres la pousse, le saut d'avant (ecrasement) est bien la
+    const saut = h.sample(COUCOU_POUSSE + 0.14)!
+    expect(saut.sy).toBeLessThan(0.95)
+  })
+
+  it('en mouvement reduit : pas de pousse (le composant fait un simple fondu)', () => {
+    const h = new Humeurs('repos', { reduit: true })
+    expect(h.react('coucou', 0)).toBe(false)
+    expect(h.sample(0.1)?.sx ?? 1).toBe(1)
   })
 })

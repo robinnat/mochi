@@ -879,7 +879,11 @@ onMounted(() => {
     redrawFrozen()
     return
   }
-  if (props.coucou) humeurs.react(REACTION_DE_EVENEMENT.arrivee, clock)
+  if (props.coucou) {
+    // mouvement reduit : pas de pousse, un simple fondu a l'apparition ; sinon la reaction fait grandir le Mochi
+    if (reduit.value) svg.value?.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 400, easing: 'ease-out' })
+    else humeurs.react(REACTION_DE_EVENEMENT.arrivee, clock)
+  }
   // le curseur peut arriver deja pose (URL, cycle relu du stockage)
   apply(block.value, elapsed.value)
   raf = requestAnimationFrame(tick)

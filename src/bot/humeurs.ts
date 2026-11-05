@@ -47,6 +47,17 @@ const g = (p: Partial<Geste>): Geste => ({ ...GESTE_NEUTRE, ...p })
 /** Le corps repose sur le sol : quand il s'ecrase, son centre descend d'autant. */
 const sol = (sy: number) => (1 - sy) * 0.92
 
+/** Duree de la pousse du coucou, en secondes (le Mochi grandit depuis le sol avant de saluer). */
+export const COUCOU_POUSSE = 0.5
+/** Echelle de la pousse a la date `t` (secondes depuis le debut du coucou) : ~3 % -> ~107 % -> 100 %, ease-out avec rebond. */
+export function coucouEchelle(t: number): number {
+  const x = clamp(t / COUCOU_POUSSE)
+  const c1 = 1.4
+  const c3 = c1 + 1
+  const back = 1 + c3 * (x - 1) ** 3 + c1 * (x - 1) ** 2 // easeOutBack : 0 -> ~1,07 -> 1
+  return 0.03 + 0.97 * back
+}
+
 const eye = (w: number, h: number, tilt = 0, open = 1): EyeCfg => ({ w, h, tilt, open })
 const paire = (w: number, h: number, tilt = 0): [EyeCfg, EyeCfg] => [eye(w, h, tilt), eye(w, h, -tilt)]
 const visage = (id: BotExpression['id'], yaw: number, pitch: number, roll: number, split: number, eyes: [EyeCfg, EyeCfg]): BotExpression => ({
@@ -409,11 +420,14 @@ export const REACTIONS: ReactionDef[] = [
     }
   },
   {
-    // coucou : petit saut a l'apparition, puis un salut de la tete
+    // coucou : le Mochi pousse depuis le sol (presque rien -> 100 %, ease-out avec un leger rebond a ~107 %),
+    // puis petit saut et salut de la tete
     id: 'coucou',
     declencheur: 'arrivee',
-    duree: 1.8,
-    pose: (u) => {
+    duree: 1.8 + COUCOU_POUSSE,
+    pose: (t) => {
+      const pousse = coucouEchelle(t)
+      const u = t - COUCOU_POUSSE
       const v = u / 0.7
       let sy = 1
       let sx = 1
@@ -428,12 +442,16 @@ export const REACTIONS: ReactionDef[] = [
           [1, 1, 1]
         ]) as [number, number]
         const w = clamp((v - 0.22) / 0.58)
-        dy = -0.22 * 4 * w * (1 - w) + sol(sy)
+        dy = -0.22 * 4 * w * (1 - w)
       }
       // le salut : la tete part de cote deux fois, comme on salue de la main
       const fen = lisse((u - 0.7) / 0.15) * (1 - lisse((u - 1.45) / 0.3))
       const salut = Math.sin((u - 0.7) * TAU * 1.9) * fen
       const env = lisse(u / 0.2) * (1 - lisse((u - 1.3) / 0.45))
+      // l'echelle de pousse multiplie le corps entier ; le corps reste pose sur le sol (le bas ne bouge pas)
+      sx *= pousse
+      sy *= pousse
+      dy += sol(sy)
       return { geste: g({ sy, sx, dy, rot: 12 * salut }), exp: expr('heureux'), mix: 0.75 * env, masque: 0.5 * env }
     }
   }

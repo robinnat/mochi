@@ -256,7 +256,7 @@ ANIMS.push({
 /* --- coucou : ils apparaissent l'un apres l'autre */
 const ARRIVEES = [0.25, 0.65, 1.05]
 ANIMS.push({
-  id: 'coucou', groupe: 'interaction', nom: 'Coucou', code: 'à l’apparition : petit salut', duree: 3.4, cle: 1.45, mood: 'repos', cadre: 175,
+  id: 'coucou', groupe: 'interaction', nom: 'Coucou', code: 'à l’apparition : il pousse, puis salue', duree: 3.8, cle: 1.45, mood: 'repos', cadre: 175,
   phase: [0, 0.4, 0.8],
   evts: ARRIVEES.map((t, i) => ({ t, i, type: 'react', id: 'coucou' }) as Evt),
   visible: (i, t) => t >= ARRIVEES[i]!
