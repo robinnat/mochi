@@ -293,18 +293,26 @@ describe('retours de Robin du 05/11/2026', () => {
     acc.liberer()
   })
 
-  it('la cravate se decolle du corps : son bas est plus en avant que le corps a la meme hauteur', () => {
-    for (const forme of ['cercle', 'squircle', 'etoile']) {
-      const { R } = corpsDe(forme)
-      const acc = new Accessoires3d()
-      acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
-      const b = new Box3().setFromObject(acc.groupe)
-      // la cravate PEND droit : le bas peut depasser sous le corps, on compare a la surface juste au-dessus du bas
-      const surfaceBas = R.A.avant(0, Math.max(b.min.y + 0.15 * (b.max.y - b.min.y), R.bas + 0.1 * R.H))
-      expect(surfaceBas, forme).not.toBeNull()
-      expect(b.max.z, forme).toBeGreaterThan(surfaceBas!.p.z + 0.05 * R.hw)
-      acc.liberer()
+  it.each(FORMES)('%s : la cravate est plaquee contre le ventre, rien ne flotte ni ne pointe vers l avant', (forme) => {
+    const { R } = corpsDe(forme)
+    const acc = new Accessoires3d()
+    acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
+    expect(meshes(acc.groupe).length).toBe(2)
+    for (const m of meshes(acc.groupe)) {
+      const P = m.geometry.attributes.position!
+      for (let i = 0; i < P.count; i += 3) {
+        const x = P.getX(i)
+        const y = P.getY(i)
+        const h = R.A.avant(x, y)
+        // au-dessus du corps de quelques pour cent de sa largeur au plus (la lame tombe a peine)
+        if (h) expect(P.getZ(i) - h.p.z, forme).toBeLessThan(0.16 * R.hw)
+      }
     }
+    // largeur de la lame : 1/6 a 1/4 de la largeur du corps
+    const b = new Box3().setFromObject(acc.groupe)
+    expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeGreaterThan(0.12)
+    expect((b.max.x - b.min.x) / (2 * R.hw), forme).toBeLessThan(0.3)
+    acc.liberer()
   })
 
   it('les bretelles du sac suivent le corps : tous leurs sommets sont a la surface ou juste au-dessus (pas de vol libre)', () => {

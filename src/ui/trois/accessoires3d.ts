@@ -981,22 +981,52 @@ const BAS: Record<string, Gen> = {
     papillon3d(c, g, s, c.c1, c.c1)
   },
   cravate(c) {
-    const hw = c.R.hw
-    const w = hw * 0.15
-    // le noeud part clairement du bas du visage : sous la bouche, jamais a hauteur du nez ou des lunettes
+    // Cravate dans l'esprit du noeud papillon d'Alfred : tout a plat, formes simples aux coins arrondis, collee
+    // au ventre (chaque sommet recoit la hauteur de la surface), JAMAIS de partie qui flotte ou qui pointe en avant.
+    // Un petit noeud trapeze (large en haut), puis une lame un peu plus large qui descend jusqu'aux deux tiers de
+    // la place sous le noeud et finit en pointe (losange tronque). Le noeud est en c2, la lame en c1.
+    const { hw, A } = c.R
     const f = visage(c)
-    const yTop = Math.min(c.R.yBas + 0.3 * hw, f.yBouche - 0.25 * f.rv)
-    const h = surf(c, 0, yTop)
-    if (!h) return
-    // COURTE : le bout s'arrete nettement au-dessus du bas du corps, il ne depasse jamais sous la silhouette
-    const L = Math.max(0.1 * hw, Math.min(Math.max(0.3 * hw, Math.min(0.85 * hw, yTop - c.R.bas - 0.2 * c.R.H)), yTop - c.R.bas - 0.07 * c.R.H))
-    // cravate longue et fine, une seule couleur : cou etroit, lame un peu plus large, bout en pointe ; elle PEND
-    // droit sous son noeud, donc le bas se decolle du corps (plus de forme de cloche)
-    const W = (t: number) => (t < 0.08 ? w * 0.5 : t < 0.5 ? w * (0.5 + 0.5 * ((t - 0.08) / 0.42)) : t < 0.9 ? w : w * Math.sqrt(Math.max(0, 1 - ((t - 0.9) / 0.1) ** 2)))
-    pendant(c, W, c.c1, { x0: 0, yTop, L, ep: 0.2 * w, gap: 0.1 * hw, swing: 0.05 * hw, decal: 0.03 * hw, wmax: w, tombe: true })
-    // petit noeud sous la bouche
-    const g = poser(c, h.p, h.n, -0.1 * w, 0.4)
-    g.add(sph(c, c.c1, 1, [0.62 * w, 0.5 * w, 0.5 * w], V(0, 0, 0)))
+    // le noeud part du bas du visage : sous la bouche, jamais a hauteur du nez ou des lunettes
+    const yTop = Math.min(c.R.yBas + 0.3 * hw, f.yBouche + 0.15 * f.rv)
+    const place = yTop - c.R.bas - 0.08 * c.R.H // place disponible sous le haut du noeud
+    if (place < 0.25 * hw) return
+    const hk = Math.min(0.24 * hw, 0.3 * place) // hauteur du noeud
+    const lame = Math.min(0.66 * place, 1.3 * hw) // hauteur de la lame sous le noeud
+    if (lame < 0.1 * hw) return
+    const wl = 0.2 * hw // demi-largeur max de la lame : ~1/5 de la largeur du corps
+    const rc = 0.03 * hw
+    const noeud = polygoneArrondi([[-0.17 * hw, 0], [0.17 * hw, 0], [0.1 * hw, -hk], [-0.1 * hw, -hk]], rc, 8)
+    const y1 = -hk * 0.9
+    const blade = polygoneArrondi(
+      [
+        [-0.11 * hw, y1],
+        [0.11 * hw, y1],
+        [wl, y1 - 0.4 * lame],
+        [0.02 * hw, y1 - lame],
+        [-0.02 * hw, y1 - lame],
+        [-wl, y1 - 0.4 * lame]
+      ],
+      rc,
+      8
+    )
+    const ep = 0.03 * hw
+    const bis = 0.016 * hw
+    const yBot = yTop - hk * 0.9 - lame - 0.05 * hw
+    const zs = grille(c, -0.4 * hw, 0.4 * hw, yBot, yTop + 0.1 * hw, 21, 36)
+    const tombe = (y: number) => 0.015 * hw * Math.min(1, Math.max(0, (yTop - y) / (hk + lame))) ** 2
+    for (const [pts, hex, sur] of [
+      [blade, c.c1, 0],
+      [noeud, c.c2, 0.9 * ep]
+    ] as const) {
+      const geo = extrusion(formeDePoints(pts as Array<[number, number]>), ep, bis, 5, true)
+      geo.translate(0, yTop, 0)
+      // entre deux lobes (fleur), la piece se pose sur le plus bas des points voisins : elle ne flotte jamais au-dessus d'un creux
+      const bas = (x: number, y: number) => Math.min(zs(x, y), zs(x - 0.16 * hw, y), zs(x + 0.16 * hw, y))
+      epouser(geo, (x, y) => bas(x, y) + tombe(y), bis + 0.3 * ep + sur)
+      add(c, geo, hex, c.g, 1, true)
+    }
+    void A
   },
   echarpe(c) {
     const hw = c.R.hw
