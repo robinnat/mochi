@@ -5,12 +5,12 @@ const VUE_SFC = `<script setup lang="ts">
 import { ref } from 'vue'
 import MochiBot from './components/MochiBot.vue'
 
-const state = ref('idle')
+const mood = ref('repos')
 <\/script>
 
 <template>
   <MochiBot
-    v-model:state="state"
+    :mood="mood"
     shape="fleur"
     color="rose"
     rendu="3d"
@@ -20,13 +20,19 @@ const state = ref('idle')
 </template>`
 
 const VUE_3D = `<!-- 3D: Three.js is loaded on demand, only when this style is used -->
-<MochiBot shape="etoile" color="ambre" rendu="3d" contour :size="200" />
+<MochiBot shape="etoile" color="ambre" rendu="3d" :size="200" />
 
-<!-- an accessory and its gesture -->
-<MochiBot accessoire="portable" rendu="3d" :size="200" />
+<!-- a mood: repos, reflechit, travaille, attend, termine, bloque, dort -->
+<MochiBot mood="travaille" shape="squircle" :size="200" />
+
+<!-- accessories by slot (head, eyes, face, neck, back), with your colours -->
+<MochiBot :accessoires="{ tete: { id: 'casquette', c1: '#e8505b' }, yeux: 'rondes' }" />
+
+<!-- dark mode: black eyes. Reactions to touch are on by default -->
+<MochiBot theme="dark" :interactions="true" coucou />
 
 <!-- a frozen frame: no animation loop, same image every time -->
-<MochiBot state="wink" :frozen-at="1.2" :size="96" />`
+<MochiBot mood="termine" :frozen-at="1.2" :size="96" />`
 
 const INSTALL = 'npm install mochi-bots'
 const copie = ref('')
@@ -61,7 +67,7 @@ async function copier(texte: string, quoi: string) {
         <h3 style="font-size: 1rem">Props</h3>
         <div class="code"><button type="button" class="copier" @click="copier(VUE_3D, 'p')">{{ copie === 'p' ? 'Copied' : 'Copy' }}</button>{{ VUE_3D }}</div>
         <p class="note" style="margin-top: 10px">
-          Shapes, colours and expressions are ids from the catalogues (for now in French, so
+          Shapes, colours and moods are ids from the catalogues (for now in French, so
           <code>etoile</code> is the star). <code>frozen-at</code> renders one exact instant with no animation
           loop, which is what the thumbnails on this page use.
         </p>

@@ -8,15 +8,12 @@ const base: OptionsExtrait = {
   pixel: 'moyen',
   contour: false,
   reflet: true,
-  expression: 'neutre',
-  accessoire: '',
-  porte: '',
-  etat: 'idle'
+  mood: 'repos'
 }
 
 describe("extrait de code du playground", () => {
   it('ne montre que ce qui differe du defaut', () => {
-    expect(extraitCode(base)).toBe('<MochiBot\n  shape="etoile"\n  color="violet"\n  :playing="true"\n/>')
+    expect(extraitCode(base)).toBe('<MochiBot\n  shape="etoile"\n  color="violet"\n  mood="repos"\n/>')
   })
 
   it('garde la taille des pixels en style Pixel (et seulement la)', () => {
@@ -31,10 +28,10 @@ describe("extrait de code du playground", () => {
     expect(extraitCode({ ...base, rendu: 'flat3d', reflet: false })).not.toContain('reflet')
   })
 
-  it("ajoute l'accessoire porte, le metier et l'etat", () => {
-    const e = extraitCode({ ...base, porte: 'lunettes', accessoire: 'portable', etat: 'wink' })
-    expect(e).toContain('porte="lunettes"')
-    expect(e).toContain('accessoire="portable"')
-    expect(e).toContain('state="wink"')
+  it('montre l\'humeur et le salut', () => {
+    const e = extraitCode({ ...base, mood: 'travaille', coucou: true })
+    expect(e).toContain('mood="travaille"')
+    expect(e).toContain('  coucou')
+    expect(e.endsWith('\n/>')).toBe(true)
   })
 })

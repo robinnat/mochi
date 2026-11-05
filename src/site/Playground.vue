@@ -3,30 +3,11 @@ import { computed, ref } from 'vue'
 import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { useReduit } from './reduced'
-import {
-  ACCESSOIRE_IDS,
-  ACCESSOIRE_LABEL,
-  PORTE_IDS_SITE,
-  PORTE_LABEL,
-  ACTIVITES_SITE,
-  COULEUR_IDS,
-  COLOR_LABEL,
-  ETATS,
-  FORME_IDS,
-  GESTES,
-  SHAPE_LABEL,
-  STATE_LABEL,
-  cycleDe,
-  hexDe,
-  type Animation
-} from './catalog'
-import { POSES, type StateId } from '@/bot/states'
+import { COULEUR_IDS, COLOR_LABEL, FORME_IDS, HUMEURS_SITE, SHAPE_LABEL, hexDe } from './catalog'
 import { TAILLES_PIXEL, type RenduId, type TaillePixelId } from '@/ui/rendu'
-import type { AccessoireId } from '@/bot/accessoires'
 import { STYLES_SITE } from './style'
 import { extraitCode } from './extrait'
-import type { PorteId } from '@/bot/portes'
-import en from '@/i18n/locales/en'
+import type { MoodId } from '@/bot/humeurs'
 
 const reduit = useReduit()
 
@@ -36,28 +17,13 @@ const rendu = ref<RenduId>('3d')
 const pixel = ref<TaillePixelId>('moyen')
 const contour = ref(false)
 const reflet = ref(true)
-const expression = ref('neutre')
-const mouvement = ref('state:idle')
-const accessoire = ref<AccessoireId | ''>('')
-const porte = ref<PorteId | ''>('')
+const mood = ref<MoodId>('repos')
+/** Changer la cle remonte le Mochi : il arrive de nouveau et dit coucou. */
+const arrivee = ref(0)
+const salut = ref(true)
 
 const RENDUS = STYLES_SITE
-const EXPRESSIONS = Object.entries(en.expressions as Record<string, string>)
-
-// un mouvement = un etat du moteur, ou un geste, ou une activite
-const gesteChoisi = computed<Animation | null>(() => {
-  const [genre, id] = mouvement.value.split(':') as [string, string]
-  if (genre === 'geste') return GESTES.find((a) => a.id === id) ?? null
-  if (genre === 'travail') return ACTIVITES_SITE.find((a) => a.id === id) ?? null
-  return null
-})
-const etat = computed<StateId>(() => (mouvement.value.startsWith('state:') ? (mouvement.value.slice(6) as StateId) : 'idle'))
-const cycle = computed(() => gesteChoisi.value?.cycle ?? cycleDe(etat.value))
-const geste = computed(() => gesteChoisi.value?.geste ?? null)
-const exprEff = computed(() => gesteChoisi.value?.expression ?? expression.value)
-const cle = computed(() => [forme.value, rendu.value, mouvement.value, accessoire.value, porte.value].join('|'))
-
-const trois = computed(() => true)
+const cle = computed(() => [forme.value, rendu.value, mood.value, arrivee.value, reduit.value].join('|'))
 
 const extrait = computed(() =>
   extraitCode({
@@ -67,10 +33,8 @@ const extrait = computed(() =>
     pixel: pixel.value,
     contour: contour.value,
     reflet: reflet.value,
-    expression: expression.value,
-    accessoire: accessoire.value,
-    porte: porte.value,
-    etat: mouvement.value.startsWith('state:') ? etat.value : 'idle'
+    mood: mood.value,
+    coucou: salut.value
   })
 )
 
@@ -96,7 +60,7 @@ async function copier() {
         <div class="scene large">
           <Lazy :largeur="270" :hauteur="270">
             <MochiBot
-              :key="cle + reduit"
+              :key="cle"
               :size="260"
               :shape="forme"
               :color="couleur"
@@ -104,18 +68,14 @@ async function copier() {
               :pixel="pixel"
               :contour="contour"
               :reflet="reflet"
-              :expression="exprEff"
-              :accessoire="accessoire || null"
-              :porte="trois ? porte || null : null"
-              :geste="geste"
-              :state="reduit ? etat : undefined"
-              :cycle="cycle"
-              :playing="!reduit"
-              :frozen-at="reduit ? (accessoire ? 2.2 : POSES[etat]) : undefined"
+              :mood="mood"
+              :coucou="salut && arrivee > 0 && !reduit"
+              :frozen-at="reduit ? 1 : undefined"
               label="Your Mochi"
             />
           </Lazy>
         </div>
+        <div style="margin-top: 10px"><button type="button" class="btn" @click="arrivee++">Replay the hello</button></div>
         <div class="code" style="margin-top: 12px"><button type="button" class="copier" @click="copier">{{ copie ? 'Copied' : 'Copy' }}</button>{{ extrait }}</div>
       </div>
 
@@ -130,7 +90,7 @@ async function copier() {
               {{ p.id === 'gros' ? 'Large' : p.id === 'moyen' ? 'Medium' : 'Fine' }} pixels
             </button>
           </div>
-          <div v-if="trois" style="margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap">
+          <div style="margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap">
             <label v-if="rendu === 'flat3d'" class="case"><input v-model="contour" type="checkbox" /> Outline</label>
             <label v-if="rendu === '3d'" class="case"><input v-model="reflet" type="checkbox" /> Soft highlight</label>
           </div>
@@ -160,40 +120,9 @@ async function copier() {
         </div>
 
         <div>
-          <h3>Animation</h3>
-          <select v-model="mouvement" aria-label="Animation">
-            <optgroup label="Moods">
-              <option v-for="id in ETATS" :key="id" :value="'state:' + id">{{ STATE_LABEL[id] }}</option>
-            </optgroup>
-            <optgroup label="Gestures">
-              <option v-for="a in GESTES" :key="a.id" :value="'geste:' + a.id">{{ a.label }}</option>
-            </optgroup>
-            <optgroup label="At work">
-              <option v-for="a in ACTIVITES_SITE" :key="a.id" :value="'travail:' + a.id">{{ a.label }}</option>
-            </optgroup>
-          </select>
-        </div>
-
-        <div style="display: flex; gap: 16px; flex-wrap: wrap">
-          <div>
-            <h3>Expression</h3>
-            <select v-model="expression" aria-label="Resting expression">
-              <option v-for="[id, nom] in EXPRESSIONS" :key="id" :value="id">{{ nom }}</option>
-            </select>
-          </div>
-          <div v-if="trois">
-            <h3>Worn (3D)</h3>
-            <select v-model="porte" aria-label="Worn accessory">
-              <option value="">None</option>
-              <option v-for="id in PORTE_IDS_SITE" :key="id" :value="id">{{ PORTE_LABEL[id] }}</option>
-            </select>
-          </div>
-          <div>
-            <h3>Tool</h3>
-            <select v-model="accessoire" aria-label="Accessory">
-              <option value="">None</option>
-              <option v-for="id in ACCESSOIRE_IDS" :key="id" :value="id">{{ ACCESSOIRE_LABEL[id] }}</option>
-            </select>
+          <h3>Mood</h3>
+          <div class="chips" role="group" aria-label="Mood">
+            <button v-for="h in HUMEURS_SITE" :key="h.id" type="button" class="chip" :aria-pressed="mood === h.id" @click="mood = h.id">{{ h.label }}</button>
           </div>
         </div>
         <p v-if="reduit" class="note">Reduced motion is on: the preview shows a still frame.</p>

@@ -3,8 +3,8 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { useReduit } from './reduced'
-import { ETATS, FORMES_3D, GESTES, STATE_LABEL, cycleDe } from './catalog'
-import { POSES, type StateId } from '@/bot/states'
+import { FORMES_3D, HUMEURS_SITE } from './catalog'
+import type { MoodId } from '@/bot/humeurs'
 import { styleSite } from './style'
 
 /**
@@ -17,14 +17,11 @@ import { styleSite } from './style'
  */
 const reduit = useReduit()
 const forme = ref('etoile')
-const humeur = ref<StateId>('idle')
-const geste = ref('')
+const humeur = ref<MoodId>('repos')
 const yaw = ref(0)
 
 const f = computed(() => FORMES_3D.find((x) => x.id === forme.value) ?? FORMES_3D[0]!)
-const g = computed(() => GESTES.find((x) => x.id === geste.value) ?? null)
-const cycle = computed(() => (g.value ? g.value.cycle : cycleDe(humeur.value)))
-const libelle = computed(() => `${f.value.label}, 3D, ${g.value ? g.value.label : STATE_LABEL[humeur.value]}`)
+const libelle = computed(() => `${f.value.label}, 3D, ${HUMEURS_SITE.find((h) => h.id === humeur.value)!.label}`)
 
 /* ------------------------------------------------------------ orbite a la main */
 
@@ -137,17 +134,14 @@ const degres = computed(() => Math.round(((yaw.value * 180) / Math.PI) % 360))
           @keydown="clavier"
         >
           <MochiBot
-            :key="forme + humeur + geste + reduit"
+            :key="forme + reduit"
             :size="288"
             :shape="forme"
             :color="f.couleur"
             :rendu="styleSite"
             :yaw="yaw"
-            :cycle="cycle"
-            :geste="g ? g.geste : null"
-            :expression="g ? g.expression : undefined"
-            :playing="!reduit"
-            :frozen-at="reduit ? POSES[humeur] : undefined"
+            :mood="humeur"
+            :frozen-at="reduit ? 1 : undefined"
             :label="libelle"
           />
         </div>
@@ -163,25 +157,10 @@ const degres = computed(() => Math.round(((yaw.value * 180) / Math.PI) % 360))
         </div>
       </div>
       <div>
-        <h3>State</h3>
+        <h3>Mood</h3>
         <div class="chips" role="group" aria-label="Mood">
-          <button
-            v-for="id in ETATS"
-            :key="id"
-            type="button"
-            class="chip"
-            :aria-pressed="!geste && humeur === id"
-            @click="((humeur = id), (geste = ''))"
-          >
-            {{ STATE_LABEL[id] }}
-          </button>
-        </div>
-      </div>
-      <div>
-        <h3>Gesture</h3>
-        <div class="chips" role="group" aria-label="Gesture">
-          <button v-for="a in GESTES" :key="a.id" type="button" class="chip" :aria-pressed="geste === a.id" @click="geste = geste === a.id ? '' : a.id">
-            {{ a.label }}
+          <button v-for="h in HUMEURS_SITE" :key="h.id" type="button" class="chip" :aria-pressed="humeur === h.id" @click="humeur = h.id">
+            {{ h.label }}
           </button>
         </div>
       </div>

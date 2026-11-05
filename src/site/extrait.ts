@@ -7,10 +7,9 @@ export interface OptionsExtrait {
   pixel: TaillePixelId
   contour: boolean
   reflet: boolean
-  expression: string
-  accessoire: string
-  porte: string
-  etat: string
+  mood: string
+  /** le salut a l'arrivee est rejoue */
+  coucou?: boolean
 }
 
 /** L'extrait de code montre par le playground : seulement ce qui differe des valeurs par defaut. */
@@ -20,9 +19,7 @@ export function extraitCode(o: OptionsExtrait): string {
   if (o.rendu === 'pixel3d') l.push(`  pixel="${o.pixel}"`)
   if (o.rendu === 'flat3d' && o.contour) l.push('  contour')
   if (o.rendu === '3d' && !o.reflet) l.push('  :reflet="false"')
-  if (o.expression !== 'neutre') l.push(`  expression="${o.expression}"`)
-  if (o.accessoire) l.push(`  accessoire="${o.accessoire}"`)
-  if (o.porte) l.push(`  porte="${o.porte}"`)
-  if (o.etat !== 'idle') l.push(`  state="${o.etat}"`)
-  return l.join('\n') + '\n  :playing="true"\n/>'
+  l.push(`  mood="${o.mood}"`)
+  if (o.coucou) l.push('  coucou')
+  return l.join('\n') + '\n/>'
 }

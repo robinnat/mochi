@@ -2,19 +2,9 @@
 import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { useReduit } from './reduced'
-import type { Block } from '@/bot/cycles'
 
 const reduit = useReduit()
 
-// un repos, un clin d'oeil, des yeux ecarquilles, une reflexion : le Mochi du haut de page
-const cycle: Block[] = [
-  { state: 'idle', duration: 3.2 },
-  { state: 'wink', duration: 1.6 },
-  { state: 'idle', duration: 2.6 },
-  { state: 'wide', duration: 1.8 },
-  { state: 'idle', duration: 2.6 },
-  { state: 'thinking', duration: 2.6 }
-]
 </script>
 
 <template>
@@ -36,8 +26,7 @@ const cycle: Block[] = [
           shape="cercle"
           color="violet"
           rendu="3d"
-          :cycle="cycle"
-          :playing="true"
+          mood="repos"
           follow
           coucou
           label="A Mochi, a round purple animated avatar"

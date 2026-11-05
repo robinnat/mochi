@@ -15,7 +15,7 @@ const reflet = ref(true)
     <span class="etiquette">3D</span>
     <h2 id="t-3d">Real 3D, in three styles</h2>
     <p class="chapo">
-      Eleven shapes, all with a real volume you can look at from any side. The eyes always face you. Turn the model with your finger or mouse, and give it a mood or a gesture. Three.js loads only when you scroll here, and every card
+      Eleven shapes, all with a real volume you can look at from any side. The eyes always face you. Turn the model with your finger or mouse, and give it a mood. Three.js loads only when you scroll here, and every card
       below draws through one shared WebGL context.
     </p>
     <div class="chips" style="margin-top: 18px" role="group" aria-label="3D style">
