@@ -42,7 +42,7 @@ const ACCESSOIRES: Selection[] = [
   { tete: 'toque' },
   { bas: 'echarpe' },
   { yeux: 'carrees' },
-  { tete: 'bonnet', bas: 'papillon' },
+  { tete: 'casquette', bas: 'papillon' },
   {},
   { dos: 'cape' },
   { tete: 'beret' },

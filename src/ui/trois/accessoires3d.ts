@@ -39,6 +39,7 @@ import {
   Vector2,
   Vector3
 } from 'three'
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { lisere } from './lisere'
 import type { Ombre } from '@/bot/portes'
 import { mixHex } from '@/bot/skins'
@@ -212,8 +213,8 @@ function epouser(geo: BufferGeometry, zs: (x: number, y: number) => number, deca
 }
 
 /** Extrusion douce (biseau rond) d'une forme 2D centree en z. */
-function extrusion(forme: Shape, epaisseur: number, biseau: number, segBiseau = 4): ExtrudeGeometry {
-  const g = new ExtrudeGeometry(forme, {
+function extrusion(forme: Shape, epaisseur: number, biseau: number, segBiseau = 4, lisse = false): BufferGeometry {
+  let g: BufferGeometry = new ExtrudeGeometry(forme, {
     depth: epaisseur,
     bevelEnabled: true,
     bevelThickness: biseau,
@@ -222,7 +223,38 @@ function extrusion(forme: Shape, epaisseur: number, biseau: number, segBiseau = 
     curveSegments: 18
   })
   g.translate(0, 0, -epaisseur / 2)
+  if (lisse) {
+    // soude les sommets et recalcule les normales : plus de facettes, le bord se fond dans le biseau
+    g.deleteAttribute('normal')
+    g.deleteAttribute('uv')
+    g = mergeVertices(g, 1e-4)
+    g.computeVertexNormals()
+  }
   return g
+}
+
+/**
+ * Polygone aux coins arrondis : chaque sommet est remplace par un arc (courbe de Bezier quadratique dont le
+ * point de controle est le sommet) a `rc` du coin, `n` segments par arc. Rend des triangles qui restent des triangles.
+ */
+function polygoneArrondi(pts: Array<[number, number]>, rc: number, n = 12): Array<[number, number]> {
+  const out: Array<[number, number]> = []
+  for (let i = 0; i < pts.length; i++) {
+    const P = pts[i]!
+    const Q = pts[(i + pts.length - 1) % pts.length]!
+    const N = pts[(i + 1) % pts.length]!
+    const l1 = Math.hypot(Q[0] - P[0], Q[1] - P[1])
+    const l2 = Math.hypot(N[0] - P[0], N[1] - P[1])
+    const t1 = Math.min(rc, l1 * 0.45) / l1
+    const t2 = Math.min(rc, l2 * 0.45) / l2
+    const A: [number, number] = [P[0] + (Q[0] - P[0]) * t1, P[1] + (Q[1] - P[1]) * t1]
+    const B: [number, number] = [P[0] + (N[0] - P[0]) * t2, P[1] + (N[1] - P[1]) * t2]
+    for (let k = 0; k <= n; k++) {
+      const u = k / n
+      out.push([(1 - u) * (1 - u) * A[0] + 2 * u * (1 - u) * P[0] + u * u * B[0], (1 - u) * (1 - u) * A[1] + 2 * u * (1 - u) * P[1] + u * u * B[1]])
+    }
+  }
+  return out
 }
 
 function formeDePoints(pts: Array<[number, number]>): Shape {
@@ -288,15 +320,120 @@ function coiffe(c: Ctx, k = 1.18): Group {
 
 /* ------------------------------------------------------------------ tete */
 
+/**
+ * Visiere de casquette (repere de la coiffe, +z devant) : un demi-disque allonge, epais et bombe sur le dessus,
+ * qui part de l'interieur de la calotte, depasse nettement vers l'avant et un peu sur les cotes, avec une courbure
+ * (les bords tombent) et une legere pente vers le bas. Maillage maison : surface fermee, normales lissees.
+ */
+function visiere(): BufferGeometry {
+  const NR = 16
+  const NT = 56
+  const WX = 0.9 // demi-largeur
+  const Z0 = -0.1 // pied de la visiere (cache dans la calotte)
+  const LZ = 1.35 // longueur vers l'avant
+  const Y0 = 0.02
+  const pos: number[] = []
+  const idx: number[] = []
+  const rang = (haut: boolean) => {
+    const base = pos.length / 3
+    for (let i = 0; i <= NR; i++) {
+      // r dense pres du bord : le profil s'arrondit
+      const r = 1 - (1 - i / NR) ** 1.6
+      const ep = 0.13 * Math.sqrt(Math.max(0, 1 - r ** 6))
+      for (let j = 0; j <= NT; j++) {
+        const t = (j / NT) * Math.PI
+        const x = WX * r * Math.cos(t)
+        const zl = LZ * r * Math.sin(t)
+        const u = x / WX
+        const y = Y0 - 0.34 * u * u * Math.min(1, 0.3 + zl / LZ) - 0.12 * (zl / LZ) + (haut ? ep : -ep)
+        pos.push(x, y, Z0 + zl)
+      }
+    }
+    return base
+  }
+  const h = rang(true)
+  const b = rang(false)
+  const W = NT + 1
+  for (let i = 0; i < NR; i++) {
+    for (let j = 0; j < NT; j++) {
+      const a = i * W + j
+      idx.push(h + a, h + a + W, h + a + 1, h + a + 1, h + a + W, h + a + W + 1)
+      idx.push(b + a, b + a + 1, b + a + W, b + a + 1, b + a + W + 1, b + a + W)
+    }
+  }
+  const geo = new BufferGeometry()
+  geo.setAttribute('position', new BufferAttribute(new Float32Array(pos), 3))
+  geo.setIndex(idx)
+  geo.computeVertexNormals()
+  return geo
+}
+
 type Gen = (c: Ctx) => void
 
 const TETE: Record<string, Gen> = {
   casquette(c) {
-    const g = coiffe(c)
-    sph(c, c.c1, 1, [1.02, 0.9, 1.02], V(0, 0.04, 0), g)
-    // visiere : pastille plate devant, penchee vers le bas
-    const v = sph(c, c.c2, 1, [0.8, 0.13, 0.66], V(0, 0.14, 1.0), g)
-    v.rotation.x = 0.3
+    // calotte bombee qui EPOUSE le haut du corps (coque construite sur sa surface, quelle que soit la forme) +
+    // vraie visiere qui part du devant de la calotte (une 2e couleur possible)
+    const { A, hw, tete: t } = c.R
+    const Rx = t.R * 1.3
+    const Rz = t.rz * 1.3
+    const NR = 14
+    const NP = 64
+    const pos: number[] = []
+    const prev: Array<{ p: Vector3; n: Vector3 } | null> = new Array(NP).fill(null)
+    const delta = (rho: number) => 0.13 * hw * (1 - 0.3 * rho ** 4)
+    const anneaux: Array<Array<Vector3>> = []
+    for (let j = 0; j <= NR; j++) {
+      const rho = j / NR
+      const ring: Vector3[] = []
+      for (let i = 0; i < NP; i++) {
+        const ph = (i / NP) * Math.PI * 2
+        let h = A.dessus(t.cx + rho * Rx * Math.cos(ph), t.zc + rho * Rz * Math.sin(ph))
+        if (!h) h = prev[i] ?? null
+        else prev[i] = h
+        ring.push(h ? h.p.clone().addScaledVector(h.n, delta(rho)) : V(t.cx, t.y, t.zc))
+      }
+      anneaux.push(ring)
+    }
+    // bord arrondi : trois rangees qui redescendent en rentrant dans le corps
+    const dernier: Array<{ p: Vector3; n: Vector3 }> = []
+    for (let i = 0; i < NP; i++) {
+      const ph = (i / NP) * Math.PI * 2
+      dernier.push(prev[i] ?? { p: V(), n: V(0, 1, 0) })
+      void ph
+    }
+    for (let k = 1; k <= 3; k++) {
+      const u = k / 3
+      anneaux.push(
+        dernier.map((h, i) => {
+          const base = anneaux[NR]![i]!
+          return base.clone().lerp(h.p.clone().addScaledVector(h.n, -0.03 * hw), Math.sin(u * Math.PI * 0.5)).add(V(0, -0.045 * hw * u, 0))
+        })
+      )
+    }
+    const rows = anneaux.length
+    for (const r of anneaux) for (const p of r) pos.push(p.x, p.y, p.z)
+    const idx: number[] = []
+    for (let j = 0; j < rows - 1; j++) {
+      for (let i = 0; i < NP; i++) {
+        const a0 = j * NP + i
+        const a1 = j * NP + ((i + 1) % NP)
+        idx.push(a0, a0 + NP, a1, a1, a0 + NP, a1 + NP)
+      }
+    }
+    const geo = new BufferGeometry()
+    geo.setAttribute('position', new BufferAttribute(new Float32Array(pos), 3))
+    geo.setIndex(idx)
+    geo.computeVertexNormals()
+    add(c, geo, c.c1, c.g, 1, true)
+    // visiere : au devant de la calotte (phi = +z), un peu sous le bord
+    const f = A.dessus(t.cx, t.zc + Rz)
+    const yF = f ? f.p.y : t.y
+    const v = add(c, visiere(), c.c2, c.g, 1, true)
+    // jamais sur les yeux : la visiere reste au-dessus du haut des yeux
+    const yMin = Math.max(c.a.y, c.b.y) + c.rv * 1.3
+    v.position.set(t.cx, Math.max(yF + 0.05 * hw, yMin), t.zc + Rz * 0.92)
+    v.scale.setScalar(Rx)
   },
   bonnet(c) {
     const g = coiffe(c)
@@ -598,21 +735,6 @@ function surf(c: Ctx, x: number, y: number) {
 }
 
 const VISAGE: Record<string, Gen> = {
-  moustache(c) {
-    const f = visage(c)
-    const s = 0.62 * f.rv
-    for (const sg of [-1, 1]) {
-      const ctrl: Array<[number, number]> = [[0.15, 0.1], [0.65, -0.18], [1.25, -0.2], [1.8, 0.14], [2.0, 0.5]]
-      const pts: Vector3[] = []
-      for (const [dx, dy] of ctrl) {
-        const h = surf(c, f.cx + sg * dx * s, f.yBouche + dy * s)
-        if (h) pts.push(h.p.clone().addScaledVector(h.n, s * 0.06))
-      }
-      if (pts.length >= 4) tube(c, pts, 0.5 * s, 0.12 * s, c.c1)
-    }
-    const h = surf(c, f.cx, f.yBouche + 0.05 * s)
-    if (h) sph(c, c.c1, 0.4 * s, [1.3, 0.9, 0.8], h.p.clone().addScaledVector(h.n, 0.0))
-  },
   chat(c) {
     const f = visage(c)
     const s = f.rv
@@ -814,43 +936,70 @@ function bande(c: Ctx, y: number, larg: number, hex: string, o: { e0: number; eb
   return true
 }
 
-/** Aile de noeud papillon : triangle aux coins arrondis, pointe vers le centre, extrude en volume doux. `sg` = cote. */
+/**
+ * Aile de noeud papillon : VRAI triangle (pointe vers le centre, bord exterieur un peu arrondi), coins arrondis,
+ * extrude en volume doux aux normales lissees. `sg` = cote. La pointe passe un peu le centre : les deux ailes se
+ * recouvrent, aucun jour entre elles et le noeud.
+ */
 function aileNoeud(c: Ctx, parent: Object3D, s: number, hex: string, sg: number) {
   // miroir par les points (pas par un `scale` negatif, qui retournerait les normales)
-  const pts: Array<[number, number]> = sg > 0 ? [[0.04 * s, 0], [1.05 * s, 0.6 * s], [1.05 * s, -0.6 * s]] : [[-0.04 * s, 0], [-1.05 * s, -0.6 * s], [-1.05 * s, 0.6 * s]]
-  const geo = extrusion(formeDePoints(arrondir(pts, 3)), 0.2 * s, 0.13 * s, 8)
+  const base: Array<[number, number]> = [[-0.1, 0], [1.0, 0.64], [1.07, 0], [1.0, -0.64]]
+  const pts = base.map(([x, y]) => [sg * x * s, (sg > 0 ? y : -y) * s] as [number, number])
+  const geo = extrusion(formeDePoints(polygoneArrondi(pts, 0.17 * s, 12)), 0.2 * s, 0.07 * s, 12, true)
   const m = add(c, geo, hex, parent, 1, true)
   m.position.z = -0.02 * s
 }
 
 /**
- * Noeud papillon d'Alfred : deux triangles aux bords arrondis, un peu bombes, centre pince avec un tout petit
- * noeud, rien qui pende. Une seule couleur (`noeudHex` = `hex` par defaut).
+ * Noeud papillon d'Alfred : deux triangles aux coins arrondis, un peu bombes, serres sur un tout petit noeud
+ * presque invisible, rien qui pende. Une seule couleur (`noeudHex` = `hex` par defaut). Largeur totale : ~2,1 `s`.
  */
 function papillon3d(c: Ctx, parent: Object3D, s: number, hex: string, noeudHex: string) {
   aileNoeud(c, parent, s, hex, -1)
   aileNoeud(c, parent, s, hex, 1)
-  const k = arrondir([[-0.04 * s, -0.14 * s], [0.04 * s, -0.14 * s], [0.04 * s, 0.14 * s], [-0.04 * s, 0.14 * s]], 2)
-  const m = add(c, extrusion(formeDePoints(k), 0.14 * s, 0.06 * s, 8), noeudHex, parent)
-  m.position.z = 0.04 * s
+  const k = polygoneArrondi([[-0.1 * s, -0.17 * s], [0.1 * s, -0.17 * s], [0.1 * s, 0.17 * s], [-0.1 * s, 0.17 * s]], 0.08 * s, 8)
+  const m = add(c, extrusion(formeDePoints(k), 0.2 * s, 0.05 * s, 8, true), noeudHex, parent)
+  m.position.z = 0.03 * s
 }
 
 const BAS: Record<string, Gen> = {
-  papillon(c) {
-    // pose TOUT EN BAS du corps (comme sur Alfred) : il depasse un peu sous la silhouette ; sur une forme pointue
-    // on remonte jusqu'a trouver une coupe assez large pour le porter
-    const { A, hw, bas, H } = c.R
-    const s = hw * 0.5
-    let y = bas + 0.55 * s - 0.03 * H
-    let h = null
-    for (let k = 0; k < 24; k++, y += 0.02 * H) {
-      const sec = A.section(y)
-      if (sec && sec.x1 - sec.x0 >= 2.05 * s) {
-        h = surf(c, 0, y)
-        if (h) break
+  moustache(c) {
+    const f = visage(c)
+    const s = 0.62 * f.rv
+    for (const sg of [-1, 1]) {
+      const ctrl: Array<[number, number]> = [[0.15, 0.1], [0.65, -0.18], [1.25, -0.2], [1.8, 0.14], [2.0, 0.5]]
+      const pts: Vector3[] = []
+      for (const [dx, dy] of ctrl) {
+        const h = surf(c, f.cx + sg * dx * s, f.yBouche + dy * s)
+        if (h) pts.push(h.p.clone().addScaledVector(h.n, s * 0.06))
       }
+      if (pts.length >= 4) tube(c, pts, 0.5 * s, 0.12 * s, c.c1)
     }
-    h ??= devant(c)
+    const h = surf(c, f.cx, f.yBouche + 0.05 * s)
+    if (h) sph(c, c.c1, 0.4 * s, [1.3, 0.9, 0.8], h.p.clone().addScaledVector(h.n, 0.0))
+  },
+  papillon(c) {
+    // pose TOUT EN BAS du corps (comme sur Alfred), dans le tiers du corps, et il depasse un peu sous la silhouette.
+    // Taille : ~38 % de la largeur du corps a la hauteur ou il est pose (largeur totale du noeud = 2,1 s). Sur une
+    // forme arrondie, on remonte jusqu'a une coupe assez large (75 % du max) pour qu'il tienne sur le corps.
+    const { A, hw, bas, H } = c.R
+    let wMax = 0
+    for (let k = 0; k <= 20; k++) {
+      const sec = A.section(bas + (H * k) / 20)
+      if (sec) wMax = Math.max(wMax, sec.x1 - sec.x0)
+    }
+    const part = 0.38 / 2.1
+    let y = bas
+    let s = hw * 0.3
+    for (let k = 0; k < 60; k++, y += 0.01 * H) {
+      const sec = A.section(Math.max(y, bas + 0.004 * H))
+      if (!sec) continue
+      const w = sec.x1 - sec.x0
+      s = (part * w)
+      // le centre du noeud est a 0,28 de sa hauteur au-dessus du bas : la moitie basse depasse sous la silhouette
+      if (w >= 0.75 * wMax && y - bas >= 0.28 * 1.28 * s) break
+    }
+    const h = surf(c, 0, y) ?? devant(c)
     if (!h) return
     const g = poser(c, h.p, h.n, -s * 0.12, 0.8)
     papillon3d(c, g, s, c.c1, c.c1)
@@ -863,7 +1012,8 @@ const BAS: Record<string, Gen> = {
     const yTop = Math.min(c.R.yBas + 0.3 * hw, f.yBouche - 0.25 * f.rv)
     const h = surf(c, 0, yTop)
     if (!h) return
-    const L = Math.max(0.4 * hw, Math.min(1.1 * hw, yTop - c.R.bas + 0.1 * c.R.H))
+    // COURTE : le bout s'arrete nettement au-dessus du bas du corps, il ne depasse jamais sous la silhouette
+    const L = Math.max(0.1 * hw, Math.min(Math.max(0.3 * hw, Math.min(0.85 * hw, yTop - c.R.bas - 0.2 * c.R.H)), yTop - c.R.bas - 0.07 * c.R.H))
     // cravate longue et fine, une seule couleur : cou etroit, lame un peu plus large, bout en pointe ; elle PEND
     // droit sous son noeud, donc le bas se decolle du corps (plus de forme de cloche)
     const W = (t: number) => (t < 0.08 ? w * 0.5 : t < 0.5 ? w * (0.5 + 0.5 * ((t - 0.08) / 0.42)) : t < 0.9 ? w : w * Math.sqrt(Math.max(0, 1 - ((t - 0.9) / 0.1) ** 2)))
@@ -1076,52 +1226,61 @@ const DOS: Record<string, Gen> = {
     }
   },
   cape(c) {
-    const { A, hw, H, bas, zc } = c.R
-    // cape SIMPLE : un seul morceau de tissu uni qui part des epaules et tombe derriere, en depassant un peu sur
-    // les cotes de face. Pas de col, rien d'autre.
-    const yBas = c.R.yBas + 0.22 * hw
-    const yHemDos = Math.max(bas + 0.05 * H, yBas - 0.85 * hw)
-    // epaules : le haut de la cape monte derriere et sur les cotes, jusqu'au haut du corps
-    const yEpaule = Math.max(yBas + 0.45 * hw, c.R.haut - 0.3 * H)
-    const nA = 37
-    const nR = 9
-    // le tissu commence sur les EPAULES (cote du corps, 66 degres de la face) et fait le tour par le dos : rien ne
-    // passe devant la poitrine, de face on ne voit que le tissu qui depasse sur les cotes
-    const dev = 1.0
-    const a0 = Math.PI / 2 + dev
-    const a1 = Math.PI / 2 + Math.PI * 2 - dev
-    const pos: number[] = []
-    const L0 = 2 * hw + 120
-    const prev: Array<Vector3 | null> = new Array(nA).fill(null)
+    // cape de petit super-heros : UN tissu uni, trapeze accroche haut sur le dos (sous les epaules), qui tombe
+    // derriere avec un leger evasement et une ondulation douce en bas. De face : deux petits pans arrondis qui
+    // depassent derriere les flancs, rien devant le corps. Coins arrondis, bords epais et lisses.
+    const { A, hw, H, bas, haut, zc } = c.R
+    const yTop = haut - 0.27 * H
+    const yHem = Math.max(bas + 0.16 * H, yTop - 0.52 * H)
+    const nA = 49
+    const nR = 17
+    const th = 0.05 * hw
+    const interieur: Vector3[] = []
+    const exterieur: Vector3[] = []
     for (let j = 0; j < nR; j++) {
       const v = j / (nR - 1)
       for (let i = 0; i < nA; i++) {
-        const a = a0 + ((a1 - a0) * i) / (nA - 1)
+        const u = (i / (nA - 1)) * 2 - 1
+        const au = Math.abs(u)
+        // trapeze : plus etroit en haut, plus large en bas ; coins arrondis par un bord haut/bas qui s'incurve
+        const demi = 0.78 + 0.5 * v
+        const haut0 = 0.1 * au ** 5
+        const bas0 = 1 - 0.14 * au ** 4
+        const vv = haut0 + (bas0 - haut0) * v
+        const y = yTop + (yHem - yTop) * vv
+        const a = -Math.PI / 2 + u * demi
         const dx = Math.cos(a)
         const dz = Math.sin(a)
-        // t : 0 sur l'epaule (cote), 1 derriere
-        const ap = a - Math.PI / 2
-        const phi = Math.min(ap, Math.PI * 2 - ap)
-        const t0 = Math.min(1, Math.max(0, (phi - dev) / (Math.PI - dev)))
-        const t = t0 * t0 * (3 - 2 * t0)
-        const yTop = yEpaule - 0.12 * hw * (1 - t)
-        // l'ourlet remonte sur les cotes : une cape, pas une jupe
-        const yH = Math.min(yTop - 0.12 * hw, yHemDos + 0.45 * hw * (1 - t))
-        const y = yTop + (yH - yTop) * v
+        const L0 = 2 * hw + 120
         const q = A.tir(V(dx * L0, y, zc + dz * L0), V(-dx, 0, -dz))
-        const base = q ? q.p : prev[i] ? V(prev[i]!.x, y, prev[i]!.z) : V(dx * hw * 0.5, y, zc + dz * hw * 0.5)
-        prev[i] = base.clone()
-        // elle sort du corps depuis les epaules, depasse un peu sur les cotes, tombe derriere
-        const ext = 0.07 * hw + (0.2 + 0.22 * t) * hw * v ** 0.7
-        pos.push(base.x + dx * ext, y, base.z + dz * ext)
+        const base = q ? q.p : V(dx * hw * 0.5, y, zc + dz * hw * 0.5)
+        // evasement + ondulation douce en bas
+        const ext = 0.04 * hw + 0.2 * hw * vv ** 1.4 + 0.045 * hw * Math.sin(u * Math.PI * 2.5) * vv ** 2
+        interieur.push(V(base.x + dx * ext, y, base.z + dz * ext))
+        exterieur.push(V(base.x + dx * (ext + th), y, base.z + dz * (ext + th)))
       }
     }
+    const pos: number[] = []
+    for (const P of [interieur, exterieur]) for (const p of P) pos.push(p.x, p.y, p.z)
+    const N = nA * nR
     const idx: number[] = []
     for (let j = 0; j < nR - 1; j++) {
       for (let i = 0; i < nA - 1; i++) {
         const k = j * nA + i
         idx.push(k, k + 1, k + nA, k + 1, k + nA + 1, k + nA)
+        idx.push(N + k, N + k + nA, N + k + 1, N + k + 1, N + k + nA, N + k + nA + 1)
       }
+    }
+    // chant : on relie le bord de la face interieure a celui de la face exterieure
+    const bord: number[] = []
+    for (let i = 0; i < nA; i++) bord.push(i)
+    for (let j = 1; j < nR; j++) bord.push(j * nA + nA - 1)
+    for (let i = nA - 2; i >= 0; i--) bord.push((nR - 1) * nA + i)
+    for (let j = nR - 2; j >= 1; j--) bord.push(j * nA)
+    for (let t = 0; t < bord.length; t++) {
+      const a0 = bord[t]!
+      const a1 = bord[(t + 1) % bord.length]!
+      idx.push(a0, a1, N + a0, a1, N + a1, N + a0)
     }
     const geo = new BufferGeometry()
     geo.setAttribute('position', new BufferAttribute(new Float32Array(pos), 3))

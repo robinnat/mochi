@@ -13,8 +13,8 @@
  * Emplacements, chacun sur sa propre zone du corps pour ne pas entrer en collision :
  *   tete   : au-dessus du sommet (chapeaux, coiffes, antenne, fleur)
  *   yeux   : a la hauteur des yeux (lunettes, masques)
- *   visage : joues et dessous des yeux (moustache, pansement, taches de rousseur...)
- *   bas    : le « cou » du corps, vers 72 % de la hauteur (noeud papillon, echarpe, collier...)
+ *   visage : joues et dessous des yeux (taches de rousseur...)
+ *   bas    : le « cou » du corps, vers 72 % de la hauteur (noeud papillon, cravate, moustache, echarpe, collier...)
  *   dos    : les cotes et le dos (ailes, sac, cape, queue)
  */
 
@@ -64,7 +64,6 @@ const def = (emplacement: Emplacement, id: string, nom: string, c1: string, c2: 
 export const CATALOGUE: AccessoireDef[] = [
   // tete
   def('tete', 'casquette', 'Casquette', C.rouge, C.rouge),
-  def('tete', 'bonnet', 'Bonnet à pompon', C.turquoise, C.creme),
   def('tete', 'beret', 'Béret', C.noir, C.noir),
   def('tete', 'haut-de-forme', 'Haut-de-forme', C.noir, C.rouge),
   def('tete', 'couronne', 'Couronne', C.or, C.or),
@@ -81,14 +80,13 @@ export const CATALOGUE: AccessoireDef[] = [
   def('yeux', 'coeur', 'Lunettes cœur', C.rose, C.rose),
   def('yeux', 'etoile', 'Lunettes étoile', C.or, C.or),
   def('yeux', 'monocle', 'Monocle', C.or, C.or),
-  def('yeux', 'sommeil', 'Masque de sommeil', C.violet, C.creme),
   // visage
-  def('visage', 'moustache', 'Moustache', C.noir, C.noir),
   def('visage', 'chat', 'Moustaches de chat', C.noir, C.rose),
   def('visage', 'rousseur', 'Taches de rousseur', '#c8733a', '#c8733a'),
   def('visage', 'joues', 'Joues roses', C.rose, C.rose),
   def('visage', 'grain', 'Grain de beauté', C.noir, C.noir),
   // bas
+  def('bas', 'moustache', 'Moustache', C.noir, C.noir),
   def('bas', 'papillon', 'Nœud papillon', C.noir, C.noir),
   def('bas', 'cravate', 'Cravate', C.marine, C.marine),
   def('bas', 'echarpe', 'Écharpe', C.orange, C.orange),
@@ -98,8 +96,7 @@ export const CATALOGUE: AccessoireDef[] = [
   def('dos', 'ailes', 'Ailes d’ange', C.creme, C.creme),
   def('dos', 'diable', 'Ailes de chauve-souris', C.violet, C.violet),
   def('dos', 'sac', 'Sac à dos', C.orange, C.marine),
-  def('dos', 'cape', 'Cape', C.rouge, C.rouge),
-  def('dos', 'queue', 'Queue', C.orange, C.orange)
+  def('dos', 'cape', 'Cape', C.rouge, C.rouge)
 ]
 
 
@@ -119,7 +116,11 @@ export const RETIRES: AccessoireDef[] = [
   // v3 (05/11/2026)
   def('tete', 'fete', 'Chapeau de fête', C.violet, C.jaune),
   def('tete', 'bob', 'Bob', C.jaune, C.creme),
-  def('bas', 'bandana', 'Bandana', C.rouge, C.creme)
+  def('bas', 'bandana', 'Bandana', C.rouge, C.creme),
+  // v4 (05/11/2026)
+  def('tete', 'bonnet', 'Bonnet à pompon', C.turquoise, C.creme),
+  def('dos', 'queue', 'Queue', C.orange, C.orange),
+  def('yeux', 'sommeil', 'Masque de sommeil', C.violet, C.creme)
 ]
 
 export const PAR_ID = new Map(CATALOGUE.map((a) => [`${a.emplacement}:${a.id}`, a]))

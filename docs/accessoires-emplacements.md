@@ -7,7 +7,7 @@ Cinq emplacements, un accessoire au plus par emplacement, tous cumulables :
 
 | Emplacement | Zone | Exemples |
 | --- | --- | --- |
-| `tete` | assise au-dessus du sommet (jamais plus bas que 28 % de la hauteur) | casquette, bonnet, haut-de-forme, couronne |
+| `tete` | assise au-dessus du sommet (jamais plus bas que 28 % de la hauteur) | casquette, haut-de-forme, couronne |
 | `yeux` | ligne des deux yeux | lunettes rondes, carrees, coeur, masque de sommeil, lunettes de ski |
 | `visage` | sous les yeux, joues | moustache, pansement, taches de rousseur |
 | `bas` | « cou », vers 76 % de la hauteur, anneaux inclines | noeud papillon, echarpe, collier de perles |
@@ -15,7 +15,7 @@ Cinq emplacements, un accessoire au plus par emplacement, tous cumulables :
 
 ```ts
 mochi.setAccessoires({ tete: 'casquette', yeux: 'soleil', bas: 'papillon' })
-// ou avec des couleurs imposees : { tete: { id: 'bonnet', c1: '#e8505b' } }
+// ou avec des couleurs imposees : { tete: { id: 'casquette', c1: '#e8505b' } }
 ```
 
 Meme eclairage que le corps (ombrage en repere de vue, `lisere.ts`) en Soft ; Flat et Pixel reutilisent la matiere du
