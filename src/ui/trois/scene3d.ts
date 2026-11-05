@@ -40,8 +40,11 @@ import type { BotFrame } from '@/bot/engine'
 import { DEMI_VIEWBOX } from '@/bot/repere'
 import { mixHex } from '@/bot/skins'
 import { teintes3d } from '@/ui/rendu'
-import { mesuresPorte, ombresPorte, type Ombre, type PorteId } from '@/bot/portes'
+import { mesuresPorte, ombresPorte, rayonVerre, yeuxDe, type Ombre, type PorteId } from '@/bot/portes'
 import { Porte3d } from './porte3d'
+import { Accessoires3d } from './accessoires3d'
+import { mesurerReperes } from './ancres'
+import type { Selection } from '@/bot/emplacements'
 import { lisere } from './lisere'
 import { leverSombre, luminance, palettePixel, quantifier } from './pixel3d'
 import { TEINTES_PORTES } from '@/bot/portes'
@@ -118,6 +121,9 @@ export class Mochi3d {
   /** accessoire porte : chapeau et casque en volumes fixes au maillage, lunettes peintes sur le visage */
   private porte: PorteId | null = null
   private readonly porte3d = new Porte3d()
+  /** accessoires par emplacements (tete, yeux, visage, bas, dos), combinables */
+  private accs: Selection = {}
+  private readonly acc3d = new Accessoires3d()
   /** forme du mochi (`squircle`, `etoile`...) : fixe son profil de volume et ses yeux */
   private forme = ''
   /** profil impose (option de labo) ; sinon celui de la forme */
@@ -159,6 +165,7 @@ export class Mochi3d {
     this.coque.visible = false
     this.mesh.add(this.coque)
     this.mesh.add(this.porte3d.groupe)
+    this.mesh.add(this.acc3d.groupe)
   }
 
   /** Materiau d'une variante, cree a la demande et garde. */
@@ -235,6 +242,16 @@ export class Mochi3d {
     this.porte = id
   }
 
+  /** Choisit les accessoires par emplacement (un au plus par emplacement, tous cumulables). Appele avant `maj`. */
+  setAccessoires(sel: Selection) {
+    this.accs = sel
+  }
+
+  /** Couleurs des accessoires portes (palette du pixel art). */
+  get couleursAccessoires(): string[] {
+    return this.acc3d.couleurs
+  }
+
   /** Dit quelle forme est rendue : son profil de volume (cube, prisme, dome...) en depend. */
   setForme(forme: string) {
     this.forme = forme
@@ -295,7 +312,15 @@ export class Mochi3d {
     const plat0 = reglagePlat(this.rendu, this.douceur)
     this.porte3d.reglages = plat0?.lisse ? { force: 0.7, haut: 0.32, ao: 1, reflet: this.uReflet } : null
     this.porte3d.maj(this.porte, frameCorps, this.mesh.material, bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y), (y, sg) => this.bordX(y, sg))
-    const ombres: Ombre[] = this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []
+    // accessoires par emplacements : ancres sur le volume de CE corps, recalcules quand le corps change
+    this.acc3d.reglages = this.porte3d.reglages
+    const cleCorps = `${this.rendu}|${this.forme}|${frameCorps.bodyPath}|${JSON.stringify(frame.eyes)}`
+    this.acc3d.maj(this.accs, cleCorps, this.mesh.material, () => {
+      const ye = yeuxDe(frame)
+      const sc = ye.map((o) => ({ x: o.x, y: -o.y, r: o.r }))
+      return mesurerReperes(this.mesh.geometry, sc, ye.length === 2 ? rayonVerre(ye[0]!, ye[1]!) : 22)
+    })
+    const ombres: Ombre[] = [...(this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []), ...this.acc3d.ombres]
     // le reflet doux est un effet de matiere (shader, repere de la vue) : plus rien n'est peint dans la
     // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
     const reflet = null as Reflet | null
@@ -465,6 +490,7 @@ export class Mochi3d {
     for (const r of this.rampes) r.dispose()
     this.coque.material.dispose()
     this.porte3d.liberer()
+    this.acc3d.liberer()
     this.texture.dispose()
     this.textureYeux.dispose()
   }
@@ -641,7 +667,10 @@ export function rendreAvatar(
   reflet = REFLET_DEFAUT,
   forme = '',
   yaw = 0,
-  porte: PorteId | null = null
+  porte: PorteId | null = null,
+  accessoires: Selection = {},
+  /** demi-largeur du cadre en unites du moteur (par defaut le viewBox) : l'elargir laisse de la place aux grands accessoires */
+  cadre = VB
 ) {
   const ctx3 = contexte()
   const { renderer, scene, camera, mochi } = ctx3
@@ -657,13 +686,21 @@ export function rendreAvatar(
   mochi.setRendu(rendu3d, contour, douceur, reflet)
   mochi.setForme(forme)
   mochi.setPorte(porte)
+  mochi.setAccessoires(accessoires)
+  if (camera.right !== cadre) {
+    camera.left = -cadre
+    camera.right = cadre
+    camera.top = cadre
+    camera.bottom = -cadre
+    camera.updateProjectionMatrix()
+  }
   // l'instance est partagee : l'angle est remis a chaque image, jamais garde d'un avatar a l'autre
   mochi.mesh.rotation.y = yaw
   const px = cible.width
   // pixel : on rend 4 fois plus grand puis on reduit (moyenne) avant de ramener a la palette
   const pixel = rendu3d === 'pixel'
   const pxRendu = pixel ? px * 4 : px
-  mochi.calerContour(pxRendu / (2 * VB))
+  mochi.calerContour(pxRendu / (2 * cadre))
   const taille = renderer.domElement.width
   if (taille !== pxRendu) renderer.setSize(pxRendu, pxRendu, false)
   mochi.maj(frame, couleur, papier)
@@ -679,13 +716,13 @@ export function rendreAvatar(
     c.drawImage(renderer.domElement, 0, 0, px, px)
     const im = c.getImageData(0, 0, px, px)
     const t = porte ? TEINTES_PORTES[porte] : null
-    const accessoires = porte === 'lunettes' || porte === 'soleil' ? ['#26222f'] : t ? [t.fond, t.accent] : []
+    const teintes = porte === 'lunettes' || porte === 'soleil' ? ['#26222f'] : t ? [t.fond, t.accent] : []
     const corps = leverSombre(couleur)
-    quantifier(im.data, px, px, palettePixel(corps, accessoires), luminance(corps) < 0.62)
+    quantifier(im.data, px, px, palettePixel(corps, [...teintes, ...mochi.couleursAccessoires]), luminance(corps) < 0.62)
     c.putImageData(im, 0, 0)
     return
   }
-  const k = px / (2 * VB)
+  const k = px / (2 * cadre)
   // ombre au sol : ellipse sous le point le plus bas, couleur de l'argile
   const bas = -mochi.bas
   const box = mochi.mesh.geometry.boundingSphere
@@ -693,7 +730,7 @@ export function rendreAvatar(
   const cx = (box?.center.x ?? 0) + 6
   const plat = reglagePlat(rendu3d, douceur)
   c.save()
-  c.translate(k * (cx + VB), k * (bas + VB - 2))
+  c.translate(k * (cx + cadre), k * (bas + cadre - 2))
   c.scale(1, 0.2)
   const portee = matiere(couleur).portee
   c.globalAlpha = frame.bodyAlpha
