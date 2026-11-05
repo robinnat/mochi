@@ -150,7 +150,7 @@ export const FORMES_3D: { id: string; label: string; couleur: string }[] = [
 export const HUMEURS_SITE: { id: MoodId; label: string; texte: string }[] = [
   { id: 'repos', label: 'Rest', texte: 'Soft breathing, blinks, a gaze that wanders.' },
   { id: 'reflechit', label: 'Thinking', texte: 'Eyes up, squinting, one a little more closed than the other.' },
-  { id: 'travaille', label: 'Working', texte: 'Focused: the gaze reads line after line, small regular bounces.' },
+  { id: 'travaille', label: 'Working', texte: 'Types on a small 3D laptop seen from behind: quick uneven bounces, a lean from side to side, gaze down, and pauses to think. It grows in and out as the mood starts and ends (ordinateur=false hides it).' },
   { id: 'attend', label: 'Waiting', texte: 'Looking straight ahead, head tilted, a little impatient.' },
   { id: 'termine', label: 'Done', texte: 'Happy crescent eyes and two small jumps of joy.' },
   { id: 'bloque', label: 'Blocked', texte: 'Frowning eyes in mirror and a shake that comes in bursts.' },
