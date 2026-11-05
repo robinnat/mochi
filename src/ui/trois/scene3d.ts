@@ -784,7 +784,9 @@ export function rendreAvatar(
   /** sombre : contraste minimal oeil noir / corps (defaut 3, 0 = ne jamais eclaircir le corps) */
   contrasteOeil = CONTRASTE_OEIL_MIN,
   /** ordinateur du mood `travaille` : echelle de 0 (absent) a ~1 */
-  ordinateur = 0
+  ordinateur = 0,
+  /** ombre portee au sol sous le corps (defaut : oui) */
+  ombre = true
 ) {
   couleur = corpsPourTheme(couleur, theme, contrasteOeil)
   const ctx3 = contexte()
@@ -843,37 +845,39 @@ export function rendreAvatar(
     return
   }
   const k = px / (2 * cadre)
-  // ombre au sol : ellipse sous le point le plus bas, couleur de l'argile
-  const bas = -mochi.bas
-  const box = mochi.mesh.geometry.boundingSphere
-  const large = (box?.radius ?? 100) * 0.72
-  const cx = (box?.center.x ?? 0) + 6
-  const plat = reglagePlat(rendu3d, douceur)
-  c.save()
-  c.translate(k * (cx + cadre), k * (bas + cadre - 2))
-  c.scale(1, 0.2)
-  const portee = matiere(couleur).portee
-  c.globalAlpha = frame.bodyAlpha
-  c.beginPath()
-  c.arc(0, 0, k * large, 0, Math.PI * 2)
-  if (plat?.lisse) {
-    // doux : ombre au sol lisse, un degrade tres leger sans bord net
-    const g = c.createRadialGradient(0, 0, 0, 0, 0, k * large)
-    g.addColorStop(0, hexA(portee, 0.34))
-    g.addColorStop(0.6, hexA(portee, 0.17))
-    g.addColorStop(1, hexA(portee, 0))
-    c.fillStyle = g
-  } else if (plat) {
-    // 3D flat : une ellipse pleine et semi-transparente, sans flou
-    c.fillStyle = hexA(portee, 0.26)
-  } else {
-    const g = c.createRadialGradient(0, 0, 0, 0, 0, k * large)
-    g.addColorStop(0, hexA(portee, 0.42))
-    g.addColorStop(1, hexA(portee, 0))
-    c.fillStyle = g
+  if (ombre) {
+    // ombre au sol : ellipse sous le point le plus bas, couleur de l'argile
+    const bas = -mochi.bas
+    const box = mochi.mesh.geometry.boundingSphere
+    const large = (box?.radius ?? 100) * 0.72
+    const cx = (box?.center.x ?? 0) + 6
+    const plat = reglagePlat(rendu3d, douceur)
+    c.save()
+    c.translate(k * (cx + cadre), k * (bas + cadre - 2))
+    c.scale(1, 0.2)
+    const portee = matiere(couleur).portee
+    c.globalAlpha = frame.bodyAlpha
+    c.beginPath()
+    c.arc(0, 0, k * large, 0, Math.PI * 2)
+    if (plat?.lisse) {
+      // doux : ombre au sol lisse, un degrade tres leger sans bord net
+      const g = c.createRadialGradient(0, 0, 0, 0, 0, k * large)
+      g.addColorStop(0, hexA(portee, 0.34))
+      g.addColorStop(0.6, hexA(portee, 0.17))
+      g.addColorStop(1, hexA(portee, 0))
+      c.fillStyle = g
+    } else if (plat) {
+      // 3D flat : une ellipse pleine et semi-transparente, sans flou
+      c.fillStyle = hexA(portee, 0.26)
+    } else {
+      const g = c.createRadialGradient(0, 0, 0, 0, 0, k * large)
+      g.addColorStop(0, hexA(portee, 0.42))
+      g.addColorStop(1, hexA(portee, 0))
+      c.fillStyle = g
+    }
+    c.fill()
+    c.restore()
   }
-  c.fill()
-  c.restore()
   c.globalAlpha = 1
   c.drawImage(renderer.domElement, 0, 0, px, px)
 }

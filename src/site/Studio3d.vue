@@ -3,9 +3,8 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { useReduit } from './reduced'
-import { FORMES_3D, HUMEURS_SITE } from './catalog'
-import type { MoodId } from '@/bot/humeurs'
-import { styleSite } from './style'
+import { FORMES_3D } from './catalog'
+import { contourSite, ombreSite, refletSite, styleSite } from './style'
 
 /**
  * Le modele 3D que l'on tourne a la main et auquel on donne une humeur ou un geste.
@@ -17,11 +16,10 @@ import { styleSite } from './style'
  */
 const reduit = useReduit()
 const forme = ref('etoile')
-const humeur = ref<MoodId>('repos')
 const yaw = ref(0)
 
 const f = computed(() => FORMES_3D.find((x) => x.id === forme.value) ?? FORMES_3D[0]!)
-const libelle = computed(() => `${f.value.label}, 3D, ${HUMEURS_SITE.find((h) => h.id === humeur.value)!.label}`)
+const libelle = computed(() => `${f.value.label}, 3D`)
 
 /* ------------------------------------------------------------ orbite a la main */
 
@@ -140,7 +138,10 @@ const degres = computed(() => Math.round(((yaw.value * 180) / Math.PI) % 360))
             :color="f.couleur"
             :rendu="styleSite"
             :yaw="yaw"
-            :mood="humeur"
+            mood="repos"
+            :contour="contourSite"
+            :reflet="refletSite"
+            :ombre="ombreSite"
             :frozen-at="reduit ? 1 : undefined"
             :label="libelle"
           />
@@ -153,14 +154,6 @@ const degres = computed(() => Math.round(((yaw.value * 180) / Math.PI) % 360))
         <div class="chips" role="group" aria-label="3D shape">
           <button v-for="x in FORMES_3D" :key="x.id" type="button" class="chip" :aria-pressed="forme === x.id" @click="forme = x.id">
             {{ x.label }}
-          </button>
-        </div>
-      </div>
-      <div>
-        <h3>Mood</h3>
-        <div class="chips" role="group" aria-label="Mood">
-          <button v-for="h in HUMEURS_SITE" :key="h.id" type="button" class="chip" :aria-pressed="humeur === h.id" @click="humeur = h.id">
-            {{ h.label }}
           </button>
         </div>
       </div>

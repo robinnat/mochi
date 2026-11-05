@@ -99,6 +99,8 @@ const props = withDefaults(
     contour?: boolean
     /** Petit reflet doux en haut a gauche de la matiere 3D `doux` (defaut : oui). */
     reflet?: boolean
+    /** Ombre portee au sol sous le corps, en 3D (defaut : oui). */
+    ombre?: boolean
     /**
      * Angle du corps autour de l'axe vertical, en radians (vraie 3D seulement). 0 = de face.
      * Les yeux sont peints sur la face avant : de dos, il n'y en a plus.
@@ -166,6 +168,7 @@ const props = withDefaults(
     douceur: DOUCEUR_DEFAUT,
     contour: undefined,
     reflet: true,
+    ombre: true,
     yaw: 0,
     geste: null,
     accessoire: null,
@@ -487,11 +490,11 @@ const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3
 function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
-  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle())
+  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle(), props.ombre)
 }
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image
-watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, themeEff, () => props.accessoires, () => contourEffectif.value], dessiner3d, { flush: 'post' })
+watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, themeEff, () => props.accessoires, () => props.ombre, () => contourEffectif.value], dessiner3d, { flush: 'post' })
 
 /* ------------------------------------------------------- regard qui suit */
 

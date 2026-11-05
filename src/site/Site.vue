@@ -5,7 +5,8 @@ import Moods from './Moods.vue'
 import Interactions from './Interactions.vue'
 import Habillage from './Habillage.vue'
 import Sauts from './Sauts.vue'
-import Playground from './Playground.vue'
+import Personnalisation from './Personnalisation.vue'
+import ClairSombre from './ClairSombre.vue'
 import Install from './Install.vue'
 import { CHOIX_THEMES, choisirTheme, choixTheme, initTheme } from './theme'
 
@@ -21,8 +22,9 @@ initTheme()
         <a href="#moods">Moods</a>
         <a href="#interactions">Interactions</a>
         <a href="#accessories">Accessories</a>
+        <a href="#theme">Light and dark</a>
         <a href="#jumps">Jumps</a>
-        <a href="#playground">Playground</a>
+        <a href="#customise">Make it yours</a>
         <a href="#install">Install</a>
       </div>
       <div class="theme" role="group" aria-label="Colour theme">
@@ -45,8 +47,9 @@ initTheme()
     <Moods />
     <Interactions />
     <Habillage />
+    <ClairSombre />
     <Sauts />
-    <Playground />
+    <Personnalisation />
     <Install />
   </main>
   <footer class="pied">

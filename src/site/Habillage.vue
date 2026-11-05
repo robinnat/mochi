@@ -24,6 +24,8 @@ const choix = reactive<Record<Emplacement, { id: string; c1: string; c2: string 
 })
 
 const options = (e: Emplacement) => ACCESSOIRES_SITE(e)
+/** Un accessoire seul, pour sa vignette. */
+const vignette = (e: Emplacement, o: { id: string; c1: string; c2: string }): Selection => ({ [e]: { id: o.id, c1: o.c1, c2: o.c2 } })
 function choisir(e: Emplacement, id: string) {
   const a = options(e).find((o) => o.id === id)
   choix[e] = a ? { id, c1: a.c1, c2: a.c2 } : { id: '', c1: '', c2: '' }
@@ -77,10 +79,17 @@ function vider() {
       <div class="panneau">
         <div v-for="e in EMPLACEMENTS_IDS" :key="e" class="slot">
           <h3>{{ EMPLACEMENT_LABEL[e] }}</h3>
-          <select :value="choix[e].id" :aria-label="EMPLACEMENT_LABEL[e] + ' accessory'" @change="choisir(e, ($event.target as HTMLSelectElement).value)">
-            <option value="">None</option>
-            <option v-for="o in options(e)" :key="o.id" :value="o.id">{{ o.label }}</option>
-          </select>
+          <div class="galerie" role="group" :aria-label="EMPLACEMENT_LABEL[e] + ' accessories'">
+            <button type="button" class="tuile" :aria-pressed="!choix[e].id" @click="choisir(e, '')">
+              <span class="aucun">None</span>
+            </button>
+            <button v-for="o in options(e)" :key="o.id" type="button" class="tuile" :aria-pressed="choix[e].id === o.id" :aria-label="o.label" @click="choisir(e, o.id)">
+              <Lazy garder :largeur="60" :hauteur="60">
+                <MochiBot :size="56" shape="squircle" color="turquoise" rendu="3d" :ombre="false" :interactions="false" :frozen-at="1" :accessoires="vignette(e, o)" :label="o.label" />
+              </Lazy>
+              <span class="nom">{{ o.label }}</span>
+            </button>
+          </div>
           <div v-if="choix[e].id" class="couleurs">
             <div class="pastilles" role="group" :aria-label="EMPLACEMENT_LABEL[e] + ' colour'">
               <button

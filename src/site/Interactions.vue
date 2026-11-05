@@ -30,7 +30,6 @@ const arrivee = ref(0)
             mood="repos"
             :coucou="!reduit"
             :frozen-at="reduit ? 1 : undefined"
-            :accessoires="{ tete: 'casquette' }"
             label="A yellow star Mochi that reacts to the pointer"
           />
         </Lazy>

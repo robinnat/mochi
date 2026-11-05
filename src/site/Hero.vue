@@ -48,7 +48,7 @@ const reduit = useReduit()
       </p>
       <div class="actions">
         <a class="btn primaire" href="#interactions">Say hello</a>
-        <a class="btn" href="#playground">Playground</a>
+        <a class="btn" href="#customise">Make it yours</a>
         <a class="btn" href="#install">Install</a>
         <a class="btn" href="app.html">Open the app</a>
       </div>
