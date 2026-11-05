@@ -519,11 +519,6 @@ footer.pied {
 .nav .wrap {
   gap: 12px;
 }
-@media (max-width: 560px) {
-  .nav .wrap > strong {
-    display: none;
-  }
-}
 
 /* ------------------------------------------------------------------ humeurs, interactions, habillage */
 .texte-humeur {
@@ -582,4 +577,40 @@ code {
   background: var(--accent-soft);
   border-radius: 6px;
   padding: 1px 5px;
+}
+
+/* barre du haut sur petit ecran : deux lignes, aucun defilement horizontal ni lien coupe */
+@media (max-width: 700px) {
+  .nav {
+    position: static;
+  }
+  .nav .wrap {
+    flex-wrap: wrap;
+    height: auto;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    row-gap: 6px;
+  }
+  .nav .wrap > strong {
+    display: inline;
+  }
+  .nav .theme {
+    margin-left: auto;
+  }
+  .nav-liens {
+    order: 3;
+    flex: 1 0 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+    overflow: visible;
+    white-space: normal;
+    gap: 6px 14px;
+  }
+}
+/* pastilles sombres (noir, marine) : un contour clair les detache du fond */
+:root[data-theme='dark'] .pastille {
+  box-shadow: 0 0 0 1.5px #8d8a9d;
+}
+:root[data-theme='dark'] .pastille[aria-pressed='true'] {
+  box-shadow: 0 0 0 2.5px var(--ink);
 }

@@ -3,9 +3,8 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { useReduit } from './reduced'
-import { ETATS, FORMES_3D, GESTES, PORTE_IDS_SITE, PORTE_LABEL, STATE_LABEL, cycleDe } from './catalog'
+import { ETATS, FORMES_3D, GESTES, STATE_LABEL, cycleDe } from './catalog'
 import { POSES, type StateId } from '@/bot/states'
-import type { PorteId } from '@/bot/portes'
 import { styleSite } from './style'
 
 /**
@@ -21,7 +20,6 @@ const forme = ref('etoile')
 const humeur = ref<StateId>('idle')
 const geste = ref('')
 const yaw = ref(0)
-const porte = ref<PorteId | ''>('')
 
 const f = computed(() => FORMES_3D.find((x) => x.id === forme.value) ?? FORMES_3D[0]!)
 const g = computed(() => GESTES.find((x) => x.id === geste.value) ?? null)
@@ -145,7 +143,6 @@ const degres = computed(() => Math.round(((yaw.value * 180) / Math.PI) % 360))
             :color="f.couleur"
             :rendu="styleSite"
             :yaw="yaw"
-            :porte="porte || null"
             :cycle="cycle"
             :geste="g ? g.geste : null"
             :expression="g ? g.expression : undefined"
@@ -185,15 +182,6 @@ const degres = computed(() => Math.round(((yaw.value * 180) / Math.PI) % 360))
         <div class="chips" role="group" aria-label="Gesture">
           <button v-for="a in GESTES" :key="a.id" type="button" class="chip" :aria-pressed="geste === a.id" @click="geste = geste === a.id ? '' : a.id">
             {{ a.label }}
-          </button>
-        </div>
-      </div>
-      <div>
-        <h3>Wear</h3>
-        <div class="chips" role="group" aria-label="Worn accessory">
-          <button type="button" class="chip" :aria-pressed="porte === ''" @click="porte = ''">None</button>
-          <button v-for="id in PORTE_IDS_SITE" :key="id" type="button" class="chip" :aria-pressed="porte === id" @click="porte = id">
-            {{ PORTE_LABEL[id] }}
           </button>
         </div>
       </div>

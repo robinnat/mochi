@@ -7,7 +7,6 @@ import Interactions from './Interactions.vue'
 import Habillage from './Habillage.vue'
 import Gestes from './Gestes.vue'
 import Sauts from './Sauts.vue'
-import Metiers from './Metiers.vue'
 import Playground from './Playground.vue'
 import Install from './Install.vue'
 import { CHOIX_THEMES, choisirTheme, choixTheme, initTheme } from './theme'
@@ -26,7 +25,6 @@ initTheme()
         <a href="#accessories">Accessories</a>
         <a href="#gestures">Gestures</a>
         <a href="#jumps">Jumps</a>
-        <a href="#jobs">Tools</a>
         <a href="#playground">Playground</a>
         <a href="#install">Install</a>
       </div>
@@ -53,7 +51,6 @@ initTheme()
     <Faces />
     <Gestes />
     <Sauts />
-    <Metiers />
     <Playground />
     <Install />
   </main>
