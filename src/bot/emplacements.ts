@@ -65,12 +65,10 @@ export const CATALOGUE: AccessoireDef[] = [
   def('tete', 'haut-de-forme', 'Haut-de-forme', C.noir, C.rouge),
   def('tete', 'couronne', 'Couronne', C.or, C.rouge),
   def('tete', 'paille', 'Chapeau de paille', C.paille, C.rouge),
-  def('tete', 'bob', 'Bob', C.jaune, C.creme),
   def('tete', 'antenne', 'Antenne', C.noir, C.rouge),
   def('tete', 'casque', 'Casque de musique', C.rouge, C.creme),
   def('tete', 'ruban', 'Nœud ruban', C.rose, C.rose),
   def('tete', 'fleur', 'Fleur', C.rose, C.jaune),
-  def('tete', 'fete', 'Chapeau de fête', C.violet, C.jaune),
   def('tete', 'toque', 'Toque de chef', C.creme, C.creme),
   // yeux
   def('yeux', 'rondes', 'Lunettes rondes', C.noir, C.creme),
@@ -91,19 +89,18 @@ export const CATALOGUE: AccessoireDef[] = [
   def('bas', 'cravate', 'Cravate', C.bleu, C.marine),
   def('bas', 'echarpe', 'Écharpe', C.orange, C.creme),
   def('bas', 'perles', 'Collier de perles', C.creme, C.creme),
-  def('bas', 'bandana', 'Bandana', C.rouge, C.creme),
   def('bas', 'fleurs', 'Collier de fleurs', C.rose, C.jaune),
   // dos
   def('dos', 'ailes', 'Ailes d’ange', C.creme, C.or),
   def('dos', 'diable', 'Ailes de chauve-souris', C.violet, C.rose),
   def('dos', 'sac', 'Sac à dos', C.orange, C.marine),
-  def('dos', 'cape', 'Cape', C.rouge, C.or),
+  def('dos', 'cape', 'Cape', C.rouge, C.rouge),
   def('dos', 'queue', 'Queue', C.orange, C.creme)
 ]
 
 
 /**
- * Accessoires RETIRES du catalogue (retour de Robin, 05/11/2026) : ils n'apparaissent plus ni dans le
+ * Accessoires RETIRES du catalogue (retours de Robin, 05/11/2026) : ils n'apparaissent plus ni dans le
  * catalogue ni sur les planches. Les definitions et les generateurs 3D restent dans le depot : pour en
  * remettre un, le recopier dans `CATALOGUE`.
  */
@@ -115,6 +112,10 @@ export const RETIRES: AccessoireDef[] = [
   def('visage', 'larme', 'Larme', C.bleu, C.bleu),
   def('bas', 'medaille', 'Médaille', C.or, C.rouge),
   def('bas', 'clochette', 'Collier à clochette', C.turquoise, C.or),
+  // v3 (05/11/2026)
+  def('tete', 'fete', 'Chapeau de fête', C.violet, C.jaune),
+  def('tete', 'bob', 'Bob', C.jaune, C.creme),
+  def('bas', 'bandana', 'Bandana', C.rouge, C.creme)
 ]
 
 export const PAR_ID = new Map(CATALOGUE.map((a) => [`${a.emplacement}:${a.id}`, a]))

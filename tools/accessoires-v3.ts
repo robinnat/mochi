@@ -99,7 +99,7 @@ const W = 1080
 const FORMES_PLANCHE = ['cercle', 'etoile', 'squircle']
 
 /** Planche d'un emplacement : un accessoire par ligne, trois formes. */
-const CADRES_TETE: Record<string, number> = { fete: 235, toque: 200, antenne: 215, 'haut-de-forme': 195, couronne: 190 }
+const CADRES_TETE: Record<string, number> = { toque: 200, antenne: 215, 'haut-de-forme': 195, couronne: 190 }
 
 function plancheEmplacement(e: Emplacement, cadre: number, yaw: number | number[] = 0, vues?: string[]) {
   const liste = parEmplacement(e)
@@ -122,7 +122,7 @@ function plancheEmplacement(e: Emplacement, cadre: number, yaw: number | number[
   return c
 }
 
-const combo = (forme: string, couleur: string, sel: Selection, yaw = 0): Cellule & { sel: Selection } => ({ forme, couleur, sel, yaw, cadre: 205 })
+const combo = (forme: string, couleur: string, sel: Selection, yaw = 0.3): Cellule & { sel: Selection } => ({ forme, couleur, sel, yaw, cadre: 205 })
 
 function nomsDe(sel: Selection) {
   return EMPLACEMENTS.map((e) => resoudre(e, sel[e])?.nom).filter(Boolean) as string[]
@@ -133,10 +133,10 @@ function plancheCombos() {
     combo('cercle', hexDe('turquoise'), { tete: 'casque', yeux: 'rondes', visage: 'joues', bas: 'papillon', dos: 'cape' }),
     combo('etoile', hexDe('ambre'), { tete: 'fleur', yeux: 'soleil', visage: 'rousseur', bas: 'cravate', dos: 'sac' }),
     combo('squircle', hexDe('rose'), { tete: 'casque', yeux: 'coeur', visage: 'chat', bas: 'echarpe', dos: 'sac' }),
-    combo('nuage', hexDe('bleu'), { tete: 'haut-de-forme', yeux: 'monocle', visage: 'moustache', bas: 'perles', dos: 'ailes' }),
-    combo('goutte', hexDe('vert'), { tete: 'couronne', yeux: 'carrees', visage: 'rousseur', bas: 'fleurs', dos: 'queue' }),
+    combo('nuage', hexDe('bleu'), { tete: 'haut-de-forme', yeux: 'monocle', visage: 'moustache', bas: 'papillon', dos: 'ailes' }),
+    combo('goutte', hexDe('vert'), { tete: 'couronne', yeux: 'carrees', visage: 'rousseur', bas: 'fleurs', dos: 'queue' }, 0.5),
     combo('hexagone', hexDe('orange'), { tete: 'casque', yeux: 'soleil', visage: 'grain', bas: 'papillon', dos: 'sac' }),
-    combo('triangle', hexDe('violet'), { tete: 'paille', yeux: 'etoile', visage: 'joues', bas: 'bandana', dos: 'diable' }),
+    combo('triangle', hexDe('violet'), { tete: 'paille', yeux: 'etoile', visage: 'joues', bas: 'perles', dos: 'diable' }),
     combo('oeuf', hexDe('creme'), { tete: 'antenne', yeux: 'sommeil', visage: 'moustache', bas: 'cravate', dos: 'cape' })
   ]
   const cell = 540
@@ -167,12 +167,12 @@ function plancheCombos() {
 }
 
 function planchevues() {
-  const lignes: Array<{ nom: string; sel: Selection; forme: string; couleur: string }> = [
-    { nom: 'Casque de musique', sel: { tete: 'casque' }, forme: 'cercle', couleur: hexDe('turquoise') },
-    { nom: 'Écharpe', sel: { bas: 'echarpe' }, forme: 'squircle', couleur: hexDe('rose') },
-    { nom: 'Cravate', sel: { bas: 'cravate' }, forme: 'cercle', couleur: hexDe('orange') },
-    { nom: 'Sac à dos', sel: { dos: 'sac' }, forme: 'etoile', couleur: hexDe('turquoise') },
-    { nom: 'Cape', sel: { dos: 'cape' }, forme: 'oeuf', couleur: hexDe('bleu') }
+  const lignes: Array<{ nom: string; sel: Selection; forme: string; couleur: string; cadre: number }> = [
+    { nom: 'Nœud papillon', sel: { bas: 'papillon' }, forme: 'cercle', couleur: hexDe('turquoise'), cadre: 150 },
+    { nom: 'Cape', sel: { dos: 'cape' }, forme: 'oeuf', couleur: hexDe('bleu'), cadre: 215 },
+    { nom: 'Queue', sel: { dos: 'queue' }, forme: 'squircle', couleur: hexDe('vert'), cadre: 225 },
+    { nom: 'Cravate (avec lunettes)', sel: { bas: 'cravate', yeux: 'etoile' }, forme: 'etoile', couleur: hexDe('orange'), cadre: 165 },
+    { nom: 'Sac à dos', sel: { dos: 'sac' }, forme: 'cercle', couleur: hexDe('turquoise'), cadre: 215 }
   ]
   const vues = [
     { yaw: 0, nom: 'face' },
@@ -181,7 +181,7 @@ function planchevues() {
     { yaw: 3.1416, nom: 'dos' }
   ]
   const cell = 270
-  const ligne = cell + 60
+  const ligne = cell + 70
   const { c, ctx } = nouvelle(W, 150 + lignes.length * ligne + 20)
   texte(ctx, 'Vraie 3D : face, 3/4, profil, dos', 40, 78, 52, ENCRE, true)
   texte(ctx, 'Le corps tourne, la lumière reste en haut à gauche', 40, 122, 28, GRIS)
@@ -189,8 +189,32 @@ function planchevues() {
     const y0 = 150 + i * ligne
     texte(ctx, t.nom, 40, y0 + 30, 32, ENCRE, true)
     vues.forEach((v, k) => {
-      cellule(ctx, k * cell, y0 + 34, cell, { forme: t.forme, couleur: t.couleur, sel: t.sel, yaw: v.yaw, cadre: t.sel.dos ? 245 : 185 })
-      texte(ctx, v.nom, k * cell + cell / 2, y0 + ligne - 4, 20, GRIS, false, 'center')
+      cellule(ctx, k * cell, y0 + 34, cell, { forme: t.forme, couleur: t.couleur, sel: t.sel, yaw: v.yaw, cadre: t.cadre })
+      texte(ctx, v.nom, k * cell + cell / 2, y0 + ligne - 14, 20, GRIS, false, 'center')
+    })
+  })
+  return c
+}
+
+/** Gros plan du nœud papillon : trois formes, de face puis en 3/4. */
+function planchePapillon() {
+  const formes = [
+    { forme: 'cercle', couleur: hexDe('turquoise') },
+    { forme: 'etoile', couleur: hexDe('ambre') },
+    { forme: 'squircle', couleur: hexDe('rose') }
+  ]
+  const cell = 360
+  const { c, ctx } = nouvelle(W, 150 + 2 * (cell + 50) + 20)
+  texte(ctx, 'Nœud papillon', 40, 78, 58, ENCRE, true)
+  texte(ctx, 'Deux triangles arrondis, petit nœud central, volume doux et mat', 40, 122, 28, GRIS)
+  ;[
+    { nom: 'face', yaw: 0 },
+    { nom: '3/4', yaw: 0.62 }
+  ].forEach((v, r) => {
+    const y0 = 150 + r * (cell + 50)
+    formes.forEach((f, k) => {
+      cellule(ctx, k * cell, y0, cell, { forme: f.forme, couleur: f.couleur, sel: { bas: 'papillon' }, yaw: v.yaw, cadre: 120 })
+      texte(ctx, `${NOMS_FORMES[f.forme]} · ${v.nom}`, k * cell + cell / 2, y0 + cell + 30, 22, GRIS, false, 'center')
     })
   })
   return c
@@ -200,7 +224,7 @@ function planchestyles() {
   const combos: Array<{ sel: Selection; forme: string; couleur: string }> = [
     { forme: 'cercle', couleur: hexDe('turquoise'), sel: { tete: 'casquette', yeux: 'rondes', visage: 'joues', bas: 'papillon' } },
     { forme: 'etoile', couleur: hexDe('ambre'), sel: { tete: 'couronne', yeux: 'soleil', bas: 'echarpe' } },
-    { forme: 'squircle', couleur: hexDe('rose'), sel: { tete: 'bonnet', yeux: 'coeur', visage: 'moustache', bas: 'medaille' } }
+    { forme: 'squircle', couleur: hexDe('rose'), sel: { tete: 'bonnet', yeux: 'coeur', visage: 'moustache', bas: 'perles' } }
   ]
   const styles: Array<{ nom: string; rendu: Rendu3d }> = [
     { nom: 'Soft', rendu: 'doux' },
@@ -238,6 +262,7 @@ async function main() {
     ['dos', () => plancheEmplacement('dos', 245, [0.55, 2.55, 3.4], ['3/4 avant', '3/4 dos', 'de dos'])],
     ['combos', plancheCombos],
     ['vues', planchevues],
+    ['noeud-papillon', planchePapillon],
     ['styles', planchestyles]
   ]
   for (const [nom, f] of faire) {

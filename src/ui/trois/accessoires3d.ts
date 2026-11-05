@@ -212,13 +212,13 @@ function epouser(geo: BufferGeometry, zs: (x: number, y: number) => number, deca
 }
 
 /** Extrusion douce (biseau rond) d'une forme 2D centree en z. */
-function extrusion(forme: Shape, epaisseur: number, biseau: number): ExtrudeGeometry {
+function extrusion(forme: Shape, epaisseur: number, biseau: number, segBiseau = 4): ExtrudeGeometry {
   const g = new ExtrudeGeometry(forme, {
     depth: epaisseur,
     bevelEnabled: true,
     bevelThickness: biseau,
     bevelSize: biseau,
-    bevelSegments: 4,
+    bevelSegments: segBiseau,
     curveSegments: 18
   })
   g.translate(0, 0, -epaisseur / 2)
@@ -859,79 +859,49 @@ function bande(c: Ctx, y: number, larg: number, hex: string, o: { e0: number; eb
   return true
 }
 
-/** Une aile de noeud papillon : revolution pincee au centre, bombee, a plis doux. Axe x local, `sg` = cote. */
+/** Aile de noeud papillon : triangle aux coins arrondis, pointe vers le centre, extrude en volume doux. `sg` = cote. */
 function aileNoeud(c: Ctx, parent: Object3D, s: number, hex: string, sg: number) {
-  const nt = 26
-  const np = 30
-  const pos: number[] = []
-  const idx: number[] = []
-  const long = 1.0 * s
-  for (let i = 0; i <= nt; i++) {
-    const t = i / nt
-    // profil : pince au centre, s'evase, puis se referme en arrondi
-    const fin = t > 0.8 ? Math.sqrt(Math.max(0, 1 - ((t - 0.8) / 0.2) ** 2)) : 1
-    const r = (0.12 + 0.88 * Math.sin((t * Math.PI) / 2) ** 1.15) * fin
-    for (let j = 0; j <= np; j++) {
-      const a = (j / np) * Math.PI * 2
-      // plis : trois creux doux qui partent du noeud
-      const pli = 1 + 0.07 * Math.cos(3 * a + 0.4) * Math.sin(Math.PI * Math.min(1, t * 1.15))
-      const ry = 0.62 * s * r * pli
-      const rz = 0.46 * s * r * pli
-      pos.push(sg * (0.1 * s + t * long), Math.cos(a) * ry, Math.sin(a) * rz)
-    }
-  }
-  for (let i = 0; i < nt; i++) {
-    for (let j = 0; j < np; j++) {
-      const a = i * (np + 1) + j
-      const b = a + np + 1
-      idx.push(a, a + 1, b, a + 1, b + 1, b)
-    }
-  }
-  const geo = new BufferGeometry()
-  geo.setAttribute('position', new BufferAttribute(new Float32Array(pos), 3))
-  geo.setIndex(idx)
-  geo.computeVertexNormals()
+  // miroir par les points (pas par un `scale` negatif, qui retournerait les normales)
+  const pts: Array<[number, number]> = sg > 0 ? [[0.1 * s, 0], [1.05 * s, 0.6 * s], [1.05 * s, -0.6 * s]] : [[-0.1 * s, 0], [-1.05 * s, -0.6 * s], [-1.05 * s, 0.6 * s]]
+  const geo = extrusion(formeDePoints(arrondir(pts, 2)), 0.14 * s, 0.1 * s, 8)
   const m = add(c, geo, hex, parent, 1, true)
-  m.rotation.z = sg * 0.14
-  // petite pastille plus foncee au creux de l'aile : le pli central
-  const pl = sph(c, mixHex(hex, '#000000', 0.14), 1, [0.34 * s, 0.1 * s, 0.1 * s], V(sg * 0.5 * s, 0, 0.3 * s), parent)
-  pl.rotation.z = sg * 0.14
+  m.position.z = -0.02 * s
 }
 
-/** Vrai noeud papillon : deux ailes bombees pincees au centre, un noeud net, deux petits pans. */
+/** Noeud papillon classique : deux triangles arrondis, pointes vers le centre, petit noeud central rectangulaire arrondi. */
 function papillon3d(c: Ctx, parent: Object3D, s: number, hex: string, noeudHex: string) {
   aileNoeud(c, parent, s, hex, -1)
   aileNoeud(c, parent, s, hex, 1)
-  // noeud central : sangle serree
-  sph(c, noeudHex, 1, [0.2 * s, 0.34 * s, 0.26 * s], V(0, 0, 0.02 * s), parent)
-  const bague = add(c, new TorusGeometry(0.2 * s, 0.05 * s, 10, 24), mixHex(noeudHex, '#000000', 0.1), parent)
-  bague.rotation.y = Math.PI / 2
-  bague.scale.set(1, 1.4, 1)
+  const k = arrondir([[-0.17 * s, -0.3 * s], [0.17 * s, -0.3 * s], [0.17 * s, 0.3 * s], [-0.17 * s, 0.3 * s]], 2)
+  const m = add(c, extrusion(formeDePoints(k), 0.2 * s, 0.1 * s, 8), noeudHex, parent)
+  m.position.z = 0.02 * s
 }
 
 const BAS: Record<string, Gen> = {
   papillon(c) {
     const h = devant(c)
     if (!h) return
-    const s = c.R.hw * 0.45
+    const s = c.R.hw * 0.46
     const g = poser(c, h.p, h.n, -s * 0.12, 0.6)
     papillon3d(c, g, s, c.c1, mixHex(c.c1, '#000000', 0.12))
   },
   cravate(c) {
     const hw = c.R.hw
-    const w = hw * 0.25
-    const yTop = c.R.yBas + 0.3 * hw
+    const w = hw * 0.29
+    // le noeud part clairement du bas du visage : sous la bouche, jamais a hauteur du nez ou des lunettes
+    const f = visage(c)
+    const yTop = Math.min(c.R.yBas + 0.3 * hw, f.yBouche - 0.25 * f.rv)
     const h = surf(c, 0, yTop)
     if (!h) return
-    const L = Math.min(0.75 * hw, yTop - c.R.bas - 0.03 * c.R.H)
+    const L = Math.max(0.34 * hw, Math.min(0.78 * hw, yTop - c.R.bas - 0.03 * c.R.H))
     // lame de cravate : fine au noeud, large en bas, bout en pointe ; elle se decolle du corps
-    const W = (t: number) => (t < 0.12 ? w * (0.3 + 0.2 * (t / 0.12)) : t < 0.8 ? w * (0.5 + 0.5 * ((t - 0.12) / 0.68) ** 0.9) : w * Math.sqrt(Math.max(0, 1 - ((t - 0.8) / 0.2) ** 2)) * 1.0)
+    const W = (t: number) => (t < 0.12 ? w * (0.4 + 0.2 * (t / 0.12)) : t < 0.8 ? w * (0.6 + 0.4 * ((t - 0.12) / 0.68) ** 0.9) : w * Math.sqrt(Math.max(0, 1 - ((t - 0.8) / 0.2) ** 2)) * 1.0)
     const o = { x0: 0, yTop, L, ep: 0.2 * w, gap: 0.3 * hw, swing: 0.05 * hw, decal: 0.03 * hw, wmax: w }
     pendant(c, W, c.c1, o)
     for (const [t0, t1] of [[0.42, 0.5], [0.58, 0.66]] as const) pendant(c, W, c.c2, { ...o, t0, t1, plus: 0.05 * w, decal: o.decal + 0.004 * hw })
-    // noeud : petit volume serre au sommet de la lame
+    // noeud : volume serre au sommet de la lame
     const g = poser(c, h.p, h.n, -0.18 * w, 0.4)
-    g.add(sph(c, mixHex(c.c1, '#000000', 0.15), 1, [0.58 * w, 0.46 * w, 0.46 * w], V(0, 0, 0)))
+    g.add(sph(c, mixHex(c.c1, '#000000', 0.15), 1, [0.58 * w, 0.5 * w, 0.46 * w], V(0, 0, 0)))
   },
   echarpe(c) {
     const hw = c.R.hw
@@ -1122,51 +1092,45 @@ const DOS: Record<string, Gen> = {
     pm.position.set(0, -hh * 0.12, -d * 0.45)
     pm.rotation.y = Math.PI
     // bretelles : chaque point est TIRE sur la surface du corps (rayon horizontal), du haut du sac, autour du flanc
-    // (l'epaule), jusqu'au devant du corps : elles epousent le volume, sans traverser ni flotter
+    // (l'epaule). Elles s'arretent sur le cote et ne traversent jamais le devant : pas de trait qui barre le corps
     const zc = c.R.zc
     const L = 2 * hw + 120
-    const yB = y + 0.08 * hw
-    const yF = c.R.yBas + 0.02 * hw
+    const yB = y + 0.32 * hw
+    const yF = y - 0.4 * hw
     for (const sg of [-1, 1]) {
       const pts: Vector3[] = []
-      const K = 20
+      const K = 14
       const aB = -Math.PI / 2 + 0.3
-      const aF = Math.PI / 2 - 0.78
+      const aF = -0.1
       for (let k = 0; k <= K; k++) {
         const u = k / K
         const a0 = aB + (aF - aB) * u
         const a = sg > 0 ? a0 : Math.PI - a0
-        const yy = yB + (yF - yB) * u ** 2.4 + 0.02 * H * Math.sin(Math.PI * Math.min(1, u * 1.3))
+        const yy = yB + (yF - yB) * u + 0.03 * H * Math.sin(Math.PI * Math.min(1, u * 1.3))
         const dx = Math.cos(a)
         const dz = Math.sin(a)
         const q = A.tir(V(dx * L, yy, zc + dz * L), V(-dx, 0, -dz))
         if (q) pts.push(q.p.clone().addScaledVector(q.n, hw * 0.012))
       }
-      if (pts.length >= 8) tube(c, pts, hw * 0.055, hw * 0.055, c.c2)
+      if (pts.length >= 8) tube(c, pts, hw * 0.075, hw * 0.075, c.c2)
     }
   },
   cape(c) {
     const { A, hw, H, bas, zc } = c.R
+    // cape rouge unie : elle part des epaules (haut du corps), pas de la taille ; un col bombe la tient au cou
     const yBas = c.R.yBas + 0.22 * hw
     const larg = hw * 0.3
     const incl = dip(c)
-    // col : bande bombee qui epouse le cou, bien visible de face, liseré clair en haut
-    const col = mixHex(c.c1, '#ffffff', 0.3)
-    if (!bande(c, yBas, larg, col, { e0: -0.03 * hw, eb: 0.15 * hw, incl, ronde: true })) return
-    const cp = A.coupe(yBas + 0.5 * larg + incl, 56, 0, zc, incl)
-    if (cp.length === 56) tube(c, cp.map((q) => q.p.clone().addScaledVector(q.n, 0.115 * hw)), 0.022 * hw, 0.022 * hw, c.c2, c.g, true, false)
-    // fermoir : une pierre sur le devant du col
-    const f = surf(c, 0, yBas)
-    if (f) sph(c, c.c2, hw * 0.075, [1, 1, 0.7], f.p.clone().addScaledVector(f.n, hw * 0.07))
-    // tissu : de dos et sur les cotes, il part du col, flotte vers l'exterieur et tombe derriere
-    const yHem = Math.max(bas + 0.04 * H, yBas - Math.min(0.95 * hw, yBas - bas - 0.04 * H))
-    const nA = 31
+    if (!bande(c, yBas, larg, c.c1, { e0: -0.03 * hw, eb: 0.15 * hw, incl, ronde: true })) return
+    const yHemDos = Math.max(bas + 0.05 * H, yBas - 0.85 * hw)
+    // epaules : le haut de la cape monte derriere et sur les cotes, jusqu'au haut du corps
+    const yEpaule = Math.max(yBas + 0.45 * hw, c.R.haut - 0.34 * H)
+    const nA = 33
     const nR = 9
-    const a0 = Math.PI / 2 + 0.78
-    const a1 = Math.PI / 2 + Math.PI * 2 - 0.78
+    const a0 = Math.PI / 2 + 0.5
+    const a1 = Math.PI / 2 + Math.PI * 2 - 0.5
     const pos: number[] = []
     const L0 = 2 * hw + 120
-    const hem: Vector3[] = []
     const prev: Array<Vector3 | null> = new Array(nA).fill(null)
     for (let j = 0; j < nR; j++) {
       const v = j / (nR - 1)
@@ -1174,15 +1138,19 @@ const DOS: Record<string, Gen> = {
         const a = a0 + ((a1 - a0) * i) / (nA - 1)
         const dx = Math.cos(a)
         const dz = Math.sin(a)
-        const yTop = yBas + 0.32 * larg + incl * (1 - dz)
-        const y = yTop + (yHem - yTop) * v - 0.05 * H * v * Math.sin(a * 3)
+        // t : 0 devant, 1 derriere
+        const t0 = Math.min(1, Math.max(0, (0.1 - dz) / 0.9))
+        const t = t0 * t0 * (3 - 2 * t0)
+        const yTop = yBas + 0.3 * larg + incl * (1 - dz) + (yEpaule - yBas - 0.3 * larg) * t
+        // l'ourlet remonte sur les cotes : une cape, pas une jupe
+        const yH = Math.min(yTop - 0.12 * hw, yHemDos + 0.4 * hw * (1 - t))
+        const y = yTop + (yH - yTop) * v + 0.04 * hw * Math.sin(a * 4) * v * t
         const q = A.tir(V(dx * L0, y, zc + dz * L0), V(-dx, 0, -dz))
         const base = q ? q.p : prev[i] ? V(prev[i]!.x, y, prev[i]!.z) : V(dx * hw * 0.5, y, zc + dz * hw * 0.5)
         prev[i] = base.clone()
-        const ext = -0.015 * hw + (0.06 * hw + (0.4 + 0.3 * Math.max(0, -dz)) * hw * v ** 1.2) + 0.035 * hw * Math.sin(a * 6) * v
-        const p = V(base.x + dx * ext, y, base.z + dz * ext)
-        pos.push(p.x, p.y, p.z)
-        if (j === nR - 1) hem.push(p)
+        // elle sort du corps depuis les epaules, depasse un peu sur les cotes, tombe derriere
+        const ext = 0.05 * hw + (0.1 + 0.24 * t) * hw * v ** 0.8 + 0.035 * hw * Math.sin(a * 5) * v
+        pos.push(base.x + dx * ext, y, base.z + dz * ext)
       }
     }
     const idx: number[] = []
@@ -1197,20 +1165,27 @@ const DOS: Record<string, Gen> = {
     geo.setIndex(idx)
     geo.computeVertexNormals()
     add(c, geo, c.c1, c.g, 1, true)
-    tube(c, hem, hw * 0.028, hw * 0.028, c.c2)
   },
   queue(c) {
-    const { A, hw, H, haut } = c.R
+    const { A, hw, H, haut, zc } = c.R
     const y = haut - 0.76 * H
-    const h = A.arriere(0, y)
+    // la queue part du bas du dos, sort sur le cote (+x) en courbe et remonte : visible de face et de 3/4
+    const cote = A.cote(y, zc - 0.25 * hw, 1)
+    const xs = cote ? cote.p.x : hw
+    const h = A.arriere(0.4 * xs, y)
     if (!h) return
     const p = h.p.clone().addScaledVector(h.n, -hw * 0.06)
-    const b = V(0, 0, -1)
-    const pts = [p, p.clone().addScaledVector(b, hw * 0.28).add(V(hw * 0.12, -hw * 0.08, 0)), p.clone().addScaledVector(b, hw * 0.55).add(V(hw * 0.4, hw * 0.0, 0)), p.clone().addScaledVector(b, hw * 0.5).add(V(hw * 0.66, hw * 0.36, 0))]
-    tube(c, pts, hw * 0.1, hw * 0.2, c.c1)
-    const e = pts[3]!
-    const tip = sph(c, c.c2, hw * 0.26, [1, 1.3, 1], e.clone().add(V(hw * 0.05, hw * 0.12, 0)))
-    tip.rotation.z = -0.4
+    const pts = [
+      p,
+      V(xs * 0.62, y + 0.1 * hw, p.z - 0.08 * hw),
+      V(xs + 0.22 * hw, y + 0.26 * hw, zc - 0.3 * hw),
+      V(xs + 0.56 * hw, y + 0.55 * hw, zc - 0.12 * hw),
+      V(xs + 0.62 * hw, y + 0.92 * hw, zc + 0.02 * hw)
+    ]
+    tube(c, pts, hw * 0.1, hw * 0.17, c.c1)
+    const e = pts[4]!
+    const tip = sph(c, c.c2, hw * 0.24, [1, 1.3, 1], e.clone().add(V(0, hw * 0.1, 0)))
+    tip.rotation.z = 0.1
   }
 }
 

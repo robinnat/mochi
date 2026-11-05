@@ -229,8 +229,8 @@ describe('combinaison des emplacements', () => {
     let n = 0
     const f = () => (n++, R)
     const m = mat()
-    acc.maj({ tete: 'bob' }, 'k', m, f)
-    acc.maj({ tete: 'bob' }, 'k', m, f)
+    acc.maj({ tete: 'casquette' }, 'k', m, f)
+    acc.maj({ tete: 'casquette' }, 'k', m, f)
     expect(n).toBe(1)
     acc.maj({ tete: 'bonnet' }, 'k', m, f)
     expect(n).toBe(2)
@@ -245,9 +245,9 @@ describe('liste des emplacements', () => {
 })
 
 describe('retours de Robin du 05/11/2026', () => {
-  it('les sept accessoires retires ne sont plus au catalogue ni resolus, mais restent listes dans RETIRES', () => {
+  it('les dix accessoires retires ne sont plus au catalogue ni resolus, mais restent listes dans RETIRES', () => {
     expect(RETIRES.map((r) => `${r.emplacement}:${r.id}`).sort()).toEqual(
-      ['bas:clochette', 'bas:medaille', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski'].sort()
+      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'tete:bob', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski'].sort()
     )
     for (const r of RETIRES) {
       expect(CATALOGUE.some((a) => a.emplacement === r.emplacement && a.id === r.id)).toBe(false)
@@ -324,3 +324,60 @@ describe('retours de Robin du 05/11/2026', () => {
     acc.liberer()
   })
 })
+
+describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
+  it.each(FORMES)('%s : le noeud papillon est symetrique, pose devant le cou, deux ailes et un noeud', (forme) => {
+    const { R } = corpsDe(forme)
+    const acc = new Accessoires3d()
+    acc.maj({ bas: 'papillon' }, forme, mat(), () => R)
+    const ms = meshes(acc.groupe)
+    expect(ms).toHaveLength(3)
+    const b = new Box3().setFromObject(acc.groupe)
+    expect(sommetsFinis(acc.groupe)).toBe(true)
+    expect(Math.abs(b.min.x + b.max.x)).toBeLessThan(0.15 * R.hw)
+    expect(b.max.x - b.min.x).toBeGreaterThan(0.6 * R.hw)
+    expect(b.max.z).toBeGreaterThan(R.A.avant(0, R.yBas)!.p.z)
+    acc.liberer()
+  })
+
+  it('la cape est rouge unie : une seule couleur, aucune piece jaune', () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ dos: 'cape' }, 'c', mat(), () => R)
+    const couleurs = new Set(meshes(acc.groupe).map((m) => ((m.material as unknown as { color: { getHexString(): string } }).color.getHexString())))
+    expect(couleurs.size).toBe(1)
+    expect(resoudre('dos', 'cape')!.c1).toBe(resoudre('dos', 'cape')!.c2)
+    acc.liberer()
+  })
+
+  it.each(FORMES)('%s : la queue depasse sur le cote du corps (visible de face)', (forme) => {
+    const { R } = corpsDe(forme)
+    const acc = new Accessoires3d()
+    acc.maj({ dos: 'queue' }, forme, mat(), () => R)
+    const b = new Box3().setFromObject(acc.groupe)
+    const cote = R.A.cote(R.haut - 0.76 * R.H, R.zc, 1)!
+    expect(b.max.x).toBeGreaterThan(cote.p.x + 0.3 * R.hw)
+    acc.liberer()
+  })
+
+  it.each(FORMES)('%s : le noeud de la cravate est clairement sous les yeux', (forme) => {
+    const { R } = corpsDe(forme)
+    const acc = new Accessoires3d()
+    acc.maj({ bas: 'cravate' }, forme, mat(), () => R)
+    const b = new Box3().setFromObject(acc.groupe)
+    expect(b.max.y).toBeLessThan(R.yYeux - 0.5 * R.rVerre)
+    acc.liberer()
+  })
+
+  it('les bretelles du sac ne passent pas par le devant du corps', () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ dos: 'sac' }, 's', mat(), () => R)
+    for (const t of meshes(acc.groupe).filter((m) => m.geometry.type === 'TubeGeometry')) {
+      const P = t.geometry.attributes.position!
+      for (let i = 0; i < P.count; i++) expect(P.getZ(i)).toBeLessThan(R.zc + 0.45 * R.hw)
+    }
+    acc.liberer()
+  })
+})
+
