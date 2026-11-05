@@ -65,13 +65,14 @@ interface Cellule {
   yaw?: number
   rendu?: Rendu3d
   cadre?: number
+  theme?: 'light' | 'dark'
 }
 
 /** Dessine un Mochi (3D temps reel) dans le canvas de la planche, carre de `px` en (x, y). */
 function cellule(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, c: Cellule) {
   const t = document.createElement('canvas')
   t.width = t.height = px
-  rendreAvatar(t, image(c.forme), c.couleur, PAPIER, c.rendu ?? 'doux', false, 'marque', true, c.forme, c.yaw ?? 0, null, c.sel, c.cadre ?? 175)
+  rendreAvatar(t, image(c.forme), c.couleur, PAPIER, c.rendu ?? 'doux', false, 'marque', true, c.forme, c.yaw ?? 0, null, c.sel, c.cadre ?? 175, c.theme ?? 'light')
   ctx.drawImage(t, x, y)
 }
 
@@ -135,20 +136,60 @@ function planCatalogue() {
   return c
 }
 
-/** Casquette : quatre formes, de face, de 3/4 et de profil. */
+/** Casquette : les 11 formes, de face, de 3/4 et de profil, en clair puis en sombre. */
 function planCasquette() {
-  const formes = ['cercle', 'etoile', 'squircle', 'triangle']
+  const formes = SHAPES.map((s) => s.id)
   const vues = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }]
-  const cell = W / 3
-  const ligne = cell + 40
-  const { c, ctx } = nouvelle(W, 150 + formes.length * ligne + 20)
-  texte(ctx, 'Casquette v5', 40, 78, 58, ENCRE, true)
-  texte(ctx, 'Calotte bombée, vraie visière, une couleur (ou deux) · rond, étoile, cube, pyramide', 40, 122, 26, GRIS)
+  const themes: Array<'light' | 'dark'> = ['light', 'dark']
+  const cell = 240
+  const W2 = cell * 6
+  const ligne = cell + 8
+  const { c, ctx } = nouvelle(W2, 150 + formes.length * ligne + 20)
+  texte(ctx, 'Casquette v6', 40, 78, 58, ENCRE, true)
+  texte(ctx, 'Calotte ronde et rigide, indépendante du corps · 11 formes · face, 3/4, profil · clair à gauche, sombre à droite', 40, 122, 26, GRIS)
+  const couleurs = ['turquoise', 'ambre', 'rose', 'vert', 'violet', 'orange', 'bleu', 'turquoise', 'ambre', 'rose', 'vert']
   formes.forEach((f, i) => {
     const y0 = 150 + i * ligne
-    vues.forEach((v, k) => {
-      cellule(ctx, k * cell, y0, cell, { forme: f, couleur: hexDe(['turquoise', 'ambre', 'rose', 'vert'][i]!), sel: { tete: { id: 'casquette', c1: COULEURS.bleu, c2: i === 1 ? COULEURS.noir : COULEURS.bleu } }, yaw: v.yaw, cadre: 215 })
-      texte(ctx, `${NOMS_FORMES[f]} · ${v.nom}`, k * cell + cell / 2, y0 + ligne - 8, 20, GRIS, false, 'center')
+    themes.forEach((th, ti) =>
+      vues.forEach((v, k) => {
+        const x = (ti * 3 + k) * cell
+        if (th === 'dark') {
+          ctx.fillStyle = '#121212'
+          ctx.fillRect(x, y0, cell, ligne)
+        }
+        cellule(ctx, x, y0, cell, { forme: f, couleur: hexDe(couleurs[i]!), theme: th, sel: { tete: { id: 'casquette', c1: COULEURS.bleu, c2: i % 3 === 1 ? COULEURS.noir : COULEURS.bleu } }, yaw: v.yaw, cadre: 215 })
+      })
+    )
+    texte(ctx, NOMS_FORMES[f] ?? f, 14, y0 + 26, 22, GRIS, true)
+  })
+  return c
+}
+
+/** Casquette cumulee avec les autres accessoires (yeux, visage, bas, dos). */
+function planCasquetteCombos() {
+  const defs: Array<{ forme: string; couleur: string; sel: Selection }> = [
+    { forme: 'cercle', couleur: hexDe('turquoise'), sel: { yeux: 'rondes', visage: 'joues', bas: 'papillon', dos: 'cape' } },
+    { forme: 'squircle', couleur: hexDe('ambre'), sel: { yeux: 'soleil', visage: 'chat', bas: 'cravate', dos: 'sac' } },
+    { forme: 'etoile', couleur: hexDe('rose'), sel: { yeux: 'carrees', visage: 'rousseur', bas: 'echarpe', dos: 'ailes' } },
+    { forme: 'triangle', couleur: hexDe('ambre'), sel: { yeux: 'rondes', bas: 'papillon' } },
+    { forme: 'nuage', couleur: hexDe('vert'), sel: { yeux: 'monocle', visage: 'joues', bas: 'cravate' } },
+    { forme: 'goutte', couleur: hexDe('orange'), sel: { yeux: 'coeur', dos: 'cape' } }
+  ]
+  const cell = 360
+  const { c, ctx } = nouvelle(W, 150 + Math.ceil(defs.length / 3) * (cell + 50) * 2)
+  texte(ctx, 'Casquette cumulée', 40, 78, 54, ENCRE, true)
+  texte(ctx, 'Avec lunettes, visage, bas et dos · clair puis sombre', 40, 122, 26, GRIS)
+  defs.forEach((d, i) => {
+    const x = (i % 3) * cell
+    const y = 150 + Math.floor(i / 3) * (cell + 50) * 2
+    ;(['light', 'dark'] as const).forEach((th, ti) => {
+      const yy = y + ti * (cell + 50)
+      if (th === 'dark') {
+        ctx.fillStyle = '#121212'
+        ctx.fillRect(x, yy, cell, cell + 50)
+      }
+      cellule(ctx, x, yy, cell, { forme: d.forme, couleur: d.couleur, theme: th, sel: { ...d.sel, tete: { id: 'casquette', c1: COULEURS.rouge, c2: COULEURS.rouge } }, yaw: 0.3, cadre: 215 })
+      texte(ctx, `${NOMS_FORMES[d.forme]} · ${Object.values(d.sel).join(', ')}`, x + cell / 2, yy + cell + 28, 17, th === 'dark' ? '#cfcbd6' : GRIS, false, 'center')
     })
   })
   return c
@@ -219,6 +260,7 @@ async function main() {
   const tout = qui.includes('all')
   const faire: Array<[string, () => HTMLCanvasElement | Promise<HTMLCanvasElement>]> = [
     ['casquette', planCasquette],
+    ['casquette-combos', planCasquetteCombos],
     ['catalogue', planCatalogue],
     ['vues', planVues],
     ['alfred', planAlfred]

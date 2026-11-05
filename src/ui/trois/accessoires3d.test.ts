@@ -396,6 +396,17 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
+  it.each(FORMES)('%s : la calotte de la casquette est un dome rond qui depasse de l assise', (forme) => {
+    const { R } = corpsDe(forme)
+    const acc = new Accessoires3d()
+    acc.maj({ tete: 'casquette' }, forme, mat(), () => R)
+    const b = new Box3().setFromObject(acc.groupe)
+    expect(b.max.y, forme).toBeGreaterThan(R.tete.y + 0.5 * R.tete.R)
+    expect(b.min.x, forme).toBeLessThan(R.tete.cx)
+    expect(b.max.x, forme).toBeGreaterThan(R.tete.cx)
+    acc.liberer()
+  })
+
   it.each(FORMES)('%s : le noeud de la cravate est clairement sous les yeux', (forme) => {
     const { R } = corpsDe(forme)
     const acc = new Accessoires3d()

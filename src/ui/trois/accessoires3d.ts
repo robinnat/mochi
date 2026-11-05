@@ -372,68 +372,35 @@ type Gen = (c: Ctx) => void
 
 const TETE: Record<string, Gen> = {
   casquette(c) {
-    // calotte bombee qui EPOUSE le haut du corps (coque construite sur sa surface, quelle que soit la forme) +
-    // vraie visiere qui part du devant de la calotte (une 2e couleur possible)
-    const { A, hw, tete: t } = c.R
-    const Rx = t.R * 1.3
-    const Rz = t.rz * 1.3
-    const NR = 14
-    const NP = 64
-    const pos: number[] = []
-    const prev: Array<{ p: Vector3; n: Vector3 } | null> = new Array(NP).fill(null)
-    const delta = (rho: number) => 0.13 * hw * (1 - 0.3 * rho ** 4)
-    const anneaux: Array<Array<Vector3>> = []
-    for (let j = 0; j <= NR; j++) {
-      const rho = j / NR
-      const ring: Vector3[] = []
-      for (let i = 0; i < NP; i++) {
-        const ph = (i / NP) * Math.PI * 2
-        let h = A.dessus(t.cx + rho * Rx * Math.cos(ph), t.zc + rho * Rz * Math.sin(ph))
-        if (!h) h = prev[i] ?? null
-        else prev[i] = h
-        ring.push(h ? h.p.clone().addScaledVector(h.n, delta(rho)) : V(t.cx, t.y, t.zc))
-      }
-      anneaux.push(ring)
+    // calotte RIGIDE et RONDE (demi-sphere un peu aplatie), independante de la forme du corps : l'assise de la tete
+    // ne donne que la position et l'echelle. Elle est un peu inclinee vers l'arriere, son bord rentre dans le corps,
+    // et la visiere (demi-disque allonge, une 2e couleur possible) part du bord avant.
+    const { hw, tete: t } = c.R
+    const Rx = t.R * 1.28
+    const Rz = Math.min(t.rz * 1.28, Rx * 1.2)
+    const haut = 0.78 * Rx // hauteur du dome
+    const jupe = 0.16 * Rx // bord qui descend (cache dans le corps)
+    const prof: Vector2[] = [new Vector2(1, -jupe), new Vector2(1, 0)]
+    const N = 20
+    for (let i = 1; i <= N; i++) {
+      const ph = (i / N) * Math.PI * 0.5
+      prof.push(new Vector2(Math.max(0, Math.cos(ph)), Math.sin(ph) * haut))
     }
-    // bord arrondi : trois rangees qui redescendent en rentrant dans le corps
-    const dernier: Array<{ p: Vector3; n: Vector3 }> = []
-    for (let i = 0; i < NP; i++) {
-      const ph = (i / NP) * Math.PI * 2
-      dernier.push(prev[i] ?? { p: V(), n: V(0, 1, 0) })
-      void ph
-    }
-    for (let k = 1; k <= 3; k++) {
-      const u = k / 3
-      anneaux.push(
-        dernier.map((h, i) => {
-          const base = anneaux[NR]![i]!
-          return base.clone().lerp(h.p.clone().addScaledVector(h.n, -0.03 * hw), Math.sin(u * Math.PI * 0.5)).add(V(0, -0.045 * hw * u, 0))
-        })
-      )
-    }
-    const rows = anneaux.length
-    for (const r of anneaux) for (const p of r) pos.push(p.x, p.y, p.z)
-    const idx: number[] = []
-    for (let j = 0; j < rows - 1; j++) {
-      for (let i = 0; i < NP; i++) {
-        const a0 = j * NP + i
-        const a1 = j * NP + ((i + 1) % NP)
-        idx.push(a0, a0 + NP, a1, a1, a0 + NP, a1 + NP)
-      }
-    }
-    const geo = new BufferGeometry()
-    geo.setAttribute('position', new BufferAttribute(new Float32Array(pos), 3))
-    geo.setIndex(idx)
-    geo.computeVertexNormals()
-    add(c, geo, c.c1, c.g, 1, true)
-    // visiere : au devant de la calotte (phi = +z), un peu sous le bord
-    const f = A.dessus(t.cx, t.zc + Rz)
-    const yF = f ? f.p.y : t.y
-    const v = add(c, visiere(), c.c2, c.g, 1, true)
-    // jamais sur les yeux : la visiere reste au-dessus du haut des yeux
+    const g = new Group()
+    // jamais sur les yeux : le bord avant reste au-dessus du haut des yeux
     const yMin = Math.max(c.a.y, c.b.y) + c.rv * 1.3
-    v.position.set(t.cx, Math.max(yF + 0.05 * hw, yMin), t.zc + Rz * 0.92)
-    v.scale.setScalar(Rx)
+    g.position.set(t.cx, Math.max(t.y - 0.12 * Rx, yMin + 0.3 * Rx), t.zc)
+    g.rotation.x = -0.14
+    c.g.add(g)
+    const dome = add(c, new LatheGeometry(prof, 56), c.c1, g, 1, true)
+    dome.scale.set(Rx, 1, Rz)
+    // petit bouton au sommet (meme couleur)
+    sph(c, c.c1, 0.075 * Rx, [1, 0.8, 1], V(0, haut * 0.99, 0), g)
+    const v = add(c, visiere(), c.c2, g, 1, true)
+    v.position.set(0, 0.02 * Rx, Rz * 0.82)
+    v.rotation.x = 0.3 // la visiere penche vers le bas : visible de face
+    v.scale.setScalar(Rx * 0.92)
+    void hw
   },
   bonnet(c) {
     const g = coiffe(c)
