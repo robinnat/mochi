@@ -219,6 +219,31 @@ function planLunettes() {
   return c
 }
 
+/** Cape puis cravate, seules, sur 6 formes : grandes vignettes (cape : face, 3/4, profil, dos ; cravate : face, 3/4, profil). */
+function planCapeCravate() {
+  const formes = ['cercle', 'squircle', 'etoile', 'triangle', 'goutte', 'nuage']
+  const couleurs = ['turquoise', 'ambre', 'rose', 'violet', 'orange', 'bleu']
+  const vues = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }, { yaw: 3.1416, nom: 'dos' }]
+  const cell = 300
+  const W2 = cell * 4
+  const bloc = 70 + formes.length * (cell + 8)
+  const { c, ctx } = nouvelle(W2, 130 + bloc * 2 + 20)
+  texte(ctx, 'Cape et cravate (état actuel)', 40, 70, 54, ENCRE, true)
+  const section = (titre: string, id: Emplacement, acc: string, nv: number, cadre: number, y0: number) => {
+    texte(ctx, titre, 40, y0 + 40, 40, ENCRE, true)
+    formes.forEach((f, i) => {
+      const y = y0 + 60 + i * (cell + 8)
+      vues.slice(0, nv).forEach((v, k) => {
+        cellule(ctx, k * cell, y, cell, { forme: f, couleur: hexDe(couleurs[i]!), sel: { [id]: acc }, yaw: v.yaw, cadre })
+        texte(ctx, `${NOMS_FORMES[f]} · ${v.nom}`, k * cell + cell / 2, y + cell - 4, 19, GRIS, false, 'center')
+      })
+    })
+  }
+  section('Cape', 'dos', 'cape', 4, 235, 110)
+  section('Cravate', 'bas', 'cravate', 3, 185, 110 + bloc)
+  return c
+}
+
 /** Vues : face, 3/4, profil, dos pour la cape et la cravate. */
 function planVues() {
   const lignes: Array<{ nom: string; sel: Selection; forme: string; couleur: string; cadre: number }> = [
@@ -286,6 +311,7 @@ async function main() {
     ['casquette', planCasquette],
     ['casquette-combos', planCasquetteCombos],
     ['lunettes', planLunettes],
+    ['cape-cravate', planCapeCravate],
     ['catalogue', planCatalogue],
     ['vues', planVues],
     ['alfred', planAlfred]
