@@ -5,6 +5,17 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added (moods and interactions, proposal)
+
+- Seven looped moods (`repos`, `reflechit`, `travaille`, `attend`, `termine`, `bloque`, `dort`) and six
+  interactions (hover follows the cursor, tap, double tap, long press blushes, shake or fast turn makes
+  it dizzy, a greeting on appearance), face and body only. API: `setMood(id)`, `react(id)`, `relacher()`,
+  `regarder()` on `MochiBot`; props `mood`, `interactions`, `coucou`, `fps`; `Humeurs` class in
+  `src/bot/humeurs.ts`. Respects `prefers-reduced-motion`. See `docs/moods.md`.
+- `Geste` gains optional face fields (crescent eyes, mirrored tilt, gaze offset, head tilt, cheek tint);
+  without them `sample(t)` is unchanged byte for byte. In 3D the lid, slant and head tilt now apply to the
+  front-facing eyes when the layer is on.
+
 ### Added (dark theme, proposal)
 
 - `theme: 'light' | 'dark'` (default `'light'`, rendering unchanged): in `'dark'` the eyes are black

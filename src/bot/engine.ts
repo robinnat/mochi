@@ -4,6 +4,7 @@ import { decalageDesYeux } from './eyefit'
 import { blinkScale, eyePoses, liveliness } from './face'
 import { clamp, easings, lerp, r2 } from './math'
 import {
+  arcPath,
   blend,
   capsulePath,
   closedPath,
@@ -13,12 +14,21 @@ import {
   type Silhouette
 } from './shape'
 import { STATE_BY_ID, type Pose, type StateDef, type StateId } from './states'
-import type { Geste } from './gestes'
+import { aUnVisage, type Geste } from './gestes'
 
 export interface RenderedEye {
   d: string
   matrix: string
   alpha: number
+  /**
+   * Pour la 3D (yeux pile en face, `scene3d.ts`), seulement quand un geste porte la couche visage :
+   * ecrasement de la paupiere (1 = ouvert), inclinaison propre en degres, decalage du regard dans
+   * le plan du visage (unites du viewBox). Absents sinon : le rendu d'avant n'est pas touche.
+   */
+  k?: number
+  tilt?: number
+  gx?: number
+  gy?: number
 }
 
 export interface BotFrame {
@@ -27,6 +37,13 @@ export interface BotFrame {
   eyes: RenderedEye[]
   dots: DotRender[]
   arcs: ArcRender[]
+  /** couche visage des humeurs, presente seulement si le geste la porte */
+  visage?: {
+    /** inclinaison de la tete, en degres */
+    rot: number
+    /** teinte des joues, 0 a 1 */
+    joues: number
+  }
 }
 
 /**
@@ -460,16 +477,19 @@ export class BotEngine {
     const look = this.lookAtTime(now)
     const life = liveliness(now, { wander: alive ? look.wander : 0, blink: alive })
 
+    const vis = geste && aUnVisage(geste) ? geste : null
+    // une humeur impose aussi la tete de son visage (en 3D les yeux sont pile en face, sans regard)
+    const g0 = vis?.exp ? vis.exp.gaze : pose.gaze
     const gaze = {
       // Les deux visees REMPLACENT celles de la pose au lieu de s'y ajouter (voir
       // `Look`), et le tour se retranche en chemin. La derive s'ajoute APRES le
       // melange, sinon la cible l'annulerait en meme temps que la pose — or elle
       // doit survivre a une tete tournee sans pointeur.
-      yaw: lerp(pose.gaze.yaw, look.yaw, look.mix) + life.dYaw - look.spin + (geste ? geste.yaw : 0),
-      pitch: lerp(pose.gaze.pitch, look.pitch, look.mix) + life.dPitch + (geste ? geste.pitch : 0),
+      yaw: lerp(g0.yaw, look.yaw, look.mix) + life.dYaw - look.spin + (geste ? geste.yaw : 0),
+      pitch: lerp(g0.pitch, look.pitch, look.mix) + life.dPitch + (geste ? geste.pitch : 0),
       // le roulis, lui, ne suit rien : la tete du bot est penchee de -13deg dans
       // la video, et la faire rouler avec le curseur casse cette signature
-      roll: pose.gaze.roll + life.dRoll + (geste ? geste.roll : 0)
+      roll: g0.roll + life.dRoll + (geste ? geste.roll : 0)
     }
 
     // clignement declenche par le changement d'etat, en plus du calendrier
@@ -485,6 +505,7 @@ export class BotEngine {
       ...pose.sil,
       cx: pose.sil.cx + offX,
       cy: pose.sil.cy + offY,
+      rot: vis?.rot ? pose.sil.rot + (vis.rot * Math.PI) / 180 : pose.sil.rot,
       sx: geste ? pose.sil.sx * geste.sx : pose.sil.sx,
       sy: geste ? pose.sil.sy * life.breath * geste.sy : pose.sil.sy * life.breath
     }
@@ -499,11 +520,22 @@ export class BotEngine {
 
     const eyes: RenderedEye[] = []
     if (pose.eyeAlpha > 0.01) {
-      const poses = eyePoses(gaze, R, pose.split)
+      // la couche visage peut imposer ses yeux (humeur) : meme format que ceux d'une expression
+      const cfgs = vis?.exp ? vis.exp.eyes : pose.eyes
+      const poses = eyePoses(gaze, R, vis?.exp ? vis.exp.split : pose.split)
       for (let i = 0; i < 2; i++) {
         const e = poses[i]!
         if (e.depth <= 0.02) continue
-        const cfg = pose.eyes[i]!
+        const base = cfgs[i]!
+        const cfg = vis
+          ? {
+              ...base,
+              w: base.w * (vis.ew ?? 1),
+              h: base.h * (vis.eh ?? 1),
+              // en miroir : le premier oeil penche d'un cote, le second de l'autre, comme `pair()`
+              tilt: (base.tilt ?? 0) + (i === 0 ? 1 : -1) * (vis.tilt ?? 0)
+            }
+          : base
         const fit = bodyRadius(e.x, e.y)
         // Inclinaison propre de l'oeil : on compose le repere tangent avec une
         // rotation dans le plan de l'oeil (Basis x Rot). C'est ce qui permet des
@@ -518,10 +550,28 @@ export class BotEngine {
         // Le clignement s'applique APRES tout ca : c'est un ecrasement vertical
         // a l'ecran, pas le long de l'axe de la gelule.
         const k = blinkScale(Math.min(lid, cfg.open))
+        let mx = e.x * fit + (offX + decalage.x) * R
+        let my = e.y * fit + (offY + decalage.y) * R
+        let [ma, mb, mc, md] = [ax, ay * k, cx2, cy2 * k]
+        if (vis) {
+          mx += (vis.ex ?? 0) * R
+          my += (vis.ey ?? 0) * R
+          if (vis.rot) {
+            // la tete penche : yeux et inclinaisons tournent avec le corps, autour de son centre
+            const q = (vis.rot * Math.PI) / 180
+            const cq = Math.cos(q)
+            const sq = Math.sin(q)
+            const ox = offX * R
+            const oy = offY * R
+            ;[ma, mb, mc, md] = [cq * ma - sq * mb, sq * ma + cq * mb, cq * mc - sq * md, sq * mc + cq * md]
+            ;[mx, my] = [ox + cq * (mx - ox) - sq * (my - oy), oy + sq * (mx - ox) + cq * (my - oy)]
+          }
+        }
         eyes.push({
-          d: capsulePath(cfg.w * R, cfg.h * R),
-          matrix: `matrix(${r2(ax)},${r2(ay * k)},${r2(cx2)},${r2(cy2 * k)},${r2(e.x * fit + (offX + decalage.x) * R)},${r2(e.y * fit + (offY + decalage.y) * R)})`,
-          alpha: pose.eyeAlpha * clamp(e.depth / 0.12)
+          d: vis?.arc ? arcPath(cfg.w * R, cfg.h * R, vis.arc) : capsulePath(cfg.w * R, cfg.h * R),
+          matrix: `matrix(${r2(ma)},${r2(mb)},${r2(mc)},${r2(md)},${r2(mx)},${r2(my)})`,
+          alpha: pose.eyeAlpha * clamp(e.depth / 0.12),
+          ...(vis ? { k, tilt: (cfg.tilt ?? 0) + (vis.rot ?? 0), gx: (vis.ex ?? 0) * R, gy: (vis.ey ?? 0) * R } : null)
         })
       }
     }
@@ -535,6 +585,7 @@ export class BotEngine {
       bodyPath,
       bodyAlpha: pose.bodyAlpha,
       eyes,
+      ...(vis ? { visage: { rot: vis.rot ?? 0, joues: vis.joues ?? 0 } } : null),
       dots,
       // Les etats declarent des arcs en unites de rayon de boule ; le moteur
       // est le seul a connaitre l'echelle du viewBox, donc c'est lui qui trace.

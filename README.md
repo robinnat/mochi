@@ -190,6 +190,7 @@ them loses the accuracy of the motion.
 | [docs/styles.md](docs/styles.md) | Render styles: Soft, Flat, Pixel (real 3D) |
 | [docs/gestes.md](docs/gestes.md) | Gestures and activities |
 | [docs/accessoires.md](docs/accessoires.md) | Job accessories |
+| [docs/moods.md](docs/moods.md) | Work moods and reactions to the user (face and body only) |
 | [docs/iso.md](docs/iso.md) | Jumps and the isometric space |
 | [docs/intro.md](docs/intro.md) | The arrival sequence |
 | [docs/interface.md](docs/interface.md) | App layout and CSS traps |

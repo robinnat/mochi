@@ -21,6 +21,7 @@ import { STATE_BY_ID, type StateId } from '@/bot/states'
 import { dessinPorte, porteSvg, type PorteId } from '@/bot/portes'
 import { ACCESSOIRE_BY_ID, ancreDuCorps, type AccessoireId } from '@/bot/accessoires'
 import { composer, type Geste } from '@/bot/gestes'
+import { Humeurs, REACTION_DE_EVENEMENT, doitRedessiner, moodDe, type ReactionId } from '@/bot/humeurs'
 import { pixellise, pixellisePrims } from '@/ui/pixel'
 import { DOUCEUR_DEFAUT, RENDU_3D_DEFAUT, type Douceur, type Rendu3d } from '@/ui/trois/rendu3d'
 import { THEME_DEFAUT, type Theme } from '@/ui/trois/theme'
@@ -115,6 +116,26 @@ const props = withDefaults(
      * les rendus (en 3D : volumes fixes au maillage, lunettes peintes sur le visage).
      */
     porte?: PorteId | null
+    /**
+     * Humeur de travail jouee en boucle (`src/bot/humeurs.ts`) : `repos`, `reflechit`, `travaille`,
+     * `attend`, `termine`, `bloque`, `dort` (ou les noms d'etats `idle`, `thinking`, `sleep`...).
+     * Elle remplace le montage (`cycle`) : le bot reste sur son etat de repos et ne change que de
+     * visage et de corps. Absente, rien ne change. Se pilote aussi par `setMood(id)`.
+     */
+    mood?: string | null
+    /**
+     * Reactions a l'utilisateur, branchees sur les evenements pointeur de l'avatar : survol (le regard
+     * suit), tap (sursaut), double tap (rire), appui long (rougit), secousse ou tour rapide (etourdi).
+     * `false` les coupe. Sans effet sur une vignette figee (`frozenAt`).
+     */
+    interactions?: boolean
+    /** Salut a l'apparition (`coucou`), joue une fois au montage. */
+    coucou?: boolean
+    /**
+     * Plafond d'images par seconde de la boucle (tableau de bord : 12). Absent : une image par image du
+     * navigateur. L'horloge, elle, ne ralentit pas : seul le nombre de redessins baisse.
+     */
+    fps?: number
     /** Texte alternatif ; absent, le libelle traduit de l'application. */
     label?: string
   }>(),
@@ -139,6 +160,10 @@ const props = withDefaults(
     geste: null,
     accessoire: null,
     porte: null,
+    mood: null,
+    interactions: true,
+    coucou: false,
+    fps: undefined,
     label: undefined
   }
 )
@@ -196,7 +221,14 @@ const acc = computed(() => (props.accessoire ? (ACCESSOIRE_BY_ID.get(props.acces
 const ancre = computed(() =>
   acc.value ? ancreDuCorps(new BotEngine(R, 'idle', shapeRadii.value, null).sample(1).bodyPath) : undefined
 )
-const gesteA = (t: number): Geste | undefined =>
+/* ------------------------------------------------- humeurs et reactions */
+
+/** Mouvement reduit : les humeurs deviennent des images fixes (le visage reste, le corps ne bouge plus). */
+const reduit = ref(false)
+const humeurs = new Humeurs(moodDe(props.mood), { base: expression.value })
+const humeurActive = computed(() => moodDe(props.mood) !== null)
+
+const gesteBase = (t: number): Geste | undefined =>
   // un geste choisi ET un accessoire de metier se composent : le corps fait les deux, l'objet le suit
   props.geste
     ? acc.value
@@ -205,6 +237,12 @@ const gesteA = (t: number): Geste | undefined =>
     : acc.value
       ? acc.value.geste(t, { ancre: ancre.value })
       : undefined
+/** Le geste du bot : celui d'avant, plus la couche des humeurs et des reactions quand elle est active. */
+const gesteA = (t: number): Geste | undefined => {
+  const b = gesteBase(t)
+  const h = humeurs.sample(t)
+  return h ? (b ? composer(b, h) : h) : b
+}
 /**
  * Quand un geste deplace le corps (saut, ecrasement), l'objet de metier le suit : on le decale
  * de l'ecart entre le point d'appui de l'image courante et celui de repos. Sans geste, le corps
@@ -272,9 +310,11 @@ function apply(i: number, from = 0) {
   }
   blockStart = clock - from
   elapsed.value = from
-  state.value = b.state
-  engine.setState(b.state, clock)
-  nextAt = playing.value ? blockStart + b.duration : Infinity
+  // une humeur remplace le montage : le bot reste sur son etat de repos, seuls visage et corps bougent
+  const etat = humeurActive.value ? 'idle' : b.state
+  state.value = etat
+  engine.setState(etat, clock)
+  nextAt = playing.value && !humeurActive.value ? blockStart + b.duration : Infinity
 }
 
 /** Deplace le curseur et recale le moteur dans la foulee, sans passer par le watcher. */
@@ -341,7 +381,29 @@ function rendAt(t: number) {
   triggerRef(frame)
 }
 
-defineExpose({ seek, rendAt })
+/** Change d'humeur (`null` coupe la couche). Glisse de l'une a l'autre sans saut. */
+function setMood(id: string | null) {
+  humeurs.setMood(id, clock)
+  // le montage reprend la main des qu'il n'y a plus d'humeur
+  apply(block.value, elapsed.value)
+  redrawFrozen()
+}
+/** Joue une reaction (`sursaut`, `rigole`, `rougit`, `etourdi`, `coucou`) puis rend la main a l'humeur. */
+function react(id: ReactionId | string) {
+  if (!humeurs.react(id, clock)) return false
+  redrawFrozen()
+  return true
+}
+/** Fin d'une reaction tenue (appui long). */
+function relacher() {
+  humeurs.relacher(clock)
+}
+/** Regard du survol, hors evenement : `nx`, `ny` de -1 a 1 (droite et bas positifs), `null` pour lacher. */
+function regarder(cible: { nx: number; ny: number } | null) {
+  humeurs.regarder(cible, clock)
+}
+
+defineExpose({ seek, rendAt, setMood, react, relacher, regarder })
 
 /* -------------------------------------------------------------- vraie 3D */
 
@@ -521,6 +583,145 @@ watch(
   { immediate: true }
 )
 
+/* ------------------------------------------------- reactions a l'utilisateur */
+
+const TAP_MAX = 320 // ms : au-dela, ce n'est plus un tap
+const DOUBLE_MAX = 380 // ms entre deux taps
+const APPUI_LONG = 450 // ms avant que l'appui devienne « rougit »
+const DEPLACEMENT_MAX = 10 // px : au-dela on glisse (tourner la vue), ni tap ni appui long
+
+// seulement la vraie 3D (le composant 3D), jamais une vignette figee, et pas quand le suivi de la fenetre a deja la main
+const interactif = computed(() => props.interactions && props.frozenAt === undefined && estVraie3d(rendu.value) && !props.follow)
+let appui: { x: number; y: number; t: number; minuteur: number; long: boolean } | null = null
+let dernierTap = -1e9
+/** inversions de sens du glisse, pour reconnaitre une secousse */
+let secousse: { sens: number; t: number }[] = []
+let dernierDx = 0
+/** rotation cumulee recente de la vue 3D (`yaw`), pour reconnaitre « tourne vite » */
+let tours: { t: number; d: number }[] = []
+let yawPrec = props.yaw
+
+function normalise(e: PointerEvent): { nx: number; ny: number } | null {
+  const box = svg.value?.getBoundingClientRect()
+  if (!box || box.width === 0 || box.height === 0) return null
+  // le regard sature un peu au-dela de l'avatar : le curseur n'a pas besoin d'etre dessus pour etre suivi
+  return {
+    nx: clamp((e.clientX - (box.left + box.width / 2)) / (box.width * 0.6), -1, 1),
+    ny: clamp((e.clientY - (box.top + box.height / 2)) / (box.height * 0.6), -1, 1)
+  }
+}
+
+function onSurvol(e: PointerEvent) {
+  if (!interactif.value || reduit.value) return
+  const c = normalise(e)
+  if (c) humeurs.regarder(c, clock)
+}
+function onQuitte() {
+  if (!interactif.value) return
+  humeurs.regarder(null, clock)
+}
+
+function onAppui(e: PointerEvent) {
+  if (!interactif.value || (e.button !== undefined && e.button > 0)) return
+  onSurvol(e)
+  clearTimeout(appui?.minuteur)
+  appui = {
+    x: e.clientX,
+    y: e.clientY,
+    t: e.timeStamp,
+    long: false,
+    // appui long : « rougit » tient tant qu'on garde le doigt, et redescend au relachement
+    minuteur: window.setTimeout(() => {
+      if (!appui) return
+      appui.long = true
+      humeurs.react(REACTION_DE_EVENEMENT.longue, clock)
+    }, APPUI_LONG)
+  }
+  secousse = []
+  dernierDx = 0
+  // le parent peut capturer le pointeur (glisser pour tourner) : on suit alors la fin sur la fenetre
+  window.addEventListener('pointermove', onGlisse)
+  window.addEventListener('pointerup', onRelache)
+  window.addEventListener('pointercancel', onRelache)
+}
+
+function onGlisse(e: PointerEvent) {
+  if (!appui) return
+  const dx = e.clientX - appui.x
+  const dy = e.clientY - appui.y
+  if (!appui.long && Math.hypot(dx, dy) > DEPLACEMENT_MAX) {
+    // on glisse : ni tap ni appui long
+    clearTimeout(appui.minuteur)
+    appui.t = -1e9
+  }
+  // secousse : au moins quatre inversions de sens, vives, en moins d'une demi-seconde
+  const pas = e.movementX || e.clientX - dernierDx
+  if (Math.abs(pas) > 6) {
+    const sens = Math.sign(pas)
+    const dernier = secousse[secousse.length - 1]
+    if (!dernier || dernier.sens !== sens) {
+      secousse.push({ sens, t: e.timeStamp })
+      secousse = secousse.filter((s) => e.timeStamp - s.t < 600)
+      if (secousse.length >= 5 && interactif.value) {
+        secousse = []
+        humeurs.react(REACTION_DE_EVENEMENT.secoue, clock)
+      }
+    }
+  }
+  dernierDx = e.clientX
+}
+
+function onRelache(e: PointerEvent) {
+  window.removeEventListener('pointermove', onGlisse)
+  window.removeEventListener('pointerup', onRelache)
+  window.removeEventListener('pointercancel', onRelache)
+  const a = appui
+  appui = null
+  if (!a) return
+  clearTimeout(a.minuteur)
+  if (e.pointerType === 'touch') humeurs.regarder(null, clock)
+  if (a.long) {
+    humeurs.relacher(clock)
+    return
+  }
+  if (e.type === 'pointercancel' || e.timeStamp - a.t > TAP_MAX) return
+  // tap ou double tap
+  if (e.timeStamp - dernierTap < DOUBLE_MAX) {
+    dernierTap = -1e9
+    humeurs.react(REACTION_DE_EVENEMENT.double, clock)
+  } else {
+    dernierTap = e.timeStamp
+    humeurs.react(REACTION_DE_EVENEMENT.tap, clock)
+  }
+}
+
+/** Tourne vite : la vue 3D (`yaw`) fait plus d'un tour en moins d'une seconde. */
+watch(
+  () => props.yaw,
+  (v) => {
+    const now = typeof performance === 'undefined' ? 0 : performance.now()
+    if (!interactif.value) {
+      yawPrec = v
+      return
+    }
+    tours.push({ t: now, d: Math.abs(v - yawPrec) })
+    yawPrec = v
+    tours = tours.filter((x) => now - x.t < 900)
+    if (tours.reduce((n, x) => n + x.d, 0) >= Math.PI * 2 && humeurs.reaction(clock) !== 'etourdi') {
+      tours = []
+      humeurs.react(REACTION_DE_EVENEMENT.secoue, clock)
+    }
+  }
+)
+
+watch(
+  () => props.mood,
+  (id) => setMood(moodDe(id))
+)
+
+/** Redessin plafonne : date du dernier dessin, en ms navigateur. */
+let dernierDessin = 0
+
 function tick(ms: number) {
   raf = requestAnimationFrame(tick)
   // Horloge de scene a delta borne : un onglet masque puis reaffiche reprend
@@ -545,6 +746,9 @@ function tick(ms: number) {
   if (props.follow) aim()
   else if (props.gaze) scriptedGaze(props.gaze)
 
+  // cadence plafonnee (tableau de bord) : l'horloge a avance, on saute seulement le dessin
+  if (!doitRedessiner(ms, dernierDessin, props.fps)) return
+  dernierDessin = ms
   temps.value = clock
   frame.value = engine.sample(clock, gesteA(clock))
   triggerRef(frame)
@@ -619,6 +823,7 @@ watch(shapeRadii, (radii) => {
 })
 
 watch(expression, (expr) => {
+  humeurs.setBase(expr)
   engine.setExpression(expr, clock)
   redrawFrozen()
 })
@@ -658,11 +863,23 @@ function detach() {
 // geste ou accessoire change : une image figee se redessine (en lecture, la boucle s'en charge)
 watch([() => props.accessoire, () => props.geste, () => props.porte], redrawFrozen)
 
+let mqReduit: MediaQueryList | null = null
+const majReduit = () => {
+  reduit.value = !!mqReduit?.matches
+  humeurs.reduit = reduit.value
+}
+
 onMounted(() => {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    mqReduit = window.matchMedia('(prefers-reduced-motion: reduce)')
+    majReduit()
+    mqReduit.addEventListener?.('change', majReduit)
+  }
   if (props.frozenAt !== undefined) {
     redrawFrozen()
     return
   }
+  if (props.coucou) humeurs.react(REACTION_DE_EVENEMENT.arrivee, clock)
   // le curseur peut arriver deja pose (URL, cycle relu du stockage)
   apply(block.value, elapsed.value)
   raf = requestAnimationFrame(tick)
@@ -670,6 +887,11 @@ onMounted(() => {
 onBeforeUnmount(() => {
   cancelAnimationFrame(raf)
   detach()
+  clearTimeout(appui?.minuteur)
+  window.removeEventListener('pointermove', onGlisse)
+  window.removeEventListener('pointerup', onRelache)
+  window.removeEventListener('pointercancel', onRelache)
+  mqReduit?.removeEventListener?.('change', majReduit)
 })
 
 /**
@@ -703,6 +925,10 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
     role="img"
     :aria-label="props.label ?? t('app.botAria')"
     :style="acc || props.porte ? 'overflow: visible' : undefined"
+    @pointerenter="onSurvol"
+    @pointermove="onSurvol"
+    @pointerleave="onQuitte"
+    @pointerdown="onAppui"
   >
     <!--
       Pixel art : l'image du moteur rasterisee sur une grille basse resolution, un

@@ -64,6 +64,7 @@ import {
 import { peindreReflet, REFLET_DEFAUT, type Reflet } from './reflet'
 import { accessoiresSombres, CONTRASTE_OEIL_MIN, corpsPourTheme, couleurOeil, OEIL_RGB, THEME_DEFAUT, type Theme } from './theme'
 import {
+  centreDe,
   champDeRepos,
   contourDuCorps,
   demiEtendueOeil,
@@ -335,7 +336,9 @@ export class Mochi3d {
     geo.computeBoundingBox()
     const bb = geo.boundingBox
     const frameCorps = frame
-    // les yeux de la 3D : pile en face, sur la face avant
+    // les yeux de la 3D : pile en face, sur la face avant. `frameVisage` y ajoute le regard des humeurs
+    // (decalage des yeux) : seuls les yeux peints le suivent, les lunettes restent sur le visage
+    const frameVisage = frame.visage ? this.yeuxSurLaFace(frame, true) : null
     frame = this.yeuxSurLaFace(frame)
     const plat0 = reglagePlat(this.rendu, this.douceur)
     this.porte3d.reglages = plat0?.lisse ? { force: 0.7, haut: 0.32, ao: 1, reflet: this.uReflet } : null
@@ -353,11 +356,13 @@ export class Mochi3d {
     // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
     const reflet = null as Reflet | null
     const cleReflet = reflet ? [reflet.x, reflet.y, reflet.rx].map((v) => Math.round(v * 2)).join(',') : '-'
-    const cleVisage = `${this.rendu}|${this.douceur}|${this.theme}|${couleur}|${papier}|${JSON.stringify(frame.eyes)}|${cleReflet}|${this.porte ?? ''}|${ombres.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
+    const yeuxPeints = frameVisage ?? frame
+    const joues = frameVisage?.visage?.joues ?? 0
+    const cleVisage = `${this.rendu}|${this.douceur}|${this.theme}|${couleur}|${papier}|${JSON.stringify(yeuxPeints.eyes)}|${joues.toFixed(2)}|${cleReflet}|${this.porte ?? ''}|${ombres.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
     if (cleVisage !== this.cleVisage) {
       this.cleVisage = cleVisage
       // le flat garde la couleur choisie telle quelle (pas de pastel), sans creux d'oeil
-      this.peindre(frame, plat ? couleur : m.base, papier, m.creux, !plat && this.theme === 'light', reflet, ombres)
+      this.peindre(yeuxPeints, plat ? couleur : m.base, papier, m.creux, !plat && this.theme === 'light', reflet, ombres, joues)
     }
   }
 
@@ -389,18 +394,41 @@ export class Mochi3d {
    * sphere du moteur ne comptent pas ici ; l'ecart au 2D est voulu. Chaque oeil garde sa forme
    * (clignement, expression) et son opacite.
    */
-  private yeuxSurLaFace(frame: BotFrame): BotFrame {
+  private yeuxSurLaFace(frame: BotFrame, regard = false): BotFrame {
     if (!frame.eyes.length) return frame
     const yeux = [...frame.eyes].sort((p, q) => lireMatrice(p.matrix)[4]! - lireMatrice(q.matrix)[4]!)
     const demi = yeux.map((e) => demiEtendueOeil(e.d, 'matrix(1 0 0 1 0 0)'))
-    const pos = yeuxDeFace(contourDuCorps(frame.bodyPath, 1), demi, this.profil)
+    let contour = contourDuCorps(frame.bodyPath, 1)
+    // humeur : la tete penche. On cherche la face sur le corps REDRESSE, puis on penche les yeux avec lui
+    const rot = frame.visage?.rot ?? 0
+    const q = (rot * Math.PI) / 180
+    const cq = Math.cos(q)
+    const sq = Math.sin(q)
+    const centre = rot ? centreDe(contour) : { x: 0, y: 0 }
+    if (rot) contour = contour.map((p) => ({ x: centre.x + cq * (p.x - centre.x) + sq * (p.y - centre.y), y: centre.y - sq * (p.x - centre.x) + cq * (p.y - centre.y) }))
+    const pos = yeuxDeFace(contour, demi, this.profil)
     if (pos.length !== yeux.length) return frame
     return {
       ...frame,
       eyes: yeux.map((e, i) => {
         const p = pos[i]!
         const f = (v: number) => Math.round(v * 100) / 100
-        return { ...e, matrix: `matrix(${f(p.s)} 0 0 ${f(p.s)} ${f(p.x)} ${f(p.y)})` }
+        // position : rotation autour du centre du corps (la tete penche), puis regard dans le repere de la tete
+        const x0 = rot ? centre.x + cq * (p.x - centre.x) - sq * (p.y - centre.y) : p.x
+        const y0 = rot ? centre.y + sq * (p.x - centre.x) + cq * (p.y - centre.y) : p.y
+        // sans `regard` : la place des yeux sur le visage, droits et ronds, pour les lunettes et les accessoires
+        // (leurs mesures ne doivent pas varier avec un clignement ou un regard)
+        if (!frame.visage || !regard) return { ...e, matrix: `matrix(${f(p.s)} 0 0 ${f(p.s)} ${f(x0)} ${f(y0)})` }
+        // couche visage : inclinaison propre (deja augmentee de celle de la tete), paupiere, regard
+        const phi = ((e.tilt ?? 0) * Math.PI) / 180
+        const k = e.k ?? 1
+        const a = Math.cos(phi) * p.s
+        const b = Math.sin(phi) * p.s
+        const gx = e.gx ?? 0
+        const gy = e.gy ?? 0
+        const x1 = x0 + cq * gx - sq * gy
+        const y1 = y0 + sq * gx + cq * gy
+        return { ...e, matrix: `matrix(${f(a)} ${f(b * k)} ${f(-b)} ${f(a * k)} ${f(x1)} ${f(y1)})` }
       })
     }
   }
@@ -446,7 +474,7 @@ export class Mochi3d {
    * Le visage : la couleur du corps, et les yeux en couleur du fond (des trous), avec une
    * ombre interne sur le rebord haut gauche, comme le creux de l'argile.
    */
-  private peindre(frame: BotFrame, base: string, papier: string, creux: string, creuser = true, reflet: Reflet | null = null, ombres: Ombre[] = []) {
+  private peindre(frame: BotFrame, base: string, papier: string, creux: string, creuser = true, reflet: Reflet | null = null, ombres: Ombre[] = [], joues = 0) {
     const c = this.ctx
     const T = this.toile.width
     const k = T / (2 * VB)
@@ -494,6 +522,8 @@ export class Mochi3d {
       c.fill(cadre, 'evenodd')
       c.restore()
     }
+    // joues : une teinte rose doucement fondue sous les yeux, peinte DANS la couleur du corps (pas un objet)
+    if (joues > 0.01) this.peindreJoues(frame, base, joues, k)
     // ombres douces des accessoires, posees sur le corps (degrade radial, sans bord)
     for (const o of ombres) {
       c.setTransform(k * o.rx, 0, 0, k * o.ry, k * (o.x + VB), k * (o.y + VB))
@@ -511,6 +541,40 @@ export class Mochi3d {
     c.globalAlpha = 1
     this.texture.needsUpdate = true
     this.textureYeux.needsUpdate = true
+  }
+
+  /**
+   * Teinte des joues : deux taches elliptiques, a l'exterieur et sous chaque oeil, qui se fondent dans
+   * la couleur du corps. Elles suivent les yeux (donc la tete penchee) et ne depassent pas : la texture
+   * n'existe que sur le corps.
+   */
+  private peindreJoues(frame: BotFrame, base: string, joues: number, k: number) {
+    const c = this.ctx
+    const yeux = [...frame.eyes].sort((p, q) => lireMatrice(p.matrix)[4]! - lireMatrice(q.matrix)[4]!)
+    if (yeux.length < 2) return
+    const q = ((frame.visage?.rot ?? 0) * Math.PI) / 180
+    const cq = Math.cos(q)
+    const sq = Math.sin(q)
+    const teinte = mixHex(base, JOUE, 0.62)
+    yeux.forEach((e, i) => {
+      const [, , , , ex, ey] = lireMatrice(e.matrix)
+      const sg = i === 0 ? -1 : 1
+      // decalage dans le repere de la tete : vers l'exterieur et vers le bas
+      const dx = sg * 17
+      const dy = 25
+      const x = ex + cq * dx - sq * dy
+      const y = ey + sq * dx + cq * dy
+      c.setTransform(k * 27, 0, 0, k * 17, k * (x + VB), k * (y + VB))
+      const g = c.createRadialGradient(0, 0, 0, 0, 0, 1)
+      g.addColorStop(0, hexA(teinte, 0.9 * joues))
+      g.addColorStop(0.55, hexA(teinte, 0.55 * joues))
+      g.addColorStop(1, hexA(teinte, 0))
+      c.globalAlpha = e.alpha
+      c.fillStyle = g
+      c.fillRect(-1, -1, 2, 2)
+    })
+    c.setTransform(1, 0, 0, 1, 0, 0)
+    c.globalAlpha = 1
   }
 
   liberer() {
@@ -599,6 +663,9 @@ function organiser(m: MeshToonMaterial) {
       )
   }
 }
+
+/** Rose des joues : se melange a la couleur du corps (jamais pose en aplat par-dessus). */
+export const JOUE = '#ff5c8a'
 
 /** Position de la lumiere principale dans le repere de l'avatar : en haut a gauche, devant. */
 const CLE_AVATAR: [number, number, number] = [-1.1, 1.5, 1.6]
@@ -753,6 +820,8 @@ export function rendreAvatar(
     const im = c.getImageData(0, 0, px, px)
     const t = porte ? TEINTES_PORTES[porte] : null
     const teintes = porte === 'lunettes' || porte === 'soleil' ? ['#26222f'] : t ? [t.fond, t.accent] : []
+    // joues : leur teinte entre dans la palette, sinon elle serait ramenee a la couleur du corps
+    if ((frame.visage?.joues ?? 0) > 0.05) teintes.push(mixHex(couleur, JOUE, 0.62))
     const corps = leverSombre(couleur)
     const oeil = theme === 'dark' ? OEIL_RGB : undefined
     quantifier(im.data, px, px, palettePixel(corps, [...teintes, ...mochi.couleursAccessoires], oeil), !oeil && luminance(corps) < 0.62, oeil)

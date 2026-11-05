@@ -35,7 +35,7 @@ describe('accessoires', () => {
       expect(a.dessin(0.5 + a.boucle, o)).toBe(a.dessin(0.5, o))
       const g1 = a.geste(0.5)
       const g2 = a.geste(0.5 + a.boucle)
-      for (const k of Object.keys(g1) as (keyof typeof g1)[]) expect(g2[k]).toBeCloseTo(g1[k], 6)
+      for (const k of Object.keys(g1) as Exclude<keyof typeof g1, 'exp'>[]) expect(g2[k]).toBeCloseTo(g1[k] as number, 6)
     }
   })
 

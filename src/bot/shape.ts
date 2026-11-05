@@ -308,3 +308,29 @@ export function capsulePath(w: number, h: number): string {
     `A${r2(r)} ${r2(r)} 0 0 1 ${r2(-hw)} ${r2(hh - r)}Z`
   )
 }
+
+/**
+ * Oeil « croissant » : la gelule couchee (largeur >= hauteur) cintree en arche, les bouts vers le
+ * bas (^ ^), pour l'oeil content, le rire, les yeux fermes de plaisir. `arc` va de 0 (gelule
+ * droite) a 1 (arche pleine) : c'est ce qui permet de glisser d'une expression a l'autre sans
+ * saut. Meme boite que `capsulePath`, donc les memes mesures (`demiEtendueOeil`) valent.
+ */
+export function arcPath(w: number, h: number, arc: number): string {
+  const hw = Math.max(w, 0.01) / 2
+  const hh = Math.max(h, 0.01) / 2
+  const r = Math.min(hw, hh)
+  const bend = arc * 0.7 * Math.max(hw, hh)
+  const N = 20
+  const haut: string[] = []
+  const bas: string[] = []
+  for (let i = 0; i <= N; i++) {
+    // les points se resserrent aux bouts, la ou la courbure est la plus forte
+    const x = hw * Math.sin(Math.PI * (i / N - 0.5))
+    const dx = Math.max(0, Math.abs(x) - (hw - r))
+    const demi = hh - r + Math.sqrt(Math.max(0, r * r - dx * dx))
+    const cintre = bend * (x / hw) ** 2 - bend * 0.5
+    haut.push(`${r2(x)} ${r2(-demi + cintre)}`)
+    bas.unshift(`${r2(x)} ${r2(demi + cintre)}`)
+  }
+  return `M${haut.join('L')}L${bas.join('L')}Z`
+}
