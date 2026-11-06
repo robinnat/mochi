@@ -197,3 +197,47 @@ describe('theme : peinture du visage (Mochi3d)', () => {
     expect(journal.filter((j) => j.canvas === 0).map((j) => j.fill)).toContain(OEIL_SOMBRE)
   })
 })
+
+describe('epaisseur du contour (Mochi3d)', () => {
+  beforeEach(() => {
+    fauxDom()
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  const demiEpaisseur = (m: Mochi3d) => (m as unknown as { epaisseur: { value: number } }).epaisseur.value
+
+  it.each(['doux', 'toon', 'pixel'] as const)('%s : le contour est disponible, et son epaisseur suit le facteur (1 = valeur de base)', (rendu) => {
+    const m = new Mochi3d(32)
+    m.setRendu(rendu, true)
+    expect((m as unknown as { coque: { visible: boolean } }).coque.visible).toBe(true)
+    m.calerContour(1)
+    const base = demiEpaisseur(m)
+    m.setEpaisseurContour(2)
+    m.calerContour(1)
+    expect(demiEpaisseur(m)).toBeCloseTo(2 * base, 6)
+    m.setEpaisseurContour(0.5)
+    m.calerContour(1)
+    expect(demiEpaisseur(m)).toBeCloseTo(0.5 * base, 6)
+    m.setEpaisseurContour(1)
+    m.calerContour(1)
+    expect(demiEpaisseur(m)).toBeCloseTo(base, 6)
+  })
+
+  it('le facteur est borne et une valeur absurde revient au defaut', () => {
+    const m = new Mochi3d(32)
+    m.calerContour(1)
+    const base = demiEpaisseur(m)
+    m.setEpaisseurContour(1000)
+    m.calerContour(1)
+    expect(demiEpaisseur(m)).toBeCloseTo(base * 4, 6)
+    m.setEpaisseurContour(Number.NaN)
+    m.calerContour(1)
+    expect(demiEpaisseur(m)).toBeCloseTo(base, 6)
+  })
+
+  it('sans contour demande, Soft n a pas de coque', () => {
+    const m = new Mochi3d(32)
+    m.setRendu('doux', false)
+    expect((m as unknown as { coque: { visible: boolean } }).coque.visible).toBe(false)
+  })
+})

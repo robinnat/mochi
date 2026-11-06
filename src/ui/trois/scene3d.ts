@@ -52,6 +52,9 @@ import {
   couleurContour,
   eclairagePlat,
   epaisseurContourPx,
+  EPAISSEUR_CONTOUR_DEFAUT,
+  EPAISSEUR_CONTOUR_MAX,
+  EPAISSEUR_CONTOUR_MIN,
   finesseDe,
   gradientMap,
   maillageDe,
@@ -157,6 +160,8 @@ export class Mochi3d {
   private readonly uOeil = { value: 0 }
   /** demi-epaisseur du contour, en unites du moteur (uniform de la coque) */
   private readonly epaisseur = { value: 4.5 }
+  /** facteur d'epaisseur du contour (1 = l'epaisseur de base) */
+  private facteurContour = 1
   /** derniers contour et visage peints : inchanges d'une image a l'autre, on ne refait rien */
   private cleVisage = ''
   /** Bas du corps, repere Three (y vers le haut) : la ou il touche le sol. */
@@ -261,7 +266,12 @@ export class Mochi3d {
    */
   calerContour(pxParUnite: number) {
     const diametre = 2 * 100 * pxParUnite
-    this.epaisseur.value = epaisseurContourPx(diametre) / Math.max(1e-6, pxParUnite)
+    this.epaisseur.value = (epaisseurContourPx(diametre) * this.facteurContour) / Math.max(1e-6, pxParUnite)
+  }
+
+  /** Facteur d'epaisseur du contour (1 = l'epaisseur de base). Appele avant `calerContour`. */
+  setEpaisseurContour(k: number) {
+    this.facteurContour = Number.isFinite(k) ? Math.min(EPAISSEUR_CONTOUR_MAX, Math.max(EPAISSEUR_CONTOUR_MIN, k)) : EPAISSEUR_CONTOUR_DEFAUT
   }
 
   /** Impose un profil de volume (essai d'un profil alternatif) ; `null` revient a celui de la forme. */
@@ -376,6 +386,8 @@ export class Mochi3d {
       const sc = ye.map((o) => ({ x: o.x, y: -o.y, r: o.r }))
       return mesurerReperes(this.mesh.geometry, sc, ye.length === 2 ? rayonVerre(ye[0]!, ye[1]!) : 22)
     }, { k: this.ordi, sol: this.sols.get(this.forme) ?? mt.bas, cle: `${this.rendu}|${this.forme}` })
+    // le contour des accessoires suit celui du corps (meme visibilite, meme epaisseur)
+    this.acc3d.contour(this.coque.visible, this.epaisseur.value)
     const ombres: Ombre[] = [...(this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []), ...this.acc3d.ombres]
     // le reflet doux est un effet de matiere (shader, repere de la vue) : plus rien n'est peint dans la
     // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
@@ -802,7 +814,9 @@ export function rendreAvatar(
   /** ombre portee au sol sous le corps (defaut : oui) */
   ombre = true,
   /** modele du volume (ombrage du corps) : oui par defaut ; non = aplat de couleur */
-  ombrage = true
+  ombrage = true,
+  /** facteur d'epaisseur du contour (1 = l'epaisseur de base) */
+  epaisseurContour = EPAISSEUR_CONTOUR_DEFAUT
 ) {
   couleur = corpsPourTheme(couleur, theme, contrasteOeil)
   const ctx3 = contexte()
@@ -818,6 +832,7 @@ export function rendreAvatar(
   }
   mochi.setOmbrage(ombrage)
   mochi.setRendu(rendu3d, contour, douceur, reflet)
+  mochi.setEpaisseurContour(epaisseurContour)
   mochi.setForme(forme)
   mochi.setPorte(porte)
   mochi.setTheme(theme, contrasteOeil)

@@ -16,6 +16,7 @@
  */
 import {
   BufferAttribute,
+  BackSide,
   BufferGeometry,
   CapsuleGeometry,
   CatmullRomCurve3,
@@ -27,6 +28,7 @@ import {
   LatheGeometry,
   Matrix4,
   Mesh,
+  MeshBasicMaterial,
   type MeshStandardMaterial,
   type MeshToonMaterial,
   type Object3D,
@@ -41,6 +43,7 @@ import {
 } from 'three'
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { lisere } from './lisere'
+import { couleurContour } from './rendu3d'
 import type { Ombre } from '@/bot/portes'
 import { mixHex } from '@/bot/skins'
 import { COULEURS, EMPLACEMENTS, RETIRES, resoudre, couleursDe, type Emplacement, type Selection } from '@/bot/emplacements'
@@ -1411,6 +1414,36 @@ function construireOrdinateur(c: Ctx, m: MesuresOrdi): Group {
   return og
 }
 
+/** Coque de contour d'une piece : maillage inverse, gonfle le long de normales LISSEES (aucune fente aux aretes vives). */
+interface DonneesCoque {
+  coque: true
+  /** materiau propre a la coque : son epaisseur depend de l'echelle de la piece */
+  ep: { value: number }
+}
+
+/** Geometrie d'une coque : sommets soudes et normales recalculees, pour que le gonflage ne fende pas les aretes. */
+function geometrieCoque(geo: BufferGeometry): BufferGeometry {
+  const g = geo.clone()
+  g.deleteAttribute('normal')
+  g.deleteAttribute('uv')
+  const soude = mergeVertices(g, 1e-3)
+  soude.computeVertexNormals()
+  return soude
+}
+
+function materiauCoque(hex: string, ep: { value: number }): MeshBasicMaterial {
+  const m = new MeshBasicMaterial({ color: couleurContour(hex), side: BackSide })
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uEp = ep
+    sh.vertexShader = sh.vertexShader
+      .replace('void main() {', 'uniform float uEp;\nvoid main() {')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(normal) * uEp;')
+  }
+  // programme partage par toutes les coques (le code est identique, seul l'uniform change)
+  m.customProgramCacheKey = () => 'mochi-coque-accessoire'
+  return m
+}
+
 export class Accessoires3d {
   readonly groupe = new Group()
   private cle = ''
@@ -1463,7 +1496,60 @@ export class Accessoires3d {
   private vide() {
     for (const g of this.geos) g.dispose()
     this.geos = []
-    for (const ch of [...this.groupe.children]) this.groupe.remove(ch)
+    // les coques de l'ordinateur restent avec lui (il est garde d'une reconstruction a l'autre)
+    for (const ch of [...this.groupe.children]) {
+      if (ch !== this.ordiG) this.liberer3(ch)
+      this.groupe.remove(ch)
+    }
+  }
+
+  /** Libere les geometries et materiaux des coques sous `o`. */
+  private liberer3(o: Object3D) {
+    o.traverse((x) => {
+      if ((x.userData as Partial<DonneesCoque>).coque) {
+        const m = x as Mesh
+        m.geometry.dispose()
+        ;(m.material as MeshBasicMaterial).dispose()
+      }
+    })
+  }
+
+  /**
+   * Contour des accessoires : une coque inversee par piece opaque, de la couleur de la piece tres assombrie,
+   * meme epaisseur que celle du corps (`ep`, en unites du moteur) ramenee a l'echelle locale de la piece.
+   * `visible` faux : coques cachees (elles ne sont creees qu'au premier besoin). Appele a chaque image.
+   */
+  contour(visible: boolean, ep: number) {
+    if (!this.groupe.visible) return
+    const aFaire: Mesh[] = []
+    if (visible) {
+      this.groupe.traverse((o) => {
+        const m = o as Mesh
+        if (!m.isMesh || (m.userData as Partial<DonneesCoque>).coque || m.userData.avecCoque) return
+        aFaire.push(m)
+      })
+    }
+    for (const m of aFaire) {
+      m.userData.avecCoque = true
+      const mat = m.material as Materiau
+      // les pieces translucides (verres) n'ont pas de contour
+      if (mat.transparent) continue
+      const ep0 = { value: ep }
+      const c = new Mesh(geometrieCoque(m.geometry), materiauCoque(`#${mat.color.getHexString()}`, ep0))
+      c.userData = { coque: true, ep: ep0 } satisfies DonneesCoque
+      m.add(c)
+    }
+    const racine = this.groupe.parent
+    this.groupe.traverse((o) => {
+      const d = o.userData as Partial<DonneesCoque>
+      if (!d.coque) return
+      o.visible = visible
+      if (!visible) return
+      // echelle locale cumulee de la piece (l'ordinateur gonfle et se replie : le trait ne bouge pas)
+      let k = 1
+      for (let p = o.parent; p && p !== racine; p = p.parent) k *= Math.cbrt(Math.abs(p.scale.x * p.scale.y * p.scale.z)) || 1
+      d.ep!.value = ep / Math.max(1e-4, k)
+    })
   }
 
   /**
@@ -1537,6 +1623,7 @@ export class Accessoires3d {
     if (!this.ordiG || this.ordiCle !== cleO) {
       for (const g of this.ordiGeos) g.dispose()
       this.ordiGeos = []
+      if (this.ordiG) this.liberer3(this.ordiG)
       let m = this.ordiMesures.get(ordi.cle)
       if (!m) {
         m = mesurerOrdi(R, ordi.sol)
@@ -1566,6 +1653,7 @@ export class Accessoires3d {
     this.vide()
     for (const g of this.ordiGeos) g.dispose()
     this.ordiGeos = []
+    if (this.ordiG) this.liberer3(this.ordiG)
     this.ordiG = null
     for (const m of this.matieres.values()) m.dispose()
     this.matieres.clear()

@@ -97,6 +97,11 @@ const props = withDefaults(
     douceur?: Douceur
     /** Contour cartoon de la vraie 3D ; absent, le reglage courant (`contourCourant`). */
     contour?: boolean
+    /**
+     * Epaisseur du contour (facteur : 1 = l'epaisseur de base, 0,4 a 4). S'applique au corps ET aux
+     * accessoires ; sans effet tant que `contour` est faux.
+     */
+    epaisseurContour?: number
     /** Petit reflet doux en haut a gauche de la matiere 3D `doux` (defaut : oui). */
     reflet?: boolean
     /** Ombre portee au sol sous le corps, en 3D (defaut : oui). */
@@ -169,6 +174,7 @@ const props = withDefaults(
     rendu3d: RENDU_3D_DEFAUT,
     douceur: DOUCEUR_DEFAUT,
     contour: undefined,
+    epaisseurContour: 1,
     reflet: true,
     ombre: true,
     ombrage: true,
@@ -493,11 +499,11 @@ const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3
 function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
-  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle(), props.ombre, props.ombrage)
+  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle(), props.ombre, props.ombrage, props.epaisseurContour)
 }
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image
-watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, themeEff, () => props.accessoires, () => props.ombre, () => props.ombrage, () => contourEffectif.value], dessiner3d, { flush: 'post' })
+watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, themeEff, () => props.accessoires, () => props.ombre, () => props.ombrage, () => contourEffectif.value, () => props.epaisseurContour], dessiner3d, { flush: 'post' })
 
 /* ------------------------------------------------------- regard qui suit */
 

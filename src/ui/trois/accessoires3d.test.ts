@@ -541,3 +541,72 @@ describe('accessoires v4 : simples, une ou deux couleurs, personnalisables (Robi
     acc.liberer()
   })
 })
+
+describe('contour des accessoires', () => {
+  const coques = (o: Object3D) => meshes(o).filter((m) => (m.userData as { coque?: boolean }).coque)
+  const pieces = (o: Object3D) => meshes(o).filter((m) => !(m.userData as { coque?: boolean }).coque)
+
+  it('une coque par piece opaque, cachee tant que le contour est coupe', () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ tete: 'haut-de-forme' }, 'c0', mat(), () => R)
+    acc.contour(false, 4)
+    expect(coques(acc.groupe)).toHaveLength(0)
+    acc.contour(true, 4)
+    expect(coques(acc.groupe).length).toBe(pieces(acc.groupe).length)
+    expect(coques(acc.groupe).every((c) => c.visible)).toBe(true)
+    acc.contour(false, 4)
+    expect(coques(acc.groupe).every((c) => !c.visible)).toBe(true)
+    acc.liberer()
+  })
+
+  it('les coques sont des maillages inverses, plus sombres que la piece, aux sommets finis', () => {
+    const { R } = corpsDe('etoile')
+    const acc = new Accessoires3d()
+    acc.maj({ tete: 'casquette', yeux: 'rondes', bas: 'papillon' }, 'c1', mat(), () => R)
+    acc.contour(true, 3)
+    const cs = coques(acc.groupe)
+    expect(cs.length).toBeGreaterThan(3)
+    for (const c of cs) {
+      expect(c.material).toHaveProperty('side', 1) // BackSide
+      const parent = c.parent as Mesh
+      const lum = (m: Mesh) => {
+        const k = (m.material as MeshStandardMaterial).color
+        return k.r + k.g + k.b
+      }
+      expect(lum(c)).toBeLessThanOrEqual(lum(parent) + 1e-6)
+    }
+    expect(sommetsFinis(acc.groupe)).toBe(true)
+    acc.liberer()
+  })
+
+  it("l'epaisseur est celle du corps et suit sa valeur a chaque image", () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    acc.maj({ tete: 'haut-de-forme' }, 'c2', mat(), () => R)
+    acc.contour(true, 2)
+    const ep = () => coques(acc.groupe).map((c) => (c.userData as { ep: { value: number } }).ep.value)
+    const fin = ep()
+    acc.contour(true, 6)
+    const epais = ep()
+    fin.forEach((v, i) => expect(epais[i]! / v).toBeCloseTo(3, 5))
+    expect(Math.min(...fin)).toBeGreaterThan(0)
+    acc.liberer()
+  })
+
+  it("le trait ne depend pas de l'echelle de la piece : l'ordinateur qui se replie garde le meme trait", () => {
+    const { R } = corpsDe('cercle')
+    const acc = new Accessoires3d()
+    const ordi = (k: number) => ({ k, sol: R.bas, cle: 'ordi-cercle' })
+    acc.maj({}, 'c3', mat(), () => R, ordi(1))
+    acc.contour(true, 4)
+    const plein = coques(acc.groupe).map((c) => (c.userData as { ep: { value: number } }).ep.value)
+    expect(plein.length).toBeGreaterThan(0)
+    acc.maj({}, 'c3', mat(), () => R, ordi(0.5))
+    acc.contour(true, 4)
+    const demi = coques(acc.groupe).map((c) => (c.userData as { ep: { value: number } }).ep.value)
+    // la piece est a moitie taille : la valeur locale double, le trait a l'ecran reste le meme
+    demi.forEach((v, i) => expect(v / plein[i]!).toBeCloseTo(2, 5))
+    acc.liberer()
+  })
+})

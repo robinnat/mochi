@@ -25,8 +25,9 @@ const reduit = useReduit()
 const forme = ref('etoile')
 const couleur = ref('violet')
 const rendu = ref<RenduId>('3d')
-const ombrage = ref(true)
 const contour = ref(false)
+/** facteur d'epaisseur du contour (1 = l'epaisseur de base) */
+const epaisseur = ref(1)
 const reflet = ref(true)
 const mood = ref<MoodId>('repos')
 const ordinateur = ref(true)
@@ -68,7 +69,7 @@ const extrait = computed(() =>
     couleur: couleur.value,
     rendu: rendu.value,
     contour: contour.value,
-    ombrage: ombrage.value,
+    epaisseur: epaisseur.value,
     reflet: reflet.value,
     mood: mood.value,
     accessoires: accessoires.value,
@@ -94,7 +95,7 @@ async function copier() {
     <span class="etiquette">Make it yours</span>
     <h2 id="t-play">Everything in one place, with the code</h2>
     <p class="chapo">
-      Shape, colour, style, body shading, outline, mood, accessories with their colours, light or dark, and the laptop for
+      Shape, colour, style, outline and its thickness, mood, accessories with their colours, light or dark, and the laptop for
       the working mood. The preview is the real component, and the code below follows your choices. Copy it into a Vue 3 app.
     </p>
     <div class="duo">
@@ -109,7 +110,7 @@ async function copier() {
               :rendu="rendu"
               :contour="contour"
               :reflet="reflet"
-              :ombrage="ombrage"
+              :epaisseur-contour="epaisseur"
               :mood="mood"
               :ordinateur="ordinateur"
               :accessoires="accessoires"
@@ -131,10 +132,14 @@ async function copier() {
             <button v-for="r in STYLES_SITE" :key="r.id" type="button" class="chip" :aria-pressed="rendu === r.id" @click="rendu = r.id">{{ r.label }}</button>
           </div>
           <div style="margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap">
-            <label class="case"><input v-model="ombrage" type="checkbox" /> Body shading</label>
-            <label v-if="rendu === 'flat3d'" class="case"><input v-model="contour" type="checkbox" /> Outline</label>
+            <label class="case"><input v-model="contour" type="checkbox" /> Outline</label>
             <label v-if="rendu === '3d'" class="case"><input v-model="reflet" type="checkbox" /> Soft highlight</label>
           </div>
+          <label class="epaisseur" :class="{ eteint: !contour }">
+            Outline thickness
+            <input v-model.number="epaisseur" type="range" min="0.5" max="3" step="0.1" :disabled="!contour" aria-label="Outline thickness" />
+            <output>{{ epaisseur.toFixed(1) }}x</output>
+          </label>
         </div>
 
         <div>
@@ -208,6 +213,23 @@ async function copier() {
 </template>
 
 <style scoped>
+.epaisseur {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+.epaisseur input {
+  flex: 1;
+  max-width: 220px;
+  accent-color: var(--accent);
+}
+.epaisseur output {
+  min-width: 2.6em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 .scene.sombre {
   background: #1e1d27;
   border-color: #2f2d3b;

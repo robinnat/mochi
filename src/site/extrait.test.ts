@@ -6,7 +6,6 @@ const base: OptionsExtrait = {
   couleur: 'violet',
   rendu: '3d',
   contour: false,
-  ombrage: true,
   reflet: true,
   mood: 'repos',
   accessoires: {},
@@ -19,17 +18,22 @@ describe('extrait de code de la personnalisation', () => {
     const e = extraitCode(base)
     expect(e).toContain("import MochiBot from './components/MochiBot.vue'")
     expect(e).toContain('<MochiBot\n    shape="etoile"\n    color="violet"\n    mood="repos"\n    :size="260"\n  />')
-    for (const absent of ['rendu=', 'contour', 'ombrage', 'accessoires', 'theme', 'ordinateur']) expect(e).not.toContain(absent)
+    for (const absent of ['rendu=', 'contour', 'ombrage', 'epaisseur', 'accessoires', 'theme', 'ordinateur']) expect(e).not.toContain(absent)
   })
 
-  it('le contour est propre a Flat, le reflet a Soft, l ombrage du corps se coupe', () => {
-    expect(extraitCode({ ...base, rendu: 'flat3d', contour: true })).toContain('    contour')
-    expect(extraitCode({ ...base, contour: true })).not.toContain('contour')
+  it('le contour vaut pour les trois styles, le reflet seulement pour Soft, plus aucun ombrage', () => {
+    for (const rendu of ['3d', 'flat3d', 'pixel3d'] as const) expect(extraitCode({ ...base, rendu, contour: true })).toContain('    contour')
+    expect(extraitCode(base)).not.toContain('ombrage')
     expect(extraitCode({ ...base, reflet: false })).toContain(':reflet="false"')
     expect(extraitCode({ ...base, rendu: 'flat3d', reflet: false })).not.toContain('reflet')
-    expect(extraitCode({ ...base, ombrage: false })).toContain(':ombrage="false"')
     expect(extraitCode({ ...base, rendu: 'pixel3d' })).toContain('rendu="pixel3d"')
     expect(extraitCode({ ...base, rendu: 'pixel3d' })).not.toContain('pixel=')
+  })
+
+  it('l epaisseur du contour est ecrite seulement si elle differe du defaut et si le contour est actif', () => {
+    expect(extraitCode({ ...base, contour: true, epaisseur: 1 })).not.toContain('epaisseur')
+    expect(extraitCode({ ...base, contour: true, epaisseur: 2.5 })).toContain('    :epaisseur-contour="2.5"')
+    expect(extraitCode({ ...base, contour: false, epaisseur: 2.5 })).not.toContain('epaisseur')
   })
 
   it('theme, ordinateur du mood travaille et accessoires avec leurs couleurs', () => {

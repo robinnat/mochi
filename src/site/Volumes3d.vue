@@ -2,8 +2,13 @@
 import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { FORMES_3D } from './catalog'
-import Studio3d from './Studio3d.vue'
-import { STYLES_SITE, contourSite, ombrageSite, refletSite, styleSite } from './style'
+
+/** Les trois styles, dans l'ordre voulu : Soft (le classique), Pixel, Flat. Aucun reglage ici : tout se regle plus bas, dans « Make it yours ». */
+const STYLES: { id: '3d' | 'pixel3d' | 'flat3d'; titre: string }[] = [
+  { id: '3d', titre: '3D Soft' },
+  { id: 'pixel3d', titre: 'Pixel' },
+  { id: 'flat3d', titre: 'Flat' }
+]
 </script>
 
 <template>
@@ -11,40 +16,53 @@ import { STYLES_SITE, contourSite, ombrageSite, refletSite, styleSite } from './
     <span class="etiquette">3D</span>
     <h2 id="t-3d">Real 3D, in three styles</h2>
     <p class="chapo">
-      Eleven shapes, all with a real volume you can look at from any side. The eyes always face you. Turn the model with your finger or mouse, and set how it is drawn: style, body shading and outline. Three.js loads only when you scroll here, and every card
+      Eleven shapes, all with a real volume you can look at from any side. The eyes always face you. Three.js loads only when you scroll here, and every card
       below draws through one shared WebGL context.
     </p>
-    <div class="chips" style="margin-top: 18px" role="group" aria-label="3D style">
-      <button v-for="s in STYLES_SITE" :key="s.id" type="button" class="chip" :aria-pressed="styleSite === s.id" @click="styleSite = s.id">
-        {{ s.label }}
-      </button>
-      <label class="case" style="margin-left: 14px"><input v-model="ombrageSite" type="checkbox" /> Body shading</label>
-      <label class="case" :class="{ eteint: styleSite !== 'flat3d' }" style="margin-left: 14px">
-        <input v-model="contourSite" type="checkbox" :disabled="styleSite !== 'flat3d'" /> Outline<span v-if="styleSite !== 'flat3d'" class="note"> (Flat)</span>
-      </label>
-      <label v-if="styleSite === '3d'" class="case" style="margin-left: 14px"><input v-model="refletSite" type="checkbox" /> Soft highlight</label>
-    </div>
-    <Studio3d />
-    <div class="grille">
-      <figure v-for="f in FORMES_3D" :key="f.id" class="carte">
-        <Lazy garder :largeur="140" :hauteur="140">
-          <MochiBot
-            :size="136"
-            :shape="f.id"
-            :color="f.couleur"
-            :rendu="styleSite"
-            :contour="contourSite"
-            :reflet="refletSite"
-            :ombrage="ombrageSite"
-            :frozen-at="1.2"
-            :label="`${f.label}, 3D`"
-          />
-        </Lazy>
-        <figcaption>{{ f.label }}</figcaption>
-      </figure>
+    <div v-for="s in STYLES" :key="s.id" class="style3d">
+      <h3>{{ s.titre }}</h3>
+      <div class="grille grille-formes">
+        <figure v-for="f in FORMES_3D" :key="f.id" class="carte">
+          <Lazy garder :largeur="80" :hauteur="80">
+            <MochiBot :size="76" :shape="f.id" :color="f.couleur" :rendu="s.id" :frozen-at="1.2" :label="`${f.label}, ${s.titre}`" />
+          </Lazy>
+          <figcaption>{{ f.label }}</figcaption>
+        </figure>
+      </div>
     </div>
     <p class="note" style="margin-top: 12px">
-      Without WebGL there is nothing to turn: the page keeps a still drawing of the mochi.
+      Without WebGL the page keeps a still drawing of each mochi.
     </p>
   </section>
 </template>
+
+<style scoped>
+.style3d {
+  margin-top: 26px;
+}
+.style3d h3 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+.grille-formes {
+  margin-top: 10px;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (min-width: 560px) {
+  .grille-formes {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+@media (min-width: 980px) {
+  .grille-formes {
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+  }
+}
+.grille-formes .carte {
+  padding: 10px 2px 8px;
+}
+.grille-formes .carte figcaption {
+  font-size: 0.74rem;
+}
+</style>

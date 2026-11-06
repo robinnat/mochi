@@ -69,9 +69,9 @@ describe('catalogue des styles', () => {
 })
 
 describe('taille des pixels', () => {
-  it('a trois tailles, la moyenne par defaut', () => {
+  it('a trois tailles, la plus fine par defaut', () => {
     expect(TAILLES_PIXEL.map((p) => p.id)).toEqual(['gros', 'moyen', 'fin'])
-    expect(PIXEL_DEFAUT).toBe('moyen')
+    expect(PIXEL_DEFAUT).toBe('fin')
     expect(estTaillePixel('moyen')).toBe(true)
     expect(estTaillePixel('enorme')).toBe(false)
   })

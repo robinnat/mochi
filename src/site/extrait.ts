@@ -6,8 +6,8 @@ export interface OptionsExtrait {
   couleur: string
   rendu: RenduId
   contour: boolean
-  /** ombrage du volume du corps (Soft, Flat, Pixel) */
-  ombrage: boolean
+  /** epaisseur du contour (facteur, 1 = defaut) ; ecrite seulement si elle differe et si le contour est actif */
+  epaisseur?: number
   reflet: boolean
   mood: string
   /** accessoires par emplacement, avec leurs couleurs */
@@ -42,9 +42,11 @@ export function accessoiresEnCode(sel: Selection): string {
 export function extraitCode(o: OptionsExtrait): string {
   const l = [`    shape="${o.forme}"`, `    color="${o.couleur}"`]
   if (o.rendu !== '3d') l.push(`    rendu="${o.rendu}"`)
-  if (o.rendu === 'flat3d' && o.contour) l.push('    contour')
+  if (o.contour) {
+    l.push('    contour')
+    if (o.epaisseur !== undefined && Math.abs(o.epaisseur - 1) > 1e-6) l.push(`    :epaisseur-contour="${Number(o.epaisseur.toFixed(2))}"`)
+  }
   if (o.rendu === '3d' && !o.reflet) l.push('    :reflet="false"')
-  if (!o.ombrage) l.push('    :ombrage="false"')
   l.push(`    mood="${o.mood}"`)
   if (o.mood === 'travaille' && !o.ordinateur) l.push('    :ordinateur="false"')
   const acc = accessoiresEnCode(o.accessoires)
