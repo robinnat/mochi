@@ -149,6 +149,11 @@ export class Mochi3d {
   }
   private readonly materiaux = new Map<string, Materiau>()
   private readonly rampes: DataTexture[] = []
+  /** accessoires seuls : le corps reste (il ancre les pieces) mais ne se dessine pas */
+  private sansCorps = false
+  setSansCorps(v: boolean) {
+    this.sansCorps = v
+  }
   /** contour fonce (coque inversee), visible seulement en `toon-contour` */
   private readonly coque: Mesh<BufferGeometry, MeshBasicMaterial>
   private rendu: Rendu3d = RENDU_3D_DEFAUT
@@ -349,6 +354,9 @@ export class Mochi3d {
     if (this.rendu === 'toon' || this.rendu === 'toon-contour' || this.rendu === 'pixel') couleur = leverSombre(couleur)
     this.mesh.visible = frame.bodyPath.length > 10 && frame.bodyAlpha > 0.01
     if (!this.mesh.visible) return
+    // corps invisible : la matiere ne se dessine pas, mais ses enfants (accessoires) si ; l'ancrage se fait sur la geometrie
+    ;(this.mesh.material as { visible: boolean }).visible = !this.sansCorps
+    if (this.sansCorps) this.coque.visible = false
     const mat = this.mesh.material
     mat.transparent = frame.bodyAlpha < 1
     mat.opacity = frame.bodyAlpha
@@ -816,7 +824,11 @@ export function rendreAvatar(
   /** modele du volume (ombrage du corps) : oui par defaut ; non = aplat de couleur */
   ombrage = true,
   /** facteur d'epaisseur du contour (1 = l'epaisseur de base) */
-  epaisseurContour = EPAISSEUR_CONTOUR_DEFAUT
+  epaisseurContour = EPAISSEUR_CONTOUR_DEFAUT,
+  /** vrai : le corps n'est pas dessine, seuls les accessoires le sont (ancres sur ce corps invisible) ; pas d'ombre ni de contour */
+  sansCorps = false,
+  /** centre du cadre en unites du moteur (y vers le haut) ; par defaut l'origine. Sert a cadrer serre sur des accessoires seuls. */
+  centre: { x: number; y: number } = { x: 0, y: 0 }
 ) {
   couleur = corpsPourTheme(couleur, theme, contrasteOeil)
   const ctx3 = contexte()
@@ -830,6 +842,7 @@ export function rendreAvatar(
     ctx3.rendu = rendu3d
     ctx3.douceur = douceur
   }
+  mochi.setSansCorps(sansCorps)
   mochi.setOmbrage(ombrage)
   mochi.setRendu(rendu3d, contour, douceur, reflet)
   mochi.setEpaisseurContour(epaisseurContour)
@@ -838,11 +851,11 @@ export function rendreAvatar(
   mochi.setTheme(theme, contrasteOeil)
   mochi.setAccessoires(accessoires)
   mochi.setOrdinateur(ordinateur)
-  if (camera.right !== cadre) {
-    camera.left = -cadre
-    camera.right = cadre
-    camera.top = cadre
-    camera.bottom = -cadre
+  if (camera.right !== centre.x + cadre || camera.left !== centre.x - cadre || camera.top !== centre.y + cadre || camera.bottom !== centre.y - cadre) {
+    camera.left = centre.x - cadre
+    camera.right = centre.x + cadre
+    camera.top = centre.y + cadre
+    camera.bottom = centre.y - cadre
     camera.updateProjectionMatrix()
   }
   // l'instance est partagee : l'angle est remis a chaque image, jamais garde d'un avatar a l'autre
@@ -877,7 +890,7 @@ export function rendreAvatar(
     return
   }
   const k = px / (2 * cadre)
-  if (ombre) {
+  if (ombre && !sansCorps) {
     // ombre au sol : ellipse sous le point le plus bas, couleur de l'argile
     const bas = -mochi.bas
     const box = mochi.mesh.geometry.boundingSphere

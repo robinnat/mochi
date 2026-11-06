@@ -119,7 +119,8 @@ describe('ancrage sur les 12 formes', () => {
     const { R } = corpsDe(forme)
     expect(R.tete.R).toBeGreaterThan(5)
     expect(R.tete.rz).toBeGreaterThan(3)
-    expect(R.tete.y).toBeLessThanOrEqual(R.haut)
+    // sommet creuse (coeur) : la coiffe repose sur les bosses, a 5 % de son rayon au-dessus du haut
+    expect(R.tete.y).toBeLessThanOrEqual(R.haut + 0.05 * R.tete.R + 1e-6)
     expect(R.tete.y).toBeGreaterThan(R.bas + 0.3 * R.H)
     expect(R.yBas).toBeLessThan(R.yYeux)
     expect(R.yBas).toBeGreaterThan(R.bas)
@@ -608,5 +609,76 @@ describe('contour des accessoires', () => {
     // la piece est a moitie taille : la valeur locale double, le trait a l'ecran reste le meme
     demi.forEach((v, i) => expect(v / plein[i]!).toBeCloseTo(2, 5))
     acc.liberer()
+  })
+})
+
+describe('coeur : les chapeaux reposent SUR les deux bosses, sans s enfoncer dans le creux (Robin, 06/11/2026)', () => {
+  /** Hauteur du plus haut point du corps sous l'emprise de la coiffe (le dessus des deux bosses). */
+  const hautDesBosses = (R: Reperes) => {
+    let y = -Infinity
+    for (let k = -8; k <= 8; k++) {
+      const h = R.A.dessus((k / 8) * 0.6 * R.hw, R.zc)
+      if (h) y = Math.max(y, h.p.y)
+    }
+    return y
+  }
+  const COIFFES = ['haut-de-forme', 'couronne', 'paille', 'beret', 'toque']
+
+  it('le coeur a bien un creux en haut (le milieu est nettement plus bas que les bosses), pas le cercle', () => {
+    const c = corpsDe('coeur').R
+    const m = c.A.dessus(0, c.zc)!
+    expect(c.haut - m.p.y).toBeGreaterThan(0.05 * c.H)
+    const r = corpsDe('cercle').R
+    expect(r.haut - r.A.dessus(0, r.zc)!.p.y).toBeLessThan(0.05 * r.H)
+  })
+
+  it('l assise est sur le haut des bosses : ni dans le creux, ni en l air', () => {
+    const { R } = corpsDe('coeur')
+    const h = hautDesBosses(R)
+    expect(R.tete.y).toBeGreaterThanOrEqual(h - 0.01 * R.H)
+    expect(R.tete.y).toBeLessThanOrEqual(h + 0.1 * R.tete.R)
+    expect(R.tete.cx).toBe(0)
+    expect(R.tete.R).toBeGreaterThan(30)
+    expect(R.tete.rz).toBeGreaterThan(R.tete.R * 0.7 - 1e-6)
+  })
+
+  it.each(COIFFES)('%s : la coiffe est posee a la hauteur des bosses, pas dans le creux', (id) => {
+    const { R } = corpsDe('coeur')
+    const acc = new Accessoires3d()
+    acc.maj({ tete: id } as Selection, 'coeur', mat(), () => R)
+    acc.groupe.updateMatrixWorld(true)
+    // le repere de la coiffe : le groupe mis a l'echelle du rayon d'assise
+    let origine: Object3D | null = null
+    acc.groupe.traverse((o) => {
+      if (!origine && Math.abs(o.scale.x - R.tete.R * 1.18) < 1e-3) origine = o
+    })
+    expect(origine, id).not.toBeNull()
+    const h = hautDesBosses(R)
+    const y = (origine as unknown as Object3D).position.y
+    // sa base (un peu sous l'origine) touche le haut des bosses : avant la correction elle etait ~0,17 H plus bas, dans le creux
+    expect(y, id).toBeGreaterThanOrEqual(h - 0.08 * R.tete.R)
+    expect(y, id).toBeLessThanOrEqual(h + 0.05 * R.tete.R)
+    // et l'ensemble depasse bien du haut du corps
+    expect(new Box3().setFromObject(acc.groupe).max.y, id).toBeGreaterThan(R.haut)
+    acc.liberer()
+  })
+
+  it('casquette, casque, ruban, fleur, antenne : se construisent sur le coeur, sommets finis, au-dessus du creux', () => {
+    const { R } = corpsDe('coeur')
+    for (const id of ['casquette', 'casque', 'ruban', 'fleur', 'antenne']) {
+      const acc = new Accessoires3d()
+      acc.maj({ tete: id } as Selection, 'coeur', mat(), () => R)
+      expect(sommetsFinis(acc.groupe), id).toBe(true)
+      const box = new Box3().setFromObject(acc.groupe)
+      expect(box.max.y, id).toBeGreaterThan(R.haut - 0.02 * R.H)
+      acc.liberer()
+    }
+  })
+
+  it('les autres formes gardent leur assise (le creux ne change rien au cercle, a l etoile, au nuage)', () => {
+    for (const f of ['cercle', 'etoile', 'nuage', 'oeuf']) {
+      const { R } = corpsDe(f)
+      expect(R.tete.y, f).toBeLessThanOrEqual(R.haut)
+    }
   })
 })

@@ -1478,6 +1478,8 @@ export class Accessoires3d {
     let m = this.matieres.get(cle)
     if (!m) {
       m = base.clone() as Materiau
+      // le corps peut etre invisible (accessoires seuls) : ses copies, elles, se dessinent toujours
+      m.visible = true
       m.map = null
       m.emissiveMap = null
       m.emissive.set(0x000000)

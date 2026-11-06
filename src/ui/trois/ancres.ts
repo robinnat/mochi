@@ -173,6 +173,29 @@ function assise(A: Ancres, hw: number, haut: number, H: number, zc: number) {
     const s = A.section(y) ?? { x0: -R, x1: R, zf: zc + R, zb: zc - R }
     best = { y, ...s }
   }
+  // Sommet creuse (le coeur : deux bosses et un creux) : la section du milieu est vide ou plus basse que les bosses, la
+  // coiffe se serait assise DANS le creux, enfoncee dans les bosses. Elle repose sur le haut des deux bosses.
+  const milieu = A.dessus(0, zc)
+  if (milieu && haut - milieu.p.y > 0.05 * H) {
+    let ymax = -Infinity
+    let xPic = 0
+    for (let k = -8; k <= 8; k++) {
+      const h = A.dessus((k / 8) * R, zc)
+      if (h && h.p.y > ymax) {
+        ymax = h.p.y
+        xPic = h.p.x
+      }
+    }
+    const yMesure = ymax - 0.1 * H
+    const g = A.cote(yMesure, zc, -1)
+    const d = A.cote(yMesure, zc, 1)
+    const f = A.avant(xPic, yMesure)
+    const b = A.arriere(xPic, yMesure)
+    const xr = g && d ? (d.p.x - g.p.x) / 2 : hw
+    const zr = f && b ? (f.p.z - b.p.z) / 2 : R
+    const Rr = Math.min(R, xr * 0.98)
+    return { cx: 0, y: ymax + 0.05 * Rr, zc, R: Rr, rz: Math.min(Math.max(zr, Rr * 0.7), Rr * 1.1) }
+  }
   const xr = Math.max(1, (best.x1 - best.x0) / 2)
   const zr = Math.max(1, (best.zf - best.zb) / 2)
   // rayon de coiffe : jamais plus large que le corps a cette hauteur
