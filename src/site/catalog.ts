@@ -128,19 +128,43 @@ export const PORTE_LABEL: Record<PorteId, string> = {
 export const PORTE_IDS_SITE: PorteId[] = ['lunettes', 'haut-de-forme', 'noeud']
 export const PORTE_IDS_ENGINE = PORTE_IDS
 
-/** Nom de la forme 3D tel qu'on la voit : le moteur n'a qu'un profil par forme. */
+/**
+ * Palette des exemples du site : 16 teintes distinctes, pastel et vives, toutes lisibles sur le fond clair
+ * ET sur le fond sombre de la page (aucune quasi-blanche ni quasi-noire ; `catalog.test.ts` le verifie).
+ */
+export const PALETTE_SITE: { nom: string; hex: string }[] = [
+  { nom: 'Violet', hex: '#8b5cf6' },
+  { nom: 'Pink', hex: '#f472b6' },
+  { nom: 'Teal', hex: '#2dd4bf' },
+  { nom: 'Amber', hex: '#f5b53d' },
+  { nom: 'Blue', hex: '#4f9cf5' },
+  { nom: 'Green', hex: '#34d399' },
+  { nom: 'Orange', hex: '#fb923c' },
+  { nom: 'Cyan', hex: '#22c5e6' },
+  { nom: 'Lemon', hex: '#f2d43a' },
+  { nom: 'Coral', hex: '#fb7185' },
+  { nom: 'Lavender', hex: '#b39cf7' },
+  { nom: 'Red', hex: '#ef4a4a' },
+  { nom: 'Lime', hex: '#a3d93b' },
+  { nom: 'Indigo', hex: '#6674f0' },
+  { nom: 'Magenta', hex: '#d946ef' },
+  { nom: 'Peach', hex: '#fdb98a' }
+]
+
+/** Les formes 3D du site, chacune avec SA couleur (12 formes, 12 teintes differentes de la palette). */
 export const FORMES_3D: { id: string; label: string; couleur: string }[] = [
-  { id: 'cercle', label: 'Circle', couleur: 'violet' },
-  { id: 'galet', label: 'Pebble', couleur: 'rose' },
-  { id: 'squircle', label: 'Squircle', couleur: 'turquoise' },
-  { id: 'capsule', label: 'Capsule', couleur: 'ambre' },
-  { id: 'triangle', label: 'Triangle', couleur: 'bleu' },
-  { id: 'hexagone', label: 'Hexagon', couleur: 'vert' },
-  { id: 'nuage', label: 'Cloud', couleur: 'orange' },
-  { id: 'goutte', label: 'Droplet', couleur: 'bleu' },
-  { id: 'etoile', label: 'Star', couleur: 'ambre' },
-  { id: 'fleur', label: 'Flower', couleur: 'rose' },
-  { id: 'oeuf', label: 'Egg', couleur: 'violet' }
+  { id: 'cercle', label: 'Circle', couleur: '#8b5cf6' },
+  { id: 'galet', label: 'Pebble', couleur: '#f472b6' },
+  { id: 'squircle', label: 'Squircle', couleur: '#2dd4bf' },
+  { id: 'capsule', label: 'Capsule', couleur: '#f5b53d' },
+  { id: 'triangle', label: 'Triangle', couleur: '#4f9cf5' },
+  { id: 'hexagone', label: 'Hexagon', couleur: '#34d399' },
+  { id: 'nuage', label: 'Cloud', couleur: '#fb923c' },
+  { id: 'goutte', label: 'Droplet', couleur: '#22c5e6' },
+  { id: 'etoile', label: 'Star', couleur: '#f2d43a' },
+  { id: 'fleur', label: 'Flower', couleur: '#fb7185' },
+  { id: 'oeuf', label: 'Egg', couleur: '#b39cf7' },
+  { id: 'coeur', label: 'Heart', couleur: '#ef4a4a' }
 ]
 
 /* ------------------------------------------------------------------ humeurs, interactions, accessoires par emplacements */

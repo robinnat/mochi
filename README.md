@@ -150,7 +150,8 @@ const frame = engine.sample(t, geste?) // pure: bodyPath, eyes, arcs, dots, noti
 
 `<MochiBot>` props: `size`, `shape`, `color`, `paper`, `frozenAt`, `follow`, `rendu`, `pixel`,
 `rendu3d`, `douceur`, `contour`, `reflet`, `yaw`, `theme`, `mood`, `interactions`, `coucou`,
-`ordinateur`, `accessoires`, `fps`, `label`. See
+`ordinateur`, `accessoires`, `fps`, `label`. `color` is a catalogue id (`violet`) or any hex
+(`#ff8800`, `#f80`). Twelve shapes, heart included. See
 [MochiBot.vue](src/components/MochiBot.vue).
 
 ## Why the numbers look arbitrary

@@ -21,7 +21,7 @@ import { champDeRepos, contourDuCorps, gonfler, lireMatrice, profilDe } from './
 
 /**
  * Accessoires par emplacements : le catalogue est complet, chaque accessoire se construit sur les
- * 11 formes (ancrage calcule sur le volume, pas en dur), et tous les emplacements se cumulent.
+ * 12 formes (ancrage calcule sur le volume, pas en dur), et tous les emplacements se cumulent.
  */
 
 /** Le volume 3D d'une forme, comme `Mochi3d` le remplit (y vers le haut), et ses reperes. */
@@ -110,9 +110,9 @@ describe('catalogue', () => {
   })
 })
 
-describe('ancrage sur les 11 formes', () => {
-  it('il y a bien 11 formes', () => {
-    expect(FORMES).toHaveLength(11)
+describe('ancrage sur les 12 formes', () => {
+  it('il y a bien 12 formes', () => {
+    expect(FORMES).toHaveLength(12)
   })
 
   it.each(FORMES)('%s : assise de coiffe dans le corps, cou sous les yeux', (forme) => {

@@ -9,7 +9,7 @@ import {
   EXPRESSION_BY_ID
 } from '@/bot/expressions'
 import {
-  COLOR_BY_ID,
+  couleurDe,
   DEFAULT_COLOR,
   DEFAULT_SHAPE,
   SHAPE_BY_ID,
@@ -45,7 +45,7 @@ const props = withDefaults(
     size?: number
     /** identifiant de forme du personnalisateur */
     shape?: string
-    /** identifiant de couleur du personnalisateur */
+    /** identifiant de couleur du personnalisateur, ou une couleur libre en hex (`#ff8800`, `#f80`) */
     color?: string
     /** identifiant d'expression de repos du personnalisateur */
     expression?: string
@@ -210,7 +210,7 @@ const R = RAYON
 const VB = DEMI_VIEWBOX
 
 const shapeRadii = computed(() => SHAPE_BY_ID.get(props.shape)?.radii ?? null)
-const ink = computed(() => COLOR_BY_ID.get(props.color)?.hex ?? '#0a0a0c')
+const ink = computed(() => couleurDe(props.color))
 const expression = computed(() => EXPRESSION_BY_ID.get(props.expression) ?? null)
 
 /* ------------------------------------------------------------- style de rendu */

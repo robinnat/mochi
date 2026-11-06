@@ -153,7 +153,8 @@ const zh: typeof fr = {
     goutte: '水滴',
     etoile: '星星',
     fleur: '花朵',
-    oeuf: '鸡蛋'
+    oeuf: '鸡蛋',
+    coeur: '爱心'
   },
 
   colors: {

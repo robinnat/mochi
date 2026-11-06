@@ -5,10 +5,12 @@ export interface OptionsExtrait {
   forme: string
   couleur: string
   rendu: RenduId
-  contour: boolean
+  /** contour : options du PAQUET, plus exposees sur le site (06/11/2026) ; absent = pas de contour */
+  contour?: boolean
   /** epaisseur du contour (facteur, 1 = defaut) ; ecrite seulement si elle differe et si le contour est actif */
   epaisseur?: number
-  reflet: boolean
+  /** reflet doux du 3D Soft : actif de base, `false` seulement pour le code qui le coupe */
+  reflet?: boolean
   mood: string
   /** accessoires par emplacement, avec leurs couleurs */
   accessoires: Selection
@@ -46,7 +48,7 @@ export function extraitCode(o: OptionsExtrait): string {
     l.push('    contour')
     if (o.epaisseur !== undefined && Math.abs(o.epaisseur - 1) > 1e-6) l.push(`    :epaisseur-contour="${Number(o.epaisseur.toFixed(2))}"`)
   }
-  if (o.rendu === '3d' && !o.reflet) l.push('    :reflet="false"')
+  if (o.rendu === '3d' && o.reflet === false) l.push('    :reflet="false"')
   l.push(`    mood="${o.mood}"`)
   if (o.mood === 'travaille' && !o.ordinateur) l.push('    :ordinateur="false"')
   const acc = accessoiresEnCode(o.accessoires)

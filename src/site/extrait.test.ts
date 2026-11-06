@@ -56,4 +56,13 @@ describe('extrait de code de la personnalisation', () => {
     expect(accessoiresEnCode({})).toBe('')
     expect(accessoiresEnCode({ bas: 'papillon', dos: 'cape' })).toBe("{ bas: 'papillon', dos: 'cape' }")
   })
+
+  it('couleur libre : le code ecrit l hex choisi, sans contour ni reflet quand le site ne les passe pas', () => {
+    const libre: OptionsExtrait = { forme: 'coeur', couleur: '#ff8800', rendu: 'pixel3d', mood: 'repos', accessoires: {}, theme: 'auto', ordinateur: true }
+    const e = extraitCode(libre)
+    expect(e).toContain('color="#ff8800"')
+    expect(e).toContain('shape="coeur"')
+    for (const absent of ['contour', 'epaisseur', 'reflet']) expect(e).not.toContain(absent)
+    expect(extraitCode({ ...libre, rendu: '3d' })).not.toContain('reflet')
+  })
 })

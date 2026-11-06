@@ -13,7 +13,7 @@ const yeuxDe = (f: ReturnType<typeof image>) =>
     return { x: m[4], y: m[5] }
   })
 
-const FORMES = ['cercle', 'etoile', 'nuage', 'fleur', 'goutte']
+const FORMES = ['cercle', 'etoile', 'nuage', 'fleur', 'goutte', 'coeur']
 
 describe('reflet doux', () => {
   it('est actif par defaut', () => {

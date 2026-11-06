@@ -150,7 +150,8 @@ const en: typeof fr = {
     goutte: 'Droplet',
     etoile: 'Star',
     fleur: 'Flower',
-    oeuf: 'Egg'
+    oeuf: 'Egg',
+    coeur: 'Heart'
   },
 
   colors: {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { BotEngine, type RenderedEye } from './engine'
 import { decalageDesYeux, POUR_TESTS } from './eyefit'
 import { EXPRESSIONS } from './expressions'
-import { DEFAULT_SHAPE, SHAPES, SHAPE_BY_ID } from './skins'
+import { DEFAULT_SHAPE, SHAPES, SHAPE_BY_ID, couleurDe, hexValide } from './skins'
 import { STATES, type StateId } from './states'
 
 /**
@@ -321,5 +321,20 @@ describe('formes du personnalisateur', () => {
     const t = performance.now()
     POUR_TESTS.batir()
     expect(performance.now() - t).toBeLessThan(200)
+  })
+})
+
+describe('couleur libre (hex) du corps', () => {
+  it('hexValide accepte #rgb et #rrggbb, avec ou sans diese, et normalise en minuscules', () => {
+    expect(hexValide('#FF8800')).toBe('#ff8800')
+    expect(hexValide('f80')).toBe('#ff8800')
+    expect(hexValide(' #AbC ')).toBe('#aabbcc')
+    for (const mauvais of ['', '#12', '#12345', '#1234567', 'rouge', '#ggg', null, undefined]) expect(hexValide(mauvais as string)).toBeNull()
+  })
+  it('couleurDe : un id du catalogue, sinon un hex libre, sinon l encre', () => {
+    expect(couleurDe('violet')).toBe('#8b5cf6')
+    expect(couleurDe('#ff8800')).toBe('#ff8800')
+    expect(couleurDe('#f80')).toBe('#ff8800')
+    expect(couleurDe('nimporte')).toBe('#0a0a0c')
   })
 })

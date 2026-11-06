@@ -175,7 +175,8 @@ export default {
     goutte: 'Goutte',
     etoile: 'Étoile',
     fleur: 'Fleur',
-    oeuf: 'Œuf'
+    oeuf: 'Œuf',
+    coeur: 'Cœur'
   },
 
   colors: {

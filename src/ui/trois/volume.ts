@@ -172,6 +172,8 @@ export const PROFILS: Record<string, ProfilVolume> = {
   etoile: { profondeur: 0.85, arrondi: 0.98, arriere: 1, coussin: true },
   // fleur : cinq petales ronds extrudes, meme biseau
   fleur: { profondeur: 0.85, arrondi: 0.98, arriere: 1, coussin: true },
+  // coeur : coussin bombe, creux en haut et pointe douce en bas
+  coeur: { profondeur: 0.85, arrondi: 0.98, arriere: 1, coussin: true },
   // nuage : coussin bombe, valide tel quel
   nuage: { profondeur: 1, arrondi: 1, arriere: 1, coussin: true }
 }

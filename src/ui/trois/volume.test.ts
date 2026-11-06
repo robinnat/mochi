@@ -174,7 +174,7 @@ describe('gonflage', () => {
       zmin = Math.min(zmin, v.positions[i + 2]!)
       zmax = Math.max(zmax, v.positions[i + 2]!)
     }
-    expect((zmax - zmin) / Math.min(x1 - x0, y1 - y0)).toBeGreaterThanOrEqual(['etoile', 'fleur', 'hexagone'].includes(id) ? 0.4 : 0.6)
+    expect((zmax - zmin) / Math.min(x1 - x0, y1 - y0)).toBeGreaterThanOrEqual(['etoile', 'fleur', 'hexagone', 'coeur'].includes(id) ? 0.4 : 0.6)
   })
 
   it('la hauteur ne depend que de la distance au bord : raccord au mur, plateau plat', () => {
@@ -295,7 +295,7 @@ describe('pyramide', () => {
 describe('gonflage coussin', () => {
   const contour = (id: string) => contourDuCorps(image(id).bodyPath)
 
-  it.each(['etoile', 'hexagone', 'nuage', 'fleur'])('%s : champ lisse, nul dehors, maximal a l interieur', (id) => {
+  it.each(['etoile', 'hexagone', 'nuage', 'fleur', 'coeur'])('%s : champ lisse, nul dehors, maximal a l interieur', (id) => {
     const pts = contour(id)
     const champ = champCoussin(pts, `test:${id}`)
     let cx = 0
@@ -332,7 +332,7 @@ describe('gonflage coussin', () => {
   })
 
   it("le volume d'une forme coussin a le meme nombre de sommets et reste ferme", () => {
-    for (const id of ['etoile', 'hexagone', 'nuage', 'fleur']) {
+    for (const id of ['etoile', 'hexagone', 'nuage', 'fleur', 'coeur']) {
       const v = gonfler(contour(id), DEMI_VIEWBOX, undefined, undefined, profilDe(id))
       expect(v.positions.every(Number.isFinite)).toBe(true)
       let zmax = 0

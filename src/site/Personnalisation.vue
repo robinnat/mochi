@@ -14,6 +14,7 @@ import {
   SHAPE_LABEL,
   hexDe
 } from './catalog'
+import { couleurDe, hexValide } from '@/bot/skins'
 import { COULEURS, type Emplacement, type Selection } from '@/bot/emplacements'
 import type { RenduId } from '@/ui/rendu'
 import type { MoodId } from '@/bot/humeurs'
@@ -23,12 +24,22 @@ import { extraitCode } from './extrait'
 const reduit = useReduit()
 
 const forme = ref('etoile')
+/** un id du catalogue (`violet`) ou une couleur libre en hex (`#ff8800`) */
 const couleur = ref('violet')
+/** texte du champ hex : suit la couleur, mais se laisse taper (valide seulement quand c'est un hex) */
+const texteHex = ref(couleurDe('violet'))
+const hexCourant = computed(() => couleurDe(couleur.value))
+function poserCouleur(c: string) {
+  couleur.value = c
+  texteHex.value = couleurDe(c)
+}
+function saisirHex(v: string) {
+  texteHex.value = v
+  const h = hexValide(v)
+  if (h) couleur.value = h
+}
+const nomCouleur = computed(() => COLOR_LABEL[couleur.value] ?? hexCourant.value.toUpperCase())
 const rendu = ref<RenduId>('3d')
-const contour = ref(false)
-/** facteur d'epaisseur du contour (1 = l'epaisseur de base) */
-const epaisseur = ref(1)
-const reflet = ref(true)
 const mood = ref<MoodId>('repos')
 const ordinateur = ref(true)
 const theme = ref<'auto' | 'light' | 'dark'>('auto')
@@ -68,9 +79,6 @@ const extrait = computed(() =>
     forme: forme.value,
     couleur: couleur.value,
     rendu: rendu.value,
-    contour: contour.value,
-    epaisseur: epaisseur.value,
-    reflet: reflet.value,
     mood: mood.value,
     accessoires: accessoires.value,
     theme: theme.value,
@@ -95,7 +103,7 @@ async function copier() {
     <span class="etiquette">Make it yours</span>
     <h2 id="t-play">Everything in one place, with the code</h2>
     <p class="chapo">
-      Shape, colour, style, outline and its thickness, mood, accessories with their colours, light or dark, and the laptop for
+      Shape, colour (a swatch or any colour you pick), style, mood, accessories with their colours, light or dark, and the laptop for
       the working mood. The preview is the real component, and the code below follows your choices. Copy it into a Vue 3 app.
     </p>
     <div class="duo">
@@ -108,9 +116,7 @@ async function copier() {
               :shape="forme"
               :color="couleur"
               :rendu="rendu"
-              :contour="contour"
-              :reflet="reflet"
-              :epaisseur-contour="epaisseur"
+              :contour="false"
               :mood="mood"
               :ordinateur="ordinateur"
               :accessoires="accessoires"
@@ -131,15 +137,6 @@ async function copier() {
           <div class="chips" role="group" aria-label="Render style">
             <button v-for="r in STYLES_SITE" :key="r.id" type="button" class="chip" :aria-pressed="rendu === r.id" @click="rendu = r.id">{{ r.label }}</button>
           </div>
-          <div style="margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap">
-            <label class="case"><input v-model="contour" type="checkbox" /> Outline</label>
-            <label v-if="rendu === '3d'" class="case"><input v-model="reflet" type="checkbox" /> Soft highlight</label>
-          </div>
-          <label class="epaisseur" :class="{ eteint: !contour }">
-            Outline thickness
-            <input v-model.number="epaisseur" type="range" min="0.5" max="3" step="0.1" :disabled="!contour" aria-label="Outline thickness" />
-            <output>{{ epaisseur.toFixed(1) }}x</output>
-          </label>
         </div>
 
         <div>
@@ -150,9 +147,30 @@ async function copier() {
         </div>
 
         <div>
-          <h3>Colour: {{ COLOR_LABEL[couleur] }}</h3>
+          <h3>Colour: {{ nomCouleur }}</h3>
           <div class="pastilles" role="group" aria-label="Colour">
-            <button v-for="id in COULEUR_IDS" :key="id" type="button" class="pastille" :style="{ background: hexDe(id) }" :aria-label="COLOR_LABEL[id]" :aria-pressed="couleur === id" @click="couleur = id" />
+            <button v-for="id in COULEUR_IDS" :key="id" type="button" class="pastille" :style="{ background: hexDe(id) }" :aria-label="COLOR_LABEL[id]" :aria-pressed="couleur === id" @click="poserCouleur(id)" />
+          </div>
+          <div class="libre">
+            <label class="libre-choix">
+              <input type="color" :value="hexCourant" aria-label="Pick any colour" @input="poserCouleur(($event.target as HTMLInputElement).value)" />
+              <span>Pick any colour</span>
+            </label>
+            <label class="libre-hex">
+              <span class="visuel-cache">Hex code</span>
+              <input
+                type="text"
+                :value="texteHex"
+                maxlength="7"
+                spellcheck="false"
+                autocomplete="off"
+                inputmode="text"
+                aria-label="Hex colour code"
+                :aria-invalid="hexValide(texteHex) ? 'false' : 'true'"
+                @input="saisirHex(($event.target as HTMLInputElement).value)"
+                @blur="texteHex = hexCourant"
+              />
+            </label>
           </div>
         </div>
 
@@ -213,22 +231,52 @@ async function copier() {
 </template>
 
 <style scoped>
-.epaisseur {
+.libre {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-top: 12px;
+}
+.libre-choix {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.9rem;
+  cursor: pointer;
 }
-.epaisseur input {
-  flex: 1;
-  max-width: 220px;
-  accent-color: var(--accent);
+.libre-choix input[type='color'] {
+  width: 38px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
 }
-.epaisseur output {
-  min-width: 2.6em;
-  color: var(--muted);
+.libre-hex input {
+  width: 6.4em;
+  height: 30px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
+  text-transform: lowercase;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.libre-hex input[aria-invalid='true'] {
+  border-color: #e0524f;
+}
+.visuel-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .scene.sombre {
   background: #1e1d27;

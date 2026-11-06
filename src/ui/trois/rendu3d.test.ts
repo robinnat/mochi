@@ -119,7 +119,7 @@ describe('maillage grossier (lowpoly)', () => {
       1
     )
 
-  it.each(['cercle', 'etoile', 'nuage', 'fleur', 'goutte'])('%s : volume ferme, bien moins de sommets', (id) => {
+  it.each(['cercle', 'etoile', 'nuage', 'fleur', 'goutte', 'coeur'])('%s : volume ferme, bien moins de sommets', (id) => {
     const p = reduire(pts(id), reglagePlat('lowpoly')!.reduction)
     const fin = gonfler(pts(id), VB_TEST)
     const gros = gonfler(p, VB_TEST, undefined, finesseDe('lowpoly'))
