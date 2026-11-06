@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import MochiBot from '@/components/MochiBot.vue'
-import Lazy from './Lazy.vue'
+import Vivant from './Vivant.vue'
+import { MOODS_BOT } from './affiches'
 import { useReduit } from './reduced'
 import { useVisible } from './motion'
 import { HUMEURS_SITE } from './catalog'
@@ -57,19 +57,16 @@ function choisir(i: number) {
         </ul>
       </div>
       <div v-reveal="2" class="moods-scene">
-        <Lazy :largeur="330" :hauteur="330">
-          <MochiBot
-            :key="'m' + reduit"
-            :size="320"
-            shape="squircle"
-            color="#2dd4bf"
-            rendu="3d"
-            :mood="humeur.id"
-            :frozen-at="reduit ? 1 : undefined"
-            :interactions="false"
-            :label="'A teal Mochi in the mood: ' + humeur.label"
-          />
-        </Lazy>
+        <Vivant
+          :key="'m' + reduit"
+          :taille="320"
+          affiche="moods"
+          v-bind="MOODS_BOT"
+          :mood="humeur.id"
+          :frozen-at="reduit ? 0 : undefined"
+          :interactions="false"
+          :alt="'A teal Mochi in the mood: ' + humeur.label"
+        />
         <p class="moods-legende" aria-live="polite"><strong>{{ humeur.label }}.</strong> {{ humeur.texte }}</p>
       </div>
     </div>

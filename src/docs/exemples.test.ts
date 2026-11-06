@@ -36,7 +36,11 @@ describe('docs : tout vient de la vraie API', () => {
     const attrs = new Set<string>()
     for (const [, code] of tousLesExemples) {
       for (const balise of code.matchAll(/<MochiBot\b([\s\S]*?)\/>/g)) {
-        for (const m of balise[1]!.matchAll(/(?:^|\s)[:@]?([a-z][a-z-]*)(?==|\s|$)/g)) attrs.add(m[1]!)
+        for (const m of balise[1]!.matchAll(/(?:^|\s)([:@]?)([a-z][a-z-]*)(?==|\s|$)/g)) {
+          // un evenement (@pret) doit etre declare par defineEmits, pas par defineProps
+          if (m[1] === '@') expect(mochiBot, m[2]).toMatch(new RegExp(`defineEmits<\\{[^}]*\\b${m[2]}:`))
+          else attrs.add(m[2]!)
+        }
       }
     }
     expect(attrs.size).toBeGreaterThan(10)

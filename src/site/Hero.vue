@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import MochiBot from '@/components/MochiBot.vue'
-import Lazy from './Lazy.vue'
+import Affiche from './Affiche.vue'
+import Vivant from './Vivant.vue'
+import { HERO, SATELLITES as SAT } from './affiches'
 import { useReduit } from './reduced'
 import { useDefilement, useLargeur, usePointeur } from './motion'
 import { CHIFFRES } from './catalog'
@@ -9,7 +10,8 @@ import { CHIFFRES } from './catalog'
 const reduit = useReduit()
 const racine = ref<HTMLElement | null>(null)
 const scene = ref<HTMLElement | null>(null)
-const bot = ref<InstanceType<typeof MochiBot> | null>(null)
+const vivant = ref<InstanceType<typeof Vivant> | null>(null)
+const regarder = (c: { nx: number; ny: number } | null) => vivant.value?.bot?.regarder?.(c)
 const largeur = useLargeur()
 /** Le grand Mochi : 400 px sur grand ecran, 240 sur telephone (taille en pixels, le rendu 3D suit). */
 const taille = computed(() => (largeur.value >= 1100 ? 400 : largeur.value >= 700 ? 330 : 240))
@@ -29,9 +31,9 @@ function onMove(e: PointerEvent) {
   if (r.bottom < 0) return
   const nx = (e.clientX - (r.left + r.width / 2)) / (window.innerWidth * 0.32)
   const ny = (e.clientY - (r.top + r.height / 2)) / (window.innerHeight * 0.4)
-  bot.value?.regarder({ nx: Math.max(-1, Math.min(1, nx)), ny: Math.max(-1, Math.min(1, ny)) })
+  regarder({ nx: Math.max(-1, Math.min(1, nx)), ny: Math.max(-1, Math.min(1, ny)) })
 }
-const onLeave = () => bot.value?.regarder(null)
+const onLeave = () => regarder(null)
 onMounted(() => {
   if (reduit.value) return
   window.addEventListener('pointermove', onMove, { passive: true })
@@ -43,21 +45,18 @@ onBeforeUnmount(() => {
 })
 
 /** Petits Mochi autour du grand : images figees (un seul rendu chacun), qui flottent en CSS. */
-const SATELLITES = [
-  { forme: 'etoile', couleur: '#f5b53d', taille: 92, x: '4%', y: '6%', p: 1.4, d: 0 },
-  { forme: 'nuage', couleur: '#f472b6', taille: 78, x: '80%', y: '2%', p: 2.2, d: 1.1 },
-  { forme: 'fleur', couleur: '#2dd4bf', taille: 70, x: '86%', y: '70%', p: 1.1, d: 0.5 },
-  { forme: 'goutte', couleur: '#4f9cf5', taille: 64, x: '0%', y: '74%', p: 1.8, d: 1.6 }
+const PLACES = [
+  { x: '4%', y: '6%', p: 1.4, d: 0 },
+  { x: '80%', y: '2%', p: 2.2, d: 1.1 },
+  { x: '84%', y: '70%', p: 1.1, d: 0.5 },
+  { x: '0%', y: '74%', p: 1.8, d: 1.6 }
 ]
+const SATELLITES = SAT.map((s, i) => ({ ...s, ...PLACES[i]! }))
 </script>
 
 <template>
   <header id="top" ref="racine" class="hero">
-    <div class="hero-fond" aria-hidden="true">
-      <span class="blob b1" />
-      <span class="blob b2" />
-      <span class="blob b3" />
-    </div>
+    <div class="hero-fond" aria-hidden="true" />
     <div class="hero-in">
       <div class="hero-texte">
         <p class="hero-badge rv-load" style="--d: 0">
@@ -80,35 +79,21 @@ const SATELLITES = [
           :style="{ left: s.x, top: s.y, '--p': s.p, '--fd': s.d + 's', '--k': i }"
         >
           <div class="flotte">
-            <Lazy garder :largeur="s.taille" :hauteur="s.taille">
-              <MochiBot :size="s.taille" :shape="s.forme" :color="s.couleur" rendu="3d" :frozen-at="1.2" :interactions="false" label="" />
-            </Lazy>
+            <Affiche :nom="`sat-${s.forme}`" :taille="s.taille" eager />
           </div>
         </div>
         <div class="hero-bot">
-          <Lazy :largeur="taille + 8" :hauteur="taille + 8">
-            <MochiBot
-              v-if="reduit"
-              :size="taille"
-              shape="cercle"
-              color="#8b5cf6"
-              rendu="3d"
-              :frozen-at="1"
-              label="Mochi, a round purple 3D avatar"
-            />
-            <MochiBot
-              v-else
-              ref="bot"
-              :size="taille"
-              shape="cercle"
-              color="#8b5cf6"
-              rendu="3d"
-              mood="repos"
-              :yaw="yaw"
-              coucou
-              label="Mochi, a round purple 3D avatar. It looks at your pointer; tap it, double tap it or press and hold."
-            />
-          </Lazy>
+          <Vivant
+            ref="vivant"
+            :taille="taille"
+            affiche="hero"
+            eager
+            marge="0px"
+            v-bind="HERO"
+            :yaw="yaw"
+            :frozen-at="reduit ? 0 : undefined"
+            alt="Mochi, a round purple 3D avatar. It looks at your pointer; tap it, double tap it or press and hold."
+          />
         </div>
       </div>
 

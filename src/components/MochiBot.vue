@@ -156,6 +156,11 @@ const props = withDefaults(
     fps?: number
     /** Texte alternatif ; absent, le libelle traduit de l'application. */
     label?: string
+    /**
+     * Plafond de densite du canvas 3D (pixels physiques par pixel CSS). 2 par defaut ; 1,5 sur telephone divise
+     * presque par deux le travail de chaque image, sans perte visible a cette taille.
+     */
+    maxPixelRatio?: number
   }>(),
   {
     size: 320,
@@ -187,9 +192,17 @@ const props = withDefaults(
     coucou: false,
     ordinateur: true,
     fps: undefined,
-    label: undefined
+    label: undefined,
+    maxPixelRatio: 2
   }
 )
+
+/**
+ * `pret` : la premiere image en vraie 3D vient d'etre peinte. Une page peut garder une image pre-rendue (ou rien)
+ * a l'ecran jusque-la, puis montrer le Mochi en fondu : le repli SVG du chargement n'est alors jamais vu.
+ */
+const emit = defineEmits<{ pret: [] }>()
+let pretEmis = false
 
 /**
  * Le curseur de lecture est un **index de bloc**, pas un etat : un montage peut
@@ -443,7 +456,7 @@ const vraie3d = computed(() => estVraie3d(rendu.value) && m3d.value !== null)
 const pxToile = computed(() =>
   rendu.value === 'pixel3d'
     ? grille.value
-    : Math.round(props.size * Math.min(2, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1))
+    : Math.round(props.size * Math.min(props.maxPixelRatio, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1))
 )
 
 watch(
@@ -500,6 +513,10 @@ function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
   m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle(), props.ombre, props.ombrage, props.epaisseurContour)
+  if (!pretEmis) {
+    pretEmis = true
+    emit('pret')
+  }
 }
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image

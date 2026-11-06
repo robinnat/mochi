@@ -311,41 +311,13 @@ header[id] {
   pointer-events: none;
   z-index: -1;
 }
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.9;
-  animation: derive 22s ease-in-out infinite alternate;
-}
-.b1 {
-  width: 62vmax;
-  height: 62vmax;
-  left: 38%;
-  top: -22vmax;
-  background: radial-gradient(closest-side, var(--p-lavande), transparent 72%);
-}
-.b2 {
-  width: 46vmax;
-  height: 46vmax;
-  left: -16vmax;
-  top: 18vmax;
-  background: radial-gradient(closest-side, var(--p-peche), transparent 72%);
-  animation-duration: 26s;
-  animation-delay: -6s;
-}
-.b3 {
-  width: 40vmax;
-  height: 40vmax;
-  right: -14vmax;
-  top: 30vmax;
-  background: radial-gradient(closest-side, var(--p-menthe), transparent 72%);
-  animation-duration: 30s;
-  animation-delay: -12s;
-}
-@keyframes derive {
-  to {
-    transform: translate3d(4vmax, 3vmax, 0) scale(1.08);
-  }
+/* fond du hero : un seul calque peint une fois (trois degres pastel), sans animation : les grandes taches animees
+   coutaient cher a peindre sur telephone (v11) */
+.hero-fond {
+  background:
+    radial-gradient(60vmax 60vmax at 78% -4%, var(--p-lavande), transparent 70%),
+    radial-gradient(46vmax 46vmax at -6% 48%, var(--p-peche), transparent 70%),
+    radial-gradient(40vmax 40vmax at 104% 68%, var(--p-menthe), transparent 70%);
 }
 .hero-in {
   max-width: 1240px;
@@ -1915,7 +1887,6 @@ header[id] {
   .rv-load,
   .mot,
   .flotte,
-  .blob,
   .point,
   .styles-geant,
   .piece-image img,
@@ -1939,4 +1910,46 @@ header[id] {
   .forme-choix {
     transition: none;
   }
+}
+
+/* ------------------------------------------------------------------ Mochi vivants et images pre-rendues (v11) */
+.affiche {
+  display: block;
+  max-width: none;
+  user-select: none;
+}
+.vivant {
+  position: relative;
+  flex: none;
+  max-width: 100%;
+}
+.vivant-affiche {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  user-select: none;
+  transition: opacity 0.35s ease 0.15s;
+}
+.vivant-affiche.cache {
+  opacity: 0;
+}
+.vivant-bot {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.vivant-bot.on {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vivant-affiche,
+  .vivant-bot {
+    transition: none;
+  }
+}
+.perso-attente {
+  min-height: 1100px;
 }

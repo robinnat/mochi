@@ -65,14 +65,18 @@ describe('bandes d accessoires (pieces seules)', () => {
     expect(v).toContain('boiteOpaque')
   })
 
-  it('les bandes defilantes ne sont plus sur la page (06/11/2026) : les pieces servent d icones au selecteur', () => {
+  it('les bandes defilantes ne sont plus sur la page (06/11/2026) : les pieces sont des images pre-rendues dans le selecteur', () => {
     const site = source('./Site.vue')
     expect(site).not.toMatch(/Habillage|BandeAccessoires/)
-    const perso = source('./Personnalisation.vue')
-    // icones rendues une fois en images, jamais un MochiBot par piece
-    expect(perso).toContain('rendreVignette')
-    expect(perso).toContain('itemPiece')
-    expect(perso.match(/<MochiBot/g)).toHaveLength(1)
+    const perso = source('./PersoCorps.vue')
+    // icones : images pre-rendues (public/rendus), jamais un rendu 3D au chargement ni au changement de theme
+    expect(perso).toContain('urlPiece')
+    expect(perso).not.toContain('rendreVignette')
+    expect(perso.match(/<Vivant/g)).toHaveLength(1)
+    // les images sont faites par tools/rendus.ts avec rendreVignette et itemPiece
+    const outil = readFileSync(new URL('../../tools/rendus.ts', import.meta.url), 'utf8')
+    expect(outil).toContain('rendreVignette')
+    expect(outil).toContain('itemPiece')
   })
 
   it('itemPiece : chaque accessoire du catalogue a son icone, dans ses couleurs, vue de trois quarts', () => {

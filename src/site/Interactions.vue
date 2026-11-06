@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import MochiBot from '@/components/MochiBot.vue'
-import Lazy from './Lazy.vue'
+import Vivant from './Vivant.vue'
+import { INTER_BOT } from './affiches'
 import { useReduit } from './reduced'
 import { INTERACTIONS_SITE } from './catalog'
 
 const reduit = useReduit()
-/** Changer la cle remonte le Mochi : il arrive de nouveau, et dit coucou. */
+/** Changer la cle remonte le Mochi : il arrive de nouveau, et dit coucou (sans affiche : il pousse du sol). */
 const arrivee = ref(0)
 </script>
 
@@ -15,19 +15,15 @@ const arrivee = ref(0)
     <div class="wrap inter">
       <div v-reveal class="inter-scene">
         <span class="inter-invite" aria-hidden="true">Poke me</span>
-        <Lazy :largeur="300" :hauteur="300">
-          <MochiBot
-            :key="arrivee + '-' + reduit"
-            :size="290"
-            shape="etoile"
-            color="#f5b53d"
-            rendu="3d"
-            mood="repos"
-            :coucou="!reduit"
-            :frozen-at="reduit ? 1 : undefined"
-            label="A yellow star Mochi that reacts to the pointer: hover, tap, double tap, press and hold, or shake it"
-          />
-        </Lazy>
+        <Vivant
+          :key="arrivee + '-' + reduit"
+          :taille="290"
+          :affiche="arrivee === 0 || reduit ? 'inter' : null"
+          v-bind="INTER_BOT"
+          :coucou="arrivee > 0 && !reduit"
+          :frozen-at="reduit ? 0 : undefined"
+          alt="A yellow star Mochi that reacts to the pointer: hover, tap, double tap, press and hold, or shake it"
+        />
         <button type="button" class="btn petit" @click="arrivee++">Say hello again</button>
       </div>
       <div class="inter-texte">

@@ -13,3 +13,11 @@ describe('MochiBot : options de rendu 3D', () => {
     expect(props.ombrage!.default).toBe(true)
   })
 })
+
+describe('MochiBot : chargement sans repli visible (v11)', () => {
+  const props = (MochiBot as unknown as { props: Record<string, { default?: unknown }>; emits?: unknown }).props
+  it('maxPixelRatio plafonne la densite du canvas (2 par defaut)', () => {
+    expect(props).toHaveProperty('maxPixelRatio')
+    expect(props.maxPixelRatio!.default).toBe(2)
+  })
+})

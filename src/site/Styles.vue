@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import MochiBot from '@/components/MochiBot.vue'
-import Lazy from './Lazy.vue'
+import Affiche from './Affiche.vue'
+import Vivant from './Vivant.vue'
+import { STYLE_BOT } from './affiches'
 import { useReduit } from './reduced'
 import { useLargeur, useVisible } from './motion'
 import type { RenduId } from '@/ui/rendu'
@@ -93,19 +94,16 @@ onBeforeUnmount(() => {
     <div class="wrap styles-piste">
       <div v-if="large" ref="scene" class="styles-scene" :style="{ background: ETAPES[actif]!.fond }">
         <span :key="actif" class="styles-geant" aria-hidden="true">{{ ETAPES[actif]!.nom }}</span>
-        <Lazy :largeur="370" :hauteur="370">
-          <MochiBot
-            :size="360"
-            shape="cercle"
-            color="#8b5cf6"
-            :rendu="ETAPES[actif]!.id"
-            :mood="reduit ? undefined : 'repos'"
-            :frozen-at="reduit ? 1.2 : undefined"
-            :yaw="yaw"
-            :interactions="false"
-            :label="`A purple Mochi in the ${ETAPES[actif]!.nom} style`"
-          />
-        </Lazy>
+        <Vivant
+          :taille="360"
+          :affiche="`style-${ETAPES[actif]!.id}`"
+          v-bind="STYLE_BOT(ETAPES[actif]!.id)"
+          :mood="reduit ? undefined : 'repos'"
+          :frozen-at="reduit ? 0 : undefined"
+          :yaw="yaw"
+          :interactions="false"
+          :alt="`A purple Mochi in the ${ETAPES[actif]!.nom} style`"
+        />
         <div class="styles-points" aria-hidden="true">
           <span v-for="(e, i) in ETAPES" :key="e.id" :class="{ on: i === actif }" />
         </div>
@@ -121,9 +119,7 @@ onBeforeUnmount(() => {
           :data-i="i"
         >
           <div v-if="!large" class="etape-image" :style="{ background: e.fond }">
-            <Lazy garder :largeur="190" :hauteur="190">
-              <MochiBot :size="180" shape="cercle" color="#8b5cf6" :rendu="e.id" :frozen-at="1.2" :yaw="0.35" :interactions="false" :label="`A purple Mochi in the ${e.nom} style`" />
-            </Lazy>
+            <Affiche :nom="`style-mini-${e.id}`" :taille="180" :alt="`A purple Mochi in the ${e.nom} style`" />
           </div>
           <span class="etape-num">0{{ i + 1 }}</span>
           <h3>{{ e.nom }}</h3>

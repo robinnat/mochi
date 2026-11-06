@@ -3,8 +3,8 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import Nav from '@/site/Nav.vue'
 import Pied from '@/site/Pied.vue'
 import CodeBlock from '@/site/CodeBlock.vue'
-import MochiBot from '@/components/MochiBot.vue'
-import Lazy from '@/site/Lazy.vue'
+import Vivant from '@/site/Vivant.vue'
+import { DOCS_BOT } from '@/site/affiches'
 import { initTheme } from '@/site/theme'
 import { COLOR_LABEL, EMPLACEMENT_LABEL, EMPLACEMENTS_IDS, ACCESSOIRES_SITE, HUMEURS_SITE, SHAPE_LABEL } from '@/site/catalog'
 import { COLORS, SHAPES } from '@/bot/skins'
@@ -109,9 +109,7 @@ onBeforeUnmount(() => obs?.disconnect())
           <div class="doc-duo">
             <CodeBlock :code="EXEMPLE_RAPIDE" titre="App.vue" />
             <div class="doc-apercu">
-              <Lazy :largeur="190" :hauteur="190">
-                <MochiBot shape="etoile" color="#8b5cf6" mood="repos" :size="180" rendu="3d" label="A purple star Mochi, the result of the example" />
-              </Lazy>
+              <Vivant :taille="180" affiche="docs" v-bind="DOCS_BOT" alt="A purple star Mochi, the result of the example" />
               <span>Result: live, it reacts to touch.</span>
             </div>
           </div>
@@ -235,7 +233,8 @@ onBeforeUnmount(() => obs?.disconnect())
           <h2>Still frames and performance</h2>
           <p>
             The engine is a pure function of time, so <code>frozen-at</code> renders one exact instant with no animation loop: ideal
-            for lists and thumbnails. All 3D Mochis share one WebGL context.
+            for lists and thumbnails. All 3D Mochis share one WebGL context. The <code>pret</code> event fires when the first 3D
+            frame is painted: until then you can show a still image, as this site does.
           </p>
           <CodeBlock :code="EX_FIGE" titre="Template" />
         </section>

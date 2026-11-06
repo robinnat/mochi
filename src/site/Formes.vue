@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import MochiBot from '@/components/MochiBot.vue'
-import Lazy from './Lazy.vue'
+import Affiche from './Affiche.vue'
 import { FORMES_3D } from './catalog'
 import { STYLES_SITE } from './style'
 import type { RenduId } from '@/ui/rendu'
@@ -29,9 +28,7 @@ const taille = computed(() => (largeur.value >= 1100 ? 128 : largeur.value >= 76
         <li v-for="(f, i) in FORMES_3D" :key="f.id" v-reveal="i % 6">
           <div class="forme">
             <div class="forme-image">
-              <Lazy garder :largeur="taille + 4" :hauteur="taille + 4">
-                <MochiBot :size="taille" :shape="f.id" :color="f.couleur" :rendu="style" :frozen-at="1.2" :interactions="false" :label="`${f.label} Mochi`" />
-              </Lazy>
+              <Affiche :nom="`forme-${f.id}-${style}`" :taille="taille" :alt="`${f.label} Mochi`" />
             </div>
             <span class="forme-nom">{{ f.label }}</span>
             <code class="forme-id">{{ f.id }}</code>

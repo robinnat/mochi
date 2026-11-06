@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import MochiBot from '@/components/MochiBot.vue'
-import Lazy from './Lazy.vue'
+import Affiche from './Affiche.vue'
 import { CATALOGUE, EMPLACEMENTS } from '@/bot/emplacements'
 
 /** Le reste, en cartes : clair et sombre, accessoires, chargement a la demande, moteur pur, exports. Images figees seulement. */
@@ -18,14 +17,10 @@ const N_EMPL = EMPLACEMENTS.length
       <article v-reveal="0" class="carte-b b-theme">
         <div class="b-duo">
           <div class="b-clair">
-            <Lazy garder :largeur="150" :hauteur="150">
-              <MochiBot :size="146" shape="etoile" color="#f5b53d" rendu="3d" theme="light" :frozen-at="1.2" :interactions="false" label="A yellow star Mochi in light mode, white eyes" />
-            </Lazy>
+            <Affiche nom="bento-clair" :taille="146" alt="A yellow star Mochi in light mode, white eyes" />
           </div>
           <div class="b-sombre">
-            <Lazy garder :largeur="150" :hauteur="150">
-              <MochiBot :size="146" shape="etoile" color="#f5b53d" rendu="3d" theme="dark" :frozen-at="1.2" :interactions="false" label="The same Mochi in dark mode, black eyes" />
-            </Lazy>
+            <Affiche nom="bento-sombre" :taille="146" alt="The same Mochi in dark mode, black eyes" />
           </div>
         </div>
         <h3>Light and dark</h3>
@@ -34,19 +29,7 @@ const N_EMPL = EMPLACEMENTS.length
 
       <article v-reveal="1" class="carte-b b-acc">
         <div class="b-image">
-          <Lazy garder :largeur="170" :hauteur="170">
-            <MochiBot
-              :size="166"
-              shape="cercle"
-              color="#f472b6"
-              rendu="3d"
-              :accessoires="{ tete: 'casquette', yeux: 'rondes', bas: 'papillon' }"
-              :frozen-at="1.2"
-              :yaw="0.3"
-              :interactions="false"
-              label="A pink Mochi wearing a cap, round glasses and a bow tie"
-            />
-          </Lazy>
+          <Affiche nom="bento-acc" :taille="166" alt="A pink Mochi wearing a cap, round glasses and a bow tie" />
         </div>
         <h3>{{ N_ACC }} accessories</h3>
         <p>{{ N_EMPL }} slots (head, eyes, face, neck, back), one piece per slot, in your colours.</p>

@@ -141,7 +141,10 @@ export const EX_FIGE = `<!-- a still frame: no animation loop, the same image ev
 <MochiBot mood="repos" :fps="12" />
 
 <!-- no reactions to the pointer -->
-<MochiBot :interactions="false" />`
+<MochiBot :interactions="false" />
+
+<!-- show your own image until the first 3D frame is painted -->
+<MochiBot mood="repos" :max-pixel-ratio="1.5" @pret="loaded = true" />`
 
 export const EX_MOTEUR_BUILD = `npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify \\
   --alias:vue=./tools/vue-stub.ts --outfile=mochi-engine.js`
@@ -187,6 +190,7 @@ export const PROPS: PropDoc[] = [
   { nom: 'reflet', attr: 'reflet', type: 'boolean', defaut: 'true', texte: 'Soft highlight of the Soft style.' },
   { nom: 'ombre', attr: 'ombre', type: 'boolean', defaut: 'true', texte: 'Ground shadow under the body.' },
   { nom: 'ombrage', attr: 'ombrage', type: 'boolean', defaut: 'true', texte: 'Shading of the body volume; false gives a flat colour.' },
+  { nom: 'maxPixelRatio', attr: 'max-pixel-ratio', type: 'number', defaut: '2', texte: 'Caps the 3D canvas density; 1.5 on phones is lighter.' },
   { nom: 'label', attr: 'label', type: 'string', defaut: 'translated', texte: 'Alternative text for screen readers.' }
 ]
 

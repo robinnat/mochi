@@ -17,6 +17,16 @@ export default defineConfig({
         docs: fileURLToPath(new URL('./docs.html', import.meta.url)),
         app: fileURLToPath(new URL('./app.html', import.meta.url)),
         labo: fileURLToPath(new URL('./labo.html', import.meta.url))
+      },
+      output: {
+        // mediabunny (export video) et three dans leurs propres morceaux : sinon l'outil de decoupage range ses petites
+        // fonctions communes dans le morceau de mediabunny, et chaque page le prechargeait (168 ko pour rien)
+        advancedChunks: {
+          groups: [
+            { name: 'mediabunny', test: /node_modules[\\/]mediabunny/ },
+            { name: 'three', test: /node_modules[\\/]three/ }
+          ]
+        }
       }
     }
   },
