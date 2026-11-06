@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, shallowRef, watch } from 'vue'
 import Vivant from './Vivant.vue'
 import CodeBlock from './CodeBlock.vue'
 import { useReduit } from './reduced'
@@ -116,6 +116,37 @@ const FORMES = FORMES_3D.map((f) => ({ ...f, d: silhouette(f.id) }))
 /* ------------------------------------------------------------------ icones des accessoires : images pre-rendues (public/rendus) */
 const icone = (e: Emplacement, id: string) => urlPiece(e, id, themeEffectif.value)
 
+/**
+ * Reponse immediate (v12) : un clic change d'abord le bouton (peint a l'image suivante), et le Mochi recoit le
+ * changement juste APRES cette image. Sans cela, le bouton restait fige le temps que la 3D se refasse. Plusieurs
+ * changements rapides (glisser dans le selecteur de couleur) se regroupent en un seul rendu.
+ */
+const etatBot = () => ({
+  forme: forme.value,
+  couleur: couleur.value,
+  rendu: rendu.value,
+  mood: mood.value,
+  ordinateur: ordinateur.value,
+  theme: theme.value,
+  accessoires: accessoires.value
+})
+const bot = shallowRef(etatBot())
+let enAttente = false
+watch(
+  [forme, couleur, rendu, mood, ordinateur, theme, accessoires],
+  () => {
+    if (enAttente) return
+    enAttente = true
+    requestAnimationFrame(() =>
+      setTimeout(() => {
+        enAttente = false
+        bot.value = etatBot()
+      }, 0)
+    )
+  },
+  { deep: true }
+)
+
 /** L'affiche (image pre-rendue) ne vaut que pour le Mochi de depart : au premier changement, plus d'affiche. */
 const touche = ref(false)
 watch([forme, couleur, rendu, mood, ordinateur, theme, accessoires], () => (touche.value = true), { deep: true })
@@ -129,15 +160,16 @@ watch([forme, couleur, rendu, mood, ordinateur, theme, accessoires], () => (touc
           <Vivant
             :key="cle"
             :taille="taille"
+            eager
             :affiche="touche || arrivee > 0 || reduit ? null : 'perso'"
-            :shape="forme"
-            :color="couleur"
-            :rendu="rendu"
+            :shape="bot.forme"
+            :color="bot.couleur"
+            :rendu="bot.rendu"
             :contour="false"
-            :mood="mood"
-            :ordinateur="ordinateur"
-            :accessoires="accessoires"
-            :theme="theme === 'auto' ? undefined : theme"
+            :mood="bot.mood"
+            :ordinateur="bot.ordinateur"
+            :accessoires="bot.accessoires"
+            :theme="bot.theme === 'auto' ? undefined : bot.theme"
             :coucou="arrivee > 0 && !reduit"
             :frozen-at="reduit ? 0 : undefined"
             alt="Your Mochi"

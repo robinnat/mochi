@@ -15,6 +15,7 @@
 import {
   AmbientLight,
   BackSide,
+  type Box3,
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
@@ -388,12 +389,16 @@ export class Mochi3d {
     // accessoires par emplacements : ancres sur le volume de CE corps, recalcules quand le corps change
     this.acc3d.reglages = this.porte3d.reglages
     this.acc3d.corps = couleur
-    const cleCorps = `${this.rendu}|${this.forme}|${frameCorps.bodyPath}|${JSON.stringify(frame.eyes)}`
+    // v12 : les pieces ne sont plus reconstruites a chaque image (le contour du corps change a chaque respiration :
+    // tirs de rayons et geometries refaits 60 fois par seconde). Elles sont construites pour la forme et le style, sur le
+    // corps de cette image, puis suivent le corps par une transformation (ci-dessous).
+    const cleCorps = `${this.rendu}|${this.forme}`
     this.acc3d.maj(this.accs, cleCorps, this.materiau(this.rendu, this.douceur), () => {
       const ye = yeuxDe(frame)
       const sc = ye.map((o) => ({ x: o.x, y: -o.y, r: o.r }))
       return mesurerReperes(this.mesh.geometry, sc, ye.length === 2 ? rayonVerre(ye[0]!, ye[1]!) : 22)
     }, { k: this.ordi, sol: this.sols.get(this.forme) ?? mt.bas, cle: `${this.rendu}|${this.forme}` })
+    this.suivreCorps(bb)
     // le contour des accessoires suit celui du corps (meme visibilite, meme epaisseur)
     this.acc3d.contour(this.coque.visible, this.epaisseur.value)
     const ombres: Ombre[] = [...(this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []), ...this.acc3d.ombres]
@@ -408,6 +413,28 @@ export class Mochi3d {
       this.cleVisage = cleVisage
       // le flat garde la couleur choisie telle quelle (pas de pastel), sans creux d'oeil
       this.peindre(yeuxPeints, plat ? couleur : m.base, papier, m.creux, !plat && this.theme === 'light' && this.ombrage, reflet, ombres, joues)
+    }
+  }
+
+  /** Boite du corps sur lequel les pieces ont ete construites (repere Three). */
+  private refPieces: { version: number; cx: number; cy: number; w: number; h: number } | null = null
+  /**
+   * Les pieces suivent le corps : la boite du corps de cette image est ramenee sur celle du corps de construction
+   * (echelle en x et y, la profondeur suit x ; translation). Le corps respire, s'ecrase et s'etire ; ses pieces avec.
+   */
+  private suivreCorps(bb: Box3 | null) {
+    if (!bb || bb.isEmpty()) return
+    const cx = (bb.min.x + bb.max.x) / 2
+    const cy = (bb.min.y + bb.max.y) / 2
+    const w = bb.max.x - bb.min.x
+    const h = bb.max.y - bb.min.y
+    if (!this.refPieces || this.refPieces.version !== this.acc3d.version) this.refPieces = { version: this.acc3d.version, cx, cy, w, h }
+    const r = this.refPieces
+    const sx = r.w > 1e-6 ? w / r.w : 1
+    const sy = r.h > 1e-6 ? h / r.h : 1
+    for (const g of this.acc3d.pieces()) {
+      g.scale.set(sx, sy, sx)
+      g.position.set(cx - sx * r.cx, cy - sy * r.cy, 0)
     }
   }
 
@@ -783,6 +810,34 @@ function contexte() {
   return partage
 }
 
+/**
+ * Compile a l'avance les programmes des trois styles (Soft, Flat, Pixel) et leurs jeux de lumieres, pendant un moment
+ * libre : le premier passage a un autre style ne fige plus la page le temps de compiler ses shaders (v12).
+ */
+export function prechauffer() {
+  const ctx3 = contexte()
+  const { renderer, scene, camera, mochi } = ctx3
+  const avant = { rendu: ctx3.rendu, douceur: ctx3.douceur }
+  const essais: [Rendu3d, Douceur][] = [['doux', 'marque'], ['toon', DOUCEUR_DEFAUT], ['pixel', DOUCEUR_DEFAUT]]
+  for (const [r, d] of essais) {
+    for (const x of ctx3.lumieres) scene.remove(x)
+    const l = lumieres(r, d)
+    for (const x of l.toutes) scene.add(x)
+    ctx3.lumieres = l.toutes
+    ctx3.rendu = r
+    ctx3.douceur = d
+    mochi.setRendu(r, false, d)
+    renderer.compile(scene, camera)
+  }
+  // retour a l'etat d'avant : le prochain avatar rendu repose ses propres reglages de toute facon
+  for (const x of ctx3.lumieres) scene.remove(x)
+  const l = lumieres(avant.rendu, avant.douceur)
+  for (const x of l.toutes) scene.add(x)
+  ctx3.lumieres = l.toutes
+  ctx3.rendu = avant.rendu
+  ctx3.douceur = avant.douceur
+}
+
 /** true si le navigateur sait faire du WebGL ; sinon l'avatar garde l'argile en SVG. */
 export function webglDisponible(): boolean {
   try {
@@ -865,20 +920,35 @@ export function rendreAvatar(
   const pixel = rendu3d === 'pixel'
   const pxRendu = pixel ? px * 4 : px
   mochi.calerContour(pxRendu / (2 * cadre))
-  const taille = renderer.domElement.width
-  if (taille !== pxRendu) renderer.setSize(pxRendu, pxRendu, false)
+  // Le canvas WebGL partage ne fait que GRANDIR : chaque avatar se rend dans le coin bas gauche (viewport + scissor),
+  // puis on recopie ce carre. Redimensionner le canvas a chaque avatar (deux tailles a l'ecran) reallouait le tampon
+  // de dessin a chaque image : plus de la moitie du temps de rendu sur telephone (v12).
+  const toileGl = renderer.domElement
+  if (toileGl.width < pxRendu || toileGl.height < pxRendu) {
+    const t = Math.max(pxRendu, toileGl.width, toileGl.height)
+    renderer.setSize(t, t, false)
+  }
+  renderer.setViewport(0, 0, pxRendu, pxRendu)
+  renderer.setScissor(0, 0, pxRendu, pxRendu)
+  renderer.setScissorTest(true)
   mochi.maj(frame, couleur, papier)
   renderer.render(scene, camera)
+  // le carre rendu, en coordonnees du canvas (l'origine WebGL est en bas a gauche)
+  const sy = toileGl.height - pxRendu
   const c = cible.getContext('2d')
   if (!c) return
   c.setTransform(1, 0, 0, 1, 0, 0)
   c.clearRect(0, 0, px, px)
   if (!mochi.mesh.visible) return
   if (pixel) {
-    c.imageSmoothingEnabled = true
-    c.imageSmoothingQuality = 'high'
-    c.drawImage(renderer.domElement, 0, 0, px, px)
-    const im = c.getImageData(0, 0, px, px)
+    // la reduction et la palette se font sur une petite toile LOGICIELLE (`willReadFrequently`) : relire les pixels
+    // de la toile visible (acceleree) forcait une synchronisation complete a chaque image, la moitie du temps (v12)
+    const cp = toilePixel(px)
+    cp.imageSmoothingEnabled = true
+    cp.imageSmoothingQuality = 'high'
+    cp.clearRect(0, 0, px, px)
+    cp.drawImage(toileGl, 0, sy, pxRendu, pxRendu, 0, 0, px, px)
+    const im = cp.getImageData(0, 0, px, px)
     const t = porte ? TEINTES_PORTES[porte] : null
     const teintes = porte === 'lunettes' || porte === 'soleil' ? ['#26222f'] : t ? [t.fond, t.accent] : []
     // joues : leur teinte entre dans la palette, sinon elle serait ramenee a la couleur du corps
@@ -886,7 +956,8 @@ export function rendreAvatar(
     const corps = leverSombre(couleur)
     const oeil = theme === 'dark' ? OEIL_RGB : undefined
     quantifier(im.data, px, px, palettePixel(corps, [...teintes, ...mochi.couleursAccessoires], oeil), !oeil && luminance(corps) < 0.62, oeil)
-    c.putImageData(im, 0, 0)
+    cp.putImageData(im, 0, 0)
+    c.drawImage(cp.canvas, 0, 0)
     return
   }
   const k = px / (2 * cadre)
@@ -924,7 +995,22 @@ export function rendreAvatar(
     c.restore()
   }
   c.globalAlpha = 1
-  c.drawImage(renderer.domElement, 0, 0, px, px)
+  c.drawImage(toileGl, 0, sy, pxRendu, pxRendu, 0, 0, px, px)
+}
+
+let ctxPixel: CanvasRenderingContext2D | null = null
+/** Toile de travail du style Pixel, logicielle (relue a chaque image), agrandie au besoin. */
+function toilePixel(px: number): CanvasRenderingContext2D {
+  if (!ctxPixel) {
+    const cv = document.createElement('canvas')
+    ctxPixel = cv.getContext('2d', { willReadFrequently: true })!
+  }
+  const cv = ctxPixel.canvas
+  if (cv.width !== px || cv.height !== px) {
+    cv.width = px
+    cv.height = px
+  }
+  return ctxPixel
 }
 
 const hexA = (hex: string, a: number) => {

@@ -1953,3 +1953,13 @@ header[id] {
 .perso-attente {
   min-height: 1100px;
 }
+/* un Mochi vivant se tourne au doigt : le glisse horizontal est pour lui, le vertical fait defiler la page */
+.vivant.tournable {
+  touch-action: pan-y;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.vivant.tournable:active {
+  cursor: grabbing;
+}

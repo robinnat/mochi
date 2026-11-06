@@ -1446,6 +1446,8 @@ function materiauCoque(hex: string, ep: { value: number }): MeshBasicMaterial {
 
 export class Accessoires3d {
   readonly groupe = new Group()
+  /** augmente a chaque reconstruction des pieces : le corps de reference de `pieces()` change */
+  version = 0
   private cle = ''
   private geos: BufferGeometry[] = []
   private readonly matieres = new Map<string, Materiau>()
@@ -1466,6 +1468,15 @@ export class Accessoires3d {
 
   constructor() {
     this.groupe.visible = false
+  }
+
+  /**
+   * Les pieces portees (un groupe par emplacement ; pas l'ordinateur, pose au sol) : construites une fois pour un corps,
+   * elles suivent ensuite le corps d'une image a l'autre par une simple transformation (voir `Mochi3d.suivreCorps`) au
+   * lieu d'etre reconstruites (v12).
+   */
+  pieces(): Object3D[] {
+    return this.groupe.children.filter((c) => c !== this.ordiG)
   }
 
   private matiere(base: Materiau, hex: string, o: number, d: boolean): Materiau {
@@ -1577,6 +1588,7 @@ export class Accessoires3d {
     }
     if (cle === this.cle) return
     this.cle = cle
+    this.version++
     this.vide()
     this.ombres = []
     this.couleurs = couleursDe(sel)

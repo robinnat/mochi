@@ -15,7 +15,27 @@ if (typeof window !== 'undefined') {
   else window.addEventListener('load', go, { once: true })
 }
 
-/** Telephone (pointeur grossier) : moins de pixels et moins d'images par seconde pour les Mochi vivants. */
+/**
+ * Telephone (pointeur grossier) : moins de pixels pour les Mochi vivants. Les images par seconde ne sont plus plafonnees
+ * (v12) : le plafond a 30 donnait des a-coups (une image sur deux sautee, irregulierement) et le cout par image a baisse.
+ */
 export const mobile = typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(pointer: coarse)').matches
 export const RATIO_MAX = mobile ? 1.5 : 2
-export const FPS_VIVANT = mobile ? 30 : undefined
+export const FPS_VIVANT: number | undefined = undefined
+
+/**
+ * Apres la premiere image 3D de la page, pendant un moment libre : compile les shaders des trois styles, pour que
+ * le premier changement de style (Soft, Pixel, Flat) reponde tout de suite. Une seule fois par page.
+ */
+let chauffe = false
+export function prechaufferStyles() {
+  if (chauffe || typeof window === 'undefined') return
+  chauffe = true
+  const ric = (window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number }).requestIdleCallback
+  const lancer = () =>
+    import('@/ui/trois/scene3d')
+      .then((m) => m.prechauffer())
+      .catch(() => {})
+  if (ric) ric(lancer, { timeout: 2000 })
+  else setTimeout(lancer, 500)
+}
