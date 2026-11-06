@@ -91,3 +91,13 @@ export function itemsBande(emplacement: Emplacement, n = 24): ItemBande[] {
   }
   return out
 }
+
+/**
+ * Une piece seule, dans les couleurs du catalogue, vue de trois quarts : c'est l'icone d'un accessoire dans le
+ * selecteur de « Make it yours » (rendue par `vignettes.ts`, comme les anciennes bandes).
+ */
+export function itemPiece(emplacement: Emplacement, id: string): ItemBande | null {
+  const acc = ACCESSOIRES_SITE(emplacement).find((a) => a.id === id)
+  if (!acc) return null
+  return { cle: `${emplacement}:${id}`, emplacement, accessoire: id, label: acc.label, c1: acc.c1, c2: acc.c2, yaw: YAW[emplacement] }
+}

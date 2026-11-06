@@ -68,7 +68,7 @@ function demarrer() {
 }
 
 /** Fond de la scene : celui de la carte (`--surface`) dans chaque theme. */
-const FONDS = { light: '#ffffff', dark: '#1e1d27' } as const
+const FONDS = { light: '#f3f0fb', dark: '#1c1a26' } as const
 watch(themeEffectif, (t) => {
   espace?.changerTheme(FONDS[t], t)
   if (espace && (reduit.value || !raf)) espace.dessiner(tCourant())
@@ -129,16 +129,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section id="jumps" class="bloc wrap" aria-labelledby="t-sauts">
-    <span class="etiquette">Movement</span>
-    <h2 id="t-sauts">They get around by jumping</h2>
-    <p class="chapo">
-      A jump is squash, stretch, flight and landing, with volume conserved: what the body loses in height it
-      gains in width. Here three mochis hop from tile to tile on an isometric grid, in real 3D.
-    </p>
-    <div ref="zone" class="iso" role="img" aria-label="Three mochis, a star, a cloud and a flower, hopping across a grid of tiles">
-      <canvas ref="toile" />
-      <div v-if="etat !== 'pret'" class="attente">{{ etat === 'indisponible' ? '3D is not available in this browser.' : 'Loading the scene as it scrolls into view...' }}</div>
+  <section id="jumps" class="sec" aria-labelledby="t-sauts">
+    <div class="wrap sec-tete">
+      <p v-reveal class="surtitre">Movement</p>
+      <h2 id="t-sauts" v-reveal="1" class="titre-sec">They get around<br />by jumping.</h2>
+      <p v-reveal="2" class="chapo">
+        Squash, stretch, flight and landing, with the volume kept: what the body loses in height it gains in width.
+        Three mochis hop from tile to tile on an isometric grid, in real 3D.
+      </p>
+    </div>
+    <div class="wrap">
+      <div ref="zone" v-reveal="1" class="iso" role="img" aria-label="Three mochis, a star, a cloud and a flower, hopping across a grid of tiles">
+        <canvas ref="toile" />
+        <div v-if="etat !== 'pret'" class="attente">{{ etat === 'indisponible' ? '3D is not available in this browser.' : 'Loading the scene...' }}</div>
+        <code class="iso-code">poseSaut() · EspaceIso</code>
+      </div>
     </div>
   </section>
 </template>

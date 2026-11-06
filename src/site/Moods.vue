@@ -1,53 +1,76 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import MochiBot from '@/components/MochiBot.vue'
 import Lazy from './Lazy.vue'
 import { useReduit } from './reduced'
+import { useVisible } from './motion'
 import { HUMEURS_SITE } from './catalog'
-import type { MoodId } from '@/bot/humeurs'
 
+/**
+ * Les sept humeurs. Elles defilent seules tant que la section est a l'ecran (une barre montre le temps qui
+ * reste) ; un clic choisit une humeur et arrete le defilement. Le Mochi n'est pas remonte : `mood` change et
+ * le moteur glisse d'une humeur a l'autre.
+ */
+const DUREE = 4200
 const reduit = useReduit()
-const choisi = ref<MoodId>('repos')
-const humeur = computed(() => HUMEURS_SITE.find((h) => h.id === choisi.value)!)
+const zone = ref<HTMLElement | null>(null)
+const visible = useVisible(zone)
+const actif = ref(0)
+const auto = ref(true)
+const humeur = computed(() => HUMEURS_SITE[actif.value]!)
+
+let minuteur = 0
+watch(
+  [visible, auto, actif, reduit],
+  ([v, a, , r]) => {
+    clearTimeout(minuteur)
+    if (v && a && !r) minuteur = window.setTimeout(() => (actif.value = (actif.value + 1) % HUMEURS_SITE.length), DUREE)
+  },
+  { immediate: true }
+)
+onBeforeUnmount(() => clearTimeout(minuteur))
+
+function choisir(i: number) {
+  auto.value = false
+  actif.value = i
+}
 </script>
 
 <template>
-  <section id="moods" class="bloc wrap" aria-labelledby="t-moods">
-    <span class="etiquette">Moods</span>
-    <h2 id="t-moods">Seven moods, one soft body</h2>
-    <p class="chapo">
-      A mood changes the face and the way the body moves, and it plays on a loop until you change it. Set one with
-      <code>mood="travaille"</code>, or call <code>setMood()</code> from your code. The ids are French (<code>repos</code>, <code>reflechit</code>, <code>travaille</code>, <code>attend</code>, <code>termine</code>, <code>bloque</code>, <code>dort</code>); English names such as <code>working</code> work too. Pick one to watch it.
-    </p>
-    <div class="duo">
-      <div class="scene">
-        <Lazy :largeur="250" :hauteur="250">
+  <section id="moods" ref="zone" class="sec" aria-labelledby="t-moods">
+    <div class="wrap moods">
+      <div class="moods-texte">
+        <p v-reveal class="surtitre">Moods</p>
+        <h2 id="t-moods" v-reveal="1" class="titre-sec">Seven moods.<br />One body.</h2>
+        <p v-reveal="2" class="chapo">
+          A mood changes the face and the way the body moves, and loops until you change it. Set it with
+          <code>mood="travaille"</code> or call <code>setMood()</code>.
+        </p>
+        <ul v-reveal="3" class="moods-liste" role="list">
+          <li v-for="(h, i) in HUMEURS_SITE" :key="h.id">
+            <button type="button" class="mood" :class="{ on: i === actif }" :aria-pressed="i === actif" @click="choisir(i)">
+              <span class="mood-nom">{{ h.label }}</span>
+              <code class="mood-id">{{ h.id }}</code>
+              <span v-if="i === actif && auto && visible && !reduit" :key="actif" class="mood-barre" :style="{ '--duree': DUREE + 'ms' }" aria-hidden="true" />
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div v-reveal="2" class="moods-scene">
+        <Lazy :largeur="330" :hauteur="330">
           <MochiBot
-            :key="choisi + reduit"
-            :size="240"
+            :key="'m' + reduit"
+            :size="320"
             shape="squircle"
-            color="turquoise"
+            color="#2dd4bf"
             rendu="3d"
-            :mood="choisi"
+            :mood="humeur.id"
             :frozen-at="reduit ? 1 : undefined"
             :interactions="false"
-            :label="'A turquoise Mochi in the mood: ' + humeur.label"
+            :label="'A teal Mochi in the mood: ' + humeur.label"
           />
         </Lazy>
-      </div>
-      <div class="panneau">
-        <div>
-          <h3>Mood</h3>
-          <div class="chips" role="group" aria-label="Choose a mood">
-            <button v-for="h in HUMEURS_SITE" :key="h.id" type="button" class="chip" :aria-pressed="choisi === h.id" @click="choisi = h.id">
-              {{ h.label }}
-            </button>
-          </div>
-        </div>
-        <p class="texte-humeur" aria-live="polite">
-          <strong>{{ humeur.label }}.</strong> {{ humeur.texte }}
-        </p>
-        <p v-if="reduit" class="note">Reduced motion is on: showing the most readable frame of each mood.</p>
+        <p class="moods-legende" aria-live="polite"><strong>{{ humeur.label }}.</strong> {{ humeur.texte }}</p>
       </div>
     </div>
   </section>

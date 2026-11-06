@@ -20,8 +20,9 @@ import { PORTE_IDS, type PorteId } from '@/bot/portes'
 import { COLOR_BY_ID, SHAPES } from '@/bot/skins'
 import { SEQUENCE, STATE_BY_ID, type StateId } from '@/bot/states'
 import type { Block } from '@/bot/cycles'
-import { EMPLACEMENTS, parEmplacement, type Emplacement } from '@/bot/emplacements'
-import { MOOD_IDS, type MoodId } from '@/bot/humeurs'
+import { CATALOGUE, EMPLACEMENTS, parEmplacement, type Emplacement } from '@/bot/emplacements'
+import { MOOD_IDS, REACTION_IDS, type MoodId } from '@/bot/humeurs'
+import { RENDUS } from '@/ui/rendu'
 
 export const SHAPE_LABEL = en.shapes as Record<string, string>
 export const COLOR_LABEL = en.colors as Record<string, string>
@@ -235,3 +236,12 @@ const ACC_EN: Record<string, string> = {
 }
 export const ACCESSOIRES_SITE = (e: Emplacement) => parEmplacement(e).map((a) => ({ id: a.id, label: ACC_EN[a.id] ?? a.id, c1: a.c1, c2: a.c2 }))
 export const ACC_EN_IDS = Object.keys(ACC_EN)
+
+/** Les chiffres du hero : tous lus dans les catalogues du moteur, aucun n'est ecrit a la main. */
+export const CHIFFRES: { valeur: number; label: string }[] = [
+  { valeur: SHAPES.length, label: 'shapes' },
+  { valeur: RENDUS.length, label: '3D styles' },
+  { valeur: MOOD_IDS.length, label: 'moods' },
+  { valeur: REACTION_IDS.length, label: 'reactions to touch' },
+  { valeur: CATALOGUE.length, label: 'accessories' }
+]

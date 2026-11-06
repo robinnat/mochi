@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { EMPLACEMENTS, PAR_ID } from '@/bot/emplacements'
+import { CATALOGUE, EMPLACEMENTS, PAR_ID } from '@/bot/emplacements'
 import { contraste } from '@/ui/trois/theme'
-import { BANDES, ECART_MIN, distanceCouleur, itemsBande } from './bandes'
+import { BANDES, ECART_MIN, distanceCouleur, itemPiece, itemsBande } from './bandes'
 import { boiteOpaque, boitesOpaques, couleurPourTheme } from './vignettes'
 
 const source = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8')
@@ -65,16 +65,26 @@ describe('bandes d accessoires (pieces seules)', () => {
     expect(v).toContain('boiteOpaque')
   })
 
-  it('le defilement est du CSS pur : transform, pause au survol, figee avec prefers-reduced-motion', () => {
-    const vue = source('./BandeAccessoires.vue')
-    expect(vue).toContain('translate3d(-50%')
-    expect(vue).toMatch(/animation:\s*defile/)
-    expect(vue).toContain('animation-direction: reverse')
-    expect(vue).toContain('animation-play-state: paused')
-    expect(vue).toContain('prefers-reduced-motion: reduce')
-    // pas de rendu 3D en direct ni de boucle JS pendant le defilement : des images pre-rendues
-    expect(vue).not.toContain('MochiBot')
-    expect(vue).not.toMatch(/setInterval|setTimeout/)
+  it('les bandes defilantes ne sont plus sur la page (06/11/2026) : les pieces servent d icones au selecteur', () => {
+    const site = source('./Site.vue')
+    expect(site).not.toMatch(/Habillage|BandeAccessoires/)
+    const perso = source('./Personnalisation.vue')
+    // icones rendues une fois en images, jamais un MochiBot par piece
+    expect(perso).toContain('rendreVignette')
+    expect(perso).toContain('itemPiece')
+    expect(perso.match(/<MochiBot/g)).toHaveLength(1)
+  })
+
+  it('itemPiece : chaque accessoire du catalogue a son icone, dans ses couleurs, vue de trois quarts', () => {
+    for (const a of CATALOGUE) {
+      const it = itemPiece(a.emplacement, a.id)!
+      expect(it, a.id).not.toBeNull()
+      expect(it.cle).toBe(`${a.emplacement}:${a.id}`)
+      expect([it.c1, it.c2]).toEqual([a.c1, a.c2])
+      if (a.emplacement === 'dos') expect(Math.abs(it.yaw)).toBeGreaterThan(Math.PI / 2)
+      else expect(Math.abs(it.yaw)).toBeLessThan(Math.PI / 2)
+    }
+    expect(itemPiece('tete', 'inconnu')).toBeNull()
   })
 })
 
