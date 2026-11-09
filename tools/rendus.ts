@@ -66,19 +66,21 @@ async function enWebp(url: string, cote: number): Promise<string> {
 
 declare global {
   interface Window {
-    toutRendre: () => Promise<{ fichier: string; data: string }[]>
+    toutRendre: (prefixe?: string) => Promise<{ fichier: string; data: string }[]>
   }
 }
 
-window.toutRendre = async () => {
+window.toutRendre = async (prefixe = '') => {
   const out: { fichier: string; data: string }[] = []
   for (const theme of THEMES) {
     themeCourant.value = theme
     for (const a of AFFICHES) {
+      if (!a.nom.startsWith(prefixe)) continue
       const data = await rendreUn({ ...a.props, theme: a.props.theme ?? theme, frozenAt: a.t }, a.taille)
       out.push({ fichier: urlAffiche(a.nom, theme), data })
     }
     for (const p of PIECES) {
+      if (prefixe) break
       const item = itemPiece(p.emplacement, p.id)
       if (!item) continue
       const u = await rendreVignette(item, theme)

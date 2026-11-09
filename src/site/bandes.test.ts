@@ -49,7 +49,7 @@ describe('bandes d accessoires (pieces seules)', () => {
         const a = Math.abs(it.yaw)
         if (e === 'dos') expect(a).toBeGreaterThan(Math.PI / 2)
         else expect(a).toBeLessThan(Math.PI / 2)
-        if (e === 'tete' || e === 'yeux' || e === 'bas') expect(a).toBeGreaterThanOrEqual(0.2)
+        if (e === 'tete' || e === 'bas') expect(a).toBeGreaterThanOrEqual(0.2)
       }
     }
   })

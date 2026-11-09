@@ -1006,6 +1006,43 @@ header[id] {
   display: grid;
   place-items: center;
 }
+.b-acc .b-image {
+  height: 214px;
+}
+.acc-defile {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+.acc-defile-scene {
+  display: grid;
+  place-items: center;
+}
+.acc-defile-img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.acc-defile-img.anime {
+  animation: acc-entre 0.32s var(--ease) both;
+}
+.acc-defile-nom {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--ink-2, var(--muted));
+  min-height: 1.2em;
+  margin: 0;
+}
+@keyframes acc-entre {
+  from {
+    opacity: 0.2;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 .b-code {
   margin: 0;
   padding: 26px 20px;

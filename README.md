@@ -39,7 +39,7 @@ import MochiBot from './components/MochiBot.vue'
   <!-- a mood with its own prop: types on a small 3D laptop (ordinateur="false" hides it) -->
   <MochiBot mood="travaille" shape="squircle" :size="200" />
   <!-- accessories by slot and colour, dark theme -->
-  <MochiBot :accessoires="{ tete: 'casquette', yeux: 'rondes' }" theme="dark" :size="200" />
+  <MochiBot :accessoires="{ tete: 'casquette', bas: 'papillon' }" theme="dark" :size="200" />
   <!-- a frozen frame: no animation loop, the same image every time -->
   <MochiBot mood="termine" :frozen-at="1.2" :size="96" />
 </template>
@@ -117,16 +117,16 @@ from behind, `ordinateur` hides it), `attend`, `termine`, `bloque`, `dort`. Set 
 the gaze follow, tap startles, double tap laughs, long press blushes, a shake or fast spin makes it dizzy, and
 `coucou` plays a hello on arrival (it grows out of the floor). See [docs/moods.md](docs/moods.md).
 
-**Worn accessories** (`src/bot/portes.ts`, `porte` prop): `lunettes`, `soleil`, `haut-de-forme`,
+**Worn accessories** (`src/bot/portes.ts`, `porte` prop): `haut-de-forme`,
 `paille`, `bonnet`, `noeud`, `couronne`, `casque`. Placed on the body again at every frame, in every
 style including 3D (`<MochiBot porte="bonnet" />`). See [docs/accessoires.md](docs/accessoires.md).
 
 **3D controls**: `<MochiBot rendu="3d" :yaw="angle" />` turns the model around its vertical axis
 (radians; the eyes are painted on the front face only). The site's 3D section drives it by drag.
 
-**Accessories by slot** (`accessoires` prop, `src/bot/emplacements.ts`): head, eyes, face, neck and back, one per
+**Accessories by slot** (`accessoires` prop, `src/bot/emplacements.ts`): head, neck and back, one per
 slot, all stackable, each a simple shape in one or two colours you choose:
-`<MochiBot :accessoires="{ tete: { id: 'casquette', c1: '#e8505b' }, yeux: 'rondes' }" />`.
+`<MochiBot :accessoires="{ tete: { id: 'casquette', c1: '#e8505b' }, bas: 'papillon' }" />`.
 **Theme**: `theme="dark"` turns the eyes black (without it, the site's current theme).
 
 **Exports**: SVG, PNG, animated SVG, animated GIF, and a whole montage as GIF or MP4

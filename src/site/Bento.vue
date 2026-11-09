@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Affiche from './Affiche.vue'
+import AccDefile from './AccDefile.vue'
 import { CATALOGUE, EMPLACEMENTS } from '@/bot/emplacements'
 
 /** Le reste, en cartes : clair et sombre, accessoires, chargement a la demande, moteur pur, exports. Images figees seulement. */
@@ -29,10 +30,10 @@ const N_EMPL = EMPLACEMENTS.length
 
       <article v-reveal="1" class="carte-b b-acc">
         <div class="b-image">
-          <Affiche nom="bento-acc" :taille="166" alt="A pink Mochi wearing a cap, round glasses and a bow tie" />
+          <AccDefile />
         </div>
         <h3>{{ N_ACC }} accessories</h3>
-        <p>{{ N_EMPL }} slots (head, eyes, face, neck, back), one piece per slot, in your colours.</p>
+        <p>{{ N_EMPL }} slots (head, neck, back), one piece per slot, in your colours.</p>
       </article>
 
       <article v-reveal="2" class="carte-b b-pur">

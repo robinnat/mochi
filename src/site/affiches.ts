@@ -60,7 +60,20 @@ export const SATELLITES = [
   { forme: 'goutte', couleur: '#4f9cf5', taille: 64 }
 ]
 export const BENTO_THEME: PropsMochi = { shape: 'etoile', color: '#f5b53d', rendu: '3d' }
-export const BENTO_ACC: PropsMochi = { shape: 'cercle', color: '#f472b6', rendu: '3d', yaw: 0.3, accessoires: { tete: 'casquette', yeux: 'rondes', bas: 'papillon' } }
+/**
+ * Carte « accessoires » : le meme petit Mochi rose porte, tour a tour, chaque accessoire du catalogue (une image
+ * pre-rendue par accessoire, `defile-<emplacement>-<id>`). Le defilement (`AccDefile.vue`) ne fait que changer d'image.
+ */
+export const DEFILE_BOT: PropsMochi = { shape: 'cercle', color: '#f472b6', rendu: '3d', yaw: 0.3 }
+/** Angle par emplacement : le dos se voit mieux de trois quarts arriere. */
+const DEFILE_YAW: Record<Emplacement, number> = { tete: 0.3, yeux: 0.3, visage: 0.3, bas: 0.3, dos: 2.0 }
+export const DEFILE = CATALOGUE.map((a) => ({
+  nom: `defile-${a.emplacement}-${a.id}`,
+  emplacement: a.emplacement,
+  id: a.id,
+  props: { ...DEFILE_BOT, yaw: DEFILE_YAW[a.emplacement], accessoires: { [a.emplacement]: a.id } } as PropsMochi
+}))
+export const TAILLE_DEFILE = 166
 
 export const AFFICHES: Affiche[] = [
   { nom: 'hero', taille: 400, props: HERO, t: 0 },
@@ -74,7 +87,7 @@ export const AFFICHES: Affiche[] = [
   ...STYLES_SITE.flatMap((s) => FORMES_3D.map((f) => ({ nom: `forme-${f.id}-${s.id}`, taille: 128, props: { shape: f.id, color: f.couleur, rendu: s.id }, t: 1.2 }))),
   { nom: 'bento-clair', taille: 146, props: { ...BENTO_THEME, theme: 'light' }, t: 1.2 },
   { nom: 'bento-sombre', taille: 146, props: { ...BENTO_THEME, theme: 'dark' }, t: 1.2 },
-  { nom: 'bento-acc', taille: 166, props: BENTO_ACC, t: 1.2 }
+  ...DEFILE.map((d) => ({ nom: d.nom, taille: TAILLE_DEFILE, props: d.props, t: 1.2 }))
 ]
 
 const suffixe = (theme: ThemeSite) => (theme === 'dark' ? 'sombre' : 'clair')

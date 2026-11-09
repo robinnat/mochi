@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { AFFICHES, PIECES, urlAffiche, urlPiece } from './affiches'
+import { CATALOGUE } from '@/bot/emplacements'
+import { AFFICHES, DEFILE, PIECES, urlAffiche, urlPiece } from './affiches'
 
 const publicDir = new URL('../../public', import.meta.url)
 const existe = (url: string) => existsSync(new URL('.' + url, publicDir + '/'))
@@ -44,5 +45,18 @@ describe('images pre-rendues (v11)', () => {
       const n = m[1] ?? m[2]!
       expect(noms.has(n), n).toBe(true)
     }
+  })
+
+  it('la carte des accessoires defile sur tout le catalogue (rien sur le visage), compteur lu dans le catalogue, immobile si mouvement reduit', () => {
+    expect(DEFILE.map((d) => `${d.emplacement}:${d.id}`)).toEqual(CATALOGUE.map((a) => `${a.emplacement}:${a.id}`))
+    expect(DEFILE.some((d) => d.emplacement === 'yeux' || d.emplacement === 'visage')).toBe(false)
+    expect(new Set(AFFICHES.map((a) => a.nom))).toContain(DEFILE[0]!.nom)
+    const bento = lire('Bento.vue')
+    expect(bento).toContain('CATALOGUE.length')
+    expect(bento).toContain('<AccDefile')
+    const d = lire('AccDefile.vue')
+    expect(d).toContain('useReduit')
+    expect(d).toMatch(/reduit\.value \? 0/)
+    expect(d).not.toMatch(/import .*three|MochiBot/)
   })
 })
