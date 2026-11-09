@@ -42,12 +42,12 @@ describe('extrait de code de la personnalisation', () => {
       mood: 'travaille',
       ordinateur: false,
       theme: 'dark',
-      accessoires: { tete: { id: 'casquette', c1: '#2f6fe0', c2: '#e8505b' }, bas: { id: 'papillon', c1: '#26222f', c2: '#26222f' } }
+      accessoires: { tete: { id: 'casquette', c1: '#2f6fe0', c2: '#e8505b' }, yeux: { id: 'rondes', c1: '#26222f', c2: '#26222f' } }
     })
     expect(e).toContain('mood="travaille"')
     expect(e).toContain(':ordinateur="false"')
     expect(e).toContain('theme="dark"')
-    expect(e).toContain(":accessoires=\"{ tete: { id: 'casquette', c1: '#2f6fe0' }, bas: 'papillon' }\"")
+    expect(e).toContain(":accessoires=\"{ tete: { id: 'casquette', c1: '#2f6fe0' }, yeux: 'rondes' }\"")
     // l'ordinateur ne s'ecrit que pour le mood travaille
     expect(extraitCode({ ...base, ordinateur: false })).not.toContain('ordinateur')
   })

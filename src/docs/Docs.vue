@@ -175,7 +175,7 @@ onBeforeUnmount(() => obs?.disconnect())
         <section id="accessories" class="doc">
           <h2>Accessories</h2>
           <p>
-            {{ ACCS.length }} slots, one accessory per slot, all stackable. Pass the id alone for the catalogue colours, or an object with your
+            Five slots, one accessory per slot, all stackable. Pass the id alone for the catalogue colours, or an object with your
             own <code>c1</code> (main colour) and <code>c2</code> (second colour, for two-colour pieces).
           </p>
           <CodeBlock :code="EX_ACCESSOIRES" titre="Template" />

@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import Affiche from './Affiche.vue'
 import AccDefile from './AccDefile.vue'
+import BandePieces from './BandePieces.vue'
 import { CATALOGUE, EMPLACEMENTS } from '@/bot/emplacements'
+import { EMPLACEMENT_LABEL } from './catalog'
 
 /** Le reste, en cartes : clair et sombre, accessoires, chargement a la demande, moteur pur, exports. Images figees seulement. */
 const N_ACC = CATALOGUE.length
 const N_EMPL = EMPLACEMENTS.length
+const NOMS_EMPL = EMPLACEMENTS.map((e) => EMPLACEMENT_LABEL[e].toLowerCase()).join(', ')
 </script>
 
 <template>
@@ -33,7 +36,7 @@ const N_EMPL = EMPLACEMENTS.length
           <AccDefile />
         </div>
         <h3>{{ N_ACC }} accessories</h3>
-        <p>{{ N_EMPL }} slots (head, neck, back), one piece per slot, in your colours.</p>
+        <p>{{ N_EMPL }} slots ({{ NOMS_EMPL }}), one piece per slot, in your colours.</p>
       </article>
 
       <article v-reveal="2" class="carte-b b-pur">
@@ -53,6 +56,9 @@ const N_EMPL = EMPLACEMENTS.length
         <h3>Exports</h3>
         <p>Save a frame or a whole loop from the <a href="/app">app</a>.</p>
       </article>
+    </div>
+    <div class="wrap bande-wrap">
+      <BandePieces />
     </div>
   </section>
 </template>

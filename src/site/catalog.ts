@@ -126,7 +126,7 @@ export const PORTE_LABEL: Record<PorteId, string> = {
   casque: 'Headphones'
 }
 /** Seuls trois accessoires sont exposes sur le site, en 3D : les autres restent en attente dans le moteur. */
-export const PORTE_IDS_SITE: PorteId[] = ['haut-de-forme', 'noeud']
+export const PORTE_IDS_SITE: PorteId[] = ['lunettes', 'haut-de-forme', 'noeud']
 export const PORTE_IDS_ENGINE = PORTE_IDS
 
 /**
@@ -214,6 +214,13 @@ const ACC_EN: Record<string, string> = {
   ruban: 'Ribbon bow',
   fleur: 'Flower',
   toque: 'Chef hat',
+  rondes: 'Round glasses',
+  carrees: 'Square glasses',
+  soleil: 'Sunglasses',
+  coeur: 'Heart glasses',
+  etoile: 'Star glasses',
+  monocle: 'Monocle',
+  joues: 'Blush',
   papillon: 'Bow tie',
   echarpe: 'Scarf',
   perles: 'Pearl necklace',

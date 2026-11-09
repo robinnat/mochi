@@ -1094,6 +1094,52 @@ header[id] {
   }
 }
 
+/* bande d'accessoires seuls */
+.bande-wrap {
+  margin-top: 14px;
+}
+.bande-pieces {
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 14px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.bande-piste {
+  display: flex;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: bande-defile 70s linear infinite;
+  will-change: transform;
+}
+.bande-piste li {
+  flex: none;
+  padding: 0 10px;
+}
+.bande-piste img {
+  display: block;
+  width: 80px;
+  height: 80px;
+}
+.bande-pieces.pause .bande-piste {
+  animation-play-state: paused;
+}
+.bande-pieces.fixe {
+  overflow-x: auto;
+}
+.bande-pieces.fixe .bande-piste {
+  animation: none;
+}
+@keyframes bande-defile {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 /* ------------------------------------------------------------------ personnalisation */
 .perso-grille {
   display: grid;

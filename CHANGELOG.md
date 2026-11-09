@@ -7,10 +7,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed (for now)
 
-- Every accessory worn on the face (round, square, sun, heart and star glasses, monocle, cat whiskers, freckles,
-  blush, beauty mark, moustache): out of `CATALOGUE` (29 to 18 accessories), kept in `RETIRES`. The `yeux` and
-  `visage` slots are no longer offered.
-
+- Freckles, beauty mark, moustache and cat whiskers: out of `CATALOGUE` (29 to 25 accessories), kept in `RETIRES`.
 - The jumping movement: the "Movement" section of the site, `src/bot/sauts.ts`, the isometric space `EspaceIso`
   and the lab's `#iso` view.
 

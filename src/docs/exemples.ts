@@ -93,7 +93,7 @@ const mood = ref('travaille')
 </template>`
 
 export const EX_ACCESSOIRES = `<!-- one accessory per slot, in its catalogue colours -->
-<MochiBot :accessoires="{ tete: 'casquette', bas: 'papillon' }" />
+<MochiBot :accessoires="{ tete: 'casquette', yeux: 'rondes' }" />
 
 <!-- or with your colours: c1 is the main colour, c2 the second one -->
 <MochiBot

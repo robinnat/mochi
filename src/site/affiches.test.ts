@@ -47,13 +47,19 @@ describe('images pre-rendues (v11)', () => {
     }
   })
 
-  it('la carte des accessoires defile sur tout le catalogue (rien sur le visage), compteur lu dans le catalogue, immobile si mouvement reduit', () => {
+  it('la carte des accessoires defile sur tout le catalogue (sans les quatre retires), compteur lu dans le catalogue, immobile si mouvement reduit', () => {
     expect(DEFILE.map((d) => `${d.emplacement}:${d.id}`)).toEqual(CATALOGUE.map((a) => `${a.emplacement}:${a.id}`))
-    expect(DEFILE.some((d) => d.emplacement === 'yeux' || d.emplacement === 'visage')).toBe(false)
+    expect(DEFILE).toHaveLength(25)
+    expect(DEFILE.some((d) => ['chat', 'rousseur', 'grain', 'moustache'].includes(d.id))).toBe(false)
     expect(new Set(AFFICHES.map((a) => a.nom))).toContain(DEFILE[0]!.nom)
     const bento = lire('Bento.vue')
     expect(bento).toContain('CATALOGUE.length')
     expect(bento).toContain('<AccDefile')
+    expect(lire('Bento.vue')).toContain('<BandePieces')
+    const bande = lire('BandePieces.vue')
+    expect(bande).toContain('useReduit')
+    expect(bande).toContain('IntersectionObserver')
+    expect(bande).toContain('document.hidden')
     const d = lire('AccDefile.vue')
     expect(d).toContain('useReduit')
     expect(d).toMatch(/reduit\.value \? 0/)

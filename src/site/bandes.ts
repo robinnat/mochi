@@ -1,5 +1,5 @@
 /**
- * Donnees des bandes d'accessoires du site : une bande par emplacement du paquet (tete, bas, dos),
+ * Donnees des bandes d'accessoires du site : une bande par emplacement du paquet (tete, yeux, visage, bas, dos),
  * remplie des PIECES SEULES (sans corps), dans beaucoup de variantes de couleurs. Tout est DETERMINISTE : memes
  * bandes a chaque visite, et testable sans navigateur. Aucun rendu ici : `vignettes.ts` dessine, `Habillage.vue` affiche.
  */
@@ -32,6 +32,8 @@ export interface DefBande {
 /** Les bandes, dans l'ordre des emplacements du paquet ; le sens alterne d'une ligne a l'autre. */
 export const BANDES: DefBande[] = [
   { emplacement: 'tete', titre: 'Hats', texte: 'Caps, crowns, berets, headphones, flowers', sens: 'gauche', duree: 64 },
+  { emplacement: 'yeux', titre: 'Glasses', texte: 'Round, square, sun, heart, star and a monocle', sens: 'droite', duree: 60 },
+  { emplacement: 'visage', titre: 'Face', texte: 'Blush', sens: 'gauche', duree: 66 },
   { emplacement: 'bas', titre: 'Neck', texte: 'Bow ties, scarves, necklaces', sens: 'droite', duree: 62 },
   { emplacement: 'dos', titre: 'Back', texte: 'Wings, a backpack, a cape, seen from behind', sens: 'gauche', duree: 68 }
 ]

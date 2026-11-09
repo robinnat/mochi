@@ -82,10 +82,10 @@ const corpsDe = (f: string) => {
 }
 
 describe('catalogue', () => {
-  it('au moins 18 accessoires, repartis sur les trois emplacements (sans rien sur le visage)', () => {
-    expect(CATALOGUE.length).toBeGreaterThanOrEqual(18)
-    expect(CATALOGUE.some((a) => (a.emplacement as string) === 'yeux' || (a.emplacement as string) === 'visage' || a.id === 'moustache')).toBe(false)
-    for (const e of EMPLACEMENTS) expect(parEmplacement(e).length).toBeGreaterThanOrEqual(4)
+  it('25 accessoires, repartis sur les cinq emplacements (sans taches de rousseur, grain de beaute, moustache ni moustaches de chat)', () => {
+    expect(CATALOGUE.length).toBe(25)
+    for (const e of EMPLACEMENTS) expect(parEmplacement(e).length).toBeGreaterThanOrEqual(1)
+    expect(CATALOGUE.some((a) => ['chat', 'rousseur', 'grain', 'moustache'].includes(a.id))).toBe(false)
   })
 
   it('chaque accessoire a un generateur, des identifiants uniques par emplacement, des couleurs hex et un nom sans tiret cadratin', () => {
@@ -106,7 +106,7 @@ describe('catalogue', () => {
     expect(resoudre('tete', 'casquette')?.nom).toBe('Casquette')
     expect(resoudre('tete', { id: 'casquette', c1: '#112233' })?.c1).toBe('#112233')
     expect(resoudre('tete', 'inconnu')).toBeNull()
-    expect(resoudre('dos', 'casquette')).toBeNull()
+    expect(resoudre('yeux', 'casquette')).toBeNull()
     expect(couleursDe({ tete: 'casquette', bas: 'papillon' }).length).toBeGreaterThanOrEqual(2)
   })
 })
@@ -164,9 +164,9 @@ describe('ancrage sur les 12 formes', () => {
 })
 
 describe('combinaison des emplacements', () => {
-  const tout: Selection = { tete: 'haut-de-forme', bas: 'papillon', dos: 'ailes' }
+  const tout: Selection = { tete: 'haut-de-forme', yeux: 'soleil', visage: 'joues', bas: 'papillon', dos: 'ailes' }
 
-  it.each(FORMES)('%s : les trois emplacements ensemble, sans erreur', (forme) => {
+  it.each(FORMES)('%s : les cinq emplacements ensemble, sans erreur', (forme) => {
     const { R } = corpsDe(forme)
     const acc = new Accessoires3d()
     acc.maj(tout, forme, mat(), () => R)
@@ -177,24 +177,26 @@ describe('combinaison des emplacements', () => {
     }
     expect(acc.couleurs.length).toBeGreaterThanOrEqual(3)
     // chaque emplacement ne produit qu'un groupe : un seul accessoire par emplacement
-    expect(new Set(acc.groupe.children.map((c) => c.name)).size).toBe(3)
+    expect(new Set(acc.groupe.children.map((c) => c.name)).size).toBe(5)
     acc.liberer()
   })
 
-  it('toutes les paires (tete, bas, dos) du catalogue se construisent sur une forme sans erreur', () => {
+  it('toutes les paires (tete, yeux, visage, bas) du catalogue se construisent sur une forme sans erreur', () => {
     const { R } = corpsDe('cercle')
     const sels: Selection[] = []
     const t = parEmplacement('tete')
+    const y = parEmplacement('yeux')
+    const v = parEmplacement('visage')
     const b = parEmplacement('bas')
     const d = parEmplacement('dos')
-    const n = Math.max(t.length, b.length, d.length)
+    const n = Math.max(t.length, y.length, v.length, b.length, d.length)
     for (let i = 0; i < n; i++) {
-      sels.push({ tete: t[i % t.length]!.id, bas: b[(i + 3) % b.length]!.id, dos: d[i % d.length]!.id })
+      sels.push({ tete: t[i % t.length]!.id, yeux: y[(i + 1) % y.length]!.id, visage: v[(i + 2) % v.length]!.id, bas: b[(i + 3) % b.length]!.id, dos: d[i % d.length]!.id })
     }
     for (const sel of sels) {
       const acc = new Accessoires3d()
       acc.maj(sel, JSON.stringify(sel), mat(), () => R)
-      expect(acc.groupe.children).toHaveLength(3)
+      expect(acc.groupe.children).toHaveLength(5)
       for (const g of acc.groupe.children) expect(sommetsFinis(g), JSON.stringify(sel)).toBe(true)
       acc.liberer()
     }
@@ -239,15 +241,15 @@ describe('combinaison des emplacements', () => {
 })
 
 describe('liste des emplacements', () => {
-  it('trois emplacements dans un ordre stable', () => {
-    expect(EMPLACEMENTS).toEqual(['tete', 'bas', 'dos'] as Emplacement[])
+  it('cinq emplacements dans un ordre stable', () => {
+    expect(EMPLACEMENTS).toEqual(['tete', 'yeux', 'visage', 'bas', 'dos'] as Emplacement[])
   })
 })
 
 describe('retours de Robin du 05/11/2026', () => {
   it('les accessoires retires ne sont plus au catalogue ni resolus, mais restent listes dans RETIRES', () => {
     expect(RETIRES.map((r) => `${r.emplacement}:${r.id}`).sort()).toEqual(
-      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'bas:cravate', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski', 'yeux:rondes', 'yeux:carrees', 'yeux:soleil', 'yeux:coeur', 'yeux:etoile', 'yeux:monocle', 'visage:chat', 'visage:rousseur', 'visage:joues', 'visage:grain', 'bas:moustache'].sort()
+      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'bas:cravate', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski', 'visage:chat', 'visage:rousseur', 'visage:grain', 'bas:moustache'].sort()
     )
     for (const r of RETIRES) {
       expect(CATALOGUE.some((a) => a.emplacement === r.emplacement && a.id === r.id)).toBe(false)
@@ -287,7 +289,7 @@ describe('retours de Robin du 05/11/2026', () => {
   it('le casque occupe l emplacement tete : il ne se cumule pas avec un chapeau (documente), mais avec tous les autres', () => {
     const { R } = corpsDe('squircle')
     const acc = new Accessoires3d()
-    acc.maj({ tete: 'casque', bas: 'echarpe', dos: 'sac' }, 'x', mat(), () => R)
+    acc.maj({ tete: 'casque', yeux: 'soleil', visage: 'joues', bas: 'echarpe', dos: 'sac' }, 'x', mat(), () => R)
     expect(acc.groupe.children.map((c) => c.name)).toEqual(EMPLACEMENTS)
     for (const g of acc.groupe.children) expect(sommetsFinis(g)).toBe(true)
     acc.liberer()
@@ -340,14 +342,15 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
 
   it('la queue et le masque de sommeil sont retires du catalogue (code garde)', () => {
     expect(resoudre('dos', 'queue')).toBeNull()
+    expect(resoudre('yeux', 'sommeil')).toBeNull()
     expect(RETIRES.some((r) => r.id === 'queue')).toBe(true)
     expect(RETIRES.some((r) => r.id === 'sommeil')).toBe(true)
   })
 
-  it('la moustache et tout ce qui se pose sur le visage sont retires du catalogue (09/11/2026, code garde)', () => {
+  it('la moustache, les taches de rousseur, le grain de beaute et les moustaches de chat sont retires (09/11/2026, code garde)', () => {
     expect(resoudre('bas', 'moustache')).toBeNull()
+    expect(resoudre('visage', 'chat')).toBeNull()
     expect(RETIRES.some((r) => r.id === 'moustache')).toBe(true)
-    expect(CATALOGUE.some((a) => ['yeux', 'visage'].includes(a.emplacement))).toBe(false)
   })
 
   it.each(FORMES)('%s : le noeud papillon est petit (au plus 45 pour cent du corps) et ne depasse que peu sous la silhouette', (forme) => {
@@ -410,7 +413,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     const { R } = corpsDe('cercle')
     const acc = new Accessoires3d()
     const m = mat()
-    acc.maj({ tete: 'casquette', bas: 'papillon' }, 'c', m, () => R, { k: 1, sol: R.bas, cle: 'c' })
+    acc.maj({ tete: 'casquette', yeux: 'rondes', bas: 'papillon' }, 'c', m, () => R, { k: 1, sol: R.bas, cle: 'c' })
     const noms = acc.groupe.children.filter((c) => c.visible).map((c) => c.name)
     expect(noms).toContain('ordinateur')
     expect(noms).toContain('tete')
@@ -438,6 +441,21 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     expect(n2).not.toBe(0)
     expect(n2).not.toBe(n1 + n2)
     acc.liberer()
+  })
+
+  it.each(FORMES)('%s : les branches des lunettes restent dans la boite du corps', (forme) => {
+    const { R } = corpsDe(forme)
+    for (const id of ['rondes', 'carrees', 'soleil', 'coeur', 'etoile']) {
+      const acc = new Accessoires3d()
+      acc.maj({ yeux: id }, forme, mat(), () => R)
+      for (const t of meshes(acc.groupe).filter((m) => m.geometry.type === 'TubeGeometry')) {
+        const P = t.geometry.attributes.position!
+        let xmax = -Infinity
+        for (let i = 0; i < P.count; i++) xmax = Math.max(xmax, Math.abs(P.getX(i)))
+        expect(xmax, `${forme} ${id}`).toBeLessThan(R.A.box.max.x + 0.05 * R.hw)
+      }
+      acc.liberer()
+    }
   })
 
   it('les bretelles du sac ne passent pas par le devant du corps', () => {
@@ -545,7 +563,7 @@ describe('contour des accessoires', () => {
   it('les coques sont des maillages inverses, plus sombres que la piece, aux sommets finis', () => {
     const { R } = corpsDe('etoile')
     const acc = new Accessoires3d()
-    acc.maj({ tete: 'casquette', bas: 'papillon' }, 'c1', mat(), () => R)
+    acc.maj({ tete: 'casquette', yeux: 'rondes', bas: 'papillon' }, 'c1', mat(), () => R)
     acc.contour(true, 3)
     const cs = coques(acc.groupe)
     expect(cs.length).toBeGreaterThan(3)

@@ -106,7 +106,7 @@ describe('docs : tout vient de la vraie API', () => {
   })
 
   it('les emplacements et le nombre d accessoires du catalogue sont ceux du moteur', () => {
-    expect(EMPLACEMENTS).toHaveLength(3)
-    expect(CATALOGUE.length).toBeGreaterThan(15)
+    expect(EMPLACEMENTS).toHaveLength(5)
+    expect(CATALOGUE.length).toBeGreaterThan(20)
   })
 })
