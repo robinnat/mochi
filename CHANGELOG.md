@@ -5,6 +5,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Removed (for now)
+
+- The jumping movement: the "Movement" section of the site, `src/bot/sauts.ts`, the isometric space `EspaceIso`
+  and the lab's `#iso` view.
+
 ### Changed (site)
 
 - Landing page: seven moods demo, live interactions (hover, tap, double tap, long press, hello on arrival, which now

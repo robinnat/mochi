@@ -177,7 +177,7 @@ reflet », `?f=cercle,etoile,nuage`), captures `docs/variantes/3d-doux-reflet-*.
 
 `labo.html` (entrée Vite séparée, l'application ne grossit pas) : `#formes` est la planche
 des formes dans les quatre styles (flat, pixel, pâte, 3D ; `?c=<couleur>`, `?s=<taille>`),
-`#gros` un gros plan en trois quarts, `#iso` la démo de saut ([iso.md](iso.md)).
+`#gros` un gros plan en trois quarts.
 
 ### Risques connus
 

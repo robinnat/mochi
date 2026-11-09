@@ -5,7 +5,6 @@ import Styles from './Styles.vue'
 import Formes from './Formes.vue'
 import Moods from './Moods.vue'
 import Interactions from './Interactions.vue'
-import Sauts from './Sauts.vue'
 import Bento from './Bento.vue'
 import Personnalisation from './Personnalisation.vue'
 import DocsTeaser from './DocsTeaser.vue'
@@ -23,7 +22,6 @@ initTheme()
     <Formes />
     <Moods />
     <Interactions />
-    <Sauts />
     <Bento />
     <Personnalisation />
     <DocsTeaser />

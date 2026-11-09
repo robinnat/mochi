@@ -5,7 +5,7 @@
 Mochi is a small animated avatar engine for the web. One solid shape with seven moods, two eyes
 that move on their own, and reactions when you touch it (hover, tap, double tap, long press, shake,
 a hello on arrival). Everything is drawn in real 3D, in three styles (Soft, Flat and Pixel), in light
-and dark, with accessories you can stack by slot and colour, jumping movement and exports
+and dark, with accessories you can stack by slot and colour, and exports
 (SVG, PNG, GIF, MP4). No animation library.
 
 **Site and playground: https://mochi-red-phi.vercel.app** (the app is at `/app`).  
@@ -129,11 +129,6 @@ slot, all stackable, each a simple shape in one or two colours you choose:
 `<MochiBot :accessoires="{ tete: { id: 'casquette', c1: '#e8505b' }, yeux: 'rondes' }" />`.
 **Theme**: `theme="dark"` turns the eyes black (without it, the site's current theme).
 
-**Jumps and movement** (`src/bot/sauts.ts`, `src/ui/trois/iso.ts`): `poseSaut` and
-`poseSurChemin` give squash, stretch, flight and landing with volume conserved;
-`EspaceIso` puts 3D mochis on an isometric grid and makes them hop tile to tile.
-See [docs/iso.md](docs/iso.md).
-
 **Exports**: SVG, PNG, animated SVG, animated GIF, and a whole montage as GIF or MP4
 (the video encoder only loads on first use).
 
@@ -179,7 +174,6 @@ them loses the accuracy of the motion.
 | [docs/styles.md](docs/styles.md) | Render styles: Soft, Flat, Pixel (real 3D) |
 | [docs/accessoires.md](docs/accessoires.md) | Job accessories |
 | [docs/moods.md](docs/moods.md) | Work moods and reactions to the user (face and body only) |
-| [docs/iso.md](docs/iso.md) | Jumps and the isometric space |
 | [docs/intro.md](docs/intro.md) | The arrival sequence |
 | [docs/interface.md](docs/interface.md) | App layout and CSS traps |
 | [docs/export.md](docs/export.md) | SVG, PNG, GIF and MP4 export |
