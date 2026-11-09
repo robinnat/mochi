@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { CATALOGUE } from '@/bot/emplacements'
+import { CATALOGUE, PAR_ID } from '@/bot/emplacements'
 import { AFFICHES, DEFILE, PIECES, urlAffiche, urlPiece } from './affiches'
 
 const publicDir = new URL('../../public', import.meta.url)
@@ -48,18 +48,21 @@ describe('images pre-rendues (v11)', () => {
   })
 
   it('la carte des accessoires defile sur tout le catalogue (sans les quatre retires), compteur lu dans le catalogue, immobile si mouvement reduit', () => {
-    expect(DEFILE.map((d) => `${d.emplacement}:${d.id}`)).toEqual(CATALOGUE.map((a) => `${a.emplacement}:${a.id}`))
-    expect(DEFILE).toHaveLength(25)
-    expect(DEFILE.some((d) => ['chat', 'rousseur', 'grain', 'moustache'].includes(d.id))).toBe(false)
+    const vus = new Set<string>()
+    for (const d of DEFILE) {
+      for (const [e, ch] of Object.entries(d.variante.acc)) {
+        const id = typeof ch === 'string' ? ch : ch!.id
+        expect(PAR_ID.has(`${e}:${id}`), `${e}:${id}`).toBe(true)
+        vus.add(`${e}:${id}`)
+      }
+    }
+    expect(vus.size).toBe(CATALOGUE.length)
+    expect(DEFILE.length).toBeGreaterThanOrEqual(20)
+    expect(DEFILE.length).toBeLessThanOrEqual(30)
     expect(new Set(AFFICHES.map((a) => a.nom))).toContain(DEFILE[0]!.nom)
     const bento = lire('Bento.vue')
     expect(bento).toContain('CATALOGUE.length')
     expect(bento).toContain('<AccDefile')
-    expect(lire('Bento.vue')).toContain('<BandePieces')
-    const bande = lire('BandePieces.vue')
-    expect(bande).toContain('useReduit')
-    expect(bande).toContain('IntersectionObserver')
-    expect(bande).toContain('document.hidden')
     const d = lire('AccDefile.vue')
     expect(d).toContain('useReduit')
     expect(d).toMatch(/reduit\.value \? 0/)

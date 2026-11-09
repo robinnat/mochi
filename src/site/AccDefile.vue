@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { DEFILE, TAILLE_DEFILE, urlAffiche } from './affiches'
+import type { Choix, Emplacement } from '@/bot/emplacements'
 import { ACCESSOIRES_SITE } from './catalog'
 import { useReduit } from './reduced'
 import { themeEffectif } from './theme'
 
 /**
- * Carte « accessoires » : le petit Mochi porte un accessoire apres l'autre, en boucle (environ 1,3 s chacun),
- * pour montrer tout ce qui est possible. Aucune 3D ici : chaque etape est une image pre-rendue de la vraie 3D
+ * Carte « accessoires » : une liste fixe de Mochi (corps, couleurs, une piece par emplacement) defile en boucle
+ * (environ 1,3 s chacun), pour montrer tout ce qui est possible. Aucune 3D ici : chaque etape est une image pre-rendue de la vraie 3D
  * (`public/rendus/defile-*.webp`), on ne fait que changer d'image. Le minuteur ne tourne que si la carte est a
  * l'ecran et l'onglet visible ; avec `prefers-reduced-motion`, un seul accessoire reste affiche, fixe.
  */
@@ -20,8 +21,11 @@ let obs: IntersectionObserver | null = null
 let visible = false
 
 const etapes = DEFILE.map((d) => ({
-  ...d,
-  label: ACCESSOIRES_SITE(d.emplacement).find((a) => a.id === d.id)?.label ?? d.id
+  nom: d.nom,
+  label: (Object.entries(d.variante.acc) as [Emplacement, Choix][])
+    .map(([e, ch]) => ACCESSOIRES_SITE(e).find((a) => a.id === (typeof ch === 'string' ? ch : ch.id))?.label)
+    .filter(Boolean)
+    .join(', ')
 }))
 const courant = computed(() => etapes[reduit.value ? 0 : rang.value % etapes.length]!)
 const src = computed(() => urlAffiche(courant.value.nom, themeEffectif.value))
@@ -80,11 +84,10 @@ onBeforeUnmount(() => {
         :src="src"
         :width="TAILLE_DEFILE"
         :height="TAILLE_DEFILE"
-        :alt="`A pink Mochi wearing: ${courant.label}`"
+        :alt="`A Mochi wearing: ${courant.label}`"
         decoding="async"
         draggable="false"
       />
     </div>
-    <p class="acc-defile-nom" aria-hidden="true">{{ courant.label }}</p>
   </div>
 </template>

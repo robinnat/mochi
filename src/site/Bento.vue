@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Affiche from './Affiche.vue'
 import AccDefile from './AccDefile.vue'
-import BandePieces from './BandePieces.vue'
 import { CATALOGUE, EMPLACEMENTS } from '@/bot/emplacements'
 import { EMPLACEMENT_LABEL } from './catalog'
 
@@ -56,9 +55,6 @@ const NOMS_EMPL = EMPLACEMENTS.map((e) => EMPLACEMENT_LABEL[e].toLowerCase()).jo
         <h3>Exports</h3>
         <p>Save a frame or a whole loop from the <a href="/app">app</a>.</p>
       </article>
-    </div>
-    <div class="wrap bande-wrap">
-      <BandePieces />
     </div>
   </section>
 </template>

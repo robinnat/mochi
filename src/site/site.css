@@ -1006,9 +1006,6 @@ header[id] {
   display: grid;
   place-items: center;
 }
-.b-acc .b-image {
-  height: 214px;
-}
 .acc-defile {
   display: grid;
   justify-items: center;
@@ -1025,13 +1022,6 @@ header[id] {
 }
 .acc-defile-img.anime {
   animation: acc-entre 0.32s var(--ease) both;
-}
-.acc-defile-nom {
-  font-size: 0.82rem;
-  font-weight: 650;
-  color: var(--ink-2, var(--muted));
-  min-height: 1.2em;
-  margin: 0;
 }
 @keyframes acc-entre {
   from {
@@ -1091,52 +1081,6 @@ header[id] {
   .b-leger,
   .b-export {
     grid-column: span 2;
-  }
-}
-
-/* bande d'accessoires seuls */
-.bande-wrap {
-  margin-top: 14px;
-}
-.bande-pieces {
-  overflow: hidden;
-  border-radius: 28px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  padding: 14px 0;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-}
-.bande-piste {
-  display: flex;
-  width: max-content;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  animation: bande-defile 70s linear infinite;
-  will-change: transform;
-}
-.bande-piste li {
-  flex: none;
-  padding: 0 10px;
-}
-.bande-piste img {
-  display: block;
-  width: 80px;
-  height: 80px;
-}
-.bande-pieces.pause .bande-piste {
-  animation-play-state: paused;
-}
-.bande-pieces.fixe {
-  overflow-x: auto;
-}
-.bande-pieces.fixe .bande-piste {
-  animation: none;
-}
-@keyframes bande-defile {
-  to {
-    transform: translateX(-50%);
   }
 }
 

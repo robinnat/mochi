@@ -61,17 +61,50 @@ export const SATELLITES = [
 ]
 export const BENTO_THEME: PropsMochi = { shape: 'etoile', color: '#f5b53d', rendu: '3d' }
 /**
- * Carte « accessoires » : le meme petit Mochi rose porte, tour a tour, chaque accessoire du catalogue (une image
- * pre-rendue par accessoire, `defile-<emplacement>-<id>`). Le defilement (`AccDefile.vue`) ne fait que changer d'image.
+ * Carte « accessoires » : une liste FIXE et soignee de variantes (corps, couleurs d'accessoires, une piece par
+ * emplacement), une image pre-rendue par variante (`defile-NN`). Chaque accessoire du catalogue y figure au moins
+ * une fois (teste). Les variantes avec une piece du dos sont vues de trois quarts arriere (pas de lunettes alors).
  */
-export const DEFILE_BOT: PropsMochi = { shape: 'cercle', color: '#f472b6', rendu: '3d', yaw: 0.3 }
-/** Angle par emplacement : le dos se voit mieux de trois quarts arriere. */
-const DEFILE_YAW: Record<Emplacement, number> = { tete: 0.3, yeux: 0.3, visage: 0.3, bas: 0.3, dos: 2.0 }
-export const DEFILE = CATALOGUE.map((a) => ({
-  nom: `defile-${a.emplacement}-${a.id}`,
-  emplacement: a.emplacement,
-  id: a.id,
-  props: { ...DEFILE_BOT, yaw: DEFILE_YAW[a.emplacement], accessoires: { [a.emplacement]: a.id } } as PropsMochi
+export interface Variante {
+  forme: string
+  corps: string
+  acc: Selection
+  dos?: boolean
+}
+const R = '#e8505b', J = '#f2b83d', T = '#2fb5a0', M = '#2b3a67', P = '#f48fb1', C = '#f6f1e7', N = '#26222f', O = '#f2c14e', V = '#7a5fd0', B = '#4a8df0'
+const c = (id: string, c1: string, c2?: string) => ({ id, c1, c2: c2 ?? c1 })
+export const VARIANTES: Variante[] = [
+  { forme: 'cercle', corps: '#f472b6', acc: { tete: c('casquette', B), yeux: 'rondes' } },
+  { forme: 'etoile', corps: '#f5b53d', acc: { tete: 'couronne', yeux: 'coeur', bas: 'papillon' } },
+  { forme: 'cercle', corps: '#8b5cf6', acc: { tete: 'haut-de-forme', yeux: 'monocle', bas: c('echarpe', T) } },
+  { forme: 'nuage', corps: '#4f9cf5', acc: { tete: 'paille', yeux: 'soleil', bas: 'fleurs' } },
+  { forme: 'fleur', corps: '#2dd4bf', acc: { tete: c('beret', R), yeux: 'carrees', bas: 'perles' } },
+  { forme: 'goutte', corps: '#f472b6', acc: { tete: c('ruban', J), visage: 'joues', bas: c('papillon', R) } },
+  { forme: 'squircle', corps: '#2dd4bf', acc: { tete: c('casque', V), yeux: 'etoile', bas: c('echarpe', P) } },
+  { forme: 'cercle', corps: '#2dd4bf', acc: { tete: 'toque', yeux: c('rondes', R), bas: 'papillon' } },
+  { forme: 'etoile', corps: '#8b5cf6', acc: { tete: c('antenne', N, J), visage: 'joues', bas: 'perles' } },
+  { forme: 'cercle', corps: '#f472b6', acc: { tete: c('fleur', V, J), yeux: c('soleil', M, M) } },
+  { forme: 'cercle', corps: '#4f9cf5', acc: { tete: c('casquette', J), yeux: c('coeur', R), bas: c('echarpe', C) } },
+  { forme: 'nuage', corps: '#f472b6', acc: { tete: 'couronne', yeux: c('carrees', T), bas: 'fleurs' } },
+  { forme: 'squircle', corps: '#8b5cf6', acc: { tete: c('haut-de-forme', C, O), yeux: 'monocle', bas: c('papillon', O) } },
+  { forme: 'fleur', corps: '#f5b53d', acc: { tete: c('beret', T), yeux: 'rondes', bas: c('echarpe', R) } },
+  { forme: 'goutte', corps: '#2dd4bf', acc: { tete: 'paille', visage: 'joues', bas: 'perles' } },
+  { forme: 'cercle', corps: '#f5b53d', acc: { tete: c('casque', M), yeux: 'soleil', bas: c('papillon', V) } },
+  { forme: 'cercle', corps: '#f472b6', acc: { yeux: c('etoile', V), tete: c('ruban', P), visage: 'joues' } },
+  { forme: 'cercle', corps: '#8b5cf6', acc: { yeux: c('coeur', P), tete: 'toque', bas: 'fleurs' } },
+  { forme: 'cercle', corps: '#f472b6', acc: { dos: 'ailes', tete: c('ruban', V) }, dos: true },
+  { forme: 'etoile', corps: '#8b5cf6', acc: { dos: 'diable', tete: 'couronne' }, dos: true },
+  { forme: 'cercle', corps: '#2dd4bf', acc: { dos: c('sac', R, M), tete: c('casquette', M) }, dos: true },
+  { forme: 'nuage', corps: '#f5b53d', acc: { dos: c('cape', V), tete: 'haut-de-forme' }, dos: true },
+  { forme: 'cercle', corps: '#4f9cf5', acc: { dos: c('ailes', C), tete: 'fleur' }, dos: true },
+  { forme: 'squircle', corps: '#f472b6', acc: { dos: c('diable', R), tete: 'antenne' }, dos: true },
+  { forme: 'fleur', corps: '#8b5cf6', acc: { dos: c('sac', J, M), tete: 'paille' }, dos: true },
+  { forme: 'cercle', corps: '#f5b53d', acc: { dos: c('cape', T), tete: c('beret', N) }, dos: true }
+]
+export const DEFILE = VARIANTES.map((v, i) => ({
+  nom: `defile-${String(i + 1).padStart(2, '0')}`,
+  variante: v,
+  props: { shape: v.forme, color: v.corps, rendu: '3d', yaw: v.dos ? 2.0 : 0.3, accessoires: v.acc } as PropsMochi
 }))
 export const TAILLE_DEFILE = 166
 
