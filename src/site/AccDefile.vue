@@ -77,17 +77,19 @@ onBeforeUnmount(() => {
 <template>
   <div ref="racine" class="acc-defile">
     <div class="acc-defile-scene">
-      <img
-        :key="courant.nom"
-        class="affiche acc-defile-img"
-        :class="{ anime: !reduit }"
-        :src="src"
-        :width="TAILLE_DEFILE"
-        :height="TAILLE_DEFILE"
-        :alt="`A Mochi wearing: ${courant.label}`"
-        decoding="async"
-        draggable="false"
-      />
+      <!-- le Mochi qui part s'ecrase puis s'etire vers le haut ; le suivant arrive avec un petit « pop » a ressort -->
+      <Transition name="acc">
+        <img
+          :key="courant.nom"
+          class="affiche acc-defile-img"
+          :src="src"
+          :width="TAILLE_DEFILE"
+          :height="TAILLE_DEFILE"
+          :alt="`A Mochi wearing: ${courant.label}`"
+          decoding="async"
+          draggable="false"
+        />
+      </Transition>
     </div>
   </div>
 </template>
