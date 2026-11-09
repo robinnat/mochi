@@ -11,7 +11,7 @@ Cinq emplacements, un accessoire au plus par emplacement, tous cumulables :
 | `yeux` | ligne des deux yeux | lunettes rondes, carrees, coeur, masque de sommeil, lunettes de ski |
 | `visage` | sous les yeux, joues | moustache, pansement, taches de rousseur |
 | `bas` | « cou », vers 76 % de la hauteur, anneaux inclines | noeud papillon, echarpe, collier de perles |
-| `dos` | cotes et arriere | ailes, sac a dos, cape, queue |
+| `dos` | cotes et arriere | sac a dos, cape |
 
 ```ts
 mochi.setAccessoires({ tete: 'casquette', yeux: 'soleil', bas: 'papillon' })

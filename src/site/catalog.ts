@@ -225,8 +225,6 @@ const ACC_EN: Record<string, string> = {
   echarpe: 'Scarf',
   perles: 'Pearl necklace',
   fleurs: 'Flower necklace',
-  ailes: 'Angel wings',
-  diable: 'Bat wings',
   sac: 'Backpack',
   cape: 'Cape'
 }

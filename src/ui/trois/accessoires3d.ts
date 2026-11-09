@@ -1663,6 +1663,15 @@ export class Accessoires3d {
     this.groupe.add(this.ordiG)
   }
 
+  /**
+   * Oublie la pose en cache : le prochain `maj` reconstruit les pieces et refait les tirs de rayons sur le corps tel qu'il
+   * est a ce moment. Sert quand la forme change : la cle (style|forme) change tout de suite, mais le corps est encore en
+   * train de se transformer (morph), donc les reperes calcules a cet instant sont ceux d'une forme a mi-chemin.
+   */
+  invalider() {
+    this.cle = ''
+  }
+
   liberer() {
     this.vide()
     for (const g of this.ordiGeos) g.dispose()

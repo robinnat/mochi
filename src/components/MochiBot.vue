@@ -20,7 +20,7 @@ import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
 import { STATE_BY_ID, type StateId } from '@/bot/states'
 import { dessinPorte, porteSvg, type PorteId } from '@/bot/portes'
 import { ACCESSOIRE_BY_ID, ancreDuCorps, type AccessoireId } from '@/bot/accessoires'
-import { composer, type Geste } from '@/bot/gestes'
+import { composer, zSommeil, type Geste } from '@/bot/gestes'
 import { Humeurs, REACTION_DE_EVENEMENT, doitRedessiner, moodDe, type ReactionId } from '@/bot/humeurs'
 import { pixellise, pixellisePrims } from '@/ui/pixel'
 import { DOUCEUR_DEFAUT, RENDU_3D_DEFAUT, type Douceur, type Rendu3d } from '@/ui/trois/rendu3d'
@@ -262,6 +262,27 @@ const ancre = computed(() =>
 /** Mouvement reduit : les humeurs deviennent des images fixes (le visage reste, le corps ne bouge plus). */
 const reduit = ref(false)
 const humeurs = new Humeurs(moodDe(props.mood), { base: expression.value })
+/**
+ * Petits « z » de l'humeur `dort` : deux traits en forme de z qui montent au-dessus du corps et s'effacent (positions
+ * de `zSommeil`, en rayons, comme dans le tableau de bord de l'entreprise). Traits dessines en SVG par-dessus tous les
+ * rendus (2D et 3D). Mouvement reduit ou image figee : une seule image, a un instant ou ils se lisent bien.
+ */
+const zMarques = computed(() => {
+  if (moodDe(props.mood) !== 'dort') return []
+  return zSommeil(reduit.value || props.frozenAt !== undefined ? 1.2 : temps.value).map((z, i) => {
+    // decales d'un cran vers l'exterieur par rapport au tableau de bord : en 3D le corps est plus large qu'une silhouette plate
+    const x = z.x * 100 + 18
+    const y = z.y * 100 - 10
+    const k = z.taille * 100
+    return {
+      i,
+      d: `M${(x - k / 2).toFixed(1)} ${(y - k / 2).toFixed(1)}h${k.toFixed(1)}l${(-k).toFixed(1)} ${k.toFixed(1)}h${k.toFixed(1)}`,
+      op: reduit.value || props.frozenAt !== undefined ? 0.8 - 0.3 * i : z.opacite
+    }
+  })
+})
+// plus foncee que le corps : le z se lit aussi quand il passe devant lui
+const couleurZ = computed(() => mixHex(ink.value, '#1a1630', 0.5))
 const humeurActive = computed(() => moodDe(props.mood) !== null)
 
 const gesteBase = (t: number): Geste | undefined =>
@@ -518,6 +539,25 @@ function dessiner3d() {
     emit('pret')
   }
 }
+
+/**
+ * Changement de forme : le corps se transforme pendant `SHAPE_MORPH`, et les accessoires (en 3D) etaient poses sur la
+ * forme a mi-chemin, puis gardes en cache tant qu'on ne changeait pas d'accessoire. Une fois le morph fini, on oublie
+ * leur pose et on redessine : ils se recalent sur la forme finale.
+ */
+let minuteurForme = 0
+watch(
+  () => props.shape,
+  () => {
+    clearTimeout(minuteurForme)
+    minuteurForme = window.setTimeout(() => {
+      if (!vraie3d.value || !m3d.value) return
+      m3d.value.invaliderAccessoires3d()
+      dessiner3d()
+    }, BotEngine.SHAPE_MORPH * 1000 + 120)
+  }
+)
+onBeforeUnmount(() => clearTimeout(minuteurForme))
 
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image
 watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, themeEff, () => props.accessoires, () => props.ombre, () => props.ombrage, () => contourEffectif.value, () => props.epaisseurContour], dessiner3d, { flush: 'post' })
@@ -1000,7 +1040,7 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
     :viewBox="`${-VB} ${-VB} ${VB * 2} ${VB * 2}`"
     role="img"
     :aria-label="props.label ?? t('app.botAria')"
-    :style="acc || props.porte ? 'overflow: visible' : undefined"
+    :style="acc || props.porte || zMarques.length ? 'overflow: visible' : undefined"
     @pointerenter="onSurvol"
     @pointermove="onSurvol"
     @pointerleave="onQuitte"
@@ -1239,6 +1279,9 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
 
     <g v-if="objetSvg" :opacity="decorAlpha" :transform="objetDecalage || undefined" v-html="objetSvg" />
     </template>
+    <g v-if="zMarques.length" data-zzz="1" fill="none" :stroke="couleurZ" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+      <path v-for="z in zMarques" :key="z.i" :d="z.d" :opacity="z.op" />
+    </g>
     <!-- accessoire porte : meme description pour tous les rendus (`portes.ts`) -->
     <g v-if="porteTexte" data-porte="1" v-html="porteTexte" />
     <g v-if="portePixels" data-porte="1" shape-rendering="crispEdges">

@@ -85,12 +85,12 @@ export const VARIANTES: Variante[] = [
   { forme: 'cercle', corps: '#ffb400', acc: { tete: c('casque', M), yeux: 'soleil', bas: c('papillon', V) } },
   { forme: 'cercle', corps: '#ff3d9a', acc: { yeux: c('etoile', V), tete: c('ruban', P), visage: 'joues' } },
   { forme: 'cercle', corps: '#7a3cff', acc: { yeux: c('coeur', P), tete: 'toque', bas: 'fleurs' } },
-  { forme: 'cercle', corps: '#ff3d9a', acc: { dos: 'ailes', tete: c('ruban', V) }, dos: true },
-  { forme: 'etoile', corps: '#7a3cff', acc: { dos: 'diable', tete: 'couronne' }, dos: true },
+  { forme: 'cercle', corps: '#ff3d9a', acc: { tete: c('ruban', V), yeux: 'etoile', bas: 'papillon' } },
+  { forme: 'etoile', corps: '#7a3cff', acc: { tete: 'couronne', yeux: 'soleil', bas: c('echarpe', J) } },
   { forme: 'cercle', corps: '#00cfc0', acc: { dos: c('sac', R, M), tete: c('casquette', M) }, dos: true },
   { forme: 'nuage', corps: '#ffb400', acc: { dos: c('cape', V), tete: 'haut-de-forme' }, dos: true },
-  { forme: 'cercle', corps: '#1f8fff', acc: { dos: c('ailes', C), tete: 'fleur' }, dos: true },
-  { forme: 'squircle', corps: '#ff3d9a', acc: { dos: c('diable', R), tete: 'antenne' }, dos: true },
+  { forme: 'cercle', corps: '#1f8fff', acc: { tete: 'fleur', visage: 'joues', bas: 'perles' } },
+  { forme: 'squircle', corps: '#ff3d9a', acc: { tete: 'antenne', yeux: 'rondes', bas: 'fleurs' } },
   { forme: 'fleur', corps: '#7a3cff', acc: { dos: c('sac', J, M), tete: 'paille' }, dos: true },
   { forme: 'cercle', corps: '#ffb400', acc: { dos: c('cape', T), tete: c('beret', N) }, dos: true }
 ]

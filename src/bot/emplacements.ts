@@ -1,7 +1,7 @@
 /**
  * Accessoires 3D par EMPLACEMENTS combinables. Un accessoire au plus par emplacement, tous les
  * emplacements se cumulent : un Mochi peut porter un chapeau, des lunettes, une moustache, un noeud
- * papillon et des ailes en meme temps.
+ * papillon et un sac en meme temps.
  *
  * Ce fichier ne contient que le catalogue (noms, couleurs) : aucune geometrie, aucun `three`.
  *
@@ -15,7 +15,7 @@
  *   yeux   : a la hauteur des yeux (lunettes, masques)
  *   visage : joues et dessous des yeux (taches de rousseur...)
  *   bas    : le « cou » du corps, vers 72 % de la hauteur (noeud papillon, cravate, moustache, echarpe, collier...)
- *   dos    : les cotes et le dos (ailes, sac, cape, queue)
+ *   dos    : les cotes et le dos (sac, cape)
  */
 
 export type Emplacement = 'tete' | 'yeux' | 'visage' | 'bas' | 'dos'
@@ -88,8 +88,6 @@ export const CATALOGUE: AccessoireDef[] = [
   def('bas', 'perles', 'Collier de perles', C.creme, C.creme),
   def('bas', 'fleurs', 'Collier de fleurs', C.rose, C.jaune),
   // dos
-  def('dos', 'ailes', 'Ailes d’ange', C.creme, C.creme),
-  def('dos', 'diable', 'Ailes de chauve-souris', C.violet, C.violet),
   def('dos', 'sac', 'Sac à dos', C.orange, C.marine),
   def('dos', 'cape', 'Cape', C.rouge, C.rouge)
 ]
@@ -101,6 +99,9 @@ export const CATALOGUE: AccessoireDef[] = [
  * remettre un, le recopier dans `CATALOGUE`.
  */
 export const RETIRES: AccessoireDef[] = [
+  // v13 (09/11/2026, Robin) : les deux paires d'ailes (ange et chauve-souris) sont retirees
+  def('dos', 'ailes', 'Ailes d’ange', C.creme, C.creme),
+  def('dos', 'diable', 'Ailes de chauve-souris', C.violet, C.violet),
   // v12 (09/11/2026, Robin) : taches de rousseur, grain de beaute, moustache et moustaches de chat retires
   def('visage', 'chat', 'Moustaches de chat', C.noir, C.rose),
   def('visage', 'rousseur', 'Taches de rousseur', '#c8733a', '#c8733a'),

@@ -7,9 +7,19 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed (for now)
 
+- The two pairs of wings (angel, bat): out of `CATALOGUE` (23 accessories), kept in `RETIRES`.
+
 - Freckles, beauty mark, moustache and cat whiskers: out of `CATALOGUE` (29 to 25 accessories), kept in `RETIRES`.
 - The jumping movement: the "Movement" section of the site, `src/bot/sauts.ts`, the isometric space `EspaceIso`
   and the lab's `#iso` view.
+
+### Fixed
+
+- Changing the shape left the accessories where they were laid out on the half-morphed body; they now re-seat once the morph ends.
+
+### Added
+
+- The `dort` mood shows small rising Z marks (all renderers).
 
 ### Changed (site)
 

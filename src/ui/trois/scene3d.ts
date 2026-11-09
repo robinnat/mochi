@@ -317,6 +317,11 @@ export class Mochi3d {
     return this.acc3d.couleurs
   }
 
+  /** Refait la pose des accessoires au prochain rendu (voir `Accessoires3d.invalider`). */
+  invaliderAccessoires() {
+    this.acc3d.invalider()
+  }
+
   /** Dit quelle forme est rendue : son profil de volume (cube, prisme, dome...) en depend. */
   setForme(forme: string) {
     this.forme = forme
@@ -853,6 +858,11 @@ export function webglDisponible(): boolean {
  * (floue en realiste, en aplat dans les variantes flat), puis le corps 3D. `yaw` (radians)
  * fait tourner le corps sur lui-meme autour de l'axe vertical, la camera et la lumiere restent fixes.
  */
+/** Forme (ou autre geometrie du corps) changee : les accessoires se replacent des que le corps a fini de se transformer. */
+export function invaliderAccessoires3d() {
+  partage?.mochi.invaliderAccessoires()
+}
+
 export function rendreAvatar(
   cible: HTMLCanvasElement,
   frame: BotFrame,

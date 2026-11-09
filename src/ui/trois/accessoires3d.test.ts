@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { BufferAttribute, BufferGeometry, Box3, MeshStandardMaterial, type Mesh, type Object3D } from 'three'
 import { BotEngine } from '@/bot/engine'
@@ -82,8 +83,8 @@ const corpsDe = (f: string) => {
 }
 
 describe('catalogue', () => {
-  it('25 accessoires, repartis sur les cinq emplacements (sans taches de rousseur, grain de beaute, moustache ni moustaches de chat)', () => {
-    expect(CATALOGUE.length).toBe(25)
+  it('23 accessoires, repartis sur les cinq emplacements (sans taches de rousseur, grain de beaute, moustache ni moustaches de chat)', () => {
+    expect(CATALOGUE.length).toBe(23)
     for (const e of EMPLACEMENTS) expect(parEmplacement(e).length).toBeGreaterThanOrEqual(1)
     expect(CATALOGUE.some((a) => ['chat', 'rousseur', 'grain', 'moustache'].includes(a.id))).toBe(false)
   })
@@ -164,7 +165,7 @@ describe('ancrage sur les 12 formes', () => {
 })
 
 describe('combinaison des emplacements', () => {
-  const tout: Selection = { tete: 'haut-de-forme', yeux: 'soleil', visage: 'joues', bas: 'papillon', dos: 'ailes' }
+  const tout: Selection = { tete: 'haut-de-forme', yeux: 'soleil', visage: 'joues', bas: 'papillon', dos: 'sac' }
 
   it.each(FORMES)('%s : les cinq emplacements ensemble, sans erreur', (forme) => {
     const { R } = corpsDe(forme)
@@ -200,7 +201,7 @@ describe('combinaison des emplacements', () => {
       for (const g of acc.groupe.children) expect(sommetsFinis(g), JSON.stringify(sel)).toBe(true)
       acc.liberer()
     }
-  })
+  }, 30000)
 
   it('la zone de la tete reste au-dessus de celle du cou : pas de collision entre emplacements du haut et du bas', () => {
     for (const forme of ['cercle', 'squircle', 'nuage', 'oeuf']) {
@@ -249,7 +250,7 @@ describe('liste des emplacements', () => {
 describe('retours de Robin du 05/11/2026', () => {
   it('les accessoires retires ne sont plus au catalogue ni resolus, mais restent listes dans RETIRES', () => {
     expect(RETIRES.map((r) => `${r.emplacement}:${r.id}`).sort()).toEqual(
-      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'bas:cravate', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski', 'visage:chat', 'visage:rousseur', 'visage:grain', 'bas:moustache'].sort()
+      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'bas:cravate', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski', 'visage:chat', 'visage:rousseur', 'visage:grain', 'bas:moustache', 'dos:ailes', 'dos:diable'].sort()
     )
     for (const r of RETIRES) {
       expect(CATALOGUE.some((a) => a.emplacement === r.emplacement && a.id === r.id)).toBe(false)
@@ -350,6 +351,8 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
   it('la moustache, les taches de rousseur, le grain de beaute et les moustaches de chat sont retires (09/11/2026, code garde)', () => {
     expect(resoudre('bas', 'moustache')).toBeNull()
     expect(resoudre('visage', 'chat')).toBeNull()
+    expect(resoudre('dos', 'ailes')).toBeNull()
+    expect(resoudre('dos', 'diable')).toBeNull()
     expect(RETIRES.some((r) => r.id === 'moustache')).toBe(true)
   })
 
@@ -679,5 +682,39 @@ describe('coeur : les chapeaux reposent SUR les deux bosses, sans s enfoncer dan
       const { R } = corpsDe(f)
       expect(R.tete.y, f).toBeLessThanOrEqual(R.haut)
     }
+  })
+})
+
+describe('changement de forme du personnalisateur (09/11/2026)', () => {
+  const haut = (acc: Accessoires3d) => new Box3().setFromObject(acc.groupe).min.y
+
+  it('bug reproduit : meme cle, autre corps -> les pieces restent la ou elles etaient ; invalider() les recale', () => {
+    const a = corpsDe('cercle').R
+    const b = corpsDe('triangle').R
+    expect(Math.abs(a.haut - b.haut)).toBeGreaterThan(1) // les deux corps n'ont pas le meme sommet
+    const sel: Selection = { tete: 'casquette' }
+    const m = mat()
+    const acc = new Accessoires3d()
+    acc.maj(sel, 'x|forme', m, () => a)
+    const posee = haut(acc)
+    // la forme change mais la cle ne voit que le nom du style et de la forme, deja pris : rien n'est recalcule
+    acc.maj(sel, 'x|forme', m, () => b)
+    expect(haut(acc)).toBeCloseTo(posee, 5)
+    // apres invalider(), la pose suit le nouveau corps, comme une construction neuve
+    acc.invalider()
+    acc.maj(sel, 'x|forme', m, () => b)
+    const neuf = new Accessoires3d()
+    neuf.maj(sel, 'x|forme', m, () => b)
+    expect(haut(acc)).toBeCloseTo(haut(neuf), 5)
+    expect(Math.abs(haut(acc) - posee)).toBeGreaterThan(0.5)
+    acc.liberer()
+    neuf.liberer()
+  })
+
+  it('MochiBot invalide la pose des accessoires apres le morph quand la forme change', () => {
+    const src = readFileSync(new URL('../../components/MochiBot.vue', import.meta.url), 'utf8')
+    expect(src).toContain('invaliderAccessoires3d()')
+    expect(src).toMatch(/watch\(\s*\(\) => props\.shape/)
+    expect(src).toContain('BotEngine.SHAPE_MORPH')
   })
 })

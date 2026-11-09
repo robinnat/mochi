@@ -35,7 +35,7 @@ export const BANDES: DefBande[] = [
   { emplacement: 'yeux', titre: 'Glasses', texte: 'Round, square, sun, heart, star and a monocle', sens: 'droite', duree: 60 },
   { emplacement: 'visage', titre: 'Face', texte: 'Blush', sens: 'gauche', duree: 66 },
   { emplacement: 'bas', titre: 'Neck', texte: 'Bow ties, scarves, necklaces', sens: 'droite', duree: 62 },
-  { emplacement: 'dos', titre: 'Back', texte: 'Wings, a backpack, a cape, seen from behind', sens: 'gauche', duree: 68 }
+  { emplacement: 'dos', titre: 'Back', texte: 'A backpack and a cape, seen from behind', sens: 'gauche', duree: 68 }
 ]
 
 /** Angle de vue par emplacement : trois quarts (le signe alterne d'une piece a l'autre) ; visage presque de face ; dos de trois quarts arriere. */
