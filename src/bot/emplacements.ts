@@ -40,20 +40,20 @@ export interface AccessoireDef {
   c2: string
 }
 
-/** Palette vive et sobre. */
+/** Palette vive et sobre, alignee sur P1 « Bonbons et jouets » (09/11/2026) pour les teintes vives. */
 export const COULEURS = {
-  rouge: '#ff3b4e',
-  jaune: '#ffc21a',
-  turquoise: '#00c2ae',
+  rouge: '#ff3b30',
+  jaune: '#ffd60a',
+  turquoise: '#00c7be',
   marine: '#2b3a67',
-  rose: '#ff7eb6',
+  rose: '#ff4d94',
   creme: '#f6f1e7',
   noir: '#26222f',
   or: '#ffc933',
-  vert: '#1fd07a',
-  orange: '#ff7a14',
-  violet: '#7a3cff',
-  bleu: '#2f8cff',
+  vert: '#00c46a',
+  orange: '#ff9500',
+  violet: '#8b3dff',
+  bleu: '#2d5bff',
   paille: '#efcf8a'
 } as const
 

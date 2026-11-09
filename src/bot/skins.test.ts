@@ -332,7 +332,7 @@ describe('couleur libre (hex) du corps', () => {
     for (const mauvais of ['', '#12', '#12345', '#1234567', 'rouge', '#ggg', null, undefined]) expect(hexValide(mauvais as string)).toBeNull()
   })
   it('couleurDe : un id du catalogue, sinon un hex libre, sinon l encre', () => {
-    expect(couleurDe('violet')).toBe('#7a3cff')
+    expect(couleurDe('violet')).toBe('#8b3dff')
     expect(couleurDe('#ff8800')).toBe('#ff8800')
     expect(couleurDe('#f80')).toBe('#ff8800')
     expect(couleurDe('nimporte')).toBe('#0a0a0c')

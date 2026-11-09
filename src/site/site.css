@@ -4,23 +4,24 @@
  * prefers-reduced-motion les coupe (en bas du fichier).
  */
 :root {
-  --bg: #fbfaf7;
-  --bg-2: #f3f1ec;
+  --bg: #fbfbf9;
+  --bg-2: #f2f2ef;
   --surface: #ffffff;
-  --ink: #15151c;
-  --ink-2: #393b48;
-  --muted: #6b6e7b;
-  --line: rgba(21, 21, 40, 0.08);
-  --line-2: rgba(21, 21, 40, 0.14);
-  --accent: #7b5cf0;
-  --accent-ink: #5b3fd0;
-  --accent-soft: #efeafd;
-  --p-lavande: #e4dbff;
-  --p-menthe: #cdf2e2;
-  --p-peche: #ffdcc8;
-  --p-ciel: #d6e6ff;
-  --p-citron: #ffeeb0;
-  --ombre: 0 1px 2px rgba(21, 21, 40, 0.05), 0 12px 32px -16px rgba(40, 30, 90, 0.22);
+  --ink: #111113;
+  --ink-2: #3a3a3f;
+  --muted: #6b6b72;
+  --line: rgba(17, 17, 19, 0.08);
+  --line-2: rgba(17, 17, 19, 0.14);
+  --accent: #111113;
+  --accent-ink: #111113;
+  --accent-soft: #efefec;
+  /* P1 (09/11/2026) : interface neutre, aucune teinte ; les panneaux gardent leurs anciens noms mais sont des gris */
+  --p-lavande: #f0f0ed;
+  --p-menthe: #f0f0ed;
+  --p-peche: #f0f0ed;
+  --p-ciel: #f0f0ed;
+  --p-citron: #f0f0ed;
+  --ombre: 0 1px 2px rgba(17, 17, 19, 0.05), 0 12px 32px -16px rgba(17, 17, 19, 0.2);
   --gutter: 16px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --rebond: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -29,22 +30,22 @@
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 :root[data-theme='dark'] {
-  --bg: #0f0e14;
-  --bg-2: #18171f;
-  --surface: #17161e;
-  --ink: #f3f1f8;
-  --ink-2: #d2cfdc;
-  --muted: #a19eb0;
+  --bg: #101011;
+  --bg-2: #1a1a1c;
+  --surface: #171719;
+  --ink: #f5f5f2;
+  --ink-2: #d4d4d0;
+  --muted: #a1a1a8;
   --line: rgba(255, 255, 255, 0.08);
   --line-2: rgba(255, 255, 255, 0.14);
-  --accent: #9d86f7;
-  --accent-ink: #b9a8fb;
-  --accent-soft: #241f3a;
-  --p-lavande: #1f1a33;
-  --p-menthe: #13262a;
-  --p-peche: #2a1d1a;
-  --p-ciel: #161f36;
-  --p-citron: #29240f;
+  --accent: #f5f5f2;
+  --accent-ink: #f5f5f2;
+  --accent-soft: #232326;
+  --p-lavande: #1e1e20;
+  --p-menthe: #1e1e20;
+  --p-peche: #1e1e20;
+  --p-ciel: #1e1e20;
+  --p-citron: #1e1e20;
   --ombre: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -20px rgba(0, 0, 0, 0.7);
   color-scheme: dark;
 }
@@ -284,7 +285,7 @@ header[id] {
 }
 .btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px -14px rgba(30, 20, 70, 0.45);
+  box-shadow: 0 12px 26px -14px rgba(17, 17, 19, 0.45);
 }
 .btn.primaire {
   background: var(--ink);
@@ -306,10 +307,7 @@ header[id] {
 /* fond du hero : un seul calque peint une fois (trois degres pastel), sans animation : les grandes taches animees
    coutaient cher a peindre sur telephone (v11) */
 .hero-fond {
-  background:
-    radial-gradient(60vmax 60vmax at 78% -4%, var(--p-lavande), transparent 70%),
-    radial-gradient(46vmax 46vmax at -6% 48%, var(--p-peche), transparent 70%),
-    radial-gradient(40vmax 40vmax at 104% 68%, var(--p-menthe), transparent 70%);
+  background: none;
 }
 .hero-badge {
   display: inline-flex;
@@ -341,10 +339,7 @@ header[id] {
   }
 }
 .accent {
-  background: linear-gradient(100deg, #7b5cf0 10%, #c06ee6 55%, #f08aa8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--ink);
 }
 @keyframes flotte {
   to {
@@ -881,7 +876,7 @@ header[id] {
   background: #f6f4ef;
 }
 .b-sombre {
-  background: #15141b;
+  background: #151517;
 }
 .b-image {
   height: 200px;
@@ -951,8 +946,8 @@ header[id] {
   margin: 0;
   padding: 26px 20px;
   border-radius: 18px;
-  background: #14131b;
-  color: #e8e6f0;
+  background: #141416;
+  color: #ececea;
   font-family: var(--mono);
   font-size: 1rem;
   overflow-x: auto;
@@ -963,7 +958,7 @@ header[id] {
   font-weight: 900;
   line-height: 0.85;
   letter-spacing: -0.06em;
-  background: linear-gradient(120deg, #7b5cf0, #f08aa8);
+  background: linear-gradient(120deg, var(--ink), var(--ink));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -1010,7 +1005,7 @@ header[id] {
 }
 .perso-scene {
   border-radius: 28px;
-  background: radial-gradient(120% 90% at 30% 20%, var(--surface), var(--p-lavande));
+  background: var(--bg-2);
   border: 1px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -1024,24 +1019,24 @@ header[id] {
   background: #f6f4ef;
 }
 .perso-scene.sombre {
-  background: #15141b;
-  border-color: #2a2833;
+  background: #151517;
+  border-color: #2b2b2f;
 }
 .perso-scene.sombre .segment {
-  background: #23212d;
-  border-color: #2f2d3b;
+  background: #232326;
+  border-color: #303034;
 }
 .perso-scene.sombre .segment button {
-  color: #a19eb0;
+  color: #a1a1a8;
 }
 .perso-scene.sombre .segment button[aria-pressed='true'] {
-  background: #33303f;
-  color: #f3f1f8;
+  background: #343438;
+  color: #f5f5f2;
 }
 .perso-scene.sombre .btn {
-  background: #23212d;
-  color: #f3f1f8;
-  border-color: #3a3747;
+  background: #232326;
+  color: #f5f5f2;
+  border-color: #3b3b40;
 }
 .perso-outils {
   display: flex;
@@ -1366,12 +1361,12 @@ header[id] {
 
 /* ------------------------------------------------------------------ blocs de code */
 .cb {
-  background: #14131b;
-  color: #e8e6f0;
+  background: #141416;
+  color: #ececea;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 24px 60px -30px rgba(20, 10, 50, 0.55);
+  box-shadow: 0 24px 60px -30px rgba(17, 17, 19, 0.55);
 }
 .cb-tete {
   display: flex;
@@ -1391,7 +1386,7 @@ header[id] {
   gap: 6px;
   background: rgba(255, 255, 255, 0.07);
   border: 0;
-  color: #e8e6f0;
+  color: #ececea;
   padding: 6px 10px;
   border-radius: 8px;
   font-size: 0.78rem;

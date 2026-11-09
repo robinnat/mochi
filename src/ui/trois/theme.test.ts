@@ -9,6 +9,7 @@ import {
   accessoiresSombres,
   contraste,
   CONTRASTE_OEIL_MIN,
+  contourOeil,
   corpsPourTheme,
   couleurOeil,
   estTheme,
@@ -50,7 +51,7 @@ describe('theme : valeurs pures', () => {
     // l encre et le bleu marine du dashboard sont eclaircis, le violet et le bleu vif non
     expect(corpsPourTheme('#0a0a0c', 'dark')).not.toBe('#0a0a0c')
     expect(corpsPourTheme('#1f2126', 'dark')).not.toBe('#1f2126')
-    expect(corpsPourTheme('#7a3cff', 'dark')).toBe('#7a3cff')
+    expect(corpsPourTheme('#8b3dff', 'dark')).toBe('#8b3dff')
     expect(corpsPourTheme('#3b93f0', 'dark')).toBe('#3b93f0')
     // idempotent : le rendre deux fois ne l eclaircit pas davantage
     const une = corpsPourTheme('#0a0a0c', 'dark')
@@ -239,5 +240,22 @@ describe('epaisseur du contour (Mochi3d)', () => {
     const m = new Mochi3d(32)
     m.setRendu('doux', false)
     expect((m as unknown as { coque: { visible: boolean } }).coque.visible).toBe(false)
+  })
+})
+
+describe('theme : contour des yeux sur corps tres clair (P1, 09/11/2026)', () => {
+  it('jaune et citron vert ont un contour fonce en clair, les autres couleurs rien', () => {
+    for (const hex of ['#ffd60a', '#b6e800']) {
+      const c = contourOeil(hex, 'light', '#f9f9f9')
+      expect(c, hex).not.toBeNull()
+      expect(contraste(c!, '#f9f9f9'), hex).toBeGreaterThan(4)
+    }
+    for (const c of COLORS) {
+      if (c.id === 'ambre' || c.id === 'citron') continue
+      expect(contourOeil(c.hex, 'light', '#f9f9f9'), c.id).toBeNull()
+    }
+  })
+  it('jamais en sombre', () => {
+    expect(contourOeil('#ffd60a', 'dark')).toBeNull()
   })
 })

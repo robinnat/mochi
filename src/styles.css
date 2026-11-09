@@ -9,7 +9,7 @@
    * (`encre`, #0a0a0c). Les deux ne doivent pas etre confondus : changer
    * celle-ci retouche le decor, changer l'autre casse la ressemblance.
    */
-  --ink: #17203a;
+  --ink: #111113;
   --line: #e3e5ea;
   --muted: #6e7382;
   /* Rouge d'interface pour les actions destructrices — choisi, comme --ink. */

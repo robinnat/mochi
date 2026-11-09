@@ -196,13 +196,19 @@ export type ColorId =
   | 'creme'
   | 'brun'
   | 'rouge'
+  | 'corail'
   | 'orange'
   | 'ambre'
+  | 'citron'
+  | 'pomme'
   | 'vert'
   | 'turquoise'
+  | 'ciel'
   | 'bleu'
   | 'violet'
+  | 'magenta'
   | 'rose'
+  | 'cerise'
   | 'gris'
 
 export interface BotColor {
@@ -210,18 +216,24 @@ export interface BotColor {
   hex: string
 }
 
-/** Palette du personnalisateur d'origine. */
+/** Palette du personnalisateur : 14 couleurs vives « Bonbons et jouets » (P1, 09/11/2026) et quatre neutres. */
 export const COLORS: BotColor[] = [
   { id: 'encre', hex: '#0a0a0c' },
   { id: 'brun', hex: '#8b5e3c' },
-  { id: 'rouge', hex: '#ff3b4e' },
-  { id: 'orange', hex: '#ff7a14' },
-  { id: 'ambre', hex: '#ffb400' },
-  { id: 'vert', hex: '#10d985' },
-  { id: 'turquoise', hex: '#00cfc0' },
-  { id: 'bleu', hex: '#1f8fff' },
-  { id: 'violet', hex: '#7a3cff' },
-  { id: 'rose', hex: '#ff3d9a' },
+  { id: 'rouge', hex: '#ff3b30' },
+  { id: 'corail', hex: '#ff6a3d' },
+  { id: 'orange', hex: '#ff9500' },
+  { id: 'ambre', hex: '#ffd60a' },
+  { id: 'citron', hex: '#b6e800' },
+  { id: 'pomme', hex: '#6fd400' },
+  { id: 'vert', hex: '#00c46a' },
+  { id: 'turquoise', hex: '#00c7be' },
+  { id: 'ciel', hex: '#21b0ff' },
+  { id: 'bleu', hex: '#2d5bff' },
+  { id: 'violet', hex: '#8b3dff' },
+  { id: 'magenta', hex: '#d81bbd' },
+  { id: 'rose', hex: '#ff4d94' },
+  { id: 'cerise', hex: '#e6194b' },
   { id: 'gris', hex: '#a3a3a3' },
   { id: 'creme', hex: '#f1efe9' }
 ]

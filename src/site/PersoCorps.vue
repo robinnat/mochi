@@ -22,8 +22,8 @@ const taille = computed(() => (largeur.value >= 900 ? 320 : 210))
 /* ------------------------------------------------------------------ choix */
 const forme = ref('etoile')
 /** une couleur libre en hex (`#ff8800`) ou un id du catalogue du moteur */
-const couleur = ref('#7a3cff')
-const texteHex = ref('#7a3cff')
+const couleur = ref('#21b0ff')
+const texteHex = ref('#21b0ff')
 const hexCourant = computed(() => couleurDe(couleur.value))
 function poserCouleur(c: string) {
   couleur.value = c

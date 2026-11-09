@@ -46,7 +46,7 @@ import MochiBot from './components/MochiBot.vue'
 <template>
   <MochiBot
     shape="etoile"
-    color="#7a3cff"
+    color="#2d5bff"
     mood="repos"
     :size="200"
     coucou
@@ -98,8 +98,8 @@ export const EX_ACCESSOIRES = `<!-- one accessory per slot, in its catalogue col
 <!-- or with your colours: c1 is the main colour, c2 the second one -->
 <MochiBot
   :accessoires="{
-    tete: { id: 'fleur', c1: '#ff7eb6', c2: '#ffc21a' },
-    bas: { id: 'echarpe', c1: '#2f8cff' },
+    tete: { id: 'fleur', c1: '#ff4d94', c2: '#ffd60a' },
+    bas: { id: 'echarpe', c1: '#2d5bff' },
     dos: 'cape'
   }"
 />`

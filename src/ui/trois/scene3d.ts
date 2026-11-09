@@ -66,7 +66,7 @@ import {
   RENDU_3D_DEFAUT
 } from './rendu3d'
 import { peindreReflet, REFLET_DEFAUT, type Reflet } from './reflet'
-import { accessoiresSombres, CONTRASTE_OEIL_MIN, corpsPourTheme, couleurOeil, OEIL_RGB, THEME_DEFAUT, type Theme } from './theme'
+import { accessoiresSombres, CONTRASTE_OEIL_MIN, contourOeil, corpsPourTheme, couleurOeil, OEIL_RGB, THEME_DEFAUT, type Theme } from './theme'
 import {
   centreDe,
   champDeRepos,
@@ -566,6 +566,7 @@ export class Mochi3d {
       m: lireMatrice(e.matrix),
       alpha: e.alpha
     }))
+    const contour = contourOeil(base, this.theme, papier)
     const y = this.ctxYeux
     y.setTransform(1, 0, 0, 1, 0, 0)
     y.globalAlpha = 1
@@ -584,6 +585,19 @@ export class Mochi3d {
       c.globalAlpha = alpha
       c.fillStyle = papier
       c.fill(chemin)
+      // corps tres clair (jaune, citron vert) : l'oeil blanc est cerne d'un trait fonce, dessine HORS de l'oeil
+      if (contour) {
+        c.save()
+        const dehors = new Path2D()
+        dehors.rect(-400, -400, 800, 800)
+        dehors.addPath(chemin)
+        c.clip(dehors, 'evenodd')
+        c.lineWidth = 9
+        c.lineJoin = 'round'
+        c.strokeStyle = contour
+        c.stroke(chemin)
+        c.restore()
+      }
       if (!creuser) continue
       // ombre interne : un grand cadre perce de l'oeil, dont seule l'ombre entre dans le trou
       c.save()

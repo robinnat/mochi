@@ -42,7 +42,7 @@ describe('extrait de code de la personnalisation', () => {
       mood: 'travaille',
       ordinateur: false,
       theme: 'dark',
-      accessoires: { tete: { id: 'casquette', c1: '#2f6fe0', c2: '#ff3b4e' }, yeux: { id: 'rondes', c1: '#26222f', c2: '#26222f' } }
+      accessoires: { tete: { id: 'casquette', c1: '#2f6fe0', c2: '#ff3b30' }, yeux: { id: 'rondes', c1: '#26222f', c2: '#26222f' } }
     })
     expect(e).toContain('mood="travaille"')
     expect(e).toContain(':ordinateur="false"')

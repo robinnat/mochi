@@ -41,8 +41,8 @@ export const BANDES: DefBande[] = [
 /** Angle de vue par emplacement : trois quarts (le signe alterne d'une piece a l'autre) ; visage presque de face ; dos de trois quarts arriere. */
 const YAW: Record<Emplacement, number> = { tete: 0.55, yeux: 0.24, visage: 0.2, bas: 0.5, dos: Math.PI - 0.6 }
 
-/** Pas du cycle de couleurs (16) : premier avec 16, donc toute la palette est parcourue sans repetition proche. */
-const PAS_COULEUR = 7
+/** Pas du cycle de couleurs (14), choisi pour que le cycle ne se referme pas trop vite, donc toute la palette est parcourue sans repetition proche. */
+const PAS_COULEUR = 6
 
 const rgb = (hex: string): [number, number, number] => {
   const v = parseInt(hex.slice(1), 16)

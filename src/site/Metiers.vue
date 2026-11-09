@@ -5,7 +5,7 @@ import { useReduit } from './reduced'
 import { ACCESSOIRE_IDS, ACCESSOIRE_LABEL } from './catalog'
 
 const reduit = useReduit()
-const COULEURS = ['violet', 'rose', 'turquoise', 'ambre', 'bleu', 'vert', 'orange', 'violet', 'rose']
+const COULEURS = ['rouge', 'ciel', 'ambre', 'vert', 'magenta', 'orange', 'bleu', 'citron', 'turquoise']
 </script>
 
 <template>

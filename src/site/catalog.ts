@@ -29,7 +29,7 @@ export const COLOR_LABEL = en.colors as Record<string, string>
 export const STATE_LABEL = en.states as Record<string, string>
 export const FORME_IDS = SHAPES.map((s) => s.id)
 export const COULEUR_IDS = Object.keys(COLOR_LABEL)
-export const hexDe = (id: string) => COLOR_BY_ID.get(id)?.hex ?? '#7a3cff'
+export const hexDe = (id: string) => COLOR_BY_ID.get(id)?.hex ?? '#8b3dff'
 
 /** Les 5 etats du catalogue, tous portes par le visage, dans l'ordre de la sequence. */
 export const ETATS: StateId[] = [...SEQUENCE]
@@ -130,42 +130,40 @@ export const PORTE_IDS_SITE: PorteId[] = ['lunettes', 'haut-de-forme', 'noeud']
 export const PORTE_IDS_ENGINE = PORTE_IDS
 
 /**
- * Palette des exemples du site : 16 teintes distinctes, pastel et vives, toutes lisibles sur le fond clair
+ * Palette des exemples du site : 14 teintes vives (P1 « Bonbons et jouets »), toutes lisibles sur le fond clair
  * ET sur le fond sombre de la page (aucune quasi-blanche ni quasi-noire ; `catalog.test.ts` le verifie).
  */
 export const PALETTE_SITE: { nom: string; hex: string }[] = [
-  { nom: 'Violet', hex: '#7a3cff' },
-  { nom: 'Pink', hex: '#ff3d9a' },
-  { nom: 'Teal', hex: '#00cfc0' },
-  { nom: 'Amber', hex: '#ffb400' },
-  { nom: 'Blue', hex: '#1f8fff' },
-  { nom: 'Green', hex: '#10d985' },
-  { nom: 'Orange', hex: '#ff7a14' },
-  { nom: 'Cyan', hex: '#12c4ff' },
-  { nom: 'Lemon', hex: '#ffd91a' },
-  { nom: 'Coral', hex: '#ff5468' },
-  { nom: 'Lavender', hex: '#a47bff' },
-  { nom: 'Red', hex: '#ff3340' },
-  { nom: 'Lime', hex: '#84dc12' },
-  { nom: 'Indigo', hex: '#4b57ff' },
-  { nom: 'Magenta', hex: '#e22bff' },
-  { nom: 'Peach', hex: '#ff9466' }
+  { nom: 'Tomato', hex: '#ff3b30' },
+  { nom: 'Coral', hex: '#ff6a3d' },
+  { nom: 'Orange', hex: '#ff9500' },
+  { nom: 'Sunny yellow', hex: '#ffd60a' },
+  { nom: 'Lime', hex: '#b6e800' },
+  { nom: 'Apple green', hex: '#6fd400' },
+  { nom: 'Emerald', hex: '#00c46a' },
+  { nom: 'Turquoise', hex: '#00c7be' },
+  { nom: 'Sky', hex: '#21b0ff' },
+  { nom: 'Royal blue', hex: '#2d5bff' },
+  { nom: 'Violet', hex: '#8b3dff' },
+  { nom: 'Magenta', hex: '#d81bbd' },
+  { nom: 'Pink', hex: '#ff4d94' },
+  { nom: 'Cherry', hex: '#e6194b' }
 ]
 
 /** Les formes 3D du site, chacune avec SA couleur (12 formes, 12 teintes differentes de la palette). */
 export const FORMES_3D: { id: string; label: string; couleur: string }[] = [
-  { id: 'cercle', label: 'Circle', couleur: '#7a3cff' },
-  { id: 'galet', label: 'Pebble', couleur: '#ff3d9a' },
-  { id: 'squircle', label: 'Squircle', couleur: '#00cfc0' },
-  { id: 'capsule', label: 'Capsule', couleur: '#ffb400' },
-  { id: 'triangle', label: 'Triangle', couleur: '#1f8fff' },
-  { id: 'hexagone', label: 'Hexagon', couleur: '#10d985' },
-  { id: 'nuage', label: 'Cloud', couleur: '#ff7a14' },
-  { id: 'goutte', label: 'Droplet', couleur: '#12c4ff' },
-  { id: 'etoile', label: 'Star', couleur: '#ffd91a' },
-  { id: 'fleur', label: 'Flower', couleur: '#ff5468' },
-  { id: 'oeuf', label: 'Egg', couleur: '#a47bff' },
-  { id: 'coeur', label: 'Heart', couleur: '#ff3340' }
+  { id: 'cercle', label: 'Circle', couleur: '#00c46a' },
+  { id: 'galet', label: 'Pebble', couleur: '#21b0ff' },
+  { id: 'squircle', label: 'Squircle', couleur: '#ffd60a' },
+  { id: 'capsule', label: 'Capsule', couleur: '#d81bbd' },
+  { id: 'triangle', label: 'Triangle', couleur: '#6fd400' },
+  { id: 'hexagone', label: 'Hexagon', couleur: '#ff9500' },
+  { id: 'nuage', label: 'Cloud', couleur: '#2d5bff' },
+  { id: 'goutte', label: 'Droplet', couleur: '#ff4d94' },
+  { id: 'etoile', label: 'Star', couleur: '#b6e800' },
+  { id: 'fleur', label: 'Flower', couleur: '#00c7be' },
+  { id: 'oeuf', label: 'Egg', couleur: '#8b3dff' },
+  { id: 'coeur', label: 'Heart', couleur: '#ff3b30' }
 ]
 
 /* ------------------------------------------------------------------ humeurs, interactions, accessoires par emplacements */
