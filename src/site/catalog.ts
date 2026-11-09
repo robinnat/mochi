@@ -29,7 +29,7 @@ export const COLOR_LABEL = en.colors as Record<string, string>
 export const STATE_LABEL = en.states as Record<string, string>
 export const FORME_IDS = SHAPES.map((s) => s.id)
 export const COULEUR_IDS = Object.keys(COLOR_LABEL)
-export const hexDe = (id: string) => COLOR_BY_ID.get(id)?.hex ?? '#8b5cf6'
+export const hexDe = (id: string) => COLOR_BY_ID.get(id)?.hex ?? '#7a3cff'
 
 /** Les 5 etats du catalogue, tous portes par le visage, dans l'ordre de la sequence. */
 export const ETATS: StateId[] = [...SEQUENCE]
@@ -134,38 +134,38 @@ export const PORTE_IDS_ENGINE = PORTE_IDS
  * ET sur le fond sombre de la page (aucune quasi-blanche ni quasi-noire ; `catalog.test.ts` le verifie).
  */
 export const PALETTE_SITE: { nom: string; hex: string }[] = [
-  { nom: 'Violet', hex: '#8b5cf6' },
-  { nom: 'Pink', hex: '#f472b6' },
-  { nom: 'Teal', hex: '#2dd4bf' },
-  { nom: 'Amber', hex: '#f5b53d' },
-  { nom: 'Blue', hex: '#4f9cf5' },
-  { nom: 'Green', hex: '#34d399' },
-  { nom: 'Orange', hex: '#fb923c' },
-  { nom: 'Cyan', hex: '#22c5e6' },
-  { nom: 'Lemon', hex: '#f2d43a' },
-  { nom: 'Coral', hex: '#fb7185' },
-  { nom: 'Lavender', hex: '#b39cf7' },
-  { nom: 'Red', hex: '#ef4a4a' },
-  { nom: 'Lime', hex: '#a3d93b' },
-  { nom: 'Indigo', hex: '#6674f0' },
-  { nom: 'Magenta', hex: '#d946ef' },
-  { nom: 'Peach', hex: '#fdb98a' }
+  { nom: 'Violet', hex: '#7a3cff' },
+  { nom: 'Pink', hex: '#ff3d9a' },
+  { nom: 'Teal', hex: '#00cfc0' },
+  { nom: 'Amber', hex: '#ffb400' },
+  { nom: 'Blue', hex: '#1f8fff' },
+  { nom: 'Green', hex: '#10d985' },
+  { nom: 'Orange', hex: '#ff7a14' },
+  { nom: 'Cyan', hex: '#12c4ff' },
+  { nom: 'Lemon', hex: '#ffd91a' },
+  { nom: 'Coral', hex: '#ff5468' },
+  { nom: 'Lavender', hex: '#a47bff' },
+  { nom: 'Red', hex: '#ff3340' },
+  { nom: 'Lime', hex: '#84dc12' },
+  { nom: 'Indigo', hex: '#4b57ff' },
+  { nom: 'Magenta', hex: '#e22bff' },
+  { nom: 'Peach', hex: '#ff9466' }
 ]
 
 /** Les formes 3D du site, chacune avec SA couleur (12 formes, 12 teintes differentes de la palette). */
 export const FORMES_3D: { id: string; label: string; couleur: string }[] = [
-  { id: 'cercle', label: 'Circle', couleur: '#8b5cf6' },
-  { id: 'galet', label: 'Pebble', couleur: '#f472b6' },
-  { id: 'squircle', label: 'Squircle', couleur: '#2dd4bf' },
-  { id: 'capsule', label: 'Capsule', couleur: '#f5b53d' },
-  { id: 'triangle', label: 'Triangle', couleur: '#4f9cf5' },
-  { id: 'hexagone', label: 'Hexagon', couleur: '#34d399' },
-  { id: 'nuage', label: 'Cloud', couleur: '#fb923c' },
-  { id: 'goutte', label: 'Droplet', couleur: '#22c5e6' },
-  { id: 'etoile', label: 'Star', couleur: '#f2d43a' },
-  { id: 'fleur', label: 'Flower', couleur: '#fb7185' },
-  { id: 'oeuf', label: 'Egg', couleur: '#b39cf7' },
-  { id: 'coeur', label: 'Heart', couleur: '#ef4a4a' }
+  { id: 'cercle', label: 'Circle', couleur: '#7a3cff' },
+  { id: 'galet', label: 'Pebble', couleur: '#ff3d9a' },
+  { id: 'squircle', label: 'Squircle', couleur: '#00cfc0' },
+  { id: 'capsule', label: 'Capsule', couleur: '#ffb400' },
+  { id: 'triangle', label: 'Triangle', couleur: '#1f8fff' },
+  { id: 'hexagone', label: 'Hexagon', couleur: '#10d985' },
+  { id: 'nuage', label: 'Cloud', couleur: '#ff7a14' },
+  { id: 'goutte', label: 'Droplet', couleur: '#12c4ff' },
+  { id: 'etoile', label: 'Star', couleur: '#ffd91a' },
+  { id: 'fleur', label: 'Flower', couleur: '#ff5468' },
+  { id: 'oeuf', label: 'Egg', couleur: '#a47bff' },
+  { id: 'coeur', label: 'Heart', couleur: '#ff3340' }
 ]
 
 /* ------------------------------------------------------------------ humeurs, interactions, accessoires par emplacements */

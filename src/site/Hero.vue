@@ -1,118 +1,77 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import Affiche from './Affiche.vue'
-import Vivant from './Vivant.vue'
-import { HERO, SATELLITES as SAT } from './affiches'
-import { useReduit } from './reduced'
-import { useDefilement, useLargeur, usePointeur } from './motion'
-import { CHIFFRES } from './catalog'
+import HeroChiffres from './HeroChiffres.vue'
+import { DEFILE } from './affiches'
+import { ACCESSOIRES_SITE } from './catalog'
+import type { Choix, Emplacement } from '@/bot/emplacements'
 
-const reduit = useReduit()
-const racine = ref<HTMLElement | null>(null)
-const scene = ref<HTMLElement | null>(null)
-const vivant = ref<InstanceType<typeof Vivant> | null>(null)
-const regarder = (c: { nx: number; ny: number } | null) => vivant.value?.bot?.regarder?.(c)
-const largeur = useLargeur()
-/** Le grand Mochi : 400 px sur grand ecran, 240 sur telephone (taille en pixels, le rendu 3D suit). */
-const taille = computed(() => (largeur.value >= 1100 ? 400 : largeur.value >= 700 ? 330 : 240))
+/**
+ * Hero : « la foule » (choisi par Robin le 09/11/2026). Aucune 3D au premier ecran : une petite foule de Mochi tous differents (formes, couleurs,
+ * accessoires), en images pre-rendues qui flottent en CSS. Un tap sur l'un d'eux le fait sauter et dit ce qu'il porte ;
+ * « Shuffle » en appelle d'autres de la meme liste soignee que la carte des accessoires. Tres leger sur iPhone.
+ */
+const DE_FACE = DEFILE.filter((d) => !d.variante.dos)
+const NB = 12
+const labelDe = (i: number) =>
+  (Object.entries(DE_FACE[i]!.variante.acc) as [Emplacement, Choix][])
+    .map(([e, ch]) => ACCESSOIRES_SITE(e).find((a) => a.id === (typeof ch === 'string' ? ch : ch.id))?.label)
+    .filter(Boolean)
+    .join(', ')
 
-useDefilement(racine)
+const ordre = ref<number[]>(Array.from({ length: NB }, (_, i) => i))
+const foule = computed(() => ordre.value.map((i) => ({ i, nom: DE_FACE[i]!.nom })))
+const actif = ref<number | null>(null)
+const saut = ref(0)
 
-/** Le corps se tourne un peu vers le pointeur (vraie 3D, `yaw`), lisse ; les yeux le regardent (`regarder`). */
-const yaw = ref(0)
-usePointeur(racine, (x) => {
-  const v = Math.round(x * 0.38 * 200) / 200
-  if (v !== yaw.value) yaw.value = v
-})
-
-function onMove(e: PointerEvent) {
-  if (e.pointerType === 'touch' || !scene.value) return
-  const r = scene.value.getBoundingClientRect()
-  if (r.bottom < 0) return
-  const nx = (e.clientX - (r.left + r.width / 2)) / (window.innerWidth * 0.32)
-  const ny = (e.clientY - (r.top + r.height / 2)) / (window.innerHeight * 0.4)
-  regarder({ nx: Math.max(-1, Math.min(1, nx)), ny: Math.max(-1, Math.min(1, ny)) })
+function toucher(i: number) {
+  actif.value = i
+  saut.value++
 }
-const onLeave = () => regarder(null)
-onMounted(() => {
-  if (reduit.value) return
-  window.addEventListener('pointermove', onMove, { passive: true })
-  document.addEventListener('pointerleave', onLeave)
-})
-onBeforeUnmount(() => {
-  window.removeEventListener('pointermove', onMove)
-  document.removeEventListener('pointerleave', onLeave)
-})
-
-/** Petits Mochi autour du grand : images figees (un seul rendu chacun), qui flottent en CSS. */
-const PLACES = [
-  { x: '4%', y: '6%', p: 1.4, d: 0 },
-  { x: '80%', y: '2%', p: 2.2, d: 1.1 },
-  { x: '84%', y: '70%', p: 1.1, d: 0.5 },
-  { x: '0%', y: '74%', p: 1.8, d: 1.6 }
-]
-const SATELLITES = SAT.map((s, i) => ({ ...s, ...PLACES[i]! }))
+function melanger() {
+  const tout = DE_FACE.map((_, i) => i)
+  for (let k = tout.length - 1; k > 0; k--) {
+    const j = Math.floor(Math.random() * (k + 1))
+    ;[tout[k], tout[j]] = [tout[j]!, tout[k]!]
+  }
+  ordre.value = tout.slice(0, NB)
+  actif.value = null
+}
+const legende = computed(() => (actif.value === null ? 'Tap a Mochi to see what it wears.' : `Wearing: ${labelDe(actif.value)}.`))
 </script>
 
 <template>
-  <header id="top" ref="racine" class="hero">
+  <header id="top" class="hx hx-b">
     <div class="hero-fond" aria-hidden="true" />
-    <div class="hero-in">
-      <div class="hero-texte">
-        <p class="hero-badge rv-load" style="--d: 0">
-          <span class="point" aria-hidden="true" /> Open source, MIT. Vue 3 and Three.js.
-        </p>
-        <h1 class="hero-titre" aria-label="Avatars that feel alive.">
-          <span class="ligne l1" aria-hidden="true"><span class="mot" style="--d: 1">Avatars</span></span>
-          <span class="ligne l2" aria-hidden="true"><span class="mot" style="--d: 2">that&nbsp;feel</span></span>
-          <span class="ligne l3" aria-hidden="true"><span class="mot accent" style="--d: 3">alive.</span></span>
-        </h1>
+    <div class="hx-in hx-centre">
+      <p class="hero-badge rv-load" style="--d: 0"><span class="point" aria-hidden="true" /> Open source, MIT</p>
+      <h1 class="hx-titre rv-load" style="--d: 1">A crowd of <span class="accent">tiny faces</span> for your app.</h1>
+      <p class="hx-chapo rv-load" style="--d: 2">
+        Mochi is a 3D avatar for the web: pick a shape, a colour and a few accessories. Each one breathes, blinks and reacts to touch.
+      </p>
+      <div class="actions hx-actions rv-load" style="--d: 3">
+        <a class="btn primaire" href="/app">Try the app <span aria-hidden="true">→</span></a>
+        <a class="btn" href="/docs">Read the docs</a>
       </div>
 
-      <div ref="scene" class="hero-scene" :style="{ '--t': taille + 'px' }">
-        <div class="hero-halo" aria-hidden="true" />
-        <div
-          v-for="(s, i) in SATELLITES"
-          :key="s.forme"
-          class="satellite"
-          aria-hidden="true"
-          :style="{ left: s.x, top: s.y, '--p': s.p, '--fd': s.d + 's', '--k': i }"
-        >
-          <div class="flotte">
-            <Affiche :nom="`sat-${s.forme}`" :taille="s.taille" eager />
-          </div>
-        </div>
-        <div class="hero-bot">
-          <Vivant
-            ref="vivant"
-            :taille="taille"
-            affiche="hero"
-            eager
-            marge="0px"
-            v-bind="HERO"
-            :yaw="yaw"
-            :frozen-at="reduit ? 0 : undefined"
-            alt="Mochi, a round purple 3D avatar. It looks at your pointer; tap it, double tap it or press and hold."
-          />
-        </div>
-      </div>
-
-      <div class="hero-bas">
-        <p class="hero-chapo rv-load" style="--d: 4">
-          Mochi is a tiny avatar engine for the web. One soft 3D shape that breathes, blinks, looks at your pointer and
-          reacts when you touch it. Drop it in your app in a few lines.
-        </p>
-        <div class="actions rv-load" style="--d: 5">
-          <a class="btn primaire" href="/docs">Read the docs <span aria-hidden="true">→</span></a>
-          <a class="btn" href="#customise">Make it yours</a>
-        </div>
+      <ul class="hx-foule" aria-label="Some Mochi">
+        <li v-for="(m, k) in foule" :key="m.i + '-' + k" :style="{ '--k': k }">
+          <button
+            type="button"
+            class="hx-mochi"
+            :class="{ saute: actif === m.i }"
+            :aria-label="DE_FACE[m.i]!.variante.forme + ' Mochi wearing ' + labelDe(m.i)"
+            @click="toucher(m.i)"
+          >
+            <span :key="actif === m.i ? saut : 0" class="hx-mochi-i"><Affiche :nom="m.nom" :taille="166" :eager="k < 4" /></span>
+          </button>
+        </li>
+      </ul>
+      <div class="hx-pied">
+        <p class="hx-legende" aria-live="polite">{{ legende }}</p>
+        <button type="button" class="btn petit" @click="melanger">Shuffle</button>
       </div>
     </div>
-
-    <ul class="chiffres wrap" aria-label="Mochi in numbers">
-      <li v-for="(c, i) in CHIFFRES" :key="c.label" v-reveal="i">
-        <strong>{{ c.valeur }}</strong><span>{{ c.label }}</span>
-      </li>
-    </ul>
+    <HeroChiffres />
   </header>
 </template>

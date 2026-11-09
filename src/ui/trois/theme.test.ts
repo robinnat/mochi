@@ -50,7 +50,7 @@ describe('theme : valeurs pures', () => {
     // l encre et le bleu marine du dashboard sont eclaircis, le violet et le bleu vif non
     expect(corpsPourTheme('#0a0a0c', 'dark')).not.toBe('#0a0a0c')
     expect(corpsPourTheme('#1f2126', 'dark')).not.toBe('#1f2126')
-    expect(corpsPourTheme('#8b5cf6', 'dark')).toBe('#8b5cf6')
+    expect(corpsPourTheme('#7a3cff', 'dark')).toBe('#7a3cff')
     expect(corpsPourTheme('#3b93f0', 'dark')).toBe('#3b93f0')
     // idempotent : le rendre deux fois ne l eclaircit pas davantage
     const une = corpsPourTheme('#0a0a0c', 'dark')

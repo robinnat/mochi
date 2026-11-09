@@ -214,14 +214,14 @@ export interface BotColor {
 export const COLORS: BotColor[] = [
   { id: 'encre', hex: '#0a0a0c' },
   { id: 'brun', hex: '#8b5e3c' },
-  { id: 'rouge', hex: '#e8483f' },
-  { id: 'orange', hex: '#f08a24' },
-  { id: 'ambre', hex: '#f0b429' },
-  { id: 'vert', hex: '#3ecf8e' },
-  { id: 'turquoise', hex: '#2fbfa0' },
-  { id: 'bleu', hex: '#3b93f0' },
-  { id: 'violet', hex: '#8b5cf6' },
-  { id: 'rose', hex: '#e152b0' },
+  { id: 'rouge', hex: '#ff3b4e' },
+  { id: 'orange', hex: '#ff7a14' },
+  { id: 'ambre', hex: '#ffb400' },
+  { id: 'vert', hex: '#10d985' },
+  { id: 'turquoise', hex: '#00cfc0' },
+  { id: 'bleu', hex: '#1f8fff' },
+  { id: 'violet', hex: '#7a3cff' },
+  { id: 'rose', hex: '#ff3d9a' },
   { id: 'gris', hex: '#a3a3a3' },
   { id: 'creme', hex: '#f1efe9' }
 ]

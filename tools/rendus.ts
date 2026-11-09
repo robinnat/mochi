@@ -66,6 +66,7 @@ async function enWebp(url: string, cote: number): Promise<string> {
 
 declare global {
   interface Window {
+    rendreListe: (liste: { props: Record<string, unknown>; taille: number; theme?: ThemeSite }[]) => Promise<string[]>
     toutRendre: (prefixe?: string) => Promise<{ fichier: string; data: string }[]>
   }
 }
@@ -88,6 +89,16 @@ window.toutRendre = async (prefixe = '') => {
       out.push({ fichier: urlPiece(p.emplacement, p.id, theme), data: await enWebp(u, TAILLE_PIECE) })
       URL.revokeObjectURL(u)
     }
+  }
+  return out
+}
+
+/** Rend une liste libre de Mochi (planches de controle, hors du manifeste du site). */
+window.rendreListe = async (liste) => {
+  const out: string[] = []
+  for (const it of liste) {
+    themeCourant.value = it.theme ?? 'light'
+    out.push(await rendreUn({ theme: it.theme ?? 'light', frozenAt: 1.2, ...it.props }, it.taille))
   }
   return out
 }

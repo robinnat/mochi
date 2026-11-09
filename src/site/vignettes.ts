@@ -103,7 +103,7 @@ export async function rendreVignette(item: ItemBande, theme: 'light' | 'dark'): 
     const frame = moteur.sample(T_IMAGE)
     const sel = { [item.emplacement]: { id: item.accessoire, c1: couleurPourTheme(item.c1, theme), c2: couleurPourTheme(item.c2, theme) } }
     const rendre = (cv: HTMLCanvasElement, cadre: number, centre: { x: number; y: number }) =>
-      m.rendreAvatar(cv, frame, '#8b5cf6', PAPIER, 'doux', false, 'marque', true, 'cercle', item.yaw, null, sel, cadre, theme, undefined, 0, false, true, undefined, true, centre)
+      m.rendreAvatar(cv, frame, '#7a3cff', PAPIER, 'doux', false, 'marque', true, 'cercle', item.yaw, null, sel, cadre, theme, undefined, 0, false, true, undefined, true, centre)
     // passe 1 : mesure
     const mesure = document.createElement('canvas')
     mesure.width = mesure.height = TAILLE_MESURE

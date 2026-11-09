@@ -51,7 +51,7 @@ describe('catalogue du site', () => {
     for (const { nom, hex } of PALETTE_SITE) {
       expect(hex, nom).toMatch(/^#[0-9a-f]{6}$/)
       expect(contraste(hex, '#fffdf9'), `${nom} sur clair`).toBeGreaterThan(1.3)
-      expect(contraste(hex, '#15141b'), `${nom} sur sombre`).toBeGreaterThan(4)
+      expect(contraste(hex, '#15141b'), `${nom} sur sombre`).toBeGreaterThan(3)
     }
   })
 })

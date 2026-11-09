@@ -125,6 +125,6 @@ describe('vignettes : cadrage et couleurs', () => {
     const c = couleurPourTheme('#26222f', 'dark')
     expect(c).not.toBe('#26222f')
     expect(contraste(c, '#1b1922')).toBeGreaterThan(3)
-    expect(couleurPourTheme('#f2b83d', 'dark')).toBe('#f2b83d')
+    expect(couleurPourTheme('#ffc21a', 'dark')).toBe('#ffc21a')
   })
 })

@@ -42,18 +42,18 @@ export interface AccessoireDef {
 
 /** Palette vive et sobre. */
 export const COULEURS = {
-  rouge: '#e8505b',
-  jaune: '#f2b83d',
-  turquoise: '#2fb5a0',
+  rouge: '#ff3b4e',
+  jaune: '#ffc21a',
+  turquoise: '#00c2ae',
   marine: '#2b3a67',
-  rose: '#f48fb1',
+  rose: '#ff7eb6',
   creme: '#f6f1e7',
   noir: '#26222f',
-  or: '#f2c14e',
-  vert: '#4caf7a',
-  orange: '#f4883a',
-  violet: '#7a5fd0',
-  bleu: '#4a8df0',
+  or: '#ffc933',
+  vert: '#1fd07a',
+  orange: '#ff7a14',
+  violet: '#7a3cff',
+  bleu: '#2f8cff',
   paille: '#efcf8a'
 } as const
 
