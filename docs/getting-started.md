@@ -225,20 +225,21 @@ A few more options change the look in every style:
 
 ## Light and dark
 
-In the dark theme the eyes turn black. The body gets a little lighter only when it would not contrast enough with them.
+By default, a Mochi follows the visitor's device: light when the system is in light mode, dark when it is in dark mode. It switches by itself when the visitor changes the setting. In the dark theme the eyes turn black, and the body gets a little lighter only when it would not contrast enough with them.
+
+To choose the theme yourself, set it on one Mochi:
 
 ```html live
-<!-- one Mochi -->
 <mochi-bot theme="dark"></mochi-bot>
 ```
 
-```js
-// or every Mochi that has no theme of its own, at once
-import { currentTheme } from './vendor/mochis/mochis.js'
-currentTheme.value = 'dark'
-```
+Or set it for every Mochi of the page that has no `theme` of its own, for example when your site has its own light and dark switch:
 
-Without a `theme`, a Mochi uses `currentTheme`, which stays `light` until you change it.
+```js
+import { currentTheme } from './vendor/mochis/mochis.js'
+
+currentTheme.value = 'dark' // 'light', 'dark', or 'auto' to follow the device again (the default)
+```
 
 ## Still images and speed
 

@@ -135,7 +135,7 @@ export const accessoriesInSlot = (e: Slot) => ACCESSORIES.filter((a) => a.slot =
 /** A choice: the id alone (catalog colors) or the id with forced colors. */
 export type AccessoryChoice = string | { id: string; c1?: string; c2?: string }
 
-/** What is worn: at most one accessory per slot. */
+/** What a Mochi wears: at most one accessory per slot. */
 export type AccessorySelection = Partial<Record<Slot, AccessoryChoice>>
 
 /** Normalized choice: the catalog definition with the final colors; `null` if unknown. */

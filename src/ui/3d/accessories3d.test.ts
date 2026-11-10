@@ -4,7 +4,7 @@ import { BufferAttribute, BufferGeometry, Box3, MeshStandardMaterial, type Mesh,
 import { BotEngine } from '@/bot/engine'
 import { HALF_VIEWBOX, RADIUS } from '@/bot/frame'
 import { SHAPES } from '@/bot/skins'
-import { radiusLens, eyesOf } from '@/bot/worn'
+import { radiusLens, eyesOf } from '@/bot/eyePlacement'
 import {
   ACCESSORIES,
   ACCESSORY_PALETTE,

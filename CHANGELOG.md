@@ -28,11 +28,25 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `docs/getting-started.md` and `docs/reference.md`), with live examples taken from their code blocks. A test fails if
   the site and the repository could say different things, or if the docs and the code disagree.
 - The app falls back to English when the browser asks for a language it does not speak.
+- **American spelling in the API**: the light entry is `mochis/catalog` (`dist-lib/catalog.js`) and the gray color id is
+  `gray`. Settings saved with `grey` are moved to `gray`.
+- **The theme follows the device by default.** Without a `theme`, a Mochi uses `currentTheme`, which is now `auto`: dark
+  when the visitor's system is in dark mode. Set `currentTheme.value` to `light` or `dark` to choose (the app sets
+  `light`).
+- **The default `label` is English** (`Animated Mochi avatar`), whatever the browser language. The tag no longer loads
+  the app's translations; the app passes its own translated label.
+- Install guide: with a bundler, copy `dist-lib/` to `src/vendor/mochis/` and import `./vendor/mochis/mochis.js`
+  (importing from `public/` fails in Vite). Plain HTML loads `/mochis/mochis.js`.
+- `package.json` declares `engines.node` `>=22.12.0`; the CI runs Node 24.
+- The reference has a short "Cycle player" section.
 - The lab moved from `/labo` to `/lab` (`/labo` redirects).
 - New icons (favicon, app icons, web manifest) and the Mochis name in the site's bar and footer.
 
 ### Removed
 
+- The `worn` option (an older set of eight accessories, a duplicate of `accessories`) and its 3D pieces.
+- The `material` option: the render style picks the material (`3d` is Soft, `flat3d` Flat, `pixel3d` Pixel), and
+  `softness` still tunes Soft. The `Material` type is no longer exported.
 - **No 2D any more.** The old SVG drawings (`original`, `pixel`, `argile`, `bubble`, partly derived from bloub) are
   gone, with their pixel-art rasteriser, the 2D drawing of worn accessories and the 2D job accessories (the
   `accessory` prop). Mochi is always drawn in 3D (Soft, Flat, Pixel). An unknown `renderStyle` (old ids included) falls

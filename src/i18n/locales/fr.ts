@@ -17,8 +17,7 @@ export default {
      */
     name: 'mochis',
     title: 'Mochis, avatar animé',
-    botAria: 'Avatar mochi animé',
-    no3d: 'La 3D demande WebGL'
+    botAria: 'Avatar Mochi animé'
   },
 
   gallery: {

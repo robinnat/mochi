@@ -8,8 +8,7 @@ const en: typeof fr = {
   app: {
     name: 'mochis',
     title: 'Mochis, animated avatar',
-    botAria: 'Animated mochi avatar',
-    no3d: '3D needs WebGL'
+    botAria: 'Animated Mochi avatar'
   },
 
   gallery: {

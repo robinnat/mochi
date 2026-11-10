@@ -1,5 +1,6 @@
 import { h, type Component } from '@/ui/dom/h'
 import '@/components/mochi-bot'
+import { t } from '@/i18n'
 import { DEFAULT_EXPRESSION } from '@/bot/expressions'
 import { DEFAULT_COLOR, DEFAULT_SHAPE } from '@/bot/skins'
 import type { StateId } from '@/bot/states'
@@ -40,6 +41,7 @@ export const BotTile: Component<BotTileProps> = (props) => () =>
       onClick: () => props.onClick?.()
     },
     h('mochi-bot', {
+      label: t('app.botAria'),
       state: props.state ?? 'idle',
       size: props.size ?? 60,
       shape: props.shape ?? DEFAULT_SHAPE,

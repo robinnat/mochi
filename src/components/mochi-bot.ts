@@ -31,19 +31,17 @@
 
 import { BotEngine, type BotFrame } from '@/bot/engine'
 import { clamp, easings } from '@/bot/math'
-import { t } from '@/i18n'
 import { lookTarget, TURN_TIME, type GazeScript } from '@/ui/gaze'
 import { DEFAULT_EXPRESSION, EXPRESSION_BY_ID } from '@/bot/expressions'
 import { colorOf, DEFAULT_COLOR, DEFAULT_SHAPE, SHAPE_BY_ID, mixHex } from '@/bot/skins'
 import { blockAt, defaultCycle, offsetOf, type Block } from '@/bot/cycles'
 import { HALF_VIEWBOX, RADIUS } from '@/bot/frame'
 import { STATE_BY_ID, type StateId } from '@/bot/states'
-import { WORN_IDS, type WornId } from '@/bot/worn'
 import { compose, sleepZ, type Gesture } from '@/bot/gestures'
 import { Moods, REACTION_FOR_EVENT, mustRedraw, resolveMood, type ReactionId } from '@/bot/moods'
 import { DEFAULT_SOFTNESS, DEFAULT_MATERIAL, type Softness, type Material } from '@/ui/3d/material'
 import { type Theme } from '@/ui/3d/theme'
-import { currentTheme } from '@/ui/3d/currentTheme'
+import { resolveTheme } from '@/ui/3d/currentTheme'
 import type { AccessorySelection } from '@/bot/slots'
 import { currentOutline, materialFor, pixelGrid, effectivePixel, effectiveRenderStyle, type RenderStyleId, type PixelSizeId } from '@/ui/renderStyle'
 import { computed, within, Scope, ref, untracked, shallowRef, onCleanup, triggerRef, watch, type Ref } from '@/ui/dom/reactive'
@@ -64,7 +62,8 @@ export interface MochiBotProps {
   /** background color, used for the depth haze of particles */
   paper: string
   /**
- * 3D theme: `light` or `dark` (the eyes turn black); absent, the current theme (`currentTheme`, light by default)
+ * 3D theme: `light` or `dark` (the eyes turn black); absent, the page's `currentTheme`, which follows the device
+ * (`prefers-color-scheme`) unless the page sets it
  */
   theme: Theme | undefined
   /** accessories by slot (head, eyes, face, neck, back), 3D only; see `src/bot/slots.ts` */
@@ -92,9 +91,7 @@ export interface MochiBotProps {
  * Pixel size of the Pixel style (`large`, `medium`, `fine`): resolution of its canvas; absent, the current setting.
  */
   pixel: PixelSizeId | undefined
-  /** Material of the real 3D (`renderStyle` = 3d only). Absent: the default (`soft`). */
-  material: Material
-  /** Setting of the `soft` material: `light` or `strong`. Ignored by the other materials. */
+  /** Shading of the Soft style (`renderStyle` = `3d`): `light` or `strong`. Ignored by Flat and Pixel. */
   softness: Softness
   /** Cartoon outline of the real 3D; absent, the current setting (`currentOutline`). */
   outline: boolean | undefined
@@ -110,8 +107,6 @@ export interface MochiBotProps {
   yaw: number
   /** Gesture (`src/bot/gestures.ts`): small offsets added to the pose, a function of the scene time. */
   gesture: ((t: number) => Gesture) | null
-  /** WORN accessory in 3D (`src/bot/worn.ts`, older set): glasses, hat, bow, crown, headphones. */
-  worn: WornId | null
   /**
  * Work mood played on a loop (`idle`, `thinking`, `working`, `waiting`, `done`, `blocked`, `asleep`, or their
  * aliases).
@@ -125,7 +120,7 @@ export interface MochiBotProps {
   laptop: boolean
   /** Cap on the loop's frames per second. Absent: one frame per browser frame. */
   fps: number | undefined
-  /** Alternative text; absent, the translated label. */
+  /** Alternative text read by screen readers; absent, `DEFAULT_LABEL` (English, whatever the browser language). */
   label: string | undefined
   /** Cap on the 3D canvas density (device pixels per CSS pixel). */
   maxPixelRatio: number
@@ -152,6 +147,14 @@ interface DefProp {
 
 const d = <T>(v: T) => () => v
 
+/**
+ * Default alternative text, in English whatever the browser language: the tag never translates itself. A page in
+ * another language passes its own `label` (the app does).
+ */
+export const DEFAULT_LABEL = 'Animated Mochi avatar'
+/** Shown instead of the Mochi when the browser cannot draw 3D (no WebGL). */
+const NO_3D_MESSAGE = '3D needs WebGL'
+
 /** Every option, its attribute type and its default value. */
 export const PROPERTIES: DefProp[] = [
   { name: 'size', kind: 'number', initial: d(320) },
@@ -167,7 +170,6 @@ export const PROPERTIES: DefProp[] = [
   { name: 'gaze', kind: 'function', initial: d(null), withoutAttribute: true },
   { name: 'renderStyle', kind: 'text', initial: d(undefined) },
   { name: 'pixel', kind: 'text', initial: d(undefined) },
-  { name: 'material', kind: 'text', initial: d(DEFAULT_MATERIAL) },
   { name: 'softness', kind: 'text', initial: d(DEFAULT_SOFTNESS) },
   { name: 'outline', kind: 'boolean', initial: d(undefined) },
   { name: 'outlineWidth', kind: 'number', initial: d(1) },
@@ -176,7 +178,6 @@ export const PROPERTIES: DefProp[] = [
   { name: 'shading', kind: 'boolean', initial: d(true) },
   { name: 'yaw', kind: 'number', initial: d(0) },
   { name: 'gesture', kind: 'function', initial: d(null), withoutAttribute: true },
-  { name: 'worn', kind: 'text', initial: d(null) },
   { name: 'mood', kind: 'text', initial: d(null) },
   { name: 'interactions', kind: 'boolean', initial: d(true) },
   { name: 'wave', kind: 'boolean', initial: d(false) },
@@ -464,8 +465,6 @@ function mountBot(host: MochiBotElement): Internal {
   const colorZ = computed(() => mixHex(ink.value, '#1a1630', 0.5))
   const moodActive = computed(() => resolveMood(props.mood) !== null)
 
-  /** Known worn accessory, or nothing. */
-  const worn = computed<WornId | null>(() => (props.worn && (WORN_IDS as string[]).includes(props.worn) ? props.worn : null))
 
   const gestureA = (t: number): Gesture | undefined => {
     const b = props.gesture ? props.gesture(t) : undefined
@@ -601,13 +600,13 @@ function mountBot(host: MochiBotElement): Internal {
     return k * k * (3 - 2 * k)
   }
 
-  const themeEff = computed<Theme>(() => props.theme ?? currentTheme.value)
-  const render3dEff = computed<Material>(() => materialFor(renderStyle.value, props.material))
+  const themeEff = computed<Theme>(() => resolveTheme(props.theme))
+  const render3dEff = computed<Material>(() => materialFor(renderStyle.value, DEFAULT_MATERIAL))
 
   function draw3d() {
     const m = m3d.value
     if (!real3d.value || !m || !canvas) return
-    m.renderAvatar(canvas, frame.value, ink.value, props.paper, render3dEff.value, effectiveOutline.value, props.softness, props.highlight, props.shape, props.yaw + 0.3 * turnLaptop(), worn.value, props.accessories ?? {}, undefined, themeEff.value, undefined, laptopScale(), props.shadow, props.shading, props.outlineWidth)
+    m.renderAvatar(canvas, frame.value, ink.value, props.paper, render3dEff.value, effectiveOutline.value, props.softness, props.highlight, props.shape, props.yaw + 0.3 * turnLaptop(), props.accessories ?? {}, undefined, themeEff.value, undefined, laptopScale(), props.shadow, props.shading, props.outlineWidth)
     if (!readyEmitted) {
       readyEmitted = true
       host.dataset.ready = '1'
@@ -631,7 +630,7 @@ function mountBot(host: MochiBotElement): Internal {
   onCleanup(() => clearTimeout(timerShape))
 
   watch(
-    [frame, real3d, canvasRef, ink, pxCanvas, render3dEff, () => props.softness, () => props.highlight, () => props.yaw, worn, themeEff, () => props.accessories, () => props.shadow, () => props.shading, () => effectiveOutline.value, () => props.outlineWidth],
+    [frame, real3d, canvasRef, ink, pxCanvas, render3dEff, () => props.softness, () => props.highlight, () => props.yaw, themeEff, () => props.accessories, () => props.shadow, () => props.shading, () => effectiveOutline.value, () => props.outlineWidth],
     draw3d,
     { flush: 'post' }
   )
@@ -929,7 +928,7 @@ function mountBot(host: MochiBotElement): Internal {
     },
     { immediate: true }
   )
-  watch([() => props.gesture, () => props.worn], redrawFrozen)
+  watch(() => props.gesture, redrawFrozen)
 
   /* ------------------------------------------------------------------ drawing */
 
@@ -989,7 +988,7 @@ function mountBot(host: MochiBotElement): Internal {
         h(
           'text',
           { key: 'no3d', 'data-no3d': '1', x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': 18, 'font-family': 'system-ui, sans-serif', fill: '#8a8a8a' },
-          t('app.no3d')
+          NO_3D_MESSAGE
         )
       )
     }
@@ -1018,8 +1017,8 @@ function mountBot(host: MochiBotElement): Internal {
         height: props.size,
         viewBox: `${-VB} ${-VB} ${VB * 2} ${VB * 2}`,
         role: 'img',
-        'aria-label': props.label ?? t('app.botAria'),
-        style: worn.value || z.length ? 'overflow: visible' : undefined,
+        'aria-label': props.label ?? DEFAULT_LABEL,
+        style: z.length ? 'overflow: visible' : undefined,
         onPointerenter: onHover,
         onPointermove: onHover,
         onPointerleave: onLeaves,

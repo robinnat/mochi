@@ -33,7 +33,7 @@ function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, px: numbe
   const pixel = o.renderStyle === 'pixel'
   const t = document.createElement('canvas')
   t.width = t.height = pixel ? Math.round((32 * o.frame) / 100) : px * 2
-  renderAvatar(t, image(o.shape), o.color, PAPER, o.renderStyle, o.outline, 'strong', true, o.shape, o.yaw ?? 0.3, null, o.sel, o.frame, 'light', undefined, 0, true, true, o.th)
+  renderAvatar(t, image(o.shape), o.color, PAPER, o.renderStyle, o.outline, 'strong', true, o.shape, o.yaw ?? 0.3, o.sel, o.frame, 'light', undefined, 0, true, true, o.th)
   ctx.imageSmoothingEnabled = !pixel
   ctx.drawImage(t, x, y, px, px)
 }

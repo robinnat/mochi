@@ -4,7 +4,7 @@ For the list of ids, see the [reference](reference.md#moods). This page explains
 
 Moods are a layer on top of the engine that animates only the **face and the body**: no stars, exclamation
 marks, orbits, comets or particles. Everything is real-time 3D with the existing shading. It works on
-the 12 shapes, in Soft, Flat and Pixel, in light and dark themes (black eyes), and with worn
+the 12 shapes, in Soft, Flat and Pixel, in light and dark themes (black eyes), and with
 accessories (they read the rendered body, so they follow every squash, stretch and tilt).
 
 Code: `src/bot/moods.ts` (pure, no framework, no clock), wired into `mochi-bot.ts`. It reuses the

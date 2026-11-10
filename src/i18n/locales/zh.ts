@@ -11,8 +11,7 @@ const zh: typeof fr = {
   app: {
     name: 'mochis',
     title: 'Mochis, 动画头像',
-    botAria: 'mochi 动画头像',
-    no3d: '3D 需要 WebGL'
+    botAria: 'Mochi 动画头像'
   },
 
   gallery: {

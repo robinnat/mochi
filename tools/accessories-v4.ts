@@ -76,7 +76,7 @@ interface Cell {
 function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, c: Cell) {
   const t = document.createElement('canvas')
   t.width = t.height = px
-  renderAvatar(t, image(c.shape), c.color, PAPER, c.renderStyle ?? 'soft', false, 'strong', true, c.shape, c.yaw ?? 0, null, c.sel, c.frame ?? 175)
+  renderAvatar(t, image(c.shape), c.color, PAPER, c.renderStyle ?? 'soft', false, 'strong', true, c.shape, c.yaw ?? 0, c.sel, c.frame ?? 175)
   ctx.drawImage(t, x, y)
 }
 

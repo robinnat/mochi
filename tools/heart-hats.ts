@@ -52,7 +52,7 @@ function sheet() {
         const pixel = s.renderStyle === 'pixel'
         const t = document.createElement('canvas')
         t.width = t.height = pixel ? Math.round((pixelGrid('fine') * frame) / HALF_VIEWBOX) : cell * 2
-        renderAvatar(t, frame, s.color, '#f9f9f9', s.renderStyle, false, 'strong', true, SHAPE.id, yaw, null, { head: h.id }, frame)
+        renderAvatar(t, frame, s.color, '#f9f9f9', s.renderStyle, false, 'strong', true, SHAPE.id, yaw, { head: h.id }, frame)
         ctx.imageSmoothingEnabled = !pixel
         ctx.drawImage(t, (si * 2 + k) * cell, y, cell, cell)
       }

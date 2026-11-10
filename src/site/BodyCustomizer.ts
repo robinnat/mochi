@@ -58,7 +58,7 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
   /** Replay the hello on arrival. */
   const arrival = ref(0)
 
-  /** Worn pieces, one per slot; replaced as a whole on each change (never mutated). */
+  /** Chosen pieces, one per slot; replaced as a whole on each change (never mutated). */
   const choice = ref<Record<Slot, ChoicePiece>>({
     head: { id: 'cap', c1: ACCESSORY_PALETTE.red, c2: ACCESSORY_PALETTE.red },
     eyes: NONE,
@@ -85,7 +85,7 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
     for (const e of SLOT_IDS) if (choice.value[e].id) s[e] = { id: choice.value[e].id, c1: choice.value[e].c1, c2: choice.value[e].c2 }
     return s
   })
-  const nWorn = computed(() => SLOT_IDS.filter((e) => choice.value[e].id).length)
+  const nChosen = computed(() => SLOT_IDS.filter((e) => choice.value[e].id).length)
   /** Tabs: left and right arrows, Home and End (keyboard contract of the `tablist` role), focus follows. */
   function keyboardTabs(ev: KeyboardEvent) {
     const i = SLOT_IDS.indexOf(slot.value)
@@ -316,8 +316,8 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
               'h3',
               null,
               'Accessories',
-              h('span', { class: 'value' }, `${nWorn.value} worn`),
-              nWorn.value ? h('button', { key: 'everything', type: 'button', class: 'link-btn', onClick: allRemove }, 'Remove all') : null
+              h('span', { class: 'value' }, `${nChosen.value} chosen`),
+              nChosen.value ? h('button', { key: 'everything', type: 'button', class: 'link-btn', onClick: allRemove }, 'Remove all') : null
             ),
             h(
               'div',

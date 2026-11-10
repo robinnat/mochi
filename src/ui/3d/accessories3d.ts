@@ -42,7 +42,7 @@ import {
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { rim } from './rim'
 import { colorOutline } from './material'
-import type { Shadow } from '@/bot/worn'
+import type { Shadow } from '@/bot/eyePlacement'
 import { mixHex } from '@/bot/skins'
 import { ACCESSORY_PALETTE, SLOTS, REMOVED, resolveAccessories, colorsOf, type Slot, type AccessorySelection } from '@/bot/slots'
 import type { EyeScene, Landmarks } from './anchors'
@@ -1475,7 +1475,7 @@ export class Accessories3d {
   }
 
   /**
-   * The worn pieces (one group per slot; not the laptop, which sits on the ground): built once for a body, then they
+   * The pieces on the body (one group per slot; not the laptop, which sits on the ground): built once for a body, then they
    * follow the body from frame to frame with a simple transform (see `Mochi3d.followBody`) instead of being rebuilt
    * (v12).
    */

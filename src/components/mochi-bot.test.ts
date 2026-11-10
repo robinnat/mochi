@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from '@/ui/dom/reactive'
-import { MochiBotElement, PROPERTIES, attributeOf, readAttribute } from './mochi-bot'
+import { readFileSync } from 'node:fs'
+import { DEFAULT_LABEL, MochiBotElement, PROPERTIES, attributeOf, readAttribute } from './mochi-bot'
 
 /**
  * The native `<mochi-bot>` Web Component: options as attributes and properties, a host `<svg>` in the regular DOM,
@@ -28,6 +29,16 @@ describe('<mochi-bot> : declaration', () => {
     expect(customElements.get('mochi-bot')).toBe(MochiBotElement)
     const el = create()
     for (const p of PROPERTIES) expect(p.name in el, p.name).toBe(true)
+  })
+
+  it('exposes exactly these options: nothing hidden, no duplicate (accessories and the render style cover the rest)', () => {
+    expect(PROPERTIES.map((p) => p.name).sort()).toEqual(
+      [
+        'accessories', 'block', 'color', 'cycle', 'elapsed', 'expression', 'follow', 'fps', 'frozenAt', 'gaze', 'gesture',
+        'highlight', 'interactions', 'label', 'laptop', 'maxPixelRatio', 'mood', 'outline', 'outlineWidth', 'paper', 'pixel',
+        'playing', 'renderStyle', 'shading', 'shadow', 'shape', 'size', 'softness', 'state', 'theme', 'wave', 'yaw'
+      ].sort()
+    )
   })
 
   it('observes one kebab-case attribute per option (except functions)', () => {
@@ -62,6 +73,16 @@ describe('<mochi-bot>: drawing', () => {
     expect(svg.getAttribute('width')).toBe('96')
     expect(svg.getAttribute('role')).toBe('img')
     expect(svg.getAttribute('aria-label')).toBe('Mon Mochi')
+  })
+
+  it('the default alternative text is English, whatever the browser language', () => {
+    const el = create({ 'frozen-at': '1' })
+    host().appendChild(el)
+    expect(el.svg!.getAttribute('aria-label')).toBe(DEFAULT_LABEL)
+    expect(DEFAULT_LABEL).toBe('Animated Mochi avatar')
+    // the tag never loads the app's translations: only /app translates its interface
+    const source = readFileSync('src/components/mochi-bot.ts', 'utf8')
+    expect(source).not.toMatch(/from '@\/i18n/)
   })
 
   it('a changed option (attribute or property) redraws on the next task', async () => {

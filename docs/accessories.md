@@ -30,14 +30,8 @@ Rule for every accessory: a very simple shape, ONE color (`c1`), TWO at most (`c
 
 ## Light and styles
 
-In the Soft style, accessories get the same light as the body (`rim.ts`). Flat and Pixel reuse the body material. Soft shadows on the body go through the same texture as the older worn accessories.
+In the Soft style, accessories get the same light as the body (`rim.ts`). Flat and Pixel reuse the body material. The soft shadows they cast on the body are painted in the body texture.
 
 ## Removed accessories
 
 Removed pieces stay in `REMOVED` (`src/bot/slots.ts`) with their 3D builders, so one can come back by copying it into the catalog. They no longer show anywhere.
-
-## Older worn accessories (`worn.ts`)
-
-Eight older pieces (`glasses`, `sunglasses`, `top-hat`, `straw`, `beanie`, `bow`, `crown`, `headphones`), set with the `worn` option. They are not animated on their own: they are measured again at EVERY frame from the body and the eyes of that frame. A jump, a squash, another shape or a wink moves them with the body, with no extra setting. Their volumes are in `src/ui/3d/worn3d.ts`.
-
-Known limits: pieces are rebuilt when the outline changes (ray casting), and 3D pieces have no cartoon outline.

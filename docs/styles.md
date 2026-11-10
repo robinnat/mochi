@@ -35,14 +35,14 @@ The engine does not change: `engine.sample(t)` gives the same frame, and the sta
 
 ## Materials
 
-The material of the Soft style is `soft` (option `material`), with a `softness` setting:
+The material of the Soft style is `soft`. It has one setting, `softness`:
 
 - `strong` (default): the darkest tone is 0.56 in linear light, about 24 % darker on screen;
 - `light`: 0.70, about 16 % darker.
 
 The shadow is a smooth, matte ramp of `dot(normal, light)`, with the light at the top left, in front. A soft highlight (`highlight.ts`) is painted in the body texture BEFORE the eyes, so the eyes are never touched; its place follows the shape (the highest top-left point where it still fits, away from the eyes).
 
-Other materials stay in the code but are not offered: `flat` (two tones only, judged too heavy), `toon`, `toon-outline`, `lowpoly` and `realistic` (internal only).
+Flat uses the `toon` material and Pixel the `pixel` material: the render style picks the material, there is no option for it. Other materials stay in the code but are not offered: `flat` (two tones only, judged too heavy), `toon-outline`, `lowpoly` and `realistic` (internal only).
 
 The cartoon outline (`outline`) is an inverted shell, colored with the body color darkened in HSL, with a width in pixels that gets lighter at small sizes (`outlineWidthPx`).
 

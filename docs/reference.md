@@ -14,7 +14,7 @@ Each option is both an attribute (written in HTML, with dashes, as text) and a p
 | `render-style` | `3d`, `pixel3d` or `flat3d` | `3d` | Style: Soft, Pixel or Flat. |
 | `mood` | string | none | Mood played on a loop, see [Moods](#moods). |
 | `accessories` | JSON object | none | Accessories by slot, see [Accessories](#accessories). |
-| `theme` | `light` or `dark` | `currentTheme` (`light`) | The dark theme turns the eyes black. |
+| `theme` | `light` or `dark` | `currentTheme` (`auto`: the device's theme) | The dark theme turns the eyes black. |
 | `interactions` | boolean | `true` | Reactions to hover, tap, double tap, long press and shake. |
 | `wave` | boolean | `false` | Waves once when it appears. |
 | `follow` | boolean | `false` | The eyes follow the pointer anywhere in the window (turns the reactions off). |
@@ -29,7 +29,7 @@ Each option is both an attribute (written in HTML, with dashes, as text) and a p
 | `shadow` | boolean | `true` | Ground shadow under the body. |
 | `shading` | boolean | `true` | Shading of the body volume. `false` gives a flat color. |
 | `max-pixel-ratio` | number | `2` | Caps the sharpness of the 3D canvas (screen pixels per CSS pixel). `1.5` is lighter on phones. |
-| `label` | string | built-in, in the visitor's language | Text read by screen readers instead of the drawing. |
+| `label` | string | `Animated Mochi avatar` | Text read by screen readers instead of the drawing. The default is English, whatever the browser language: pass your own text for a page in another language. |
 
 A boolean (yes-or-no) attribute is on when present (`wave`), and off with `"false"` or `"0"` (`shadow="false"`).
 
@@ -40,15 +40,11 @@ You rarely need these. The app uses them for its animation editor.
 | Attribute | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `expression` | string | `neutral` | Resting expression, see [Expressions](#expressions). |
-| `cycle` | JSON array | the built-in cycle | The animation played by the player, as a list of blocks: `{ "state": "wink", "duration": 1.2 }` plays the `wink` state for 1.2 seconds. |
-| `material` | string | `soft` | 3D material of the Soft style. `soft` is the only one supported. |
-| `softness` | `light` or `strong` | `strong` | How dark the shading of the `soft` material is. |
+| `cycle` | JSON array | the built-in cycle | The animation of the [cycle player](#cycle-player), as a list of blocks. |
+| `softness` | `light` or `strong` | `strong` | How dark the shading of the Soft style is. |
 | `paper` | string | `#f9f9f9` | Color of the page behind the Mochi, used for the depth haze. |
-| `worn` | string | none | One accessory from an older set (`glasses`, `top-hat`...). Use `accessories` instead. |
 
 Two more options exist only as properties, because their value is a function: `gaze` (a scripted gaze) and `gesture` (small moves added to the pose).
-
-The player that plays `cycle` also has four properties, used by the app: `playing` (`true` to play the cycle), `block` (the index of the current block), and two values it writes itself, `state` (the current state) and `elapsed` (seconds spent in the current block).
 
 ## Methods
 
@@ -73,6 +69,33 @@ Listen to them with `addEventListener`. They are standard `CustomEvent`s and do 
 | `blockchange` | The player moved to another block of the cycle (detail: its index). |
 | `playingchange` | The cycle started or stopped (detail: `true` or `false`). |
 | `elapsedchange` | Time spent in the current block, every frame while playing (detail: seconds). |
+
+## Cycle player
+
+The cycle player is how the app builds and exports an animation. Most pages do not need it: moods are simpler.
+
+A **cycle** is a list of **blocks**. A block plays one body state for a number of seconds. The states are `idle`, `thinking`, `wink`, `wide` and `sleep`. When the last block ends, the player starts again from the first one.
+
+```js
+const bot = document.querySelector('mochi-bot')
+bot.cycle = [
+  { state: 'idle', duration: 2 }, // 2 seconds of idle
+  { state: 'wink', duration: 1.2 } // then a wink, then back to the start
+]
+bot.playing = true
+```
+
+| Property | Who sets it | What it holds |
+| --- | --- | --- |
+| `cycle` | you | The blocks, as above. |
+| `playing` | you | `true` plays the cycle, `false` pauses it. `false` by default. |
+| `block` | you or the player | Index of the current block. Set it to jump to a block. |
+| `state` | the player | State of the current block (event `statechange`). |
+| `elapsed` | the player | Seconds spent in the current block (event `elapsedchange`). |
+
+- `seek(index, offset)` jumps to block `index`, `offset` seconds in.
+- `renderAt(t)` draws the cycle at time `t` (seconds from its start), without playing it: the app uses it to export a video frame by frame.
+- A mood wins over the cycle: while `mood` is set, the body stays in `idle` and the blocks do not advance.
 
 ## Shapes
 
@@ -200,6 +223,6 @@ const hats = ACCESSORIES.filter((a) => a.slot === 'head').map((a) => a.id)
 | `MOOD_IDS`, `REACTION_IDS`, `resolveMood(id)` | Mood and reaction ids. |
 | `ACCESSORIES`, `SLOTS`, `accessoriesInSlot(slot)` | The accessory catalog. |
 | `RENDER_STYLES`, `PIXEL_SIZES` | Style and pixel size ids. |
-| `currentTheme`, `currentRenderStyle`, `currentOutline` | Settings shared by every Mochi without its own value. |
+| `currentTheme`, `currentRenderStyle`, `currentOutline` | Settings shared by every Mochi without its own value. `currentTheme.value` is `auto` (follow the device), `light` or `dark`. |
 | `shapePath(radii)` | An SVG path of a shape, for an icon in a picker. |
 | `load3d()` | Loads the 3D part early (optional). |

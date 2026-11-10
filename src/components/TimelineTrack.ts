@@ -327,6 +327,7 @@ export const TimelineTrack: Component<TimelineTrackProps> = (props) => {
                     width(i) > 44
                       ? h('mochi-bot', {
                           class: 'shrink-0',
+                          label: t('app.botAria'),
                           state: b.state,
                           size: Math.min(56, Math.max(30, width(i) * 0.5)),
                           shape: props.shape,

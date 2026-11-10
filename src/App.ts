@@ -478,7 +478,7 @@ export const App: Component<Record<string, never>> = () => {
           h(
             'figure',
             { key: s.id, class: 'flex flex-col items-center' },
-            h('mochi-bot', { state: s.id, size: 210, shape: shape.value, color: color.value, expression: expression.value, frozenAt: POSES[s.id] }),
+            h('mochi-bot', { label: t('app.botAria'), state: s.id, size: 210, shape: shape.value, color: color.value, expression: expression.value, frozenAt: POSES[s.id] }),
             h('figcaption', { class: 'text-xs text-[var(--muted)]' }, t(`states.${s.id}`))
           )
         )
@@ -563,6 +563,8 @@ export const App: Component<Record<string, never>> = () => {
             },
             h('mochi-bot', {
               ref: (el: Element | null) => (bot = el as MochiBotElement | null),
+              // the tag's own label is English: the app passes it in the visitor's language
+              label: t('app.botAria'),
               class: 'h-auto max-w-full',
               state: state.value,
               block: block.value,

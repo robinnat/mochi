@@ -38,14 +38,12 @@ import {
 import type { BotFrame } from '@/bot/engine'
 import { HALF_VIEWBOX } from '@/bot/frame'
 import { mixHex } from '@/bot/skins'
-import { measuresWorn, shadowsWorn, radiusLens, eyesOf, type Shadow, type WornId } from '@/bot/worn'
-import { Worn3d } from './worn3d'
+import { radiusLens, eyesOf, type Shadow } from '@/bot/eyePlacement'
 import { Accessories3d } from './accessories3d'
 import { measureLandmarks } from './anchors'
 import type { AccessorySelection } from '@/bot/slots'
 import { rim } from './rim'
 import { leverDark, luminance, palettePixel, quantifier } from './pixel3d'
-import { WORN_TINTS } from '@/bot/worn'
 import {
   colorOutline,
   lightingFlat,
@@ -121,9 +119,6 @@ export class Mochi3d {
   private readonly ctxEyes: CanvasRenderingContext2D
   private readonly textureEyes: CanvasTexture
   private readonly meshes = new Map<string, BodyMesh>()
-  /** worn accessory: hat and headphones as volumes fixed to the mesh, glasses painted on the face */
-  private worn: WornId | null = null
-  private readonly worn3d = new Worn3d()
   /** accessories by slot (head, eyes, face, neck, back), stackable */
   private accs: AccessorySelection = {}
   private readonly acc3d = new Accessories3d()
@@ -187,7 +182,6 @@ export class Mochi3d {
     this.shell = new Mesh(this.mesh.geometry, shellMaterial(this.thickness))
     this.shell.visible = false
     this.mesh.add(this.shell)
-    this.mesh.add(this.worn3d.group)
     this.mesh.add(this.acc3d.group)
   }
 
@@ -282,11 +276,6 @@ export class Mochi3d {
     this.profileForced = p
   }
 
-  /** Chooses the worn accessory (`null` = none). Called before `update`. */
-  setWorn(id: WornId | null) {
-    this.worn = id
-  }
-
   /** Chooses the accessories by slot (at most one per slot, all stackable). Called before `update`. */
   /** Laptop scale (0 = absent). */
   setLaptop(k: number) {
@@ -309,7 +298,7 @@ export class Mochi3d {
     for (const m of this.materials.values()) m.emissiveIntensity = this.emission(m)
   }
 
-  /** Colors of the worn accessories (pixel art palette). */
+  /** Colors of the accessories (pixel art palette). */
   get colorsAccessories(): string[] {
     return this.acc3d.colors
   }
@@ -375,21 +364,16 @@ export class Mochi3d {
       cm.transparent = mat.transparent
       cm.opacity = mat.opacity
     }
-    // worn accessory: placed again from this frame's outline (hat, bow) or from the
-    // 3D eyes (glasses, a real tube frame), with a small soft shadow it casts on the body
     const geo = this.mesh.geometry
     geo.computeBoundingBox()
     const bb = geo.boundingBox
-    const frameBody = frame
     // the 3D eyes: facing front, on the front face. `frameFace` adds the moods' gaze
     // (eye offset): only the painted eyes follow it, the glasses stay on the face
     const frameFace = frame.face ? this.eyesOnFace(frame, true) : null
     frame = this.eyesOnFace(frame)
     const flat0 = settingFlat(this.renderStyle, this.softness)
-    this.worn3d.settings = flat0?.smooth ? { force: 0.7, top: 0.32, ao: 1, highlight: this.uHighlight } : null
-    this.worn3d.update(this.worn, frameBody, this.mat(this.renderStyle, this.softness), bb ? (bb.min.z + bb.max.z) / 2 : 0, frame, (x, y) => this.zFace(x, y), (y, sg) => this.edgeX(y, sg))
     // accessories by slot: anchored on the volume of THIS body, recomputed when the body changes
-    this.acc3d.settings = this.worn3d.settings
+    this.acc3d.settings = flat0?.smooth ? { force: 0.7, top: 0.32, ao: 1, highlight: this.uHighlight } : null
     this.acc3d.body = color
     // v12: pieces are no longer rebuilt every frame (the body outline changes on every breath:
     // ray casting and geometries redone 60 times per second). They are built for the shape and style, on the
@@ -403,14 +387,14 @@ export class Mochi3d {
     this.followBody(bb)
     // the accessory outline follows the body's (same visibility, same thickness)
     this.acc3d.outline(this.shell.visible, this.thickness.value)
-    const shadows: Shadow[] = [...(this.worn ? shadowsWorn(this.worn, frame, measuresWorn(frameBody)) : []), ...this.acc3d.shadows]
+    const shadows: Shadow[] = this.acc3d.shadows
     // the soft highlight is a material effect (shader, camera space): nothing is painted in the
     // texture outside the eyes any more, so the back and sides get the same shading as the face
     const highlight = null as Highlight | null
     const keyHighlight = highlight ? [highlight.x, highlight.y, highlight.rx].map((v) => Math.round(v * 2)).join(',') : '-'
     const eyesPainted = frameFace ?? frame
     const cheeks = frameFace?.face?.cheeks ?? 0
-    const keyFace = `${this.renderStyle}|${this.softness}|${this.shading}|${this.theme}|${color}|${paper}|${JSON.stringify(eyesPainted.eyes)}|${cheeks.toFixed(2)}|${keyHighlight}|${this.worn ?? ''}|${shadows.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
+    const keyFace = `${this.renderStyle}|${this.softness}|${this.shading}|${this.theme}|${color}|${paper}|${JSON.stringify(eyesPainted.eyes)}|${cheeks.toFixed(2)}|${keyHighlight}|${shadows.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
     if (keyFace !== this.keyFace) {
       this.keyFace = keyFace
       // flat keeps the chosen color as is (no pastel), with no eye hollow
@@ -438,28 +422,6 @@ export class Mochi3d {
       g.scale.set(sx, sy, sx)
       g.position.set(cx - sx * r.cx, cy - sy * r.cy, 0)
     }
-  }
-
-  /** Abscissa of the body edge (side `sg`: -1 left, 1 right) at engine height `y`. */
-  private edgeX(y: number, sg: number): number {
-    const P = this.mesh.geometry.attributes.position
-    if (!P) return 0
-    let x = 0
-    for (let i = 0; i < P.count; i++) {
-      if (Math.abs(P.getY(i) + y) < 5) x = sg > 0 ? Math.max(x, P.getX(i)) : Math.min(x, P.getX(i))
-    }
-    return x
-  }
-
-  /** Depth (z) of the body's front face at engine (x, y): the most forward vertex nearby. */
-  private zFace(x: number, y: number): number {
-    const P = this.mesh.geometry.attributes.position
-    if (!P) return 0
-    let z = -Infinity
-    for (let i = 0; i < P.count; i++) {
-      if (Math.abs(P.getX(i) - x) < 7 && Math.abs(P.getY(i) + y) < 7) z = Math.max(z, P.getZ(i))
-    }
-    return z === -Infinity ? (this.mesh.geometry.boundingBox?.max.z ?? 0) : z
   }
 
   /**
@@ -654,7 +616,6 @@ export class Mochi3d {
     for (const m of this.materials.values()) m.dispose()
     for (const r of this.ramps) r.dispose()
     this.shell.material.dispose()
-    this.worn3d.liberer()
     this.acc3d.liberer()
     this.texture.dispose()
     this.textureEyes.dispose()
@@ -868,7 +829,6 @@ export function renderAvatar(
   highlight = DEFAULT_HIGHLIGHT,
   shape = '',
   yaw = 0,
-  worn: WornId | null = null,
   accessories: AccessorySelection = {},
   /**
  * half width of the frame in engine units (the viewBox by default): widening it leaves room for big accessories
@@ -912,7 +872,6 @@ export function renderAvatar(
   mochi.setRenderStyle(material, outline, softness, highlight)
   mochi.setOutlineWidth(outlineWidth)
   mochi.setShape(shape)
-  mochi.setWorn(worn)
   mochi.setTheme(theme, eyeContrast)
   mochi.setAccessories(accessories)
   mochi.setLaptop(laptop)
@@ -959,8 +918,7 @@ export function renderAvatar(
     cp.clearRect(0, 0, px, px)
     cp.drawImage(canvasGl, 0, sy, pxRender, pxRender, 0, 0, px, px)
     const im = cp.getImageData(0, 0, px, px)
-    const t = worn ? WORN_TINTS[worn] : null
-    const tints = worn === 'glasses' || worn === 'sunglasses' ? ['#26222f'] : t ? [t.background, t.accent] : []
+    const tints: string[] = []
     // cheeks: their tint enters the palette, otherwise it would be brought back to the body color
     if ((frame.face?.cheeks ?? 0) > 0.05) tints.push(mixHex(color, PLAYED, 0.62))
     const body = leverDark(color)

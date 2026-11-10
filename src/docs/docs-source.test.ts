@@ -4,6 +4,7 @@ import { ACCESSORIES, ACCESSORY_BY_KEY, SLOTS, type Slot } from '@/bot/slots'
 import { MOOD_IDS, REACTION_IDS, resolveMood } from '@/bot/moods'
 import { COLORS, COLOR_BY_ID, SHAPES, SHAPE_BY_ID, isValidHex } from '@/bot/skins'
 import { EXPRESSIONS } from '@/bot/expressions'
+import { SEQUENCE } from '@/bot/states'
 import { RENDER_STYLES, PIXEL_SIZES } from '@/ui/renderStyle'
 import { MochiBotElement, PROPERTIES, attributeOf } from '@/components/mochi-bot'
 import { pagesOf, parseMarkdown, type Block } from './markdown'
@@ -112,6 +113,14 @@ describe('the documentation says what the code does', () => {
     const expressions = REFERENCE.match(/## Expressions\n\n[^\n]*\n/)![0]
     expect([...expressions.matchAll(/`([a-z]+)`/g)].map((m) => m[1]).filter((x) => x !== 'expression')).toEqual(EXPRESSIONS.map((e) => e.id))
     expect(SLOTS).toEqual(['head', 'eyes', 'neck', 'back'])
+  })
+
+  it('the cycle player has its own section, with the real states and the player properties', () => {
+    const i = REFERENCE.indexOf('## Cycle player')
+    expect(i).toBeGreaterThan(0)
+    const section = REFERENCE.slice(i, REFERENCE.indexOf('\n## ', i + 1))
+    expect(section).toContain(SEQUENCE.map((x) => '`' + x + '`').slice(0, -1).join(', ') + ' and `' + SEQUENCE.at(-1) + '`')
+    for (const p of ['cycle', 'playing', 'block', 'state', 'elapsed', 'seek(index, offset)', 'renderAt(t)']) expect(section, p).toContain('`' + p + '`')
   })
 
   it('the attributes written in the examples are real options, with ids that exist', () => {
