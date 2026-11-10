@@ -1,12 +1,12 @@
-# Mochi
+# Mochi World
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochi-red-phi.vercel.app)
 
-Mochi is a small animated avatar engine for the web. One solid shape with seven moods, two eyes
-that move on their own, and reactions when you touch it (hover, tap, double tap, long press, shake,
-a hello on arrival). Everything is drawn in real 3D, in three styles (Soft, Flat and Pixel), in light
-and dark, with accessories you can stack by slot and colour, and exports
-(SVG, PNG, GIF, MP4). No animation library.
+Mochi World is a small animated avatar engine for the web. Its characters, the Mochi, are one
+solid shape with seven moods, two eyes that move on their own, and reactions when you touch them
+(hover, tap, double tap, long press, shake, a hello on arrival). Everything is drawn in real 3D, in
+three styles (Soft, Flat and Pixel), in light and dark, with 23 accessories you can stack by slot and
+colour, and exports (SVG, PNG, GIF, MP4). No animation library.
 
 **Site and playground: https://mochi-red-phi.vercel.app** (the app is at `/app`).  
 **Source: https://github.com/robinnat/mochi**
@@ -14,7 +14,7 @@ and dark, with accessories you can stack by slot and colour, and exports
 ## Install
 
 ```bash
-npm install mochi-bots   # coming soon: the package is NOT published yet
+npm install mochi-world   # coming soon: the package is NOT published yet
 ```
 
 Until then, work from the repository (see [Development](#development)). Heads up: the repo
@@ -99,33 +99,39 @@ Keep the MIT header of `LICENSE` at the top of the bundle you ship.
 and highlight computed in view space so the whole volume is lit the same way from every
 side), `flat3d` (Flat: two or three flat tones, optional `contour`) and `pixel3d` (Pixel: low
 resolution render, short palette, 1 px outline; `pixel`: `gros` 16, `moyen` 24, `fin` 32
-px for the ball). `yaw` turns the model. The old SVG drawings (`original`, `argile`, `bulle`,
-`pixel`) are no longer offered: they remain only as the fallback when WebGL is missing and
-for the SVG/PNG/GIF/MP4 exports, which still serialise the SVG (a 3D mochi exports as clay).
+px for the ball). `yaw` turns the model. When WebGL is missing, and for the SVG, PNG, GIF and
+MP4 exports, the avatar falls back to its SVG drawing: there is no 3D export yet.
 
-**Shapes** (11): `cercle`, `galet`, `squircle`, `capsule`, `triangle`, `hexagone`, `nuage`,
-`goutte`, `etoile`, `fleur`, `oeuf`. Every shape has a real volume from all angles: the circle is a
-sphere, the squircle a rounded pillow, the triangle a rounded cone, drop, egg and capsule are
-solids of revolution, and star, flower, hexagon and cloud are thick, fully rounded bodies.
+**Shapes** (12): `cercle`, `galet`, `squircle`, `capsule`, `triangle`, `hexagone`, `nuage`,
+`goutte`, `etoile`, `fleur`, `oeuf`, `coeur`. Every shape has a real volume from all angles: the circle
+is a sphere, the squircle a rounded pillow, the triangle a rounded cone, drop, egg and capsule are
+solids of revolution, and star, flower, hexagon, cloud and heart are thick, rounded bodies.
 
-**Colours** (12): `encre`, `brun`, `rouge`, `orange`, `ambre`, `vert`, `turquoise`, `bleu`,
-`violet`, `rose`, `gris`, `creme`.
+**Colours** (18: 14 bright ones and 4 neutrals): `encre`, `brun`, `rouge`, `corail`, `orange`, `ambre`,
+`citron`, `pomme`, `vert`, `turquoise`, `ciel`, `bleu`, `violet`, `magenta`, `rose`, `cerise`, `gris`,
+`creme`. `color` also takes any hex.
 
 **Moods** (7, looped, face and body): `repos`, `reflechit`, `travaille` (types on a small 3D laptop seen
 from behind, `ordinateur` hides it), `attend`, `termine`, `bloque`, `dort`. Set one with
 `<MochiBot mood="travaille" />` or `setMood()`. **Interactions** (on by default, `interactions`): hover makes
 the gaze follow, tap startles, double tap laughs, long press blushes, a shake or fast spin makes it dizzy, and
-`coucou` plays a hello on arrival (it grows out of the floor). See [docs/moods.md](docs/moods.md).
-
-**Worn accessories** (`src/bot/portes.ts`, `porte` prop): `lunettes`, `soleil`, `haut-de-forme`,
-`paille`, `bonnet`, `noeud`, `couronne`, `casque`. Placed on the body again at every frame, in every
-style including 3D (`<MochiBot porte="bonnet" />`). See [docs/accessoires.md](docs/accessoires.md).
+`coucou` plays a hello on arrival (it grows out of the floor). That makes 5 reactions: `sursaut`, `rigole`,
+`rougit`, `etourdi`, `coucou`. See [docs/moods.md](docs/moods.md).
 
 **3D controls**: `<MochiBot rendu="3d" :yaw="angle" />` turns the model around its vertical axis
 (radians; the eyes are painted on the front face only). The site's 3D section drives it by drag.
 
-**Accessories by slot** (`accessoires` prop, `src/bot/emplacements.ts`): head, eyes, face, neck and back, one per
-slot, all stackable, each a simple shape in one or two colours you choose:
+**Accessories** (23, `accessoires` prop, catalogue in `src/bot/emplacements.ts`): one per slot, all
+stackable, each a simple shape in one or two colours you choose.
+
+| Slot | Accessories |
+|---|---|
+| `tete` (head, 10) | `casquette`, `beret`, `haut-de-forme`, `couronne`, `paille`, `antenne`, `casque`, `ruban`, `fleur`, `toque` |
+| `yeux` (eyes, 6) | `rondes`, `carrees`, `soleil`, `coeur`, `etoile`, `monocle` |
+| `visage` (face, 1) | `joues` |
+| `bas` (neck, 4) | `papillon`, `echarpe`, `perles`, `fleurs` |
+| `dos` (back, 2) | `sac`, `cape` |
+
 `<MochiBot :accessoires="{ tete: { id: 'casquette', c1: '#e8505b' }, yeux: 'rondes' }" />`.
 **Theme**: `theme="dark"` turns the eyes black (without it, the site's current theme).
 
@@ -146,8 +152,10 @@ const frame = engine.sample(t, geste?) // pure: bodyPath, eyes, arcs, dots, noti
 `<MochiBot>` props: `size`, `shape`, `color`, `paper`, `frozenAt`, `follow`, `rendu`, `pixel`,
 `rendu3d`, `douceur`, `contour`, `reflet`, `yaw`, `theme`, `mood`, `interactions`, `coucou`,
 `ordinateur`, `accessoires`, `fps`, `label`. `color` is a catalogue id (`violet`) or any hex
-(`#ff8800`, `#f80`). Twelve shapes, heart included. See
-[MochiBot.vue](src/components/MochiBot.vue).
+(`#ff8800`, `#f80`). See [MochiBot.vue](src/components/MochiBot.vue).
+
+The code keeps its names: the component is still `MochiBot.vue` and the browser storage keys still start
+with `mochi:`. Renaming them would break existing code, so it is not part of the move to the Mochi World name.
 
 ## Why the numbers look arbitrary
 
@@ -172,7 +180,6 @@ them loses the accuracy of the motion.
 | [docs/architecture.md](docs/architecture.md) | The engine, radial-profile morphing, eyes as mask holes |
 | [docs/measurements.md](docs/measurements.md) | What was measured, regenerating `profiles.ts` |
 | [docs/styles.md](docs/styles.md) | Render styles: Soft, Flat, Pixel (real 3D) |
-| [docs/accessoires.md](docs/accessoires.md) | Job accessories |
 | [docs/moods.md](docs/moods.md) | Work moods and reactions to the user (face and body only) |
 | [docs/intro.md](docs/intro.md) | The arrival sequence |
 | [docs/interface.md](docs/interface.md) | App layout and CSS traps |
@@ -191,6 +198,17 @@ npx -y pnpm@11.17.0 build    # vue-tsc --noEmit && vite build
 Vue 3, Vite, TypeScript, Tailwind 4 (app only), Three.js (loaded on demand). `vue-tsc` is the
 only gate: run the build before you conclude. [CHANGELOG.md](CHANGELOG.md) has one entry
 per version.
+
+## Contributing
+
+Bug reports, ideas and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first
+(setup, tests, code style, one pull request per topic, green CI). Everyone taking part follows the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Security
+
+Please do not report security problems in a public issue. See [SECURITY.md](SECURITY.md) for the
+private reporting form and the supported versions.
 
 ## License
 

@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an idea or a change.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please open the request before writing a large pull request, so we can agree on the idea first.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do
+      description: The use case, in a few lines. What are you building, and what is missing?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How it could work (a new prop, shape, mood, accessory, export...). A sketch or a reference image helps.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to open the pull request myself.

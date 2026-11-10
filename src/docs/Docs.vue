@@ -65,7 +65,7 @@ onBeforeUnmount(() => obs?.disconnect())
       <p class="surtitre">Documentation</p>
       <h1 class="docs-titre">Put a Mochi<br />in your app.</h1>
       <p class="chapo">
-        Mochi is one Vue 3 component, <code>&lt;MochiBot&gt;</code>, on top of a small engine with no framework and no clock.
+        Mochi World is one Vue 3 component, <code>&lt;MochiBot&gt;</code>, on top of a small engine with no framework and no clock.
         This page covers everything you need: installation, the main options, and copyable examples.
       </p>
     </header>
@@ -85,7 +85,7 @@ onBeforeUnmount(() => obs?.disconnect())
           <h2>Installation</h2>
           <div class="encart">
             <strong>The npm package is coming soon.</strong>
-            <span><code>mochi-bots</code> is not published yet, so <code>{{ INSTALL_NPM }}</code> does not work today. Until then, add Mochi from the repository.</span>
+            <span><code>mochi-world</code> is not published yet, so <code>{{ INSTALL_NPM }}</code> does not work today. Until then, add Mochi from the repository.</span>
           </div>
           <p>
             Mochi needs <strong>Vue 3</strong> and <strong>Three.js</strong>, in an app built with Vite. Copy the engine and the

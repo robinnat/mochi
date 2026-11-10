@@ -1,0 +1,61 @@
+name: Bug report
+description: Something does not work or does not look right.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. For a security problem, do not use this form: see SECURITY.md.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Where (site, /app, /docs, your own app) and what you did, step by step.
+      placeholder: |
+        1. Open /app
+        2. Pick the star shape and the Pixel style
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: Props or code
+      description: The `<MochiBot>` props or the smallest code that shows the problem, if any.
+      render: vue
+  - type: dropdown
+    id: style
+    attributes:
+      label: Render style
+      options:
+        - Soft (3d)
+        - Flat (flat3d)
+        - Pixel (pixel3d)
+        - SVG fallback (no WebGL) or export
+        - Not related to a style
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: Chrome 131 on macOS 15, Safari on iPhone (iOS 18)
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or date
+      description: The commit of `main` you used, or the day you saw it on the demo site.
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshot or clip
+      description: Drag an image or a short video here. Very helpful for anything visual.

@@ -5,6 +5,17 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- The project is now called **Mochi World** (the characters are still Mochi). The package name in
+  `package.json` is `mochi-world` (not published yet). Page titles, meta tags, the site header and footer
+  follow. Code names do not change: `MochiBot.vue`, the `mochi:` storage keys and every prop stay as they are.
+
+### Added
+
+- Community files: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, issue and pull request templates,
+  and a Dependabot config (weekly, at most 3 open pull requests).
+
 ### Removed (for now)
 
 - The two pairs of wings (angel, bat): out of `CATALOGUE` (23 accessories), kept in `RETIRES`.
