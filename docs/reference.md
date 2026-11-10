@@ -29,7 +29,7 @@ Each option is both an attribute (written in HTML, with dashes, as text) and a p
 | `shadow` | boolean | `true` | Ground shadow under the body. |
 | `shading` | boolean | `true` | Shading of the body volume. `false` gives a flat color. |
 | `max-pixel-ratio` | number | `2` | Caps the sharpness of the 3D canvas (screen pixels per CSS pixel). `1.5` is lighter on phones. |
-| `label` | string | a built-in text | Text read by screen readers instead of the drawing. |
+| `label` | string | built-in, in the visitor's language | Text read by screen readers instead of the drawing. |
 
 A boolean (yes-or-no) attribute is on when present (`wave`), and off with `"false"` or `"0"` (`shadow="false"`).
 
