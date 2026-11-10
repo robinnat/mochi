@@ -15,6 +15,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Community files: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, issue and pull request templates,
   and a Dependabot config (weekly, at most 3 open pull requests).
+- French versions of the README and of the community files (`README.fr.md`, `CONTRIBUTING.fr.md`,
+  `CODE_OF_CONDUCT.fr.md`, `SECURITY.fr.md`), with an English | Français switch at the top of each.
+  English stays the reference.
 
 ### Removed (for now)
 

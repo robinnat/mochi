@@ -1,3 +1,5 @@
+**English** | [Français](README.fr.md)
+
 # Mochi World
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochi-red-phi.vercel.app)

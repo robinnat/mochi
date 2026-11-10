@@ -1,3 +1,5 @@
+**English** | [Français](CONTRIBUTING.fr.md)
+
 # Contributing to Mochi World
 
 Thanks for taking the time. Mochi World is a small project maintained in spare time, so reviews
