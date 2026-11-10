@@ -9,7 +9,7 @@
  * - soft highlight: a wide light spot towards the top left, tinted by the material. No scene light: these are
  *   material effects (a few lines of shader).
  */
-import type { Material, WebGLProgramParametersWithUniforms } from 'three'
+import type { Material, WebGLProgramParametersWithUniforms } from './three'
 
 export interface OptionsRim {
   /** soft highlight uniform (0 = none); absent = no highlight */

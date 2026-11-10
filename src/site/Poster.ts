@@ -18,6 +18,7 @@ export const Poster: Component<PosterProps> = (props) => () =>
     height: props.size,
     alt: props.alt ?? '',
     loading: props.eager ? 'eager' : 'lazy',
+    fetchpriority: props.eager ? 'high' : undefined,
     decoding: 'async',
     draggable: 'false'
   })

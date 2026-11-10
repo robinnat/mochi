@@ -203,7 +203,19 @@ header[id] {
 :root[data-theme='dark'] .mark-dark {
   display: block;
 }
-/* the word "Mochis" is set in Fredoka 600 (Google Fonts, display=swap) */
+/*
+ * the word "Mochis" is set in Fredoka 600, served with the site (v13): a 7 kB file with the Latin letters only
+ * (fonts/OFL.txt: SIL Open Font License). The Google Fonts stylesheet it replaces blocked the first paint (~0.8 s on
+ * a phone) for a single word.
+ */
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/fredoka-600-letters.woff2') format('woff2');
+  unicode-range: U+41-5A, U+61-7A;
+}
 .wordmark {
   font-family: 'Fredoka', var(--font-titre);
   font-weight: 600;

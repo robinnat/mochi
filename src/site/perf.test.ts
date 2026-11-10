@@ -48,3 +48,45 @@ describe('3D performance (v12)', () => {
     expect(p).toContain('shape: b.shape')
   })
 })
+
+/** v13 (10/11/2026): fast loading and at least 30 frames per second with every Mochi of a page. */
+describe('3D performance (v13)', () => {
+  const bot = read('../components/mochi-bot.ts')
+
+  it('each Mochi keeps its own 3D body (accessories, face texture, meshes), freed with the element', () => {
+    expect(scene).toContain('export function avatarSlot(): AvatarSlot')
+    expect(scene).toContain('export function releaseSlot(slot: AvatarSlot)')
+    expect(bot).toContain('slot = m.avatarSlot()')
+    expect(bot).toContain('m3d.value?.releaseSlot(slot)')
+    expect(bot).toMatch(/props\.outlineWidth, false, undefined, slot \?\? undefined\)/)
+  })
+
+  it('a Mochi off screen does not sample nor draw (IntersectionObserver)', () => {
+    expect(bot).toContain('new IntersectionObserver(')
+    expect(bot).toContain('if (!onScreen || !mustRedraw(ms, lastDrawing, props.fps)) return')
+    expect(bot).toContain('io?.disconnect()')
+  })
+
+  it('the face texture is sized to the render, 512 at most', async () => {
+    const { textureSizeFor } = await import('../ui/3d/scene3d')
+    expect(textureSizeFor(120)).toBe(256)
+    expect(textureSizeFor(256)).toBe(256)
+    expect(textureSizeFor(480)).toBe(512)
+    expect(textureSizeFor(2048)).toBe(512)
+  })
+
+  it('the wordmark font is served with the site, without the blocking Google Fonts stylesheet', () => {
+    for (const f of ['../../index.html', '../../docs.html']) {
+      expect(read(f)).not.toContain('fonts.googleapis.com')
+      expect(read(f)).toContain('<link rel="preload" href="/src/site/fonts/fredoka-600-letters.woff2" as="font" type="font/woff2" crossorigin />')
+    }
+    expect(read('./site.css')).toContain("src: url('./fonts/fredoka-600-letters.woff2') format('woff2')")
+    expect(read('./fonts/OFL.txt')).toContain('SIL Open Font License')
+  })
+
+  it('index.html fetches the first posters of the hero before the scripts run', async () => {
+    const { HERO_FIRST } = await import('./Hero')
+    const html = read('../../index.html')
+    expect(html).toContain(`;[${HERO_FIRST.map((n) => `'${n}'`).join(', ')}].forEach(`)
+  })
+})

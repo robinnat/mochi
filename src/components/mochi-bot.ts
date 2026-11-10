@@ -227,6 +227,43 @@ const EVENT_FOR_PROP: Partial<Record<keyof MochiBotProps, string>> = {
   elapsed: 'elapsedchange'
 }
 
+/* ------------------------------------------------------------------ cadence */
+
+/**
+ * Adaptive cadence shared by every Mochi of the page (v13). Each browser frame, the 3D drawing time of all the Mochis
+ * is added up. When frames come late (more than `CADENCE_LATE_MS` apart on average) AND drawing every Mochi at every
+ * frame costs more than `CADENCE_HALF_MS` (a slow phone, many Mochis on screen), each one draws every other frame, half
+ * of them on even frames and half on odd ones: every Mochi still moves at 30 frames per second, steadily, and the page
+ * gets its time back. Back to every frame when drawing them all costs less than `CADENCE_FULL_MS`. A fast computer
+ * that keeps up never halves. A Mochi with its own `fps` keeps it.
+ *
+ * Declared before the tag: declaring it upgrades the `<mochi-bot>` already in the page at once, and they read this.
+ */
+export const CADENCE_LATE_MS = 20
+export const CADENCE_HALF_MS = 8
+export const CADENCE_FULL_MS = 6
+export const cadence = { ms: -1, frame: 0, cost: 0, average: 0, interval: 1000 / 60, half: false, count: 0 }
+
+/** Called at the start of each Mochi's frame: a new browser frame closes the cost of the previous one. */
+export function cadenceFrame(ms: number): number {
+  if (ms === cadence.ms) return cadence.frame
+  if (cadence.ms >= 0) {
+    // cost of drawing EVERY Mochi in one frame: in half cadence, a frame only drew half of them
+    // one slow frame (a shader compiling, a Mochi mounting) weighs at most 50 ms: only a lasting load changes the cadence
+    const full = Math.min(50, cadence.half ? cadence.cost * 2 : cadence.cost)
+    cadence.average = cadence.average * 0.95 + full * 0.05
+    // a gap of more than 200 ms is a pause (hidden tab, debugger), not a slow frame
+    const gap = ms - cadence.ms
+    if (gap > 0 && gap < 200) cadence.interval = cadence.interval * 0.95 + Math.min(50, gap) * 0.05
+    if (!cadence.half && cadence.interval > CADENCE_LATE_MS && cadence.average > CADENCE_HALF_MS) cadence.half = true
+    else if (cadence.half && cadence.average < CADENCE_FULL_MS) cadence.half = false
+  }
+  cadence.ms = ms
+  cadence.frame++
+  cadence.cost = 0
+  return cadence.frame
+}
+
 /* ------------------------------------------------------------------ style */
 
 let styleAdds = false
@@ -513,7 +550,10 @@ function mountBot(host: MochiBotElement): Internal {
    * Each state change is timed at the ABSOLUTE offset of its block; going back starts again without history.
    */
   let lastBlock = -1
+  /** driven frame by frame (`renderAt`, exports): every requested frame is drawn, several per browser frame if asked */
+  let driven = false
   function renderAt(t: number) {
+    driven = true
     const blocks = props.cycle
     if (!blocks.length) return
     const { index } = blockAt(blocks, t)
@@ -555,6 +595,8 @@ function mountBot(host: MochiBotElement): Internal {
   let canvas: HTMLCanvasElement | null = null
   const canvasRef = ref(0)
   const real3d = computed(() => m3d.value !== null)
+  /** this Mochi's own 3D body (mesh cache, face textures, accessories), freed with the element */
+  let slot: import('@/ui/3d/scene3d').AvatarSlot | null = null
   const pxCanvas = computed(() =>
     renderStyle.value === 'pixel3d'
       ? grid.value
@@ -564,8 +606,9 @@ function mountBot(host: MochiBotElement): Internal {
   // the 3D (Three.js) loads on mount, once for every Mochi of the page
   import('@/ui/3d/scene3d')
     .then((m) => {
-      if (m.webglAvailable()) m3d.value = m
-      else signalNo3d()
+      if (!m.webglAvailable()) return signalNo3d()
+      slot = m.avatarSlot()
+      m3d.value = m
     })
     // module not found: same fallback as without WebGL
     .catch(signalNo3d)
@@ -603,10 +646,18 @@ function mountBot(host: MochiBotElement): Internal {
   const themeEff = computed<Theme>(() => resolveTheme(props.theme))
   const render3dEff = computed<Material>(() => materialFor(renderStyle.value, DEFAULT_MATERIAL))
 
+  /** browser frame of the last drawing (cadence numbering) */
+  let drawnFrame = -1
   function draw3d() {
     const m = m3d.value
     if (!real3d.value || !m || !canvas) return
-    m.renderAvatar(canvas, frame.value, ink.value, props.paper, render3dEff.value, effectiveOutline.value, props.softness, props.highlight, props.shape, props.yaw + 0.3 * turnLaptop(), props.accessories ?? {}, undefined, themeEff.value, undefined, laptopScale(), props.shadow, props.shading, props.outlineWidth)
+    // an animated Mochi draws at most once per browser frame: a page that turns it (yaw) in its own
+    // requestAnimationFrame used to make it draw twice. Its next frame draws the latest state anyway.
+    if (props.frozenAt === undefined && !driven && readyEmitted && drawnFrame === cadence.frame) return
+    drawnFrame = cadence.frame
+    const t0 = performance.now()
+    m.renderAvatar(canvas, frame.value, ink.value, props.paper, render3dEff.value, effectiveOutline.value, props.softness, props.highlight, props.shape, props.yaw + 0.3 * turnLaptop(), props.accessories ?? {}, undefined, themeEff.value, undefined, laptopScale(), props.shadow, props.shading, props.outlineWidth, false, undefined, slot ?? undefined)
+    cadence.cost += performance.now() - t0
     if (!readyEmitted) {
       readyEmitted = true
       host.dataset.ready = '1'
@@ -622,12 +673,15 @@ function mountBot(host: MochiBotElement): Internal {
       clearTimeout(timerShape)
       timerShape = window.setTimeout(() => {
         if (!real3d.value || !m3d.value) return
-        m3d.value.invalidateAccessories3d()
+        m3d.value.invalidateAccessories3d(slot ?? undefined)
         draw3d()
       }, BotEngine.SHAPE_MORPH * 1000 + 120)
     }
   )
-  onCleanup(() => clearTimeout(timerShape))
+  onCleanup(() => {
+    clearTimeout(timerShape)
+    if (slot) m3d.value?.releaseSlot(slot)
+  })
 
   watch(
     [frame, real3d, canvasRef, ink, pxCanvas, render3dEff, () => props.softness, () => props.highlight, () => props.yaw, themeEff, () => props.accessories, () => props.shadow, () => props.shading, () => effectiveOutline.value, () => props.outlineWidth],
@@ -830,6 +884,25 @@ function mountBot(host: MochiBotElement): Internal {
     (id) => setMood(resolveMood(id))
   )
 
+  /**
+   * On screen: off screen (scrolled away, hidden panel), the loop keeps the clock and the montage going but neither
+   * samples nor draws anything; the Mochi is up to date as soon as it comes back. Visible until told otherwise.
+   */
+  let onScreen = true
+  let io: IntersectionObserver | null = null
+  if (typeof IntersectionObserver !== 'undefined') {
+    io = new IntersectionObserver((entries) => {
+      const was = onScreen
+      onScreen = !!entries[entries.length - 1]?.isIntersecting
+      // back on screen: the next frame draws at once, whatever the `fps` cap
+      if (onScreen && !was) lastDrawing = 0
+    })
+    io.observe(host)
+  }
+
+  /** even or odd frames, when the cadence is halved */
+  const parity = cadence.count++ % 2
+
   let lastDrawing = 0
   function tick(ms: number) {
     raf = requestAnimationFrame(tick)
@@ -844,7 +917,9 @@ function mountBot(host: MochiBotElement): Internal {
     }
     if (props.follow) aim()
     else if (props.gaze) scriptedGaze(props.gaze)
-    if (!mustRedraw(ms, lastDrawing, props.fps)) return
+    const frameNo = cadenceFrame(ms)
+    if (!onScreen || !mustRedraw(ms, lastDrawing, props.fps)) return
+    if (cadence.half && !props.fps && frameNo % 2 !== parity) return
     lastDrawing = ms
     time.value = clock
     advanceLaptop(dt)
@@ -1063,6 +1138,7 @@ function mountBot(host: MochiBotElement): Internal {
 
   onCleanup(() => {
     cancelAnimationFrame(raf)
+    io?.disconnect()
     detach()
     clearTimeout(press?.timer)
     window.removeEventListener('pointermove', onDrag)

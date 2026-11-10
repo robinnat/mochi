@@ -30,7 +30,10 @@ The engine does not change: `engine.sample(t)` gives the same frame, and the sta
 - **The body is the outline, inflated** (`volume.ts`, pure and tested under Node): the `bodyPath` of the frame becomes points, then each ray from the center to the edge becomes a series of rings.
 - **The eyes are on the front face only.** On a shape with a flat front, the pair of eyes is shifted (same vector, same gap) so it never bites into the rounded edge.
 - **The eyes are painted in a texture** projected from the front, at the exact positions given by the engine, and ALSO in an emission texture (white on black): an eye is a light hole, the lighting must not gray it.
-- **One WebGL context** for every avatar of the page (`renderAvatar`): each one asks for a frame, which is rendered and copied into its own canvas. The outline and the face are rebuilt only when they changed.
+- **One WebGL context** for every avatar of the page (`renderAvatar`): each one asks for a frame, which is rendered and copied into its own canvas. Each `<mochi-bot>` has its own 3D body (`avatarSlot`): its meshes, its face texture (sized to the render, 512 px at most) and its accessories stay from one frame to the next. The outline and the face are rebuilt only when they changed.
+- **Off screen, nothing is drawn**: an `IntersectionObserver` pauses the drawing of a Mochi out of view; its clock keeps going.
+- **Adaptive cadence**: the drawing time of every Mochi is added up each frame. When frames come late (more than 20 ms apart) and drawing all of them costs more than 8 ms, each Mochi draws every other frame, half on even frames and half on odd ones (30 per second each); back to every frame below 5 ms. A computer that keeps up never halves (`cadenceFrame` in `mochi-bot.ts`).
+- **Three.js enters through `src/ui/3d/three.ts`** only: each class is imported from its own source file, so the bundle keeps only what Mochis draws with.
 - **Loaded on demand**: `scene3d.ts` is never imported statically (about 133 kB gzip). `mochi-bot.ts` loads it when it mounts; until then the Mochi is not drawn (the `ready` event fires on the first frame).
 
 ## Materials

@@ -254,7 +254,9 @@ currentTheme.value = 'dark' // 'light', 'dark', or 'auto' to follow the device a
 - `frozen-at` draws one exact instant (a time in seconds) without any animation loop. Use it for lists and thumbnails.
 - `fps` caps the number of frames per second: lighter when many Mochis move at once.
 - `max-pixel-ratio` caps the sharpness of the 3D canvas (2 by default). `1.5` is lighter on phones.
-- All the Mochis of a page share one WebGL context (one 3D drawing surface), so a page can show many of them.
+- All the Mochis of a page share one WebGL context (one 3D drawing surface), so a page can show many of them. Each Mochi still keeps its own body, face and accessories, so one Mochi never redoes the work of another.
+- A Mochi off the screen (scrolled away or in a hidden panel) draws nothing. Its clock keeps going, and it is up to date as soon as it comes back into view.
+- When drawing every Mochi at every frame gets too heavy (a slow phone, many Mochis on screen), each one draws every other frame by itself: 30 frames per second, steady, and the page keeps its own speed. A Mochi with its own `fps` keeps it.
 - When a Mochi is removed from the page, it stops its animation loop and its listeners by itself.
 
 ```html
