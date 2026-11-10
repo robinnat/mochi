@@ -88,7 +88,8 @@ describe('docs : tout vient de la vraie API', () => {
     const docs = source('./Docs.vue')
     expect(docs).toContain('coming soon')
     expect(docs).toMatch(/does not work today/)
-    expect(EX.INSTALL_DEPOT).not.toContain('mochi-bots')
+    expect(EX.INSTALL_DEPOT).not.toContain('mochi-world')
+    expect(EX.INSTALL_NPM).toBe('npm install mochi-world')
     expect(EX.INSTALL_DEPOT).toContain('git clone https://github.com/robinnat/mochi.git')
     // les fichiers copies existent bien dans le depot
     for (const d of ['bot/engine.ts', 'ui/rendu.ts', 'i18n/index.ts', 'components/MochiBot.vue', 'ui/trois/themeCourant.ts']) {

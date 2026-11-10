@@ -1,9 +1,9 @@
 {
-  "name": "mochi-bots",
+  "name": "mochi-world",
   "private": true,
   "version": "0.1.1",
   "type": "module",
-  "description": "Mochi : animated avatar engine for the web. One shape morphing through five measured face moods, in real 3D (Soft, Flat, Pixel), with gestures, job accessories and exports.",
+  "description": "Mochi World: animated avatar engine for the web. Mochi characters in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch, 23 accessories and exports.",
   "license": "MIT",
   "author": "SYGEN SAS",
   "repository": {

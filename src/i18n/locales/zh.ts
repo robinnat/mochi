@@ -12,8 +12,8 @@ import type fr from './fr'
  */
 const zh: typeof fr = {
   app: {
-    name: 'mochi',
-    title: 'mochi — 动画 SVG 头像',
+    name: 'mochi world',
+    title: 'Mochi World, 动画头像',
     botAria: 'mochi 动画头像'
   },
 

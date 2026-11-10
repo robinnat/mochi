@@ -19,8 +19,8 @@ export default {
      * Un nom propre ne se traduit pas non plus. `title` sert de `document.title`.
      * Voir aussi le <title> de index.html, qui est statique.
      */
-    name: 'mochi',
-    title: 'mochi — avatar SVG animé',
+    name: 'mochi world',
+    title: 'Mochi World, avatar animé',
     botAria: 'Avatar mochi animé'
   },
 

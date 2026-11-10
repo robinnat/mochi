@@ -21,7 +21,7 @@ cd my-app
 npm install three
 npm install -D @types/three`
 
-export const INSTALL_NPM = 'npm install mochi-bots'
+export const INSTALL_NPM = 'npm install mochi-world'
 
 /** L'alias `@` vers `src/` : celui de create-vue ; le code de Mochi importe avec `@/bot/...`. */
 export const VITE_ALIAS = `// vite.config.ts
