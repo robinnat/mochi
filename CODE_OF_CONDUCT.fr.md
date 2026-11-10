@@ -44,7 +44,7 @@ Les cas de comportements abusifs, harcelants ou tout autre comportement inaccept
 * par le formulaire de signalement privé décrit dans [SECURITY.fr.md](SECURITY.fr.md) (le formulaire « Report a vulnerability » de GitHub, que seuls les mainteneurs peuvent lire ; indiquez dans le titre qu'il s'agit d'un signalement au titre du code de conduite), ou
 * par l'option « Report content » de GitHub sur le commentaire, l'issue ou la pull request concernés, qui va à GitHub.
 
-Adresse de contact : [ADRESSE DE CONTACT À AJOUTER PAR LES MAINTENEURS].
+Adresse de contact : sygen.contact@gmail.com.
 
 Toutes les plaintes seront examinées et feront l'objet d'une enquête rapide et équitable.
 

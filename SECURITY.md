@@ -23,6 +23,8 @@ Report it privately through GitHub instead:
    [this form](https://github.com/robinnat/mochi/security/advisories/new) directly).
 3. Describe the problem, how to reproduce it, and what an attacker could do with it.
 
+If you cannot use the GitHub form, write to sygen.contact@gmail.com as a fallback, with "Security" in the subject.
+
 Only the maintainers can read the report. We will look at it and answer on a best-effort
 basis: this is a small project and we cannot promise a response time or a fix date. If the
 report is confirmed, the fix goes to `main` through a normal pull request.

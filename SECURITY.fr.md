@@ -25,6 +25,8 @@ Signalez-le plutôt en privé sur GitHub :
    [ce formulaire](https://github.com/robinnat/mochi/security/advisories/new)).
 3. Décrivez le problème, comment le reproduire, et ce qu'un attaquant pourrait en faire.
 
+Si vous ne pouvez pas utiliser le formulaire GitHub, écrivez en secours à sygen.contact@gmail.com, avec « Security » dans l'objet.
+
 Seuls les mainteneurs peuvent lire le signalement. Nous l'examinerons et répondrons au mieux de nos
 moyens : c'est un petit projet et nous ne pouvons promettre ni délai de réponse ni date de correctif.
 Si le signalement est confirmé, le correctif arrive sur `main` par une pull request normale.

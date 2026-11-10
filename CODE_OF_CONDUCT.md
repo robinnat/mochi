@@ -69,7 +69,7 @@ reported to the community leaders responsible for enforcement, privately:
 * through GitHub's own "Report content" option on the comment, issue or pull
   request concerned, which goes to GitHub.
 
-Contact address: [CONTACT ADDRESS TO BE ADDED BY THE MAINTAINERS].
+Contact address: sygen.contact@gmail.com.
 
 All complaints will be reviewed and investigated promptly and fairly.
 
