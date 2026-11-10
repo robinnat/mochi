@@ -1,7 +1,7 @@
 /**
  * `<mochi-bot>` : le Mochi en Web Component natif, sans dependance ni framework.
  *
- * Il marche partout ou il y a un DOM : HTML simple, React, Vue, Svelte, Angular. On l'importe une
+ * Il marche partout ou il y a un DOM : HTML simple et tous les frameworks (React, Svelte, Angular...). On l'importe une
  * fois (`import './components/mochi-bot'`), ce qui declare la balise, puis on l'ecrit comme
  * n'importe quel element :
  *
@@ -852,7 +852,7 @@ function monterBot(hote: MochiBotElement): Interne {
     }
   }
 
-  /** Tourne vite : la vue 3D (`yaw`) fait plus d'un tour en moins d'une seconde. */
+  /** Tourne vite : le modele 3D (`yaw`) fait plus d'un tour en moins d'une seconde. */
   watch(
     () => props.yaw,
     (v) => {

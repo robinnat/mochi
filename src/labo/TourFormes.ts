@@ -7,7 +7,7 @@ import { tailleCellule } from './largeur'
  * `#tour` : chaque forme sous quatre angles (face, trois quarts, profil, dos), pour juger le volume de tous les cotes.
  * `?f=squircle,cercle` ne garde que ces formes ; `?c=<couleur>` ; `?t=<date>` fige l'image ; `?s=<taille>` : cote
  * d'une cellule en pixels ; `?e=<degres>` : hauteur de la camera. La page rend tout dans UN canvas (une seule scene
- * WebGL, une cellule par vue).
+ * WebGL, une cellule par angle).
  */
 const ANGLES = [
   { nom: 'face', deg: 0 },

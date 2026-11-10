@@ -25,7 +25,7 @@ export const Moods: Composant<Record<string, never>> = () => {
   const bots: (MochiBotElement | null)[] = []
   const info = computed(() => `${humeur.value}${interactions.value ? '' : ' (interactions coupees)'}`)
 
-  // glisser sur le cote fait tourner la vue : un tour rapide rend le Mochi etourdi (cf. `yaw`)
+  // glisser sur le cote fait tourner le Mochi : un tour rapide rend le Mochi etourdi (cf. `yaw`)
   let x0: number | null = null
   const bouge = (e: PointerEvent) => {
     if (x0 === null) return
