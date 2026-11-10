@@ -4,7 +4,7 @@
  * (`src/i18n/locales/en.ts`).
  */
 import en from '@/i18n/locales/en'
-import { ACCESSORIES, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochis/catalogue'
+import { ACCESSORIES, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochis/catalog'
 
 export const SHAPE_LABEL = en.shapes as Record<string, string>
 export const COLOR_LABEL = en.colors as Record<string, string>

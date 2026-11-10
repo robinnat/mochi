@@ -204,7 +204,7 @@ export type ColorId =
   | 'magenta'
   | 'pink'
   | 'cherry'
-  | 'grey'
+  | 'gray'
 
 export interface BotColor {
   id: ColorId
@@ -229,7 +229,7 @@ export const COLORS: BotColor[] = [
   { id: 'magenta', hex: '#d81bbd' },
   { id: 'pink', hex: '#ff4d94' },
   { id: 'cherry', hex: '#e6194b' },
-  { id: 'grey', hex: '#a3a3a3' },
+  { id: 'gray', hex: '#a3a3a3' },
   { id: 'cream', hex: '#f1efe9' }
 ]
 

@@ -1,7 +1,7 @@
 import { computed, ref, watch } from '@/ui/dom/reactive'
 import { h, onUnmount, onMount, type Component } from '@/ui/dom/h'
 import { SCROLL, SIZE_SCROLL, urlPoster } from './posters'
-import type { AccessoryChoice, Slot } from 'mochis/catalogue'
+import type { AccessoryChoice, Slot } from 'mochis/catalog'
 import { SITE_ACCESSORIES } from './catalog'
 import { useReduced } from './reduced'
 import { effectiveTheme } from './theme'

@@ -3,7 +3,7 @@ import { c, h, type Component } from '@/ui/dom/h'
 import { Poster } from './Poster'
 import { SHAPES_3D } from './catalog'
 import { STYLES_SITE } from './style'
-import type { RenderStyleId } from 'mochis/catalogue'
+import type { RenderStyleId } from 'mochis/catalog'
 import { reveal, useWidth } from './motion'
 
 /** The twelve shapes, frozen images (one render each, no loop), appearing in a cascade. */

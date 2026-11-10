@@ -19,7 +19,7 @@ import type { Material } from '../src/ui/3d/material'
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
-const GREY = '#8a8794'
+const GRAY = '#8a8794'
 const PAPER = '#f9f9f9'
 
 const hexOf = (id: string) => COLORS.find((c) => c.id === id)!.hex
@@ -124,20 +124,20 @@ function fresh(w: number, h: number) {
 }
 
 /** Catalog sheet: every accessory, one per cell, same shape (round) and same body color. */
-function planCatalogue() {
+function planCatalog() {
   const cols = 4
   const cell = W / cols
   const row = cell + 56
   const rows = Math.ceil(ACCESSORIES.length / cols)
   const { c, ctx } = fresh(W, 150 + rows * row + 20)
-  text(ctx, 'Catalogue v4', 40, 78, 58, INK, true)
-  text(ctx, `${ACCESSORIES.length} accessories · one color, two at most · same shape, same body`, 40, 122, 26, GREY)
+  text(ctx, 'Catalog v4', 40, 78, 58, INK, true)
+  text(ctx, `${ACCESSORIES.length} accessories · one color, two at most · same shape, same body`, 40, 122, 26, GRAY)
   ACCESSORIES.forEach((a, i) => {
     const x = (i % cols) * cell
     const y = 150 + Math.floor(i / cols) * row
     drawCell(ctx, x, y, cell, { shape: 'circle', color: BODY, sel: { [a.slot]: a.id }, frame: frameOf(a.slot, a.id), yaw: YAW[a.slot] })
     text(ctx, a.name, x + cell / 2, y + cell + 24, 22, INK, true, 'center')
-    text(ctx, SLOT_NAMES[a.slot], x + cell / 2, y + cell + 46, 17, GREY, false, 'center')
+    text(ctx, SLOT_NAMES[a.slot], x + cell / 2, y + cell + 46, 17, GRAY, false, 'center')
   })
   return c
 }
@@ -156,13 +156,13 @@ function planColors() {
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
   text(ctx, 'Customization', 40, 78, 58, INK, true)
-  text(ctx, 'Same accessory, four colors: c1 and, if needed, c2 set through the API', 40, 122, 26, GREY)
+  text(ctx, 'Same accessory, four colors: c1 and, if needed, c2 set through the API', 40, 122, 26, GRAY)
   rows.forEach((l, i) => {
     const y0 = 150 + i * row
     text(ctx, l.name, 40, y0 + 30, 30, INK, true)
     l.choice.forEach((ch, k) => {
       drawCell(ctx, k * cell, y0 + 34, cell, { shape: 'circle', color: l.id === 'cape' || l.id === 'tie' ? hexOf('amber') : hexOf('turquoise'), sel: { [l.e]: { id: l.id, ...ch } }, frame: frameOf(l.e, l.id), yaw: YAW[l.e] })
-      text(ctx, ch.c2 ? `${ch.c1} + ${ch.c2}` : ch.c1, k * cell + cell / 2, y0 + row - 8, 18, GREY, false, 'center')
+      text(ctx, ch.c2 ? `${ch.c1} + ${ch.c2}` : ch.c1, k * cell + cell / 2, y0 + row - 8, 18, GRAY, false, 'center')
     })
   })
   return c
@@ -186,13 +186,13 @@ function planAngles() {
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
   text(ctx, 'Angles : face, 3/4, profil, dos', 40, 78, 52, INK, true)
-  text(ctx, 'The body turns, the light stays at the top left', 40, 122, 26, GREY)
+  text(ctx, 'The body turns, the light stays at the top left', 40, 122, 26, GRAY)
   rows.forEach((t, i) => {
     const y0 = 150 + i * row
     text(ctx, t.name, 40, y0 + 30, 32, INK, true)
     angles.forEach((v, k) => {
       drawCell(ctx, k * cell, y0 + 34, cell, { shape: t.shape, color: t.color, sel: t.sel, yaw: v.yaw, frame: t.frame })
-      text(ctx, v.name, k * cell + cell / 2, y0 + row - 8, 20, GREY, false, 'center')
+      text(ctx, v.name, k * cell + cell / 2, y0 + row - 8, 20, GRAY, false, 'center')
     })
   })
   return c
@@ -210,7 +210,7 @@ async function planAlfred() {
   const cell = 520
   const { c, ctx } = fresh(W, 150 + cell + 120)
   text(ctx, 'Comparison with Alfred', 40, 78, 54, INK, true)
-  text(ctx, 'Same black round glasses, same black bow tie at the very bottom', 40, 122, 26, GREY)
+  text(ctx, 'Same black round glasses, same black bow tie at the very bottom', 40, 122, 26, GRAY)
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 150, cell, cell)
   ctx.drawImage(ref, 0, 150 + (cell - ref.height * (cell / ref.width)) / 2, cell, ref.height * (cell / ref.width))
@@ -234,7 +234,7 @@ function planCombos() {
   const lh = 100
   const { c, ctx } = fresh(W, 150 + (defs.length / 2) * (cell + lh) + 20)
   text(ctx, 'Combos', 40, 78, 58, INK, true)
-  text(ctx, 'Slots stack, each accessory stays simple', 40, 122, 26, GREY)
+  text(ctx, 'Slots stack, each accessory stays simple', 40, 122, 26, GRAY)
   defs.forEach((d, i) => {
     const x = (i % 2) * cell
     const y = 150 + Math.floor(i / 2) * (cell + lh)
@@ -273,7 +273,7 @@ async function main() {
   const who = (q.get('sheet') ?? 'all').split(',')
   const everything = who.includes('all')
   const todo: Array<[string, () => HTMLCanvasElement | Promise<HTMLCanvasElement>]> = [
-    ['catalogue', planCatalogue],
+    ['catalog', planCatalog],
     ['colors', planColors],
     ['angles', planAngles],
     ['alfred', planAlfred],

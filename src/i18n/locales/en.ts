@@ -167,7 +167,7 @@ const en: typeof fr = {
     magenta: 'Magenta',
     pink: 'Pink',
     cherry: 'Cherry',
-    grey: 'Grey'
+    gray: 'Gray'
   },
 
   expressions: {

@@ -118,6 +118,16 @@ describe('migration of settings saved with the old French ids', () => {
     expect(read('color')).toBe('pink')
   })
 
+  it('moves the British spelling grey to gray', () => {
+    memory({ 'mochi:color': 'grey' })
+    expect(read('color')).toBe('gray')
+  })
+
+  it('moves the French gris to gray', () => {
+    memory({ 'mochi:couleur': 'gris' })
+    expect(read('color')).toBe('gray')
+  })
+
   it('changes nothing when there is nothing old (safe to run again)', () => {
     const heap = new Map([['mochi:shape', 'star']])
     const store = { getItem: (k: string) => heap.get(k) ?? null, setItem: vi.fn(), removeItem: vi.fn() }

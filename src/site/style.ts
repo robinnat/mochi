@@ -1,4 +1,4 @@
-import type { RenderStyleId } from 'mochis/catalogue'
+import type { RenderStyleId } from 'mochis/catalog'
 
 /** The three 3D styles shown on the site, in the site's order: Soft, Pixel and Flat. */
 export const STYLES_SITE: { id: RenderStyleId; label: string }[] = [

@@ -5,7 +5,7 @@ import { Alive } from './Alive'
 import { STYLE_BOT } from './posters'
 import { useReduced } from './reduced'
 import { reveal, useWidth, useVisible } from './motion'
-import type { RenderStyleId } from 'mochis/catalogue'
+import type { RenderStyleId } from 'mochis/catalog'
 
 /**
  * The three styles, on scroll: the scene stays stuck while the three steps go by, and the Mochi changes style when a

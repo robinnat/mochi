@@ -20,7 +20,7 @@
     "baseUrl": ".",
     "paths": {
       "mochis": ["./src/index.ts"],
-      "mochis/catalogue": ["./src/catalogue.ts"],
+      "mochis/catalog": ["./src/catalog.ts"],
       "@/*": ["./src/*"]
     }
   },

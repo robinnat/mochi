@@ -12,7 +12,7 @@ const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const BACKGROUND_DARK = '#121212'
 const INK = '#26222f'
-const GREY = '#8a8794'
+const GRAY = '#8a8794'
 const PAPER = '#f9f9f9'
 const W = 1080
 
@@ -33,7 +33,7 @@ const SHAPE_NAMES: Record<string, string> = {
 }
 const SHAPE_LIST = SHAPES.map((s) => s.id)
 // varied colors, ink included (body lightened in dark); shifted from one style to the next
-const ACCESSORY_PALETTE = ['turquoise', 'amber', 'pink', 'blue', 'violet', 'orange', 'green', 'red', 'grey', 'cream', 'ink']
+const ACCESSORY_PALETTE = ['turquoise', 'amber', 'pink', 'blue', 'violet', 'orange', 'green', 'red', 'gray', 'cream', 'ink']
 
 let renderAvatar: typeof import('../src/ui/3d/scene3d').renderAvatar
 const images = new Map<string, ReturnType<BotEngine['sample']>>()
@@ -105,14 +105,14 @@ function sheetShapes(style: keyof typeof STYLES, offset: number) {
   const rows = Math.ceil(SHAPE_LIST.length / 2)
   const { c, ctx } = fresh(W, 170 + rows * row + 20)
   text(ctx, `${s.name}: light and dark`, 40, 78, 56, INK, true)
-  text(ctx, 'The 11 shapes. Light on the left, dark on the right (black eyes).', 40, 122, 26, GREY)
+  text(ctx, 'The 11 shapes. Light on the left, dark on the right (black eyes).', 40, 122, 26, GRAY)
   SHAPE_LIST.forEach((f, i) => {
     const x0 = (i % 2) * 540
     const y0 = 150 + Math.floor(i / 2) * row
     const color = hexOf(ACCESSORY_PALETTE[(i + offset) % ACCESSORY_PALETTE.length]!)
     drawCell(ctx, x0, y0, cell, { shape: f, color, theme: 'light', renderStyle: s.renderStyle })
     drawCell(ctx, x0 + cell, y0, cell, { shape: f, color, theme: 'dark', renderStyle: s.renderStyle })
-    text(ctx, `${SHAPE_NAMES[f]}  ·  ${ACCESSORY_PALETTE[(i + offset) % ACCESSORY_PALETTE.length]}`, x0 + cell, y0 + cell + 26, 22, GREY, false, 'center')
+    text(ctx, `${SHAPE_NAMES[f]}  ·  ${ACCESSORY_PALETTE[(i + offset) % ACCESSORY_PALETTE.length]}`, x0 + cell, y0 + cell + 26, 22, GRAY, false, 'center')
   })
   return c
 }
@@ -162,7 +162,7 @@ function planchepalette() {
   const rows = Math.ceil(PALETTE.length / cols)
   const { c, ctx } = fresh(W, 170 + rows * row + 20)
   text(ctx, 'Palette en dark', 40, 78, 56, INK, true)
-  text(ctx, 'Contrast ratio black eye / body (3:1 threshold). Red = lightened.', 40, 122, 26, GREY)
+  text(ctx, 'Contrast ratio black eye / body (3:1 threshold). Red = lightened.', 40, 122, 26, GRAY)
   PALETTE.forEach(([name, hex], i) => {
     const x = (i % cols) * cell
     const y = 150 + Math.floor(i / cols) * row
@@ -171,7 +171,7 @@ function planchepalette() {
     const r = contrast(hex, DARK_EYE)
     const lift = after !== hex
     text(ctx, `${name}  ${r.toFixed(1)}:1`, x + cell / 2, y + cell + 24, 23, lift ? '#d23b3b' : INK, true, 'center')
-    text(ctx, lift ? `lightened: ${contrast(after, DARK_EYE).toFixed(1)}:1` : 'unchanged', x + cell / 2, y + cell + 50, 21, GREY, false, 'center')
+    text(ctx, lift ? `lightened: ${contrast(after, DARK_EYE).toFixed(1)}:1` : 'unchanged', x + cell / 2, y + cell + 50, 21, GRAY, false, 'center')
   })
   return c
 }
@@ -183,7 +183,7 @@ function planchecontraste() {
   const row = cell + 74
   const { c, ctx } = fresh(W, 200 + scenario.length * row + 20)
   text(ctx, 'Body lightened in dark', 40, 78, 52, INK, true)
-  text(ctx, 'Only colors under 3:1, just enough to reach 3:1.', 40, 122, 26, GREY)
+  text(ctx, 'Only colors under 3:1, just enough to reach 3:1.', 40, 122, 26, GRAY)
   const x1 = 120
   const x2 = 120 + cell + 20
   text(ctx, 'without fix', x1 + cell / 2 - 60, 180, 26, INK, true, 'center')
@@ -212,7 +212,7 @@ function planchehumeurs() {
   const row = cell + 56
   const { c, ctx } = fresh(W, 160 + 2 * row + 10)
   text(ctx, 'Face moods in dark', 40, 78, 50, INK, true)
-  text(ctx, 'Lids and eye shapes unchanged, only the color changes.', 40, 122, 26, GREY)
+  text(ctx, 'Lids and eye shapes unchanged, only the color changes.', 40, 122, 26, GRAY)
   defs.forEach((d, i) => {
     const x = (i % 3) * cell
     const y = 140 + Math.floor(i / 3) * row
@@ -235,7 +235,7 @@ function sheetcombos() {
   const row = cell + 90
   const { c, ctx } = fresh(W, 150 + defs.length * row)
   text(ctx, 'Accessories in dark', 40, 78, 52, INK, true)
-  text(ctx, 'Light on the left, dark on the right: the accessories do not change.', 40, 122, 26, GREY)
+  text(ctx, 'Light on the left, dark on the right: the accessories do not change.', 40, 122, 26, GRAY)
   defs.forEach((d, i) => {
     const y = 140 + i * row
     drawCell(ctx, 20, y, cell, { shape: d.shape, color: d.color, theme: 'light', sel: d.sel, frame: 205 })
@@ -259,7 +259,7 @@ function planchecconflits() {
   const row = cell + 60
   const { c, ctx } = fresh(W, 210 + rows.length * row)
   text(ctx, 'Black eyes and glasses', 40, 78, 52, INK, true)
-  text(ctx, 'The only real conflict: the black lens of the sunglasses.', 40, 122, 26, GREY)
+  text(ctx, 'The only real conflict: the black lens of the sunglasses.', 40, 122, 26, GRAY)
   ;['light', 'dark, without the fix', 'dark, verre ardoise'].forEach((t, k) => text(ctx, t, 20 + k * 357 + 170, 190, 22, INK, true, 'center'))
   rows.forEach((l, i) => {
     const y = 210 + i * row

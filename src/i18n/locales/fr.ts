@@ -186,7 +186,7 @@ export default {
     magenta: 'Magenta',
     pink: 'Rose',
     cherry: 'Cerise',
-    grey: 'Gris'
+    gray: 'Gris'
   },
 
   expressions: {

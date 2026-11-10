@@ -17,7 +17,7 @@ import type { Material } from '../src/ui/3d/material'
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
-const GREY = '#8a8794'
+const GRAY = '#8a8794'
 const PAPER = '#f9f9f9'
 
 const hexOf = (id: string) => COLORS.find((c) => c.id === id)!.hex
@@ -122,20 +122,20 @@ function fresh(w: number, h: number) {
 }
 
 /** Catalog sheet: every accessory, one per cell, same shape (round) and same body color. */
-function planCatalogue() {
+function planCatalog() {
   const cols = 4
   const cell = W / cols
   const row = cell + 56
   const rows = Math.ceil(ACCESSORIES.length / cols)
   const { c, ctx } = fresh(W, 150 + rows * row + 20)
-  text(ctx, 'Catalogue v5', 40, 78, 58, INK, true)
-  text(ctx, `${ACCESSORIES.length} accessories · one color, two at most · same shape, same body`, 40, 122, 26, GREY)
+  text(ctx, 'Catalog v5', 40, 78, 58, INK, true)
+  text(ctx, `${ACCESSORIES.length} accessories · one color, two at most · same shape, same body`, 40, 122, 26, GRAY)
   ACCESSORIES.forEach((a, i) => {
     const x = (i % cols) * cell
     const y = 150 + Math.floor(i / cols) * row
     drawCell(ctx, x, y, cell, { shape: 'circle', color: BODY, sel: { [a.slot]: a.id }, frame: frameOf(a.slot, a.id), yaw: YAW[a.slot] })
     text(ctx, a.name, x + cell / 2, y + cell + 24, 22, INK, true, 'center')
-    text(ctx, SLOT_NAMES[a.slot], x + cell / 2, y + cell + 46, 17, GREY, false, 'center')
+    text(ctx, SLOT_NAMES[a.slot], x + cell / 2, y + cell + 46, 17, GRAY, false, 'center')
   })
   return c
 }
@@ -150,7 +150,7 @@ function planCap() {
   const row = cell + 8
   const { c, ctx } = fresh(W2, 150 + shapes.length * row + 20)
   text(ctx, 'Cap v6', 40, 78, 58, INK, true)
-  text(ctx, 'Round, rigid crown, independent of the body · 11 shapes · front, 3/4, profile · light on the left, dark on the right', 40, 122, 26, GREY)
+  text(ctx, 'Round, rigid crown, independent of the body · 11 shapes · front, 3/4, profile · light on the left, dark on the right', 40, 122, 26, GRAY)
   const colors = ['turquoise', 'amber', 'pink', 'green', 'violet', 'orange', 'blue', 'turquoise', 'amber', 'pink', 'green']
   shapes.forEach((f, i) => {
     const y0 = 150 + i * row
@@ -164,7 +164,7 @@ function planCap() {
         drawCell(ctx, x, y0, cell, { shape: f, color: hexOf(colors[i]!), theme: th, sel: { head: { id: 'cap', c1: ACCESSORY_PALETTE.blue, c2: i % 3 === 1 ? ACCESSORY_PALETTE.black : ACCESSORY_PALETTE.blue } }, yaw: v.yaw, frame: 215 })
       })
     )
-    text(ctx, SHAPE_NAMES[f] ?? f, 14, y0 + 26, 22, GREY, true)
+    text(ctx, SHAPE_NAMES[f] ?? f, 14, y0 + 26, 22, GRAY, true)
   })
   return c
 }
@@ -182,7 +182,7 @@ function planCapCombos() {
   const cell = 360
   const { c, ctx } = fresh(W, 150 + Math.ceil(defs.length / 3) * (cell + 50) * 2)
   text(ctx, 'Cap stacked', 40, 78, 54, INK, true)
-  text(ctx, 'With glasses, face, neck and back · light then dark', 40, 122, 26, GREY)
+  text(ctx, 'With glasses, face, neck and back · light then dark', 40, 122, 26, GRAY)
   defs.forEach((d, i) => {
     const x = (i % 3) * cell
     const y = 150 + Math.floor(i / 3) * (cell + 50) * 2
@@ -193,7 +193,7 @@ function planCapCombos() {
         ctx.fillRect(x, yy, cell, cell + 50)
       }
       drawCell(ctx, x, yy, cell, { shape: d.shape, color: d.color, theme: th, sel: { ...d.sel, head: { id: 'cap', c1: ACCESSORY_PALETTE.red, c2: ACCESSORY_PALETTE.red } }, yaw: 0.3, frame: 215 })
-      text(ctx, `${SHAPE_NAMES[d.shape]} · ${Object.values(d.sel).join(', ')}`, x + cell / 2, yy + cell + 28, 17, th === 'dark' ? '#cfcbd6' : GREY, false, 'center')
+      text(ctx, `${SHAPE_NAMES[d.shape]} · ${Object.values(d.sel).join(', ')}`, x + cell / 2, yy + cell + 28, 17, th === 'dark' ? '#cfcbd6' : GRAY, false, 'center')
     })
   })
   return c
@@ -207,7 +207,7 @@ function planGlasses() {
   const cell = 150
   const { c, ctx } = fresh(cell * models.length * 2, 150 + shapes.length * cell + 20)
   text(ctx, 'Glasses v7: arms anchored in the body', 40, 78, 52, INK, true)
-  text(ctx, '6 models × 11 shapes · 3/4 then profile for each model', 40, 122, 24, GREY)
+  text(ctx, '6 models × 11 shapes · 3/4 then profile for each model', 40, 122, 24, GRAY)
   const colors = ['turquoise', 'amber', 'pink', 'green', 'violet', 'orange', 'blue', 'turquoise', 'amber', 'pink', 'green']
   shapes.forEach((f, i) => {
     models.forEach((m, mi) =>
@@ -217,7 +217,7 @@ function planGlasses() {
         drawCell(ctx, x, y, cell, { shape: f, color: hexOf(colors[i]!), sel: { eyes: { id: m, c1: ACCESSORY_PALETTE.black, c2: ACCESSORY_PALETTE.black } }, yaw, frame: 150 })
       })
     )
-    text(ctx, SHAPE_NAMES[f] ?? f, 6, 150 + i * cell + 16, 14, GREY, true)
+    text(ctx, SHAPE_NAMES[f] ?? f, 6, 150 + i * cell + 16, 14, GRAY, true)
   })
   models.forEach((m, mi) => text(ctx, m, mi * 2 * cell + cell, 144, 18, INK, true, 'center'))
   return c
@@ -241,7 +241,7 @@ function planCapeTie() {
       const y = y0 + 60 + i * (cell + 8)
       angles.slice(0, nv).forEach((v, k) => {
         drawCell(ctx, k * cell, y, cell, { shape: f, color: hexOf(colors[i]!), sel: { [id]: acc }, yaw: v.yaw, frame })
-        text(ctx, `${SHAPE_NAMES[f]} · ${v.name}`, k * cell + cell / 2, y + cell - 4, 19, GREY, false, 'center')
+        text(ctx, `${SHAPE_NAMES[f]} · ${v.name}`, k * cell + cell / 2, y + cell - 4, 19, GRAY, false, 'center')
       })
     })
   }
@@ -258,14 +258,14 @@ function planTie() {
   const cell = 300
   const { c, ctx } = fresh(cell * 3, 170 + shapes.length * (cell + 8) + 200)
   text(ctx, 'Tie v11', 40, 70, 54, INK, true)
-  text(ctx, 'Domed triangle + diamond, same technique as the bow tie', 40, 108, 22, GREY)
+  text(ctx, 'Domed triangle + diamond, same technique as the bow tie', 40, 108, 22, GRAY)
   drawCell(ctx, cell * 3 - 190, 0, 190, { shape: 'circle', color: hexOf('turquoise'), sel: { neck: 'bowtie' }, yaw: 0, frame: 150 })
-  text(ctx, 'bow tie (reference)', cell * 3 - 95, 150, 16, GREY, false, 'center')
+  text(ctx, 'bow tie (reference)', cell * 3 - 95, 150, 16, GRAY, false, 'center')
   shapes.forEach((f, i) => {
     const y = 170 + i * (cell + 8)
     angles.forEach((v, k) => {
       drawCell(ctx, k * cell, y, cell, { shape: f, color: hexOf(colors[i]!), sel: { neck: 'tie' }, yaw: v.yaw, frame: 185 })
-      text(ctx, `${SHAPE_NAMES[f]} · ${v.name}`, k * cell + cell / 2, y + cell - 4, 19, GREY, false, 'center')
+      text(ctx, `${SHAPE_NAMES[f]} · ${v.name}`, k * cell + cell / 2, y + cell - 4, 19, GRAY, false, 'center')
     })
   })
   const y0 = 170 + shapes.length * (cell + 8)
@@ -282,7 +282,7 @@ function planShading() {
   const cell = 240
   const { c, ctx } = fresh(cell * 6, 140 + styles.length * (cell + 40))
   text(ctx, 'Body shading: with and without, in the three styles', 40, 66, 44, INK, true)
-  text(ctx, 'For each shape: with shading on the left, without on the right (flat body, eyes unchanged)', 40, 104, 22, GREY)
+  text(ctx, 'For each shape: with shading on the left, without on the right (flat body, eyes unchanged)', 40, 104, 22, GRAY)
   styles.forEach((s, i) => {
     const y = 130 + i * (cell + 40)
     text(ctx, s.name, 12, y + 24, 26, INK, true)
@@ -290,7 +290,7 @@ function planShading() {
       ;[true, false].forEach((om, v) => {
         const x = (k * 2 + v) * cell
         drawCell(ctx, x, y + 20, cell, { shape: f.f, color: hexOf(f.c), renderStyle: s.renderStyle, sel: {}, shading: om, frame: 150, yaw: 0.3 })
-        text(ctx, om ? 'withIt' : 'without', x + cell / 2, y + cell + 30, 18, GREY, false, 'center')
+        text(ctx, om ? 'withIt' : 'without', x + cell / 2, y + cell + 30, 18, GRAY, false, 'center')
       })
     })
   })
@@ -315,13 +315,13 @@ function planAngles() {
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
   text(ctx, 'Angles : face, 3/4, profil, dos', 40, 78, 52, INK, true)
-  text(ctx, 'The body turns, the light stays at the top left', 40, 122, 26, GREY)
+  text(ctx, 'The body turns, the light stays at the top left', 40, 122, 26, GRAY)
   rows.forEach((t, i) => {
     const y0 = 150 + i * row
     text(ctx, t.name, 40, y0 + 30, 32, INK, true)
     angles.forEach((v, k) => {
       drawCell(ctx, k * cell, y0 + 34, cell, { shape: t.shape, color: t.color, sel: t.sel, yaw: v.yaw, frame: t.frame })
-      text(ctx, v.name, k * cell + cell / 2, y0 + row - 8, 20, GREY, false, 'center')
+      text(ctx, v.name, k * cell + cell / 2, y0 + row - 8, 20, GRAY, false, 'center')
     })
   })
   return c
@@ -339,7 +339,7 @@ async function planAlfred() {
   const cell = 520
   const { c, ctx } = fresh(W, 150 + cell + 120)
   text(ctx, 'Comparison with Alfred', 40, 78, 54, INK, true)
-  text(ctx, 'Same black round glasses, same black bow tie at the very bottom', 40, 122, 26, GREY)
+  text(ctx, 'Same black round glasses, same black bow tie at the very bottom', 40, 122, 26, GRAY)
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 150, cell, cell)
   ctx.drawImage(ref, 0, 150 + (cell - ref.height * (cell / ref.width)) / 2, cell, ref.height * (cell / ref.width))
@@ -367,7 +367,7 @@ async function main() {
     ['cape-tie', planCapeTie],
     ['tie', planTie],
     ['shading', planShading],
-    ['catalogue', planCatalogue],
+    ['catalog', planCatalog],
     ['angles', planAngles],
     ['alfred', planAlfred]
   ]

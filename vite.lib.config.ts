@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 
 /**
  * Library only: `pnpm build:lib` writes `dist-lib/mochis.js` (the `<mochi-bot>` Web Component, the engine and the
- * catalogs), `dist-lib/catalogue.js` (the catalogs alone, without the tag) and, next to them, the chunks loaded on demand
+ * catalogs), `dist-lib/catalog.js` (the catalogs alone, without the tag) and, next to them, the chunks loaded on demand
  * (the 3D and Three.js). Copy them as they are into a project, whatever its framework, or serve them with
  * `<script type="module">`.
  */
@@ -13,10 +13,10 @@ export default defineConfig({
     outDir: 'dist-lib',
     emptyOutDir: true,
     lib: {
-      // two public entries: `mochis` (the tag and everything else) and `mochis/catalogue` (without the tag)
+      // two public entries: `mochis` (the tag and everything else) and `mochis/catalog` (without the tag)
       entry: {
         'mochis': fileURLToPath(new URL('./src/index.ts', import.meta.url)),
-        catalogue: fileURLToPath(new URL('./src/catalogue.ts', import.meta.url))
+        catalog: fileURLToPath(new URL('./src/catalog.ts', import.meta.url))
       },
       formats: ['es'],
       fileName: (_format, name) => `${name}.js`

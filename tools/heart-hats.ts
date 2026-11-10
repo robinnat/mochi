@@ -12,7 +12,7 @@ const q = new URLSearchParams(location.search)
 const SHAPE = SHAPES.find((s) => s.id === (q.get('f') ?? 'heart'))!
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
-const GREY = '#8a8794'
+const GRAY = '#8a8794'
 const hexOf = (id: string) => COLORS.find((c) => c.id === id)!.hex
 let renderAvatar: typeof import('../src/ui/3d/scene3d').renderAvatar
 
@@ -57,7 +57,7 @@ function sheet() {
         ctx.drawImage(t, (si * 2 + k) * cell, y, cell, cell)
       }
     })
-    ctx.fillStyle = GREY
+    ctx.fillStyle = GRAY
     ctx.font = '500 14px -apple-system, Helvetica, Arial, sans-serif'
     ctx.textAlign = 'left'
     ctx.fillText(h.id, 6, y + 16)

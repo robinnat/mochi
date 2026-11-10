@@ -1,5 +1,5 @@
 import { ref } from '@/ui/dom/reactive'
-import { load3d } from 'mochis/catalogue'
+import { load3d } from 'mochis/catalog'
 
 /**
  * The page is "ready" when it has finished loading and the browser has a free moment: only then do live Mochis

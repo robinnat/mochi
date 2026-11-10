@@ -11,7 +11,7 @@ import type { Material } from '../src/ui/3d/material'
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
-const GREY = '#8a8794'
+const GRAY = '#8a8794'
 const PAPER = '#f9f9f9'
 const hexOf = (id: string) => COLORS.find((c) => c.id === id)!.hex
 
@@ -66,7 +66,7 @@ function sheet() {
   const cols = styles.length * thicknesses.length
   const { c, ctx } = fresh(cols * cell, 150 + rows.length * (cell + 20) + 20)
   text(ctx, 'Outline: thin, medium, thick, in the three styles', 40, 70, 46, INK, true)
-  text(ctx, 'The outline follows the body AND the accessories (top hat, glasses, cap, bow)', 40, 108, 24, GREY)
+  text(ctx, 'The outline follows the body AND the accessories (top hat, glasses, cap, bow)', 40, 108, 24, GRAY)
   styles.forEach((s, i) => {
     text(ctx, s.name, (i * thicknesses.length + 1.5) * cell, 142, 28, INK, true, 'center')
     thicknesses.forEach((e, k) => {
@@ -74,7 +74,7 @@ function sheet() {
       rows.forEach((l, r) => {
         drawCell(ctx, x, 150 + r * (cell + 20), cell, { ...l, renderStyle: s.renderStyle, outline: true, th: e.th, frame: 225 })
       })
-      text(ctx, e.name, x + cell / 2, 150 + rows.length * (cell + 20) + 4, 18, GREY, false, 'center')
+      text(ctx, e.name, x + cell / 2, 150 + rows.length * (cell + 20) + 4, 18, GRAY, false, 'center')
     })
   })
   return c

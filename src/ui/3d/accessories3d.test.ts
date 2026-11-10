@@ -82,7 +82,7 @@ const bodyOf = (f: string) => {
   return c
 }
 
-describe('catalogue', () => {
+describe('catalog', () => {
   it('22 accessories, spread over the four offered slots (no pink cheeks, freckles, beauty mark, mustache or cat whiskers)', () => {
     expect(ACCESSORIES.length).toBe(22)
     for (const e of SLOTS) expect(accessoriesInSlot(e).length).toBeGreaterThanOrEqual(1)

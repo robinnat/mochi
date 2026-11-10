@@ -12,7 +12,7 @@ import type { Material } from '../src/ui/3d/material'
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
-const GREY = '#8a8794'
+const GRAY = '#8a8794'
 const PAPER = '#f9f9f9'
 const hexOf = (id: string) => COLORS.find((c) => c.id === id)!.hex
 const SHAPE = SHAPES.find((s) => s.id === 'heart')!
@@ -77,12 +77,12 @@ function sheet() {
     text(ctx, s.name, 30, y1 + 22, 24, INK, true)
     angles.forEach((v, i) => {
       drawCell(ctx, i * cell, y1 + 30, cell, { renderStyle: s.renderStyle, color: colors[si]!, sel: v.sel, yaw: v.yaw })
-      text(ctx, v.name, i * cell + cell / 2, y1 + 30 + cell + 4, 16, GREY, false, 'center')
+      text(ctx, v.name, i * cell + cell / 2, y1 + 30 + cell + 4, 16, GRAY, false, 'center')
     })
     const y2 = y1 + cell + 36
     moods.forEach((m, i) => {
       drawCell(ctx, i * cell, y2 + 30, cell, { renderStyle: s.renderStyle, color: colors[si]!, mood: m.mood, t: m.t, yaw: 0.15 })
-      text(ctx, m.name, i * cell + cell / 2, y2 + 30 + cell + 4, 16, GREY, false, 'center')
+      text(ctx, m.name, i * cell + cell / 2, y2 + 30 + cell + 4, 16, GRAY, false, 'center')
     })
   })
   return c

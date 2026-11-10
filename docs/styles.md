@@ -29,7 +29,7 @@ The engine does not change: `engine.sample(t)` gives the same frame, and the sta
 
 - **The body is the outline, inflated** (`volume.ts`, pure and tested under Node): the `bodyPath` of the frame becomes points, then each ray from the center to the edge becomes a series of rings.
 - **The eyes are on the front face only.** On a shape with a flat front, the pair of eyes is shifted (same vector, same gap) so it never bites into the rounded edge.
-- **The eyes are painted in a texture** projected from the front, at the exact positions given by the engine, and ALSO in an emission texture (white on black): an eye is a light hole, the lighting must not grey it.
+- **The eyes are painted in a texture** projected from the front, at the exact positions given by the engine, and ALSO in an emission texture (white on black): an eye is a light hole, the lighting must not gray it.
 - **One WebGL context** for every avatar of the page (`renderAvatar`): each one asks for a frame, which is rendered and copied into its own canvas. The outline and the face are rebuilt only when they changed.
 - **Loaded on demand**: `scene3d.ts` is never imported statically (about 133 kB gzip). `mochi-bot.ts` loads it when it mounts; until then the Mochi is not drawn (the `ready` event fires on the first frame).
 

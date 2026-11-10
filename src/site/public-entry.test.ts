@@ -5,14 +5,14 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * The site (home, docs) and the lab are SHOWCASES: they use Mochis exactly like a user of the package, through its
- * public entries (`mochis`, `mochis/catalogue`) and the `<mochi-bot>` tag. No import of an internal engine file
+ * public entries (`mochis`, `mochis/catalog`) and the `<mochi-bot>` tag. No import of an internal engine file
  * (`src/bot`, `src/ui/3d`, `src/components`...). Still allowed: their own code, the repository's small interface
  * library (`@/ui/dom`, which is not Mochis), the texts (`@/i18n`), the styles and the Markdown docs
  * (`docs/*.md?raw`).
  */
 const SRC = fileURLToPath(new URL('..', import.meta.url))
 const FOLDERS = ['site', 'docs', 'lab']
-const ALLOWED = [/^mochis(\/catalogue)?$/, /^\/mochi\/(mochis|catalogue)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|lab)\//, /^(\.\.\/)+docs\/[\w-]+\.md\?raw$/, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
+const ALLOWED = [/^mochis(\/catalog)?$/, /^\/mochi\/(mochis|catalog)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|lab)\//, /^(\.\.\/)+docs\/[\w-]+\.md\?raw$/, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
 
 const sources = FOLDERS.flatMap((d) =>
   readdirSync(join(SRC, d))

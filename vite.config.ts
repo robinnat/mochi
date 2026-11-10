@@ -32,7 +32,7 @@ export default defineConfig({
     // the site, the docs and the lab use Mochis like a user of the package: through its public entries
     alias: [
       { find: /^mochis$/, replacement: fileURLToPath(new URL('./src/index.ts', import.meta.url)) },
-      { find: /^mochis\/catalogue$/, replacement: fileURLToPath(new URL('./src/catalogue.ts', import.meta.url)) },
+      { find: /^mochis\/catalog$/, replacement: fileURLToPath(new URL('./src/catalog.ts', import.meta.url)) },
       { find: /^@\//, replacement: fileURLToPath(new URL('./src/', import.meta.url)) }
     ]
   }

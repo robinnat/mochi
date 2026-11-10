@@ -16,7 +16,7 @@ import type { Material } from '../src/ui/3d/material'
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
-const GREY = '#8a8794'
+const GRAY = '#8a8794'
 const PAPER = '#f9f9f9'
 
 const hexOf = (id: string) => COLORS.find((c) => c.id === id)!.hex
@@ -108,7 +108,7 @@ function sheetSlot(e: Slot, frame: number, yaw: number | number[] = 0, angles?: 
   const row = cell + 60
   const { c, ctx } = fresh(W, header + list.length * row + 30)
   text(ctx, SLOT_NAMES[e], 40, 78, 58, INK, true)
-  text(ctx, `${list.length} proposals · real 3D, same lighting as the body`, 40, 122, 28, GREY)
+  text(ctx, `${list.length} proposals · real 3D, same lighting as the body`, 40, 122, 28, GRAY)
   list.forEach((a, i) => {
     const y0 = header + i * row
     text(ctx, `${i + 1}. ${a.name}`, 40, y0 + 44, 38, INK, true)
@@ -116,7 +116,7 @@ function sheetSlot(e: Slot, frame: number, yaw: number | number[] = 0, angles?: 
     SHAPES_SHEET.forEach((f, k) => {
       const x = k * cell
       drawCell(ctx, x, y0 + 42, cell, { shape: f, color: body[k]!, sel: { [e]: a.id }, frame: (e === 'head' && FRAMES_HEAD[a.id]) || (a.id === 'antenna' ? 195 : frame), yaw: Array.isArray(yaw) ? yaw[k]! : yaw })
-      text(ctx, SHAPE_NAMES[f]! + (angles ? ` · ${angles[k]}` : ''), x + cell / 2, y0 + row - 14, 22, GREY, false, 'center')
+      text(ctx, SHAPE_NAMES[f]! + (angles ? ` · ${angles[k]}` : ''), x + cell / 2, y0 + row - 14, 22, GRAY, false, 'center')
     })
   })
   return c
@@ -144,7 +144,7 @@ function sheetCombos() {
   const rows = defs.length / 2
   const { c, ctx } = fresh(W, 150 + rows * (cell + lh - 60) + 20)
   text(ctx, 'Combos', 40, 78, 58, INK, true)
-  text(ctx, 'All slots stack, without collision', 40, 122, 28, GREY)
+  text(ctx, 'All slots stack, without collision', 40, 122, 28, GRAY)
   defs.forEach((d, i) => {
     const x = (i % 2) * cell
     const y = 150 + Math.floor(i / 2) * (cell + lh - 60)
@@ -184,13 +184,13 @@ function sheetAngles() {
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
   text(ctx, 'Real 3D: front, 3/4, profile, back', 40, 78, 52, INK, true)
-  text(ctx, 'The body turns, the light stays at the top left', 40, 122, 28, GREY)
+  text(ctx, 'The body turns, the light stays at the top left', 40, 122, 28, GRAY)
   rows.forEach((t, i) => {
     const y0 = 150 + i * row
     text(ctx, t.name, 40, y0 + 30, 32, INK, true)
     angles.forEach((v, k) => {
       drawCell(ctx, k * cell, y0 + 34, cell, { shape: t.shape, color: t.color, sel: t.sel, yaw: v.yaw, frame: t.frame })
-      text(ctx, v.name, k * cell + cell / 2, y0 + row - 14, 20, GREY, false, 'center')
+      text(ctx, v.name, k * cell + cell / 2, y0 + row - 14, 20, GRAY, false, 'center')
     })
   })
   return c
@@ -206,7 +206,7 @@ function sheetBowtie() {
   const cell = 360
   const { c, ctx } = fresh(W, 150 + 2 * (cell + 50) + 20)
   text(ctx, 'Bow tie', 40, 78, 58, INK, true)
-  text(ctx, 'Two rounded triangles, a small central knot, soft matte volume', 40, 122, 28, GREY)
+  text(ctx, 'Two rounded triangles, a small central knot, soft matte volume', 40, 122, 28, GRAY)
   ;[
     { name: 'face', yaw: 0 },
     { name: '3/4', yaw: 0.62 }
@@ -214,7 +214,7 @@ function sheetBowtie() {
     const y0 = 150 + r * (cell + 50)
     shapes.forEach((f, k) => {
       drawCell(ctx, k * cell, y0, cell, { shape: f.shape, color: f.color, sel: { neck: 'bowtie' }, yaw: v.yaw, frame: 120 })
-      text(ctx, `${SHAPE_NAMES[f.shape]} · ${v.name}`, k * cell + cell / 2, y0 + cell + 30, 22, GREY, false, 'center')
+      text(ctx, `${SHAPE_NAMES[f.shape]} · ${v.name}`, k * cell + cell / 2, y0 + cell + 30, 22, GRAY, false, 'center')
     })
   })
   return c
@@ -235,7 +235,7 @@ function planchestyles() {
   const row = cell + 20
   const { c, ctx } = fresh(W, 190 + combos.length * row + 30)
   text(ctx, 'Soft, Flat, Pixel', 40, 78, 54, INK, true)
-  text(ctx, 'The same accessories in the three styles', 40, 122, 28, GREY)
+  text(ctx, 'The same accessories in the three styles', 40, 122, 28, GRAY)
   styles.forEach((s, k) => text(ctx, s.name, k * cell + cell / 2, 176, 30, INK, true, 'center'))
   combos.forEach((cb, i) => {
     styles.forEach((s, k) => drawCell(ctx, k * cell, 190 + i * row, cell, { ...cb, renderStyle: s.renderStyle, frame: 190 }))

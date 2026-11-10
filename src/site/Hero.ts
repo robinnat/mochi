@@ -4,7 +4,7 @@ import { Poster } from './Poster'
 import { HeroFigures } from './HeroFigures'
 import { SCROLL } from './posters'
 import { SITE_ACCESSORIES } from './catalog'
-import type { AccessoryChoice, Slot } from 'mochis/catalogue'
+import type { AccessoryChoice, Slot } from 'mochis/catalog'
 
 /**
  * Hero: "the crowd" (chosen on 09/11/2026). No 3D on the first screen: a small crowd of all different Mochis, as

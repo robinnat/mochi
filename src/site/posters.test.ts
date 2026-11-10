@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { ACCESSORIES, ACCESSORY_BY_KEY } from 'mochis/catalogue'
+import { ACCESSORIES, ACCESSORY_BY_KEY } from 'mochis/catalog'
 import { POSTERS, SCROLL, PIECES, urlPoster, urlPiece } from './posters'
 
 const publicDir = new URL('../../public', import.meta.url)

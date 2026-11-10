@@ -85,7 +85,7 @@ const VB = HALF_VIEWBOX
 
 /**
  * Material tints: the chosen color barely lightened (base), its shaded side (hollows, eye bottoms) and the ground
- * shadow, colored and not grey.
+ * shadow, colored and not gray.
  */
 export function materialKind(hex: string) {
   return { base: mixHex(hex, '#ffffff', 0.16), hollow: mixHex(hex, '#000000', 0.18), scope: mixHex(hex, '#000000', 0.3) }
@@ -207,7 +207,7 @@ export class Mochi3d {
       m = new MeshStandardMaterial({
         map: this.texture,
         emissiveMap: this.textureEyes,
-        // an eye is a hole on the light background: without this the light greys it and it gets lost
+        // an eye is a hole on the light background: without this the light grays it and it gets lost
         emissive: new Color(0xffffff),
         emissiveIntensity: 0.85,
         roughness: 0.9,
@@ -226,7 +226,7 @@ export class Mochi3d {
       m = new MeshToonMaterial({
         map: this.texture,
         gradientMap: ramp,
-        // the eyes stay white and sharp: they glow, no shadow greys them
+        // the eyes stay white and sharp: they glow, no shadow grays them
         emissiveMap: this.textureEyes,
         emissive: new Color(0xffffff),
         emissiveIntensity: 1

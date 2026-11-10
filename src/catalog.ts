@@ -1,5 +1,5 @@
 /**
- * LIGHT public entry of the library (`mochis/catalogue`): the catalogs (shapes, colors, moods, accessories, styles)
+ * LIGHT public entry of the library (`mochis/catalog`): the catalogs (shapes, colors, moods, accessories, styles)
  * and the shared settings, WITHOUT the `<mochi-bot>` tag. To build an interface around Mochis (shape, color,
  * accessory pickers) without loading the component right away; `mochis` (the full entry) re-exports all of this and
  * declares the tag.
@@ -15,7 +15,7 @@ export { contrast, THEMES, type Theme } from './ui/3d/theme'
 export { currentRenderStyle, currentOutline, RENDER_STYLES, DEFAULT_RENDER_STYLE, PIXEL_SIZES, type RenderStyleId, type PixelSizeId } from './ui/renderStyle'
 export type { Softness, Material } from './ui/3d/material'
 
-/* --------------------------------------------------------------- catalogues */
+/* --------------------------------------------------------------- catalogs */
 export { SHAPES, SHAPE_BY_ID, COLORS, COLOR_BY_ID, colorOf, isValidHex, mixHex } from './bot/skins'
 export { MOOD_IDS, REACTION_IDS, resolveMood, type MoodId, type ReactionId } from './bot/moods'
 export {

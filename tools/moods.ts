@@ -18,7 +18,7 @@ const W = 1080
 const H = 720
 const BACKGROUND = '#f4f1ea'
 const INK = '#26222f'
-const GREY = '#8a8794'
+const GRAY = '#8a8794'
 const PAPER = '#f9f9f9'
 const CARD = '#fffdf9'
 const CARD_DARK = '#1b1922'
@@ -374,14 +374,14 @@ function image(a: Anim, t: number): HTMLCanvasElement {
   c.fillRect(0, 0, W, H)
   FRAME = a.frame ?? 150
   const casting = distribution(a.cast ?? ANIMS.indexOf(a))
-  text(c, a.group === 'mood' ? 'MOOD' : 'INTERACTION', 44, 58, 22, GREY, true)
+  text(c, a.group === 'mood' ? 'MOOD' : 'INTERACTION', 44, 58, 22, GRAY, true)
   text(c, a.name, 44, 112, 54, INK, true)
-  text(c, a.code, W - 44, 112, 26, GREY, false, 'right', true)
+  text(c, a.code, W - 44, 112, 26, GRAY, false, 'right', true)
   casting.forEach((p, i) => {
     const cx = COL * i
     drawCard(c, cx + 14, 150, COL - 28, 524, p.theme === 'dark')
     if (!a.visible || a.visible(i, t)) mochi(c, a, i, p, t, cx + (COL - PX) / 2, CY - PX / 2 - 12, PX)
-    text(c, `${SHAPE_NAMES[p.shape]} · ${p.style.name} · ${p.theme === 'dark' ? 'dark' : 'light'}`, cx + COL / 2, 650, 21, p.theme === 'dark' ? '#cfcad8' : GREY, false, 'center')
+    text(c, `${SHAPE_NAMES[p.shape]} · ${p.style.name} · ${p.theme === 'dark' ? 'dark' : 'light'}`, cx + COL / 2, 650, 21, p.theme === 'dark' ? '#cfcad8' : GRAY, false, 'center')
   })
   a.inset?.(c, t, [0, 1, 2].map(centerOf))
   return cv
@@ -399,7 +399,7 @@ function sheet(): HTMLCanvasElement {
   c.fillStyle = BACKGROUND
   c.fillRect(0, 0, cv.width, cv.height)
   text(c, 'Mochi: moods and interactions', 40, 76, 52, INK, true)
-  text(c, '7 moods played on a loop, 6 interactions triggered by the user. One key frame each; the videos show the motion.', 40, 118, 24, GREY)
+  text(c, '7 moods played on a loop, 6 interactions triggered by the user. One key frame each; the videos show the motion.', 40, 118, 24, GRAY)
   ANIMS.forEach((a, k) => {
     const x = (k % columns) * cell
     const y = 150 + Math.floor(k / columns) * (cell + 30)
@@ -439,7 +439,7 @@ function planLaptop(): HTMLCanvasElement {
   c.fillStyle = BACKGROUND
   c.fillRect(0, 0, cv.width, cv.height)
   text(c, 'A working Mochi: 3D laptop', 40, 62, 44, INK, true)
-  text(c, "Seen from behind, in front of the body · 3/4 then front", 40, 100, 20, GREY)
+  text(c, "Seen from behind, in front of the body · 3/4 then front", 40, 100, 20, GRAY)
   const draw = (shape: string, k: number, x: number, y: number, theme: Theme) => {
     const color = hexOf(ACCESSORY_PALETTE[SHAPE_LIST.indexOf(shape) % ACCESSORY_PALETTE.length]!)
     if (theme === 'dark') {
@@ -455,7 +455,7 @@ function planLaptop(): HTMLCanvasElement {
       renderAvatar(tile, frame, color, PAPER, 'soft', false, 'strong', true, shape, yaw + 0.3, null, k % 3 === 1 ? { head: 'cap', eyes: 'round' } : {}, FRAME, theme, undefined, 1)
       c.drawImage(tile, x + v * cell, y, cell, cell)
     })
-    text(c, SHAPE_NAMES[shape] ?? shape, x + 10, y + 26, 20, theme === 'dark' ? '#cfcbd6' : GREY, true)
+    text(c, SHAPE_NAMES[shape] ?? shape, x + 10, y + 26, 20, theme === 'dark' ? '#cfcbd6' : GRAY, true)
   }
   SHAPE_LIST.forEach((f, k) => draw(f, k, (k % 2) * 2 * cell, header + Math.floor(k / 2) * (cell + 8), 'light'))
   const y0 = header + rowsLight * (cell + 8)

@@ -31,7 +31,7 @@ export function luminance(hex: string): number {
 
 /**
  * Styles with clean tones (Flat, Pixel) lose all relief on an almost black color (the app's default ink): three tones
- * of black are three blacks. So dark colors are lightened towards a readable blue grey before setting the tones; the
+ * of black are three blacks. So dark colors are lightened towards a readable blue gray before setting the tones; the
  * others do not move.
  */
 export function leverDark(hex: string): string {

@@ -1,4 +1,4 @@
-import { SLOTS, ACCESSORY_BY_KEY, type RenderStyleId, type AccessorySelection } from 'mochis/catalogue'
+import { SLOTS, ACCESSORY_BY_KEY, type RenderStyleId, type AccessorySelection } from 'mochis/catalog'
 
 export interface OptionsExtrait {
   shape: string

@@ -5,6 +5,9 @@
  * (`mochi:forme`, `mochi:couleur`, `mochi:langue`, `mochi:contour`). A visitor who comes back must find their Mochi
  * as they left it, so the first read moves every old key to its new name and translates its value. The old key is
  * removed once copied, so the migration runs once per browser.
+ *
+ * The first English ids used the British spelling `grey`; the id is now `gray` (American spelling, like the rest of
+ * the API), so `grey` is translated too.
  */
 
 /** Old shape id -> new shape id. */
@@ -34,7 +37,8 @@ export const LEGACY_COLORS: Record<string, string> = {
   bleu: 'blue',
   rose: 'pink',
   cerise: 'cherry',
-  gris: 'grey',
+  gris: 'gray',
+  grey: 'gray',
   creme: 'cream'
 }
 

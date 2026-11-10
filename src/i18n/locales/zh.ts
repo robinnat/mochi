@@ -168,7 +168,7 @@ const zh: typeof fr = {
     magenta: '洋红色',
     pink: '粉色',
     cherry: '樱桃红',
-    grey: '灰色'
+    gray: '灰色'
   },
 
   expressions: {

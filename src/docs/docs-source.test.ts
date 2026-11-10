@@ -155,13 +155,13 @@ describe('the documentation says what the code does', () => {
 
   it('the names imported in the examples exist in the public entry points', async () => {
     const full = (await import('mochis')) as Record<string, unknown>
-    const catalog = (await import('mochis/catalogue')) as Record<string, unknown>
+    const catalog = (await import('mochis/catalog')) as Record<string, unknown>
     const all = USER_CODE.map((b) => b.code).join('\n')
     const names = (file: string) =>
       [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '/mochi/${file.replace('.', '\\.')}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
-    expect(names('catalogue.js').length).toBeGreaterThan(0)
+    expect(names('catalog.js').length).toBeGreaterThan(0)
     for (const n of names('mochis.js')) expect(full[n], n).toBeDefined()
-    for (const n of names('catalogue.js')) expect(catalog[n], n).toBeDefined()
+    for (const n of names('catalog.js')) expect(catalog[n], n).toBeDefined()
   })
 
   it('npm is never presented as available: the package is not published yet', () => {

@@ -7,7 +7,7 @@
  *
  * The props written here are those the page passes to the live Mochi: the poster and the live 3D are the same image.
  */
-import { ACCESSORIES, type Slot, type RenderStyleId, type AccessorySelection } from 'mochis/catalogue'
+import { ACCESSORIES, type Slot, type RenderStyleId, type AccessorySelection } from 'mochis/catalog'
 import { SHAPES_3D } from './catalog'
 import { STYLES_SITE } from './style'
 
