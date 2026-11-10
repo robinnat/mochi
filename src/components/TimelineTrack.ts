@@ -181,10 +181,13 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
     if (!d.moved && Math.abs(e.clientX - d.startX) <= 4) return
     drag.value = { ...d, moved: true, dx: e.clientX - d.startX, to: Math.max(0, indexAt(pointerSeconds(e))) }
   }
-  function onBlockUp(index: number) {
-    const d = drag.value
+  function onBlockUp(index: number, e?: PointerEvent) {
+    const fin = drag.value
     drag.value = null
-    if (!d) return
+    if (!fin) return
+    // la carte tombe la ou le doigt se LEVE : au toucher, le dernier `pointermove` peut arriver en retard ou
+    // avec une position perimee (vu en Chrome mobile emule), et la carte revenait a sa place
+    const d = e && (fin.moved || Math.abs(e.clientX - fin.startX) > 4) ? { ...fin, moved: true, to: Math.max(0, indexAt(pointerSeconds(e))) } : fin
     // un clic sans deplacement, c'est un saut de la tete de lecture
     if (!d.moved) {
       block.value = index
@@ -297,7 +300,9 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                   {
                     type: 'button',
                     class: [
-                      'flex h-full w-full cursor-grab flex-col justify-between overflow-hidden rounded-lg px-1.5 py-1 text-left transition select-none active:cursor-grabbing',
+                      // `touch-none` : au doigt, sans lui le navigateur prend le geste pour un defilement de la piste et
+                      // annule le pointeur (pointercancel) au bout de quelques pixels, la carte ne bougeait jamais
+                      'flex h-full w-full cursor-grab touch-none flex-col justify-between overflow-hidden rounded-lg px-1.5 py-1 text-left transition select-none active:cursor-grabbing',
                       i === block.value ? 'bg-white ring-2 ring-[var(--ink)] ring-inset' : 'bg-black/[0.045] hover:bg-black/[0.08]',
                       lifted(i) ? 'scale-[1.02] opacity-75 shadow-lg' : ''
                     ],
@@ -305,7 +310,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                     'aria-current': i === block.value ? 'true' : undefined,
                     onPointerdown: (e: PointerEvent) => onBlockDown(i, e),
                     onPointermove: onBlockMove,
-                    onPointerup: () => onBlockUp(i),
+                    onPointerup: (e: PointerEvent) => onBlockUp(i, e),
                     onPointercancel: () => (drag.value = null),
                     'data-carte': '',
                     'aria-keyshortcuts': 'Alt+ArrowLeft Alt+ArrowRight ArrowLeft ArrowRight',
@@ -347,7 +352,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                 h('button', {
                   type: 'button',
                   class:
-                    'absolute inset-y-2 right-0.5 w-1 cursor-ew-resize rounded-full bg-[var(--muted)] opacity-0 transition group-hover:opacity-60 hover:opacity-100! focus-visible:opacity-100',
+                    'absolute inset-y-2 right-0.5 w-1 cursor-ew-resize touch-none rounded-full bg-[var(--muted)] opacity-0 transition group-hover:opacity-60 hover:opacity-100! focus-visible:opacity-100',
                   'aria-label': t('timeline.blockDurationAria', { state: label(i), duration: secondes(b.duration) }),
                   onPointerdown: (e: PointerEvent) => onResizeDown(i, e),
                   onPointermove: onResizeMove,

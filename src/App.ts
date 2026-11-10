@@ -418,7 +418,14 @@ export const App: Composant<Record<string, never>> = () => {
     clearTimeout(confirmation)
     etatExport.value = 'occupe'
     const nom = () =>
-      nomFichier(shape.value, expression.value, color.value, action.extension, [suffixeRendu(renduExportable(rendu.value)), action.suffixe].filter(Boolean).join('-'))
+      nomFichier(
+        shape.value,
+        expression.value,
+        color.value,
+        action.extension,
+        // l'image fixe est le noeud AFFICHE (vraie 3D comprise) ; seules les animations repassent en argile
+        [suffixeRendu(action.mode === 'anime' || action.mode === 'gif' ? renduExportable(rendu.value) : rendu.value), action.suffixe].filter(Boolean).join('-')
+      )
     try {
       if (action.mode === 'anime') {
         // l'animation est rejouee depuis le debut sur une instance hors ecran
@@ -525,7 +532,11 @@ export const App: Composant<Record<string, never>> = () => {
                 class: [
                   'panneau scene__gauche w-full lg:flex lg:h-[calc(100dvh_-_3rem_-_var(--timeline))] lg:w-80 lg:shrink-0 lg:flex-col lg:justify-center lg:self-start lg:-translate-y-12 lg:pl-14',
                   gauche.value ? 'panneau--ouvert max-lg:order-2' : 'max-lg:hidden'
-                ]
+                ],
+                // ferme, il n'est que transparent (sa colonne se referme) : sans `inert` ses champs restaient dans
+                // l'ordre de tabulation et lus par les lecteurs d'ecran
+                inert: !gauche.value,
+                'aria-hidden': gauche.value ? undefined : 'true'
               },
               c(Settings, {})
             )
@@ -610,7 +621,13 @@ export const App: Composant<Record<string, never>> = () => {
         !pv
           ? h(
               'aside',
-              { key: 'droite', class: ['panneau scene__droite w-full lg:w-80 lg:shrink-0', droite.value ? 'panneau--ouvert max-lg:order-2' : 'max-lg:hidden'] },
+              {
+                key: 'droite',
+                class: ['panneau scene__droite w-full lg:w-80 lg:shrink-0', droite.value ? 'panneau--ouvert max-lg:order-2' : 'max-lg:hidden'],
+                // meme raison que le panneau de gauche : transparent n'est pas cache pour le clavier
+                inert: !droite.value,
+                'aria-hidden': droite.value ? undefined : 'true'
+              },
               v === 'animations'
                 ? [
                     h('h2', { key: 'ta', class: 'text-sm font-semibold' }, t('panel.animations')),
