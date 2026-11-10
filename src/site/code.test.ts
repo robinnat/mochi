@@ -13,10 +13,10 @@ describe('example highlighting', () => {
   })
 
   it('colore balises, attributs, chaines, mots-cles et commentaires', () => {
-    const h = highlight('<mochi-bot shape="star" size="200"></mochi-bot>\n// note\nimport x from \\'y\\'')
+    const h = highlight('<mochi-bot shape="star" size="200"></mochi-bot>\n// note\nimport x from \'y\'')
     expect(h).toContain('<span class="c-tag">&lt;mochi-bot</span>')
     expect(h).toContain('<span class="c-attr">shape</span>')
-    expect(h).toContain('<span class="c-str">&quot;etoile&quot;</span>')
+    expect(h).toContain('<span class="c-str">&quot;star&quot;</span>')
     expect(h).toContain('<span class="c-attr">size</span>')
     expect(h).toContain('<span class="c-com">// note</span>')
     expect(h).toContain('<span class="c-word">import</span>')

@@ -94,7 +94,7 @@ export const VARIANTS: Variant[] = [
   { shape: 'circle', body: '#6fd400', acc: { back: c('cape', T), head: c('beret', N) }, back: true }
 ]
 export const SCROLL = VARIANTS.map((v, i) => ({
-  name: `defile-${String(i + 1).padStart(2, '0')}`,
+  name: `scroll-${String(i + 1).padStart(2, '0')}`,
   variant: v,
   props: { shape: v.shape, color: v.body, renderStyle: '3d', yaw: v.back ? 2.0 : 0.3, accessories: v.acc } as PropsMochi
 }))
@@ -106,7 +106,7 @@ export const POSTERS: Poster[] = [
   { name: 'custom', size: 320, props: CUSTOM_START, t: 0 },
   ...STYLES_SITE.map((s) => ({ name: `style-${s.id}`, size: 360, props: STYLE_BOT(s.id), t: 0 })),
   ...STYLES_SITE.map((s) => ({ name: `style-mini-${s.id}`, size: 180, props: { shape: 'circle', color: '#2d5bff', renderStyle: s.id, yaw: 0.35 }, t: 1.2 })),
-  ...STYLES_SITE.flatMap((s) => SHAPES_3D.map((f) => ({ name: `forme-${f.id}-${s.id}`, size: 128, props: { shape: f.id, color: f.color, renderStyle: s.id }, t: 1.2 }))),
+  ...STYLES_SITE.flatMap((s) => SHAPES_3D.map((f) => ({ name: `shape-${f.id}-${s.id}`, size: 128, props: { shape: f.id, color: f.color, renderStyle: s.id }, t: 1.2 }))),
   { name: 'bento-light', size: 146, props: { ...BENTO_THEME, theme: 'light' }, t: 1.2 },
   { name: 'bento-dark', size: 146, props: { ...BENTO_THEME, theme: 'dark' }, t: 1.2 },
   ...SCROLL.map((d) => ({ name: d.name, size: SIZE_SCROLL, props: d.props, t: 1.2 }))
@@ -114,10 +114,10 @@ export const POSTERS: Poster[] = [
 
 const suffix = (theme: ThemeSite) => (theme === 'dark' ? 'dark' : 'light')
 /** Address of a pre-rendered image (one per theme). */
-export const urlPoster = (name: string, theme: ThemeSite) => `/rendus/${name}-${suffix(theme)}.webp`
+export const urlPoster = (name: string, theme: ThemeSite) => `/renders/${name}-${suffix(theme)}.webp`
 
 /** Icon of an accessory alone (the piece, without a body), in the catalog colors. */
 export const PIECES = ACCESSORIES.map((a) => ({ slot: a.slot, id: a.id }))
-export const urlPiece = (e: Slot, id: string, theme: ThemeSite) => `/rendus/piece-${e}-${id}-${suffix(theme)}.webp`
+export const urlPiece = (e: Slot, id: string, theme: ThemeSite) => `/renders/piece-${e}-${id}-${suffix(theme)}.webp`
 /** Side of a piece's image, in pixels. */
 export const SIZE_PIECE = 160

@@ -61,7 +61,7 @@ describe('accessory strips (pieces alone)', () => {
   it('no body in the strips: pieces are rendered without a body, tightly framed and centered', () => {
     const v = source('./thumbnails.ts')
     // rendreAvatar(..., sansCorps = true, centre)
-    expect(v).toMatch(/undefined, true, centre\)/)
+    expect(v).toMatch(/undefined, true, center\)/)
     expect(v).toContain('boxOpaque')
   })
 
@@ -72,7 +72,7 @@ describe('accessory strips (pieces alone)', () => {
     // icons: pre-rendered images (public/renders), never a 3D render on load or on theme change
     expect(custom).toContain('urlPiece')
     expect(custom).not.toContain('renderThumbnail')
-    expect(custom.match(/c\(Vivant/g)).toHaveLength(1)
+    expect(custom.match(/c\(Alive/g)).toHaveLength(1)
     // the images are made by tools/renders.ts with renderThumbnail and itemPiece
     const tool = readFileSync(new URL('../../tools/renders.ts', import.meta.url), 'utf8')
     expect(tool).toContain('renderThumbnail')

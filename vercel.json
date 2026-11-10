@@ -4,5 +4,12 @@
   "buildCommand": "npx pnpm@11.17.0 build",
   "installCommand": "npx pnpm@11.17.0 install --frozen-lockfile",
   "outputDirectory": "dist",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/labo",
+      "destination": "/lab",
+      "permanent": true
+    }
+  ]
 }

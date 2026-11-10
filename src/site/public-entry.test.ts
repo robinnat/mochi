@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest'
  */
 const SRC = fileURLToPath(new URL('..', import.meta.url))
 const FOLDERS = ['site', 'docs', 'lab']
-const ALLOWED = [/^mochis(\/catalogue)?$/, /^\/mochi\/(mochis|catalogue)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|labo)\//, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
+const ALLOWED = [/^mochis(\/catalogue)?$/, /^\/mochi\/(mochis|catalogue)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|lab)\//, /^(\.\.\/)+docs\/[\w-]+\.md\?raw$/, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
 
 const sources = FOLDERS.flatMap((d) =>
   readdirSync(join(SRC, d))
@@ -42,7 +42,7 @@ describe('the site uses Mochis through its public entry', () => {
   it("home and docs only load the tag on demand: as a static import, only the catalog", () => {
     for (const { file, text } of sources) {
       // the lab mounts Mochis on load; thumbnails.ts only serves the tools/renders.ts tool
-      if (file.startsWith('labo/') || file === 'site/vignettes.ts') continue
+      if (file.startsWith('lab/') || file === 'site/thumbnails.ts') continue
       expect(text, file).not.toMatch(/(?:^|\n)\s*import\s+(?!type\b)[^'";]*['"]mochis['"]/)
     }
   })

@@ -41,7 +41,7 @@ export const Shapes: Component<Record<string, never>> = () => {
               h(
                 'div',
                 { class: 'shape' },
-                h('div', { class: 'shape-image' }, c(Poster, { name: `forme-${f.id}-${style.value}`, size: size.value, alt: `${f.label} Mochi` })),
+                h('div', { class: 'shape-image' }, c(Poster, { name: `shape-${f.id}-${style.value}`, size: size.value, alt: `${f.label} Mochi` })),
                 h('span', { class: 'shape-name' }, f.label),
                 h('code', { class: 'shape-id' }, f.id)
               )

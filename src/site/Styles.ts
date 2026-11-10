@@ -16,21 +16,21 @@ const STEPS: { id: RenderStyleId; name: string; code: string; text: string; back
   {
     id: '3d',
     name: 'Soft',
-    code: 'rendu="3d"',
+    code: 'render-style="3d"',
     text: 'Smooth studio shading, rim glows and a soft highlight, lit the same way from every side. The default.',
     background: 'var(--p-lavande)'
   },
   {
     id: 'pixel3d',
     name: 'Pixel',
-    code: 'rendu="pixel3d"',
+    code: 'render-style="pixel3d"',
     text: 'The same 3D model rendered at low resolution, with a short palette and a 1 px outline. A game sprite that can turn around.',
     background: 'var(--p-menthe)'
   },
   {
     id: 'flat3d',
     name: 'Flat',
-    code: 'rendu="flat3d"',
+    code: 'render-style="flat3d"',
     text: 'Two or three flat tones and no gloss, for a bold, graphic look. Add an outline with contour.',
     background: 'var(--p-peche)'
   }

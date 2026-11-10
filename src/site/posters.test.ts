@@ -28,14 +28,14 @@ describe('images pre-rendues (v11)', () => {
 
   it('no site section mounts <mochi-bot> directly: images or Alive (poster then 3D fading in, never 2D)', () => {
     for (const f of pages) {
-      if (f === 'Vivant.ts') continue
+      if (f === 'Alive.ts') continue
       expect(read(f), f).not.toMatch(/'mochi-bot'/)
       expect(read(f), f).not.toMatch(/^import [^\n]*components\/mochi-bot/m)
     }
-    const v = read('Vivant.ts')
+    const v = read('Alive.ts')
     // the component arrives through the package's public entry, as for a user
     expect(v).toContain("import('mochis')")
-    expect(v).toContain('onPret: surPret')
+    expect(v).toContain('onReady: whenReady')
     expect(v).toContain('IntersectionObserver')
   })
 
@@ -43,7 +43,7 @@ describe('images pre-rendues (v11)', () => {
     const names = new Set(POSTERS.map((a) => a.name))
     const everything = pages.map(read).join('\n') + readFileSync(new URL('../docs/Docs.ts', import.meta.url), 'utf8')
     let seen = 0
-    for (const m of everything.matchAll(/affiche: (?:[^,\n]*\? )?'([a-z-]+)'/g)) {
+    for (const m of everything.matchAll(/poster: (?:[^,\n]*\? )?'([a-z-]+)'/g)) {
       seen++
       const n = m[1]!
       expect(names.has(n), n).toBe(true)
@@ -65,11 +65,11 @@ describe('images pre-rendues (v11)', () => {
     expect(SCROLL.length).toBeLessThanOrEqual(30)
     expect(new Set(POSTERS.map((a) => a.name))).toContain(SCROLL[0]!.name)
     const bento = read('Bento.ts')
-    expect(bento).toContain('CATALOGUE.length')
-    expect(bento).toContain('c(AccDefile')
-    const d = read('AccDefile.ts')
+    expect(bento).toContain('ACCESSORIES.length')
+    expect(bento).toContain('c(AccessoryScroller')
+    const d = read('AccessoryScroller.ts')
     expect(d).toContain('useReduced')
-    expect(d).toMatch(/reduit\.value \? 0/)
+    expect(d).toMatch(/reduced\.value \? 0/)
     expect(d).not.toMatch(/import .*three|mochi-bot/)
   })
 })

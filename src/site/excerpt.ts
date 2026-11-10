@@ -62,14 +62,14 @@ export function accessoriesAsJson(sel: AccessorySelection): string {
  */
 export function extraitCode(o: OptionsExtrait): string {
   const l = [`  shape="${o.shape}"`, `  color="${o.color}"`]
-  if (o.renderStyle !== '3d') l.push(`  renderStyle="${o.renderStyle}"`)
+  if (o.renderStyle !== '3d') l.push(`  render-style="${o.renderStyle}"`)
   if (o.outline) {
     l.push('  outline')
     if (o.thickness !== undefined && Math.abs(o.thickness - 1) > 1e-6) l.push(`  outline-width="${Number(o.thickness.toFixed(2))}"`)
   }
   if (o.renderStyle === '3d' && o.highlight === false) l.push('  highlight="false"')
   l.push(`  mood="${o.mood}"`)
-  if (o.mood === 'working' && !o.laptop) l.push('  ordinateur="false"')
+  if (o.mood === 'working' && !o.laptop) l.push('  laptop="false"')
   const acc = accessoriesAsJson(o.accessories)
   if (acc) l.push(`  accessories='${acc}'`)
   if (o.theme !== 'auto') l.push(`  theme="${o.theme}"`)

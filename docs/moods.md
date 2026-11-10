@@ -1,4 +1,4 @@
-# Moods and interactions (proposal)
+# Moods and interactions
 
 A layer on top of the engine that animates only the **face and the body**: no stars, exclamation
 marks, orbits, comets or particles. Everything is real-time 3D with the existing shading. It works on
@@ -17,13 +17,12 @@ Code: `src/bot/moods.ts` (pure, no framework, no clock), wired into `mochi-bot.t
 | `idle` | idle | `idle` | soft breathing, blinks, eyes that wander |
 | `thinking` | thinking | `thinking` | eyes up, squinted (one eye tighter), head tilted a little |
 | `working` | working | `idle` | focused, eyes reading line after line, small regular bounces |
-| `waiting` | waiting for Robin | `wide` | looking straight ahead, head tilted, foot-tap, quick glance aside |
+| `waiting` | waiting | `wide` | looking straight ahead, head tilted, foot-tap, quick glance aside |
 | `done` | done | `wink` | crescent eyes, two small hops of joy |
 | `blocked` | blocked | `wide` | angry (`angry`, mirrored slanted eyes, a bit bigger), trembling in bursts |
 | `asleep` | asleep | `sleep` | closed eyes, slow breathing, head tilted |
 
-English aliases are accepted by `resolveMood` (`idle`, `thinking`, `working`, `waiting`, `done`, `blocked`,
-`sleeping`).
+`resolveMood` also accepts `sleep` and `sleeping` for `asleep`.
 
 ## Interactions
 
@@ -42,16 +41,16 @@ An interaction plays once on top of the mood, then hands back: the mood resumes 
 
 ```ts
 // component
-<mochi-bot rendu="3d" mood="travaille" interactions coucou fps="12"></mochi-bot>
-bot.setMood('termine')        // 'repos' | 'reflechit' | 'travaille' | 'attend' | 'termine' | 'bloque' | 'dort' | null
-bot.react('sursaut')          // 'sursaut' | 'rigole' | 'rougit' | 'etourdi' | 'coucou'
-bot.relacher()                // end of a held reaction (long press)
-bot.regarder({ nx: 0.5, ny: -0.2 })  // hover without a DOM event, null to let go
+<mochi-bot render-style="3d" mood="working" interactions wave fps="12"></mochi-bot>
+bot.setMood('done')           // 'idle' | 'thinking' | 'working' | 'waiting' | 'done' | 'blocked' | 'asleep' | null
+bot.react('startle')          // 'startle' | 'laugh' | 'blush' | 'dizzy' | 'wave'
+bot.release()                 // end of a held reaction (long press)
+bot.lookAt({ nx: 0.5, ny: -0.2 })    // hover without a DOM event, null to let go
 
 // engine level
-const humeurs = new Humeurs('repos', { reduit: prefersReducedMotion })
-humeurs.react('rigole', now)
-const image = engine.sample(now, humeurs.sample(now))   // undefined when the layer is idle
+const moods = new Moods('idle', { reduced: prefersReducedMotion })
+moods.react('laugh', now)
+const frame = engine.sample(now, moods.sample(now))   // undefined when the layer is idle
 ```
 
 - Without a mood, reaction or hover, `moods.sample(now)` is `undefined` and the engine renders exactly
@@ -69,7 +68,7 @@ const image = engine.sample(now, humeurs.sample(now))   // undefined when the la
 `Gesture` gets optional face fields (`exp`, `ew`, `eh`, `tilt`, `arc`, `ex`, `ey`, `cheeks`, `rot`), absent
 from `NEUTRAL_GESTURE`. The engine applies them only when present, so `sample(t)` is byte-identical
 without them. `BotFrame.face` and `RenderedEye.{k, tilt, gx, gy}` are set only then. The 3D eyes stay
-"pile en face" (centred on the front face); with the layer they also take the lid, the slant, the
+straight in front (centred on the front face); with the layer they also take the lid, the slant, the
 head tilt and the gaze offset. Glasses and accessories keep reading the eye positions without the gaze
 offset, so they stay on the face.
 

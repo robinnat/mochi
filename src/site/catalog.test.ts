@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ACC_EN_IDS, SHAPES_3D, SHAPE_ID_LIST, SITE_MOODS, INTERACTIONS_SITE, PALETTE_SITE } from './catalog'
+import { SHAPES_3D, SHAPE_ID_LIST, SITE_MOODS, INTERACTIONS_SITE, PALETTE_SITE } from './catalog'
 import { contrast } from '@/ui/3d/theme'
 import { ACCESSORIES } from '@/bot/slots'
 import { MOOD_IDS } from '@/bot/moods'
@@ -11,7 +11,7 @@ describe('site catalog', () => {
   })
 
   it('each accessory of the catalog has an English name', () => {
-    for (const a of ACCESSORIES) expect(ACC_EN_IDS, a.id).toContain(a.id)
+    for (const a of ACCESSORIES) expect(a.name, a.id).toMatch(/^[A-Z][a-z]+( [a-z]+)*$/)
   })
 
   it('the site texts have no em dash and no accent (English)', () => {
