@@ -5,12 +5,12 @@ Depuis la refonte « 3D seule », l'interface ne propose plus que trois styles, 
 
 | Style | id `rendu` | Principe |
 |---|---|---|
-| **Soft** (défaut) | `3d` | matière douce : ombrage lisse, lueurs et reflet calculés en shader dans le repère de la vue |
+| **Soft** (défaut) | `3d` | matière douce : ombrage lisse, lueurs et reflet calculés en shader dans le repère de la caméra |
 | **Flat** | `flat3d` | `toon` : trois tons nets, contour optionnel (`contour`) |
 | **Pixel** | `pixel3d` | rendu à basse résolution (grille de `pixel`), réduit à une palette courte (3 tons du corps, tons des accessoires, blanc des yeux), contour de 1 px, agrandi avec `image-rendering: pixelated` (`src/ui/trois/pixel3d.ts`) |
 
 Les anciens styles SVG (`original`, `pixel`, `argile`, `bulle`) ne sont plus proposés ni
-relus du stockage (un ancien réglage retombe sur Soft). Le code SVG de `MochiBot.vue` ne sert
+relus du stockage (un ancien réglage retombe sur Soft). Le code SVG de `mochi-bot.ts` ne sert
 plus que de repli sans WebGL et pour les exports SVG/PNG/GIF/MP4, qui sérialisent encore le
 SVG : tant qu'il n'y a pas d'export 3D, un mochi 3D s'exporte « argile ». Les sections
 ci-dessous décrivent ces anciens dessins (historique).
@@ -18,7 +18,7 @@ ci-dessous décrivent ces anciens dessins (historique).
 ## Ombrage continu sur 360 degrés (`src/ui/trois/lisere.ts`)
 
 L'ombrage n'est PAS peint dans la texture de visage (c'est ce qui assombrissait le dos et les
-flancs et laissait une couture) : tout est calculé dans le shader, en repère de la vue, sur tout
+flancs et laissait une couture) : tout est calculé dans le shader, en repère de la caméra, sur tout
 le volume. Ombrage doux (AO) vers le bas et les bords, lueur bas-droite (4 h), lueur légère
 haut-gauche (10 h), reflet doux. La texture ne porte que la couleur et les yeux.
 
@@ -35,7 +35,7 @@ solides de révolution (`ProfilVolume.revolution`) : la profondeur d'un point es
 du contour à sa hauteur.
 
 Le moteur ne change pas : `engine.sample(t)` rend la même image et les 5 états, leurs
-mesures et leurs durées sont identiques. Seul `MochiBot.vue` peint l'image autrement.
+mesures et leurs durées sont identiques. Seul `mochi-bot.ts` peint l'image autrement.
 Le catalogue et le réglage courant vivent dans `src/ui/rendu.ts`.
 
 > **LEGACY, NON DISPONIBLE** : les sections « Pixel art (`src/ui/pixel.ts`) », « 3D douce » et
@@ -97,12 +97,12 @@ lit `engine.sample(t)` et on le dessine.
 - **Les yeux sont peints dans une texture** projetée de face, aux positions exactes du
   moteur, et AUSSI dans une texture d'émission (blanc sur noir) : un œil est un trou clair,
   la lumière ne doit pas le griser. Sans cela, les yeux disparaissaient sur le dos du
-  corps et en vue trois quarts.
+  corps et de trois quarts.
 - **Un seul contexte WebGL** pour tous les avatars de la page (`rendreAvatar`) : chaque
   vignette demande une image, elle est rendue puis recopiée dans son canvas 2D. Le contour
   et le visage ne sont refaits que s'ils ont changé d'une image à l'autre.
 - **Chargement à la demande** : `scene3d.ts` n'est jamais importé statiquement
-  (133 ko gzip). `MochiBot.vue` le charge quand le style 3D est choisi et garde l'argile
+  (133 ko gzip). `mochi-bot.ts` le charge quand le style 3D est choisi et garde l'argile
   SVG tant qu'il n'est pas là, ou sans WebGL, ou dans un export (le canvas WebGL n'est pas
   du SVG : un export en 3D sort en argile, et son nom de fichier le dit).
 - **Intégration** : le canvas est dans un `<foreignObject>` calé sur le viewBox, entre la

@@ -6,8 +6,8 @@
 prop, the frozen state board and the DOM-less tests possible.
 
 So `src/bot/` must not gain internal state that depends on real time, nor
-`Date.now()`, nor a Vue import. Vue code shared between components (composables,
-display settings) goes in `src/ui/` instead.
+`Date.now()`, nor an interface import. Interface code shared between components (reactive
+state, display settings) goes in `src/ui/` instead.
 
 **A state change landing inside a fade blends from the frozen frame.** The engine keeps
 only one slot of history, so the origin of the new blend used to become the *full* pose of

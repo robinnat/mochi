@@ -233,7 +233,7 @@ export function sansCommentaires(markup: string) {
  * ne doit pas changer avec la langue de l'interface.
  *
  * Les ids sont filtres alors qu'ils viennent d'unions litterales, parce que
- * `App.vue` les relit du `localStorage` sans les valider : une valeur trafiquee
+ * `App.ts` les relit du `localStorage` sans les valider : une valeur trafiquee
  * n'a pas a pouvoir composer le nom du fichier telecharge.
  */
 export function nomFichier(

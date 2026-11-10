@@ -1,5 +1,5 @@
-import { createApp, h } from 'vue'
-import MochiBot from '../src/components/MochiBot.vue'
+import { h, rendre } from '../src/ui/dom/h'
+import '../src/components/mochi-bot'
 import { POSES, type StateId } from '../src/bot/states'
 import { ACCESSOIRES } from '../src/bot/accessoires'
 import { PORTE_IDS } from '../src/bot/portes'
@@ -23,28 +23,32 @@ const formesListe = q.get('formes')?.split(',')
 const porteUnique = (q.get('ids') ?? 'aucun').split(',')[0]!
 if (formesListe) racine.style.gridTemplateColumns = `repeat(${Math.min(formesListe.length, Number(q.get('cols') ?? 6))}, ${taille + 24}px)`
 
-createApp({
-  render: () =>
+rendre(
+  h(
+    'div',
+    { style: 'display: contents' },
     formesListe
       ? formesListe.map((f, i) =>
           h('div', { class: 'c' }, [
-            h(MochiBot, { size: taille, shape: f, color: couleur ?? COULEURS[i % 9], rendu: rendu as never, state: etats[0]!, porte: (porteUnique === 'aucun' ? null : porteUnique) as never, frozenAt: POSES[etats[0]!], yaw, label: f }),
+            h('mochi-bot', { size: taille, shape: f, color: couleur ?? COULEURS[i % 9], rendu: rendu as never, state: etats[0]!, porte: (porteUnique === 'aucun' ? null : porteUnique) as never, frozenAt: POSES[etats[0]!], yaw, label: f }),
             h('div', { class: 't' }, f)
           ])
         )
       : mode === 'job'
       ? ids.map((id, i) =>
           h('div', { class: 'c' }, [
-            h(MochiBot, { size: taille, shape: forme, color: COULEURS[i % 9], rendu: rendu as never, accessoire: id as never, frozenAt: 2.2, yaw, label: id }),
+            h('mochi-bot', { size: taille, shape: forme, color: COULEURS[i % 9], rendu: rendu as never, accessoire: id as never, frozenAt: 2.2, yaw, label: id }),
             h('div', { class: 't' }, id)
           ])
         )
       : ids.flatMap((id, i) =>
           etats.map((e) =>
             h('div', { class: 'c' }, [
-              h(MochiBot, { size: taille, shape: forme, color: couleur ?? COULEURS[i % 9], rendu: rendu as never, state: e, porte: (id === 'aucun' ? null : id) as never, frozenAt: POSES[e], yaw, label: id }),
+              h('mochi-bot', { size: taille, shape: forme, color: couleur ?? COULEURS[i % 9], rendu: rendu as never, state: e, porte: (id === 'aucun' ? null : id) as never, frozenAt: POSES[e], yaw, label: id }),
               h('div', { class: 't' }, `${id} / ${e}`)
             ])
           )
         )
-}).mount(racine)
+  ),
+  racine
+)

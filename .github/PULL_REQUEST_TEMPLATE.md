@@ -10,6 +10,6 @@
 
 - [ ] One topic only (no unrelated changes)
 - [ ] `npx -y pnpm@11.17.0 test` passes
-- [ ] `npx -y pnpm@11.17.0 build` passes (it runs `vue-tsc`)
+- [ ] `npx -y pnpm@11.17.0 build` passes (it runs `tsc`)
 - [ ] Tests added or updated for the change, when it makes sense
 - [ ] `CHANGELOG.md` updated under `[Unreleased]` if users would notice the change

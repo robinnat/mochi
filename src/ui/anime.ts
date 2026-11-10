@@ -209,7 +209,7 @@ function lzw(indices: Uint8Array, bitsParPixel: number): number[] {
  */
 export interface PaletteGif {
   /** Combien de pixels par teinte, pendant le recensement. */
-  vues: Map<number, number>
+  comptes: Map<number, number>
   /** RGB compacte sur 24 bits -> index, une fois la palette arretee. */
   index: Map<number, number>
   /** Resolution des teintes absentes vers la plus proche retenue. */
@@ -219,7 +219,7 @@ export interface PaletteGif {
 }
 
 export const nouvellePalette = (): PaletteGif => ({
-  vues: new Map(),
+  comptes: new Map(),
   index: new Map(),
   proches: new Map(),
   transparence: false
@@ -241,14 +241,14 @@ export function recense(palette: PaletteGif, px: Uint8ClampedArray) {
       continue
     }
     const cle = (px[p]! << 16) | (px[p + 1]! << 8) | px[p + 2]!
-    palette.vues.set(cle, (palette.vues.get(cle) ?? 0) + 1)
+    palette.comptes.set(cle, (palette.comptes.get(cle) ?? 0) + 1)
   }
 }
 
 /** Arrete la palette sur les 255 teintes les plus presentes. */
 function arrete(palette: PaletteGif) {
   if (palette.index.size) return
-  const tries = [...palette.vues.entries()].sort((a, b) => b[1] - a[1]).slice(0, 255)
+  const tries = [...palette.comptes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 255)
   for (const [cle] of tries) palette.index.set(cle, palette.index.size + 1)
 }
 

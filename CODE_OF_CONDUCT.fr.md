@@ -14,7 +14,7 @@ Nous nous engageons à agir et interagir de manière à contribuer à une commun
 Exemples de comportements qui contribuent à créer un environnement positif :
 
 * Faire preuve d'empathie et de bienveillance envers les autres
-* Être respectueux des opinions, points de vue et expériences divergents
+* Être respectueux des opinions et des expériences divergentes
 * Donner et recevoir avec grâce les critiques constructives
 * Assumer ses responsabilités et s'excuser auprès des personnes affectées par nos erreurs et apprendre de ces expériences
 * Se concentrer sur ce qui est le meilleur non pas uniquement pour nous en tant qu'individu, mais aussi pour l'ensemble de la communauté

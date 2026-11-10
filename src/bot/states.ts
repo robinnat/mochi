@@ -206,7 +206,7 @@ export const STATES: StateDef[] = [
 
   {
     /**
-     * Entree dans la vue des reglages.
+     * Entree dans l'onglet des reglages.
      *
      * SEUL etat qui n'est pas releve sur la video : il est CHOISI, comme la
      * couleur `--ink`. Il utilise des anneaux dont les parametres sont ceux releves
@@ -215,7 +215,7 @@ export const STATES: StateDef[] = [
      *
      * Les deux drapeaux a `true` sont tout l'interet de cet etat :
      *
-     * - `baseBody` laisse la forme choisie remplacer le corps, donc la vue peut
+     * - `baseBody` laisse la forme choisie remplacer le corps, donc l'onglet peut
      *   imposer le cercle et le galet ou la goutte y MORPHENT au lieu de sauter ;
      * - `baseFace` fait porter le visage de repos, donc le suivi du curseur
      *   s'applique des cette entree. Un etat qui aurait sa propre pose de regard

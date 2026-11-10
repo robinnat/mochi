@@ -1,7 +1,7 @@
 /**
  * Rendu 3D reel (WebGL, Three.js) d'une image du moteur.
  *
- * Ce module n'est JAMAIS importe statiquement : `MochiBot.vue` et la page labo le
+ * Ce module n'est JAMAIS importe statiquement : `mochi-bot.ts` et la page labo le
  * chargent par `await import(...)` quand le style 3D est choisi. Le reste de l'application
  * ne porte donc pas Three.js (meme regle que `mediabunny`).
  *
@@ -407,7 +407,7 @@ export class Mochi3d {
     // le contour des accessoires suit celui du corps (meme visibilite, meme epaisseur)
     this.acc3d.contour(this.coque.visible, this.epaisseur.value)
     const ombres: Ombre[] = [...(this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []), ...this.acc3d.ombres]
-    // le reflet doux est un effet de matiere (shader, repere de la vue) : plus rien n'est peint dans la
+    // le reflet doux est un effet de matiere (shader, repere de la camera) : plus rien n'est peint dans la
     // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
     const reflet = null as Reflet | null
     const cleReflet = reflet ? [reflet.x, reflet.y, reflet.rx].map((v) => Math.round(v * 2)).join(',') : '-'

@@ -1,4 +1,4 @@
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref, watchEffect } from '@/ui/dom/reactif'
 import { ecris, lis } from '@/ui/stockage'
 import { formePlurielle, interpoler } from './format'
 import { choisirLangue, estLangue, type Langue, tagDe } from './langues'
@@ -30,7 +30,7 @@ const courante = ref<Langue>(
 )
 
 /**
- * Langue courante, en lecture et en ecriture (`v-model` compris).
+ * Langue courante, en lecture et en ecriture (lecture et ecriture par `.value`).
  *
  * L'ecriture seule ecrit dans le stockage : la langue DETECTEE ne s'y inscrit
  * pas. Sans cette distinction, un premier passage depuis l'Angleterre figerait
@@ -56,10 +56,20 @@ const tag = computed(() => tagDe(courante.value))
  * bonne voix au lecteur d'ecran et les bonnes regles de cesure. Le titre de
  * l'onglet suit aussi — `index.html` ne peut en porter qu'un, statique.
  */
-watchEffect(() => {
-  document.documentElement.lang = tag.value
-  document.title = t('app.title')
-})
+let documentSuivi = false
+/**
+ * L'APPLICATION (et elle seule) suit sa langue sur la page : attribut `lang` et titre. Ce n'est pas fait a
+ * l'import : le composant `<mochi-bot>` importe ce module pour son texte alternatif, et une page hote (le site,
+ * les docs, l'app d'un utilisateur) ne doit jamais voir sa langue ni son titre reecrits par lui.
+ */
+export function suivreLangueDocument() {
+  if (documentSuivi) return
+  documentSuivi = true
+  watchEffect(() => {
+    document.documentElement.lang = tag.value
+    document.title = t('app.title')
+  })
+}
 
 /** Les formateurs sont chers a construire et relus a chaque image de la piste. */
 const formateurs = new Map<string, Intl.NumberFormat>()

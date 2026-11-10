@@ -1,5 +1,5 @@
-import { createApp, h } from 'vue'
-import MochiBot from '../src/components/MochiBot.vue'
+import { h, rendre } from '../src/ui/dom/h'
+import '../src/components/mochi-bot'
 import { POSES, STATE_BY_ID, type StateId } from '../src/bot/states'
 
 const mode = new URLSearchParams(location.search).get('mode') ?? 'states'
@@ -9,7 +9,7 @@ const ETATS: StateId[] = ['idle', 'thinking', 'wink', 'wide', 'sleep']
 function planche() {
   return ETATS.map((id, i) =>
     h('div', { class: 'c', style: `left:${i * 150}px; top:0px` }, [
-      h(MochiBot, { size: 150, shape: 'cercle', color: ['rouge', 'vert', 'ciel', 'magenta', 'orange'][i], rendu: 'original', state: id, frozenAt: POSES[id], label: '' })
+      h('mochi-bot', { size: 150, shape: 'cercle', color: ['rouge', 'vert', 'ciel', 'magenta', 'orange'][i], rendu: 'original', state: id, frozenAt: POSES[id], label: '' })
     ])
   )
 }
@@ -28,9 +28,9 @@ function demo() {
   document.title = String(frames.length)
   return frames.map((f, i) =>
     h('div', { class: 'c', style: `left:${(i % 12) * 300}px; top:${Math.floor(i / 12) * 300}px` }, [
-      h(MochiBot, { size: 300, shape: 'cercle', color: 'ciel', rendu: 'original', state: f.id, frozenAt: f.t, label: '' })
+      h('mochi-bot', { size: 300, shape: 'cercle', color: 'ciel', rendu: 'original', state: f.id, frozenAt: f.t, label: '' })
     ])
   )
 }
 
-createApp({ render: () => (mode === 'demo' ? demo() : planche()) }).mount('#r')
+rendre(h('div', { style: 'display: contents' }, mode === 'demo' ? demo() : planche()), document.getElementById('r')!)

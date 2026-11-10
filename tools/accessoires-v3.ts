@@ -101,7 +101,7 @@ const FORMES_PLANCHE = ['cercle', 'etoile', 'squircle']
 /** Planche d'un emplacement : un accessoire par ligne, trois formes. */
 const CADRES_TETE: Record<string, number> = { toque: 200, antenne: 215, 'haut-de-forme': 195, couronne: 190 }
 
-function plancheEmplacement(e: Emplacement, cadre: number, yaw: number | number[] = 0, vues?: string[]) {
+function plancheEmplacement(e: Emplacement, cadre: number, yaw: number | number[] = 0, angles?: string[]) {
   const liste = parEmplacement(e)
   const cell = 360
   const entete = 150
@@ -116,7 +116,7 @@ function plancheEmplacement(e: Emplacement, cadre: number, yaw: number | number[
     FORMES_PLANCHE.forEach((f, k) => {
       const x = k * cell
       cellule(ctx, x, y0 + 42, cell, { forme: f, couleur: corps[k]!, sel: { [e]: a.id }, cadre: (e === 'tete' && CADRES_TETE[a.id]) || (a.id === 'antenne' ? 195 : cadre), yaw: Array.isArray(yaw) ? yaw[k]! : yaw })
-      texte(ctx, NOMS_FORMES[f]! + (vues ? ` · ${vues[k]}` : ''), x + cell / 2, y0 + ligne - 14, 22, GRIS, false, 'center')
+      texte(ctx, NOMS_FORMES[f]! + (angles ? ` · ${angles[k]}` : ''), x + cell / 2, y0 + ligne - 14, 22, GRIS, false, 'center')
     })
   })
   return c
@@ -166,7 +166,7 @@ function plancheCombos() {
   return c
 }
 
-function planchevues() {
+function plancheAngles() {
   const lignes: Array<{ nom: string; sel: Selection; forme: string; couleur: string; cadre: number }> = [
     { nom: 'Nœud papillon', sel: { bas: 'papillon' }, forme: 'cercle', couleur: hexDe('turquoise'), cadre: 150 },
     { nom: 'Cape', sel: { dos: 'cape' }, forme: 'oeuf', couleur: hexDe('bleu'), cadre: 215 },
@@ -174,7 +174,7 @@ function planchevues() {
     { nom: 'Cravate (avec lunettes)', sel: { bas: 'cravate', yeux: 'etoile' }, forme: 'etoile', couleur: hexDe('orange'), cadre: 165 },
     { nom: 'Sac à dos', sel: { dos: 'sac' }, forme: 'cercle', couleur: hexDe('turquoise'), cadre: 215 }
   ]
-  const vues = [
+  const angles = [
     { yaw: 0, nom: 'face' },
     { yaw: 0.62, nom: '3/4' },
     { yaw: 1.5708, nom: 'profil' },
@@ -188,7 +188,7 @@ function planchevues() {
   lignes.forEach((t, i) => {
     const y0 = 150 + i * ligne
     texte(ctx, t.nom, 40, y0 + 30, 32, ENCRE, true)
-    vues.forEach((v, k) => {
+    angles.forEach((v, k) => {
       cellule(ctx, k * cell, y0 + 34, cell, { forme: t.forme, couleur: t.couleur, sel: t.sel, yaw: v.yaw, cadre: t.cadre })
       texte(ctx, v.nom, k * cell + cell / 2, y0 + ligne - 14, 20, GRIS, false, 'center')
     })
@@ -261,7 +261,7 @@ async function main() {
     ['bas', () => plancheEmplacement('bas', 160, 0.25)],
     ['dos', () => plancheEmplacement('dos', 245, [0.55, 2.55, 3.4], ['3/4 avant', '3/4 dos', 'de dos'])],
     ['combos', plancheCombos],
-    ['vues', planchevues],
+    ['angles', plancheAngles],
     ['noeud-papillon', planchePapillon],
     ['styles', planchestyles]
   ]

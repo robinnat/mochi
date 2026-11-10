@@ -164,15 +164,15 @@ describe('lecteur hors ecran', () => {
  */
 describe('style de rendu', () => {
   async function monte(props: Record<string, unknown>) {
-    const { createApp, h, nextTick } = await import('vue')
-    const MochiBot = (await import('@/components/MochiBot.vue')).default
+    const { nextTick } = await import('@/ui/dom/reactif')
+    const { creerBot } = await import('./capture')
     const hote = document.createElement('div')
     document.body.appendChild(hote)
-    const app = createApp({ render: () => h(MochiBot, { ...REGLAGES, size: TAILLE, frozenAt: 1, ...props }) })
-    app.mount(hote)
+    const bot = creerBot({ ...REGLAGES, size: TAILLE, frozenAt: 1, ...props })
+    hote.appendChild(bot)
     await nextTick()
     const svg = hote.querySelector('svg')!
-    return { svg, ferme: () => (app.unmount(), hote.remove()) }
+    return { svg, ferme: () => hote.remove() }
   }
 
   it("laisse l'original sans degrade ni filtre", async () => {

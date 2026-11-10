@@ -6,12 +6,12 @@ import { MOOD_IDS } from '@/bot/humeurs'
 import { SHAPES } from '@/bot/skins'
 
 const dossier = new URL('./', import.meta.url)
-const vues = readdirSync(dossier).filter((f) => f.endsWith('.vue'))
+const pages = readdirSync(dossier).filter((f) => /^[A-Z].*\.ts$/.test(f))
 const lire = (f: string) => readFileSync(new URL(f, dossier), 'utf8')
 
 describe('site v10', () => {
   it('aucun tiret cadratin ni demi-cadratin dans les pages', () => {
-    for (const f of [...vues, 'catalog.ts']) expect(lire(f), f).not.toMatch(/[\u2014\u2013]/)
+    for (const f of [...pages, 'catalog.ts']) expect(lire(f), f).not.toMatch(/[\u2014\u2013]/)
   })
 
   it('les chiffres du hero viennent des catalogues', () => {
@@ -33,16 +33,16 @@ describe('site v10', () => {
   })
 
   it('three et la 3D restent des imports dynamiques dans le site', () => {
-    for (const f of [...vues, ...readdirSync(dossier).filter((x) => x.endsWith('.ts') && !x.endsWith('.test.ts'))]) {
+    for (const f of readdirSync(dossier).filter((x) => x.endsWith('.ts') && !x.endsWith('.test.ts'))) {
       expect(lire(f), f).not.toMatch(/^import (?!type )[^\n]*from '(three|@\/ui\/trois\/(scene3d|iso))'/m)
     }
   })
 
   it('le npm install n est jamais presente comme disponible sur le site', () => {
-    for (const f of vues) {
+    for (const f of pages) {
       const t = lire(f)
       if (t.includes('npm install mochi-world')) expect(t, f).toMatch(/coming soon/i)
     }
-    expect(lire('DocsTeaser.vue')).toMatch(/coming\s+soon/)
+    expect(lire('DocsTeaser.ts')).toMatch(/coming\s+soon/)
   })
 })

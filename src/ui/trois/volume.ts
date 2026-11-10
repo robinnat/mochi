@@ -163,7 +163,7 @@ export const PROFILS: Record<string, ProfilVolume> = {
   capsule: { profondeur: 1, arrondi: 1, arriere: 1, revolution: 'h' },
   // le carre est un CUBE : aussi profond que large, face plane, cotes droits, aretes rondes
   squircle: { profondeur: 1, arrondi: 0.78, arriere: 1 },
-  // pyramide a base carree vue par une face : la profondeur croit de la pointe a la base
+  // pyramide a base carree regardee par une face : la profondeur croit de la pointe a la base
   triangle: { profondeur: 1, arrondi: 1, arriere: 1, revolution: 'v' },
   // hexagone : ecrou doux, meme extrusion biseautee
   hexagone: { profondeur: 0.8, arrondi: 0.82, arriere: 1, coussin: true },
@@ -291,7 +291,7 @@ export function indexDuVolume(n: number, anneaux = ANNEAUX): Uint32Array {
   const tri: number[] = []
   const { avant, mur, centreArriere, arriere } = indicesVolume(n, anneaux)
   for (let k = 0; k < n; k++) {
-    // face avant : anti-horaire vue de +z une fois y retourne (repere Three)
+    // face avant : anti-horaire vu de +z une fois y retourne (repere Three)
     tri.push(0, avant(1, k + 1), avant(1, k))
     tri.push(centreArriere, arriere(1, k), arriere(1, k + 1))
     for (let a = 1; a < anneaux; a++) {

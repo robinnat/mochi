@@ -42,9 +42,9 @@ Pour le mouvement réduit, l'application dessine une seule image fixe.
 ## Mains
 
 Deux capsules détachées de la couleur du corps (0,34 x 0,15 rayon) tiennent l'outil. Elles sont
-dessinées dans la couche d'accessoires, pure et sans Vue, au lieu d'un composant.
+dessinées dans la couche d'accessoires, pure et sans framework, au lieu d'un composant.
 
-## Se servir de l'objet (revue du 30/10/2026)
+## Se servir de l'objet (bilan du 30/10/2026)
 
 Objectifs : l'avatar doit avoir l'air d'utiliser l'objet, et les accessoires doivent etre proches du corps. Pour les neuf
 objets : une seule ligne de temps pilote l'objet, les mains et le geste ; `regard(x, y)` vise le
@@ -66,7 +66,7 @@ regard ou un clin d'œil les déplacent donc avec le corps, sans réglage.
 
 - Une seule description (`partiesPorte`, en unités du moteur) sert la 3D (Soft, Flat, Pixel : les
   teintes passent par le matériau du corps). Les sorties SVG (`porteSvg`) et cases de grille
-  (`pixellisePrims`) sont LEGACY, coupées par `PORTE_2D = false` dans `MochiBot.vue` et non disponibles ; volumes
+  (`pixellisePrims`) sont LEGACY, coupées par `PORTE_2D = false` dans `mochi-bot.ts` et non disponibles ; volumes
   pour la vraie 3D (`ui/trois/porte3d.ts`, enfants du maillage donc tournés avec lui).
 - Les lunettes sont une vraie monture 3D en tube épais, posée DEVANT les yeux 3D (toujours de face) avec un
   écart ; leurs branches rentrent dans la tête, d'où elles ressortent à la hauteur des côtés. Une ombre

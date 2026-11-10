@@ -40,20 +40,40 @@ export function accessoiresEnCode(sel: Selection): string {
   return l.length ? `{ ${l.join(', ')} }` : ''
 }
 
-/** L'extrait de code montre par la section « Make it yours » : un composant Vue, seulement ce qui differe des valeurs par defaut. */
-export function extraitCode(o: OptionsExtrait): string {
-  const l = [`    shape="${o.forme}"`, `    color="${o.couleur}"`]
-  if (o.rendu !== '3d') l.push(`    rendu="${o.rendu}"`)
-  if (o.contour) {
-    l.push('    contour')
-    if (o.epaisseur !== undefined && Math.abs(o.epaisseur - 1) > 1e-6) l.push(`    :epaisseur-contour="${Number(o.epaisseur.toFixed(2))}"`)
+/** Meme selection en JSON, pour l'attribut `accessoires` de `<mochi-bot>` (seulement ce qui change du catalogue). */
+export function accessoiresEnJson(sel: Selection): string {
+  const o: Record<string, string | { id: string; c1?: string; c2?: string }> = {}
+  for (const e of EMPLACEMENTS) {
+    const c = sel[e]
+    if (!c) continue
+    const id = typeof c === 'string' ? c : c.id
+    const def = PAR_ID.get(`${e}:${id}`)
+    const x: { c1?: string; c2?: string } = typeof c === 'string' ? {} : c
+    const piece: { id: string; c1?: string; c2?: string } = { id }
+    if (x.c1 && x.c1 !== def?.c1) piece.c1 = x.c1
+    if (x.c2 && x.c2 !== def?.c2) piece.c2 = x.c2
+    o[e] = piece.c1 || piece.c2 ? piece : id
   }
-  if (o.rendu === '3d' && o.reflet === false) l.push('    :reflet="false"')
-  l.push(`    mood="${o.mood}"`)
-  if (o.mood === 'travaille' && !o.ordinateur) l.push('    :ordinateur="false"')
-  const acc = accessoiresEnCode(o.accessoires)
-  if (acc) l.push(`    :accessoires="${acc}"`)
-  if (o.theme !== 'auto') l.push(`    theme="${o.theme}"`)
-  l.push(`    :size="${o.taille ?? 260}"`)
-  return `<script setup lang="ts">\nimport MochiBot from './components/MochiBot.vue'\n<\/script>\n\n<template>\n  <MochiBot\n${l.join('\n')}\n  />\n</template>`
+  return Object.keys(o).length ? JSON.stringify(o) : ''
+}
+
+/**
+ * L'extrait de code montre par la section « Make it yours » : la balise `<mochi-bot>` en HTML (valable telle quelle
+ * dans n'importe quel framework), seulement ce qui differe des valeurs par defaut.
+ */
+export function extraitCode(o: OptionsExtrait): string {
+  const l = [`  shape="${o.forme}"`, `  color="${o.couleur}"`]
+  if (o.rendu !== '3d') l.push(`  rendu="${o.rendu}"`)
+  if (o.contour) {
+    l.push('  contour')
+    if (o.epaisseur !== undefined && Math.abs(o.epaisseur - 1) > 1e-6) l.push(`  epaisseur-contour="${Number(o.epaisseur.toFixed(2))}"`)
+  }
+  if (o.rendu === '3d' && o.reflet === false) l.push('  reflet="false"')
+  l.push(`  mood="${o.mood}"`)
+  if (o.mood === 'travaille' && !o.ordinateur) l.push('  ordinateur="false"')
+  const acc = accessoiresEnJson(o.accessoires)
+  if (acc) l.push(`  accessoires='${acc}'`)
+  if (o.theme !== 'auto') l.push(`  theme="${o.theme}"`)
+  l.push(`  size="${o.taille ?? 260}"`)
+  return `<mochi-bot\n${l.join('\n')}\n></mochi-bot>`
 }

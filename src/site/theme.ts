@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch } from '@/ui/dom/reactif'
 import { themeCourant } from '@/ui/trois/themeCourant'
 
 /**

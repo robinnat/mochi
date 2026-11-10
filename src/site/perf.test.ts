@@ -30,21 +30,21 @@ describe('performance de la 3D (v12)', () => {
   it('les shaders des trois styles sont compiles a l avance, apres la premiere image', () => {
     expect(scene).toContain('export function prechauffer()')
     expect(lire('./pret.ts')).toContain('m.prechauffer()')
-    expect(lire('./Vivant.vue')).toContain('prechaufferStyles()')
+    expect(lire('./Vivant.ts')).toContain('prechaufferStyles()')
   })
 
   it('un Mochi vivant se tourne au doigt, et le defilement vertical reste a la page', () => {
-    const v = lire('./Vivant.vue')
-    expect(v).toContain(':yaw="yaw + spin"')
+    const v = lire('./Vivant.ts')
+    expect(v).toContain('yaw: (props.yaw ?? 0) + spin.value')
     expect(v).toContain('setPointerCapture')
-    expect(v).toContain('@pointerdown="onDown"')
+    expect(v).toContain('onPointerdown: onDown')
     expect(lire('./site.css')).toMatch(/\.vivant\.tournable \{\s*touch-action: pan-y;/)
   })
 
   it('personnalisation : le bouton change tout de suite, le Mochi recoit le changement a l image suivante', () => {
-    const p = lire('./PersoCorps.vue')
+    const p = lire('./PersoCorps.ts')
     expect(p).toContain('const bot = shallowRef(etatBot())')
-    expect(p).toContain(':rendu="bot.rendu"')
-    expect(p).toContain(':shape="bot.forme"')
+    expect(p).toContain('rendu: b.rendu')
+    expect(p).toContain('shape: b.forme')
   })
 })

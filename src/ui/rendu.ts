@@ -2,7 +2,7 @@
  * Style de RENDU du bot : original, pixel art, ou 3D douce (argile, bulle).
  *
  * Seul le dessin change. Le moteur (`src/bot/`), ses cinq etats et toutes ses
- * mesures restent identiques : `engine.sample(t)` rend la meme image, c'est `MochiBot.vue`
+ * mesures restent identiques : `engine.sample(t)` rend la meme image, c'est `mochi-bot.ts`
  * qui la peint autrement. D'ou ce module dans `src/ui/` et pas dans `src/bot/`.
  *
  * Le catalogue ne porte que des ids, comme les formes et les couleurs : les libelles sont
@@ -10,7 +10,7 @@
  * chacun a sa traduction dans les trois langues.
  */
 
-import { ref } from 'vue'
+import { ref } from '@/ui/dom/reactif'
 import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
 import { mixHex } from '@/bot/skins'
 

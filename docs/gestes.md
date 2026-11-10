@@ -52,8 +52,8 @@ L'application choisit l'activité de chaque rôle.
 
 ## Moteur seul pour une autre page
 
-`tools/moteur.ts` exporte le moteur, les teintes 3D et les gestes, sans Vue :
+`tools/moteur.ts` exporte le moteur, les teintes 3D et les gestes, sans framework :
 
-    npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify --alias:vue=./tools/vue-stub.ts --outfile=mochi-engine.js
+    npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify --outfile=mochi-engine.js
 
 Recopier l'en-tête MIT de `LICENSE` en tête du fichier produit.

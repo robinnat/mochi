@@ -30,7 +30,7 @@ export const PITCH_MAX = 13
 export const PITCH = 10
 
 /**
- * Direction ou la tete se pose dans la vue des reglages : le bot cesse de regarder en haut a
+ * Direction ou la tete se pose dans l'onglet des reglages : le bot cesse de regarder en haut a
  * droite (sa pose de repos) pour regarder a GAUCHE, du cote du panneau.
  *
  * Ce n'est pas un miroir de l'image : les yeux font vraiment le tour de la
@@ -120,7 +120,7 @@ export type GazeScript = (t: number) => Look
  *
  * Corollaire indispensable : ce tour ne se joue que sur un CERCLE. Les yeux sont
  * recolles au contour reel (`radiusAtAngle`), donc sur une forme non circulaire
- * ils suivent le profil en tournant et sautillent. Voir `forme` dans `App.vue`.
+ * ils suivent le profil en tournant et sautillent. Voir `forme` dans `App.ts`.
  */
 export const TOUR_TIME = 1.5
 

@@ -1,10 +1,9 @@
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
-import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [vue(), tailwindcss()],
+  plugins: [tailwindcss()],
   // Le port est fixe : c'est celui que le README annonce, il doit donc valoir pour
   // un `pnpm dev` nu.
   server: { port: 5190 },

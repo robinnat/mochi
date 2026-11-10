@@ -10,8 +10,8 @@
  * forme porte son `fill` en hex.
  */
 
-import { createApp, h, nextTick, ref } from 'vue'
-import MochiBot from '@/components/MochiBot.vue'
+import { nextTick } from '@/ui/dom/reactif'
+import { MochiBotElement } from '@/components/mochi-bot'
 import type { Block } from '@/bot/cycles'
 import {
   gifAnime,
@@ -186,7 +186,7 @@ export async function cycleVersMp4(
  * Exporte le cycle en GIF.
  *
  * DEUX passes sur la sequence, et c'est pour la memoire : un GIF a besoin d'une
- * palette commune a toutes les images, donc de les avoir toutes vues avant d'en
+ * palette commune a toutes les images, donc de les avoir toutes recensees avant d'en
  * encoder une seule. Les garder en pixels bruts couterait 255 Mo sur un cycle de
  * trente secondes. La premiere passe ne retient que les couleurs, la seconde
  * encode — le rendu est deterministe, donc rejouer la sequence redonne exactement
@@ -214,7 +214,7 @@ export async function cycleVersGif(
   // Un seul canvas et un seul lecteur pour les deux passes : le canvas est reinitialise a
   // chaque image, et le lecteur sait rembobiner.
   const canvas = document.createElement('canvas')
-  const vue = viewBoxExport(DEMI_ECRAN)
+  const boite = viewBoxExport(DEMI_ECRAN)
   const lecteur = await ouvreCycle(reglages, blocs, taille, fond ?? undefined)
 
   /** Une passe complete sur la sequence. */
@@ -224,7 +224,7 @@ export async function cycleVersGif(
       // images, et l'abandon ne doit pas attendre la fin d'une passe
       arrete(signal)
       const svg = await lecteur.rendre(i * pas)
-      const ctx = await dessine(svgAutonome(svg, taille, vue), taille, canvas, fond)
+      const ctx = await dessine(svgAutonome(svg, taille, boite), taille, canvas, fond)
       lis(i, ctx.getImageData(0, 0, taille, taille).data)
     }
   }
@@ -287,22 +287,18 @@ export async function sequenceDuBot<T>(
   paper?: string
 ): Promise<T[]> {
   const hote = document.createElement('div')
-  // hors du flux et hors de vue, mais RENDU : un `display:none` ne donnerait pas
+  // hors du flux et hors de l'ecran, mais RENDU : un `display:none` ne donnerait pas
   // de SVG a serialiser.
   hote.style.cssText = 'position:fixed;left:-99999px;top:0;width:0;height:0;overflow:hidden'
   document.body.appendChild(hote)
 
-  const date = ref(0)
-  const app = createApp({
-    render: () =>
-      h(MochiBot, { ...reglages, size: taille, frozenAt: date.value, ...(paper ? { paper } : {}) })
-  })
-  app.mount(hote)
+  const bot = creerBot({ ...reglages, size: taille, frozenAt: 0, ...(paper ? { paper } : {}) })
+  hote.appendChild(bot)
 
   try {
     const out: T[] = []
     for (let i = 0; i < nombre; i++) {
-      date.value = i * pas
+      bot.frozenAt = i * pas
       await nextTick()
       const svg = hote.querySelector('svg')
       if (!svg) throw new Error('bot hors ecran non rendu')
@@ -310,9 +306,16 @@ export async function sequenceDuBot<T>(
     }
     return out
   } finally {
-    app.unmount()
+    bot.remove()
     hote.remove()
   }
+}
+
+/** Un `<mochi-bot>` avec ses options posees en proprietes, pas encore dans la page. */
+export function creerBot(options: Record<string, unknown>): MochiBotElement {
+  const bot = document.createElement('mochi-bot') as MochiBotElement
+  Object.assign(bot, options)
+  return bot
 }
 
 /**
@@ -325,7 +328,7 @@ export async function sequenceDuBot<T>(
  * Le rendu passe par `rendAt` et non par `frozenAt` : seul `rendAt` parcourt les
  * blocs en datant chaque changement d'etat a son offset absolu, ce qui donne les
  * memes fondus aux jointures que la lecture temps reel. Voir sa doc dans
- * `MochiBot.vue`.
+ * `components/mochi-bot.ts`.
  */
 export interface LecteurHorsEcran {
   /** Rend l'instant `t` du cycle et renvoie le SVG a lire. */
@@ -343,48 +346,38 @@ export async function ouvreCycle(
   hote.style.cssText = 'position:fixed;left:-99999px;top:0;width:0;height:0;overflow:hidden'
   document.body.appendChild(hote)
 
-  const bot = ref<{ rendAt: (t: number) => void } | null>(null)
-  const app = createApp({
-    render: () =>
-      h(MochiBot, {
-        ...reglages,
-        size: taille,
-        cycle: blocs,
-        /*
-         * Le moteur se construit sur l'etat qu'on lui donne, et l'image 0 doit
-         * etre le PREMIER etat du montage. Sans cette prop le modele prenait son
-         * defaut `idle` : un montage commencant par le sommeil s'ouvrait sur une
-         * boule au repos qui morphait vers la petite boule pendant 0,5 s. C'est la
-         * meme precaution qu'a l'ecran, ou `state` est amorce sur le bloc courant
-         * « pour ne pas entrer en morphant depuis un etat qui n'a jamais ete
-         * affiche » (cf. `App.vue`).
-         */
-        state: blocs[0]?.state ?? 'idle',
-        frozenAt: 0,
-        ref: bot,
-        ...(paper ? { paper } : {})
-      })
+  /*
+   * `state` : le moteur se construit sur l'etat qu'on lui donne, et l'image 0 doit etre le PREMIER etat du
+   * montage, sans morph depuis un repos jamais affiche.
+   */
+  const bot = creerBot({
+    ...reglages,
+    size: taille,
+    cycle: blocs,
+    state: blocs[0]?.state ?? 'idle',
+    frozenAt: 0,
+    ...(paper ? { paper } : {})
   })
-  app.mount(hote)
+  hote.appendChild(bot)
   await nextTick()
 
   const svg = hote.querySelector('svg')
-  if (!svg || !bot.value) {
-    app.unmount()
+  const fermer = () => {
+    bot.remove()
     hote.remove()
+  }
+  if (!svg) {
+    fermer()
     throw new Error('bot hors ecran non rendu')
   }
 
   return {
     rendre: async (t: number) => {
-      bot.value!.rendAt(t)
+      bot.rendAt(t)
       await nextTick()
       return svg
     },
-    ferme: () => {
-      app.unmount()
-      hote.remove()
-    }
+    ferme: fermer
   }
 }
 

@@ -44,7 +44,7 @@ function texte(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, t
 
 function planche() {
   const cell = 230
-  const vues = [
+  const angles = [
     { nom: 'face', yaw: 0, sel: {} as Selection },
     { nom: '3/4', yaw: 0.6, sel: {} as Selection },
     { nom: 'face, casquette', yaw: 0, sel: { tete: 'casquette' } as Selection },
@@ -60,7 +60,7 @@ function planche() {
     { nom: 'dort', mood: 'dort', t: 1.4 },
     { nom: 'travaille', mood: 'travaille', t: 0.55 }
   ]
-  const cols = vues.length
+  const cols = angles.length
   const lignes = STYLES.length * 2
   const c = document.createElement('canvas')
   c.width = cols * cell
@@ -73,7 +73,7 @@ function planche() {
   STYLES.forEach((s, si) => {
     const y1 = 90 + si * 2 * (cell + 36)
     texte(ctx, s.nom, 30, y1 + 22, 24, ENCRE, true)
-    vues.forEach((v, i) => {
+    angles.forEach((v, i) => {
       cellule(ctx, i * cell, y1 + 30, cell, { rendu: s.rendu, couleur: couleurs[si]!, sel: v.sel, yaw: v.yaw })
       texte(ctx, v.nom, i * cell + cell / 2, y1 + 30 + cell + 4, 16, GRIS, false, 'center')
     })

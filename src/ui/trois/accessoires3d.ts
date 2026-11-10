@@ -2,7 +2,7 @@
  * Accessoires 3D par emplacements (voir `bot/emplacements.ts`) : chaque piece est un vrai volume
  * (spheres, tubes, tores, revolutions, extrusions a biseau) enfant du maillage du corps. Elles
  * tournent donc avec lui et portent le MEME ombrage de matiere que le corps (`lisere.ts` : AO,
- * lueur bas-droite, lueur haut-gauche, repere de la vue). Matieres mates, aucune lumiere propre.
+ * lueur bas-droite, lueur haut-gauche, repere de la camera). Matieres mates, aucune lumiere propre.
  *
  * Ancrage : `ancres.ts` tire des rayons sur le volume du corps de cette image. Une coiffe s'assoit
  * ou la coupe du corps est assez large, une monture se pose contre la face avant aux yeux,
@@ -1359,7 +1359,7 @@ interface MesuresOrdi {
 
 function mesurerOrdi(R: Reperes, sol: number): MesuresOrdi {
   const { A, hw, H } = R
-  // pose en bas a DROITE du corps (a droite de l'image vue de face), tourne vers le Mochi : le visage reste libre
+  // pose en bas a DROITE du corps (a droite de l'image vu de face), tourne vers le Mochi : le visage reste libre
   const x = 0.5 * hw
   // un peu plus grand que le premier essai ; l'ecran reste sous le haut des yeux
   const haut = R.yYeux - 1.6 * R.rVerre

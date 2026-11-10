@@ -2,8 +2,8 @@
 
 The Personnaliser view's export bar. `src/ui/export.ts` is pure and tested (frame,
 catalogue, filename); `src/ui/capture.ts` is the DOM layer (canvas, clipboard);
-`src/components/ExportBar.vue` is presentational and only emits a format, like
-`Customizer.vue`. Everything still images is dependency-free: `XMLSerializer` and a canvas
+`src/components/ExportBar.ts` is presentational and only emits a format, like
+`Customizer.ts`. Everything still images is dependency-free: `XMLSerializer` and a canvas
 are enough. Only the **cycle video** pulls a library, and only on demand (see below).
 
 ## Nothing is reserved for the bar, and nothing should be
@@ -42,7 +42,7 @@ start state present on screen there would be nothing to interpolate from.
 
 ## It only animates on arrival, never on a view change
 
-The one reveal is after the intro, delayed in `App.vue` (400 ms) so the avatar reaches
+The one reveal is after the intro, delayed in `App.ts` (400 ms) so the avatar reaches
 its place first. Switching views does **not** fade it in: it is pinned to the window,
 so it is born already in position, and an element that doesn't move has no business
 announcing itself. That is the montage bar's rule too: it doesn't animate between the
@@ -64,7 +64,7 @@ eyes, the rest antialiasing.
 
 ## The eyes export OPAQUE, in `paper`, and that's a win
 
-A paper-coloured `<path>` sits under the body (`MochiBot.vue`), so the exported image
+A paper-coloured `<path>` sits under the body (`mochi-bot.ts`), so the exported image
 keeps light eyes on a dark background: real holes would make them disappear there.
 Don't "fix" this into transparency.
 
@@ -131,7 +131,7 @@ reason to exist. Everywhere else the animated SVG is better on every axis.
 ball's antialiased rim has to be thresholded at 50 %, which comes out as a staircase. A solid
 background smooths that rim back out because it has something to blend into, at the cost of
 baking the colour in. Neither choice wins everywhere, so a dialog offers both, white first
-(`GifDialog.vue`, native radios so the browser gives grouping and arrow keys). Exporting at
+(`GifDialog.ts`, native radios so the browser gives grouping and arrow keys). Exporting at
 320 px while an avatar displays at 40-128 px softens the transparent edge further, since the
 browser's downscale re-smooths it.
 

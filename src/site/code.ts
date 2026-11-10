@@ -1,7 +1,7 @@
 /**
- * Coloration syntaxique minimale des exemples du site (Vue, HTML, TypeScript, shell), en une seule passe
+ * Coloration syntaxique minimale des exemples du site (HTML, TypeScript, shell), en une seule passe
  * d'expression reguliere : commentaires, chaines, balises, attributs, mots-cles, nombres. Le texte est
- * TOUJOURS echappe avant d'etre enveloppe, le resultat peut donc aller dans `v-html` sans risque.
+ * TOUJOURS echappe avant d'etre enveloppe, le resultat peut donc aller dans `innerHTML` sans risque.
  */
 
 const echapper = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')

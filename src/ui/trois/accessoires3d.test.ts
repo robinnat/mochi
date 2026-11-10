@@ -711,8 +711,8 @@ describe('changement de forme du personnalisateur (09/11/2026)', () => {
     neuf.liberer()
   })
 
-  it('MochiBot invalide la pose des accessoires apres le morph quand la forme change', () => {
-    const src = readFileSync(new URL('../../components/MochiBot.vue', import.meta.url), 'utf8')
+  it('<mochi-bot> invalide la pose des accessoires apres le morph quand la forme change', () => {
+    const src = readFileSync(new URL('../../components/mochi-bot.ts', import.meta.url), 'utf8')
     expect(src).toContain('invaliderAccessoires3d()')
     expect(src).toMatch(/watch\(\s*\(\) => props\.shape/)
     expect(src).toContain('BotEngine.SHAPE_MORPH')

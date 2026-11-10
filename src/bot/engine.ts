@@ -71,7 +71,7 @@ export interface BotFrame {
  * le bot aurait l'air de chercher le curseur sans jamais le tenir. Mais quand il
  * n'y a PAS de pointeur (arrivee au clavier, au tactile, ou souris sortie de la
  * fenetre), la tete doit rester tournee ET continuer de vivre. Les confondre
- * figeait le regard des que la vue s'ouvrait.
+ * figeait le regard des que l'onglet s'ouvrait.
  *
  * `spin` est un tour a parcourir EN CHEMIN, en degres, qu'on fait fondre vers 0
  * avec l'arrivee. Comme les yeux vivent sur une sphere, un tour les fait passer

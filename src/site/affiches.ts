@@ -15,7 +15,7 @@ import { STYLES_SITE } from './style'
 
 export type ThemeSite = 'light' | 'dark'
 
-/** Props d'un Mochi du site (sous-ensemble de celles de `MochiBot`). */
+/** Props d'un Mochi du site (sous-ensemble de celles de `<mochi-bot>`). */
 export interface PropsMochi {
   shape: string
   color: string
@@ -56,7 +56,7 @@ export const BENTO_THEME: PropsMochi = { shape: 'etoile', color: '#ffd60a', rend
 /**
  * Carte « accessoires » : une liste FIXE et soignee de variantes (corps, couleurs d'accessoires, une piece par
  * emplacement), une image pre-rendue par variante (`defile-NN`). Chaque accessoire du catalogue y figure au moins
- * une fois (teste). Les variantes avec une piece du dos sont vues de trois quarts arriere (pas de lunettes alors).
+ * une fois (teste). Les variantes avec une piece du dos sont vus de trois quarts arriere (pas de lunettes alors).
  */
 export interface Variante {
   forme: string

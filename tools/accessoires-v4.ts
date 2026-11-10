@@ -165,15 +165,15 @@ function planCouleurs() {
   return c
 }
 
-/** Vues : face, 3/4, profil, dos pour le noeud papillon, la queue, la cape et la cravate. */
-function planVues() {
+/** Angles : face, 3/4, profil, dos pour le noeud papillon, la queue, la cape et la cravate. */
+function planAngles() {
   const lignes: Array<{ nom: string; sel: Selection; forme: string; couleur: string; cadre: number }> = [
     { nom: 'Nœud papillon', sel: { bas: 'papillon' }, forme: 'cercle', couleur: hexDe('ambre'), cadre: 170 },
     { nom: 'Queue', sel: { dos: 'queue' }, forme: 'squircle', couleur: hexDe('turquoise'), cadre: 235 },
     { nom: 'Cape', sel: { dos: 'cape' }, forme: 'oeuf', couleur: hexDe('bleu'), cadre: 235 },
     { nom: 'Cravate', sel: { bas: 'cravate' }, forme: 'squircle', couleur: hexDe('orange'), cadre: 185 }
   ]
-  const vues = [
+  const angles = [
     { yaw: 0, nom: 'face' },
     { yaw: 0.62, nom: '3/4' },
     { yaw: 1.5708, nom: 'profil' },
@@ -182,12 +182,12 @@ function planVues() {
   const cell = W / 4
   const ligne = cell + 70
   const { c, ctx } = nouvelle(W, 150 + lignes.length * ligne + 20)
-  texte(ctx, 'Vues : face, 3/4, profil, dos', 40, 78, 52, ENCRE, true)
+  texte(ctx, 'Angles : face, 3/4, profil, dos', 40, 78, 52, ENCRE, true)
   texte(ctx, 'Le corps tourne, la lumière reste en haut à gauche', 40, 122, 26, GRIS)
   lignes.forEach((t, i) => {
     const y0 = 150 + i * ligne
     texte(ctx, t.nom, 40, y0 + 30, 32, ENCRE, true)
-    vues.forEach((v, k) => {
+    angles.forEach((v, k) => {
       cellule(ctx, k * cell, y0 + 34, cell, { forme: t.forme, couleur: t.couleur, sel: t.sel, yaw: v.yaw, cadre: t.cadre })
       texte(ctx, v.nom, k * cell + cell / 2, y0 + ligne - 8, 20, GRIS, false, 'center')
     })
@@ -272,7 +272,7 @@ async function main() {
   const faire: Array<[string, () => HTMLCanvasElement | Promise<HTMLCanvasElement>]> = [
     ['catalogue', planCatalogue],
     ['couleurs', planCouleurs],
-    ['vues', planVues],
+    ['angles', planAngles],
     ['alfred', planAlfred],
     ['combos', planCombos]
   ]

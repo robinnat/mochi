@@ -16,7 +16,7 @@
  * Style 3D argile mat : degrades doux, liseres clairs discrets, ombre portee floue ; aucun
  * reflet brillant. `simple: true` retire les details fins pour les tres petites tailles.
  *
- * Revue d'usage (30/10/2026) : l'avatar doit avoir l'air d'utiliser l'objet, et les accessoires
+ * Bilan d'usage (30/10/2026) : l'avatar doit avoir l'air d'utiliser l'objet, et les accessoires
  * doivent etre proches du corps. Pour chaque objet, une seule ligne de temps pilote l'objet, les
  * mains et le geste : les yeux visent le point d'action (`regard`), un poing de la couleur du
  * corps TIENT l'outil et une paume tient le support, l'objet est colle au corps et le chevauche

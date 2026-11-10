@@ -1,4 +1,5 @@
-import { onBeforeUnmount, onMounted, ref, type Directive, type Ref } from 'vue'
+import { ref, type Ref } from '@/ui/dom/reactif'
+import { surDemontage as onBeforeUnmount, surMontage as onMounted } from '@/ui/dom/h'
 
 /**
  * Mouvements du site, sans bibliotheque : tout passe par `transform` et `opacity` (composites, 60 i/s),
@@ -27,22 +28,27 @@ function observateur(): IntersectionObserver | null {
 }
 
 /**
- * `v-reveal` : l'element apparait en glissant vers le haut quand il entre a l'ecran, une seule fois.
- * La valeur (facultative) est son rang dans un groupe : le decalage en cascade se lit dans `--i`.
+ * `reveal(rang)` : a poser en `ref` d'un element. L'element apparait en glissant vers le haut quand il entre a
+ * l'ecran, une seule fois. Le rang (facultatif) est sa place dans un groupe : le decalage en cascade se lit dans `--i`.
  */
-export const vReveal: Directive<HTMLElement, number | undefined> = {
-  mounted(el, b) {
-    el.classList.add('rv')
-    if (b.value !== undefined) el.style.setProperty('--i', String(b.value))
+export function reveal(rang?: number): (el: Element | null) => void {
+  return (el) => {
+    // retrait : rien a faire (l'observateur lache l'element des qu'il est apparu)
+    if (!el) return
+    const e = el as HTMLElement & { __rv?: boolean; __garder?: string[] }
+    // deja pris en charge (un nouveau dessin redonne une nouvelle fonction pour le meme element)
+    if (e.__rv) return
+    e.__rv = true
+    // ces classes survivent a un changement de `class` par le dessin
+    e.__garder = ['rv', 'in']
+    e.classList.add('rv')
+    if (rang !== undefined) e.style.setProperty('--i', String(rang))
     const o = observateur()
     if (!o || mouvementReduit()) {
-      el.classList.add('in')
+      e.classList.add('in')
       return
     }
-    o.observe(el)
-  },
-  beforeUnmount(el) {
-    obs?.unobserve(el)
+    o.observe(e)
   }
 }
 

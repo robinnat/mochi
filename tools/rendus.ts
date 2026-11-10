@@ -3,8 +3,7 @@
  * Chaque Mochi est monte fige a son instant, on attend sa premiere image 3D (`pret`), puis on lit son canvas en webp.
  * Les pieces d'accessoires passent par `rendreVignette` (piece seule, cadree), comme dans l'ancien site.
  */
-import { createApp, h } from 'vue'
-import MochiBot from '../src/components/MochiBot.vue'
+import { creerBot } from '../src/ui/capture'
 import { themeCourant } from '../src/ui/trois/themeCourant'
 import { AFFICHES, PIECES, TAILLE_PIECE, urlAffiche, urlPiece, type ThemeSite } from '../src/site/affiches'
 import { itemPiece } from '../src/site/bandes'
@@ -18,39 +17,35 @@ function rendreUn(props: Record<string, unknown>, taille: number): Promise<strin
     const hote = document.createElement('div')
     document.getElementById('scene')!.appendChild(hote)
     const minuteur = setTimeout(() => ko(new Error('pas de 3D')), 15000)
-    const app = createApp({
-      render: () =>
-        h(MochiBot, {
-          ...props,
-          size: taille,
-          interactions: false,
-          label: '',
-          onPret: () => {
-            // une image de plus : la premiere peut partir avant que tous les watchers aient pose leurs valeurs
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() => {
-                clearTimeout(minuteur)
-                const cv = hote.querySelector('canvas[data-vraie3d]') as HTMLCanvasElement
-                // Pixel : le canvas est la petite grille ; on l'agrandit sans lissage, comme l'affiche le composant
-                const cote = taille * 2
-                let source = cv
-                if (cv.width < cote) {
-                  source = document.createElement('canvas')
-                  source.width = source.height = cote
-                  const c = source.getContext('2d')!
-                  c.imageSmoothingEnabled = false
-                  c.drawImage(cv, 0, 0, cote, cote)
-                }
-                const data = source.toDataURL('image/webp', QUALITE)
-                app.unmount()
-                hote.remove()
-                ok(data)
-              })
-            )
-          }
-        })
-    })
-    app.mount(hote)
+    const bot = creerBot({ ...props, size: taille, interactions: false, label: '' })
+    bot.addEventListener(
+      'pret',
+      () => {
+        // une image de plus : la premiere peut partir avant que tous les observateurs aient pose leurs valeurs
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            clearTimeout(minuteur)
+            const cv = hote.querySelector('canvas[data-vraie3d]') as HTMLCanvasElement
+            // Pixel : le canvas est la petite grille ; on l'agrandit sans lissage, comme l'affiche le composant
+            const cote = taille * 2
+            let source = cv
+            if (cv.width < cote) {
+              source = document.createElement('canvas')
+              source.width = source.height = cote
+              const c = source.getContext('2d')!
+              c.imageSmoothingEnabled = false
+              c.drawImage(cv, 0, 0, cote, cote)
+            }
+            const data = source.toDataURL('image/webp', QUALITE)
+            bot.remove()
+            hote.remove()
+            ok(data)
+          })
+        )
+      },
+      { once: true }
+    )
+    hote.appendChild(bot)
   })
 }
 

@@ -1,6 +1,6 @@
 /**
  * Locale de reference. Les deux autres sont typees `typeof fr`, donc c'est ce
- * fichier qui definit le contrat : y ajouter une cle fait echouer `vue-tsc` sur
+ * fichier qui definit le contrat : y ajouter une cle fait echouer `tsc` sur
  * `en.ts` et `zh.ts` jusqu'a ce qu'elles soient traduites.
  *
  * Surtout PAS de `as const` : chaque valeur deviendrait son propre type
@@ -15,7 +15,7 @@ export default {
   app: {
     /**
      * Nom du produit. En minuscules dans les trois langues, ce n'est pas une
-     * coquille : les capitales de `NOM` (App.vue) sont un logotype, pas le nom.
+     * coquille : les capitales de `NOM` (App.ts) sont un logotype, pas le nom.
      * Un nom propre ne se traduit pas non plus. `title` sert de `document.title`.
      * Voir aussi le <title> de index.html, qui est statique.
      */
@@ -39,7 +39,7 @@ export default {
     /**
      * Au SINGULIER, comme les trois autres : un titre de grille nomme ce qu'un
      * clic pose, pas le nombre de vignettes proposees. Le pluriel reste au rail,
-     * qui nomme la vue et non le choix (`rail.animations`).
+     * qui nomme l'onglet et non le choix (`rail.animations`).
      */
     animations: 'Animation',
     shape: 'Forme',
@@ -51,7 +51,7 @@ export default {
   },
 
   /**
-   * Barre d'export de la vue Personnaliser. Les libelles du menu sont des
+   * Barre d'export de l'onglet Personnaliser. Les libelles du menu sont des
    * ACTIONS et pas des noms de format : « Télécharger le PNG » se comprend sans
    * savoir ce qu'est un PNG, « PNG · 1024 px » demande de trancher une question
    * qui n'est pas celle de l'utilisateur.

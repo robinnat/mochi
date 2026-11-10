@@ -1,13 +1,13 @@
 /**
  * Donnees des bandes d'accessoires du site : une bande par emplacement du paquet (tete, yeux, visage, bas, dos),
  * remplie des PIECES SEULES (sans corps), dans beaucoup de variantes de couleurs. Tout est DETERMINISTE : memes
- * bandes a chaque visite, et testable sans navigateur. Aucun rendu ici : `vignettes.ts` dessine, `Habillage.vue` affiche.
+ * bandes a chaque visite, et testable sans navigateur. Aucun rendu ici : `vignettes.ts` dessine, `Habillage.ts` affiche.
  */
 import { EMPLACEMENTS, type Emplacement } from '@/bot/emplacements'
 import { ACCESSOIRES_SITE, PALETTE_SITE } from './catalog'
 
 export interface ItemBande {
-  /** identifiant stable (cle Vue) */
+  /** identifiant stable (cle de liste) */
   cle: string
   emplacement: Emplacement
   accessoire: string
@@ -38,7 +38,7 @@ export const BANDES: DefBande[] = [
   { emplacement: 'dos', titre: 'Back', texte: 'A backpack and a cape, seen from behind', sens: 'gauche', duree: 68 }
 ]
 
-/** Angle de vue par emplacement : trois quarts (le signe alterne d'une piece a l'autre) ; visage presque de face ; dos de trois quarts arriere. */
+/** Angle par emplacement : trois quarts (le signe alterne d'une piece a l'autre) ; visage presque de face ; dos de trois quarts arriere. */
 const YAW: Record<Emplacement, number> = { tete: 0.55, yeux: 0.24, visage: 0.2, bas: 0.5, dos: Math.PI - 0.6 }
 
 /** Pas du cycle de couleurs (14), choisi pour que le cycle ne se referme pas trop vite, donc toute la palette est parcourue sans repetition proche. */
@@ -93,7 +93,7 @@ export function itemsBande(emplacement: Emplacement, n = 24): ItemBande[] {
 }
 
 /**
- * Une piece seule, dans les couleurs du catalogue, vue de trois quarts : c'est l'icone d'un accessoire dans le
+ * Une piece seule, dans les couleurs du catalogue, vu de trois quarts : c'est l'icone d'un accessoire dans le
  * selecteur de « Make it yours » (rendue par `vignettes.ts`, comme les anciennes bandes).
  */
 export function itemPiece(emplacement: Emplacement, id: string): ItemBande | null {

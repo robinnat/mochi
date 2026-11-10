@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref } from '@/ui/dom/reactif'
 
 /**
  * La page est « prete » quand son chargement est fini et que le navigateur a un moment de libre : seulement alors

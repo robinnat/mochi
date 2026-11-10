@@ -256,7 +256,7 @@ function matrice(m: string): number[] {
   return (m.match(/-?[\d.]+(?:e-?\d+)?/g) ?? []).map(Number)
 }
 
-/** Peint une image du moteur comme le gabarit de `MochiBot.vue`, dans le meme ordre. */
+/** Peint une image du moteur comme le gabarit de `mochi-bot.ts`, dans le meme ordre. */
 function peins(
   ctx: CanvasRenderingContext2D,
   lay: CanvasRenderingContext2D,

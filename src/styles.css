@@ -17,13 +17,13 @@
 
   /**
    * Hauteur de la barre de montage. Elle est fixee en bas, donc c'est la scene
-   * qui lui reserve sa place — dans les DEUX vues, sinon l'avatar centre change
+   * qui lui reserve sa place — dans les DEUX onglets, sinon l'avatar centre change
    * de position en passant a la personnalisation.
    */
   --timeline: 236px;
 
   /**
-   * Duree et courbe du passage d'une vue a l'autre : le glissement de la scene et
+   * Duree et courbe du passage d'un onglet a l'autre : le glissement de la scene et
    * la croissance de la boule. Le tour du regard, lui, a sa propre duree
    * (`TURN_TIME` de `src/ui/gaze.ts`), volontairement un peu plus longue — les
    * yeux finissent de se poser apres que la boule a fini de grandir, ce qui fait
@@ -59,8 +59,8 @@ body,
 /*
  * La boule des reglages sort volontairement par la droite. Sans ce rognage, son
  * debordement deviendrait une zone defilable et la page partirait en largeur —
- * y compris pendant l'animation de RETOUR, ou la boule redescend alors que la
- * vue a deja change. D'ou un rognage permanent, et pas seulement sur cette vue.
+ * y compris pendant l'animation de RETOUR, ou la boule redescend alors que
+ * l'onglet a deja change. D'ou un rognage permanent, et pas seulement sur cet onglet.
  *
  * Sur `#app` et non sur `body` : l'`overflow` du corps est PROPAGE a la fenetre
  * quand la racine est en `visible`, donc l'y poser ne rogne rien du tout. `#app`
@@ -265,7 +265,7 @@ body,
 }
 
 /*
- * Deplacement de l'avatar d'une vue a l'autre.
+ * Deplacement de l'avatar d'un onglet a l'autre.
  *
  * La scene est une grille de trois colonnes : panneau gauche, avatar, panneau
  * droit. Une seule des deux colonnes de panneau a une largeur a la fois, et
@@ -307,16 +307,16 @@ body,
  *
  * C'est une TRANSITION et pas une animation, exactement comme `.panneau` — et
  * c'est ce qui la fait se taire quand il le faut. Une transition ne joue pas sur
- * le premier style calcule d'un element : au rechargement, ou en revenant de la
- * vue Animations, la barre nait deja visible et rien ne bouge. Une animation,
- * elle, rejouait a chaque montage, donc a chaque changement de vue.
+ * le premier style calcule d'un element : au rechargement, ou en revenant de
+ * l'onglet Animations, la barre nait deja visible et rien ne bouge. Une animation,
+ * elle, rejouait a chaque montage, donc a chaque changement d'onglet.
  *
  * D'ou aussi le fait que la barre soit montee PENDANT l'arrivee, juste masquee :
  * sans etat de depart present a l'ecran, il n'y aurait rien a interpoler.
  *
- * Le RETARD, lui, n'est pas ici mais dans `App.vue` (`RETARD_ARRIVEE`), et il ne
+ * Le RETARD, lui, n'est pas ici mais dans `App.ts` (`RETARD_ARRIVEE`), et il ne
  * sert QU'A la fin de l'arrivee : le temps que l'avatar rejoigne sa place. En
- * venant d'une autre vue il n'y a rien a attendre, la barre etant posee sur la
+ * venant d'un autre onglet il n'y a rien a attendre, la barre etant posee sur la
  * fenetre elle nait deja a sa place. En CSS il aurait fallu une valeur unique
  * pour les deux cas, donc fausse dans l'un des deux.
  *
@@ -398,7 +398,7 @@ body,
   /*
    * La boule dans les reglages : elle grandit jusqu'a sortir de l'ecran par la
    * droite, et descend assez pour degager le haut de la page : sans cet air
-   * au-dessus d'elle, la vue se lit comme une image tronquee et non comme un
+   * au-dessus d'elle, la page se lit comme une image tronquee et non comme un
    * cadrage.
    *
    * Un `transform` et pas la taille du SVG : la mise en page ne bouge pas, donc
@@ -475,7 +475,7 @@ body,
    * lui passer dessus.
    *
    * Rien n'est reserve ici : `--timeline` est deja soustrait de la hauteur de la
-   * colonne dans les deux vues, donc la bande du bas est libre et l'avatar ne
+   * colonne dans les deux onglets, donc la bande du bas est libre et l'avatar ne
    * bouge pas d'un pixel.
    */
   /*
@@ -489,7 +489,7 @@ body,
    *
    * `left`/`right` sont exactement les siens : la bande couvre la colonne de
    * l'avatar (4,5rem = marge + gouttiere ; 24,5rem = panneau + gouttiere + marge)
-   * et centre son contenu. La vue Personnaliser n'a qu'une seule disposition de
+   * et centre son contenu. L'onglet Personnaliser n'a qu'une seule disposition de
    * grille, donc cette position est constante.
    */
   .barre-export {
@@ -518,14 +518,14 @@ body,
  * La boule parait seule au centre d'une page vide, a peine plus grande que sa
  * taille de croisiere, prend le temps de s'installer, puis redescend a l'echelle 1
  * en glissant vers sa place. Le glissement, lui, n'est pas ici : il vient des
- * colonnes de `.scene--seule` qui se rouvrent, comme un changement de vue.
+ * colonnes de `.scene--seule` qui se rouvrent, comme un changement d'onglet.
  *
  * Les ecarts sont volontairement FAIBLES — 0,9 a l'apparition, 1,06 en attente —
  * la ou un surgissement ample (0,4 puis 1,22) se lisait comme un pop. La boule ne
  * doit pas jaillir : elle doit PARAITRE, et ce qu'on regarde ensuite est le tour
  * du regard puis le clignement qui pose l'interface, pas l'echelle.
  *
- * Ecrit en `@starting-style` plutot qu'en `@keyframes` : Vue monte toute la page
+ * Ecrit en `@starting-style` plutot qu'en `@keyframes` : la page est montee
  * en JavaScript, donc l'element est bel et bien INSERE, et une transition part
  * alors de l'etat declare ici. Meme mecanisme que le grand mot du pied de page,
  * et il a l'avantage de ne rien laisser tourner apres coup.

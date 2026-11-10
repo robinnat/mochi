@@ -18,10 +18,10 @@ mochi.setAccessoires({ tete: 'casquette', yeux: 'soleil', bas: 'papillon' })
 // ou avec des couleurs imposees : { tete: { id: 'casquette', c1: '#e8505b' } }
 ```
 
-Meme eclairage que le corps (ombrage en repere de vue, `lisere.ts`) en Soft ; Flat et Pixel reutilisent la matiere du
+Meme eclairage que le corps (ombrage en repere de la camera, `lisere.ts`) en Soft ; Flat et Pixel reutilisent la matiere du
 corps (pas de lueurs). Les ombres douces sur le corps passent par la meme texture que les anciens accessoires portes.
 
-Planches de propositions : `tools/accessoires-v1.html?planche=tete|yeux|visage|bas|dos|combos|vues|styles`.
+Planches de propositions : `tools/accessoires-v1.html?planche=tete|yeux|visage|bas|dos|combos|angles|styles`.
 
 Limites connues : les pieces sont reconstruites quand le contour change (tirs de rayons), donc pas encore adaptees a une
 animation fluide ; les « vieux » accessoires portes (`portes.ts`) restent inchanges et independants.

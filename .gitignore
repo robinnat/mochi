@@ -8,3 +8,4 @@ dist
 tasks/
 .vercel
 .env*
+dist-lib
