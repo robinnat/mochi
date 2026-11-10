@@ -4,14 +4,14 @@ import { BotEngine, load3d, COLOR_BY_ID, HALF_VIEWBOX, RADIUS, SHAPES } from 'mo
 import { sizeCell } from './width'
 
 /**
- * `#turn` : chaque forme sous quatre angles (face, trois quarts, profil, dos), pour juger le volume de tous les cotes.
- * `?f=squircle,circle` ne garde que ces formes ; `?c=<color>` ; `?t=<date>` fige l'image ; `?s=<size>` : cote
- * d'une cellule en pixels ; `?e=<degres>` : hauteur de la camera. La page rend tout dans UN canvas (une seule scene
- * WebGL, une cellule par angle).
+ * `#turn`: each shape from four angles (front, three quarters, profile, back), to judge the volume from every side.
+ * `?f=squircle,circle` only keeps those shapes; `?c=<color>`; `?t=<time>` freezes the image; `?s=<size>`: side of a
+ * cell in pixels; `?e=<degrees>`: camera height. The page renders everything in ONE canvas (a single WebGL scene, a
+ * cell per angle).
  */
 const ANGLES = [
   { name: 'face', deg: 0 },
-  { name: 'trois quarts', deg: 40 },
+  { name: 'three quarters', deg: 40 },
   { name: 'profile', deg: 90 },
   { name: 'back', deg: 180 }
 ]
@@ -66,7 +66,7 @@ export const ShapeTurntable: Component<Record<string, never>> = () => {
         const cy = m.mesh.geometry.boundingSphere?.center?.y ?? 0
         camera.position.set(0, cy + 1000 * Math.sin(elevation), 1000 * Math.cos(elevation))
         camera.lookAt(0, cy, 0)
-        // lumiere fixe dans le repere de la camera : le mochi tourne, pas la lumiere
+        // light fixed in camera space: the Mochi turns, not the light
         const x = j * widthCol
         const y = (SHAPE_LIST.length - 1 - i) * size
         renderer.setViewport(x, y, widthCol, size)
@@ -87,7 +87,7 @@ export const ShapeTurntable: Component<Record<string, never>> = () => {
     h(
       'main',
       { class: 'p-4' },
-      h('h1', { class: 'mb-3 text-lg font-bold' }, 'Tour des shapes : face, trois quarts, profil, dos'),
+      h('h1', { class: 'mb-3 text-lg font-bold' }, 'Shape turntable: front, three quarters, profile, back'),
       h(
         'div',
         { class: 'max-w-full overflow-x-auto' },

@@ -160,16 +160,16 @@ export const PROFILES: Record<string, ProfileVolume> = {
   squircle: { depth: 1, rounded: 0.78, back: 1 },
   // square-based pyramid seen from one face: the depth grows from the tip to the base
   triangle: { depth: 1, rounded: 1, back: 1, revolution: 'v' },
-  // hexagone : ecrou doux, meme extrusion biseautee
+  // hexagon: soft nut, same beveled extrusion
   hexagon: { depth: 0.8, rounded: 0.82, back: 1, cushion: true },
   // extrusion with a big bevel (reference: thick, soft 3D icons): flat faces, edges
   // FULLY rounded like a candy, thickness about 0.45 x the width
   star: { depth: 0.85, rounded: 0.98, back: 1, cushion: true },
   // flower: five round extruded petals, same bevel
   flower: { depth: 0.85, rounded: 0.98, back: 1, cushion: true },
-  // coeur : coussin bombe, creux en haut et pointe douce en bas
+  // heart: domed cushion, dip at the top and a soft tip at the bottom
   heart: { depth: 0.85, rounded: 0.98, back: 1, cushion: true },
-  // nuage : coussin bombe, valide tel quel
+  // cloud: domed cushion, validated as is
   cloud: { depth: 1, rounded: 1, back: 1, cushion: true }
 }
 
@@ -308,7 +308,7 @@ export function indexOfVolume(n: number, rings = RINGS): Uint32Array {
   return out
 }
 
-/* --------------------------------------------------------------- gonflage coussin */
+/* --------------------------------------------------------------- cushion inflation */
 
 const GRID = 112
 

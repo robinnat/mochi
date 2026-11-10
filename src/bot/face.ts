@@ -36,7 +36,7 @@ export interface EyePose {
 }
 
 export interface HeadGaze {
-  /** lacet, degres, positif = regarde a droite */
+  /** yaw, degrees, positive = looks right */
   yaw: number
   /** tangage, degres, positif = regarde en haut */
   pitch: number
@@ -65,7 +65,7 @@ export function eyePoses(gaze: HeadGaze, scale: number, split = EYE_SPLIT): [Eye
   let right: Vec3 = [1, 0, 0]
   let down: Vec3 = [0, 1, 0]
 
-  // lacet : forward bascule vers right
+  // yaw: forward tips to the right
   ;[f, right] = spin(f, right, deg(gaze.yaw))
   // pitch: forward tips up (so away from down)
   ;[down, f] = spin(down, f, deg(gaze.pitch))
@@ -98,7 +98,7 @@ export interface Liveliness {
   dYaw: number
   dPitch: number
   dRoll: number
-  /** 1 = oeil ouvert, 0 = ferme (ecrasement vertical en repere ecran) */
+  /** 1 = eye open, 0 = closed (vertical squash in screen space) */
   lid: number
   driftX: number
   driftY: number

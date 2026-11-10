@@ -4,10 +4,10 @@ import type { Softness, Material, RenderStyleId } from 'mochis'
 import { sizeCell } from './width'
 
 /**
- * `#shapes3d` : l'aplat (ancien defaut, sans puis avec contour cartoon) et la matiere `soft` (ombrage
- * lisse, deux reglages : leger et marque), sur cinq formes. `?s=<size>` ; `?t=<date>` fige l'image ; `?c=<color>`
- * impose une seule couleur ; `?v=rows` met un style par LIGNE et une forme par colonne (portrait, lisible sur
- * telephone). `?x=1,3,4` ne garde que ces variantes, `?f=star` (ou `?f=circle,star,cloud`) que ces formes.
+ * `#shapes3d`: flat (old default, without then with the cartoon outline) and the `soft` material (smooth shading, two
+ * settings: light and strong), on five shapes. `?s=<size>`; `?t=<time>` freezes the image; `?c=<color>` forces a
+ * single color; `?v=rows` puts one style per ROW and one shape per column (portrait, readable on a phone). `?x=1,3,4`
+ * only keeps those variants, `?f=star` (or `?f=circle,star,cloud`) only those shapes.
  */
 interface Variant {
   letter: string
@@ -19,13 +19,13 @@ interface Variant {
   highlight?: boolean
 }
 const ALL: Variant[] = [
-  { letter: '', name: '3D aplat (ancien)', renderStyle: '3d', material: 'flat', outline: false },
-  { letter: '', name: '3D aplat + contour cartoon', renderStyle: '3d', material: 'flat', outline: true },
-  { letter: '', name: '3D doux (leger)', renderStyle: '3d', material: 'soft', softness: 'light', outline: false },
-  { letter: '', name: '3D doux strong + reflet (defaut)', renderStyle: '3d', material: 'soft', softness: 'strong', outline: false },
-  { letter: '', name: '3D doux strong sans reflet', renderStyle: '3d', material: 'soft', softness: 'strong', outline: false, highlight: false }
+  { letter: '', name: '3D flat (old)', renderStyle: '3d', material: 'flat', outline: false },
+  { letter: '', name: '3D flat + cartoon outline', renderStyle: '3d', material: 'flat', outline: true },
+  { letter: '', name: '3D soft (light)', renderStyle: '3d', material: 'soft', softness: 'light', outline: false },
+  { letter: '', name: '3D soft strong + highlight (default)', renderStyle: '3d', material: 'soft', softness: 'strong', outline: false },
+  { letter: '', name: '3D soft strong without highlight', renderStyle: '3d', material: 'soft', softness: 'strong', outline: false, highlight: false }
 ]
-// cinq formes, chacune dans une couleur du flat (les memes que le personnalisateur)
+// five shapes, each in a flat color (the same as the customizer)
 const ALL_SHAPES = [
   { id: 'circle', color: 'violet' },
   { id: 'star', color: 'amber' },
@@ -71,12 +71,12 @@ export const FlatSheet3d: Component<Record<string, never>> = () => {
     h(
       'main',
       { class: 'p-4' },
-      h('h1', { class: 'mb-3 text-lg font-bold' }, '3D : aplat, doux leger, doux strong'),
+      h('h1', { class: 'mb-3 text-lg font-bold' }, '3D: flat, soft light, soft strong'),
       h(
         'div',
         { class: 'max-w-full overflow-x-auto' },
         rows
-          ? // une variante par ligne, une forme par colonne : portrait
+          ? // one variant per row, one shape per column: portrait
             h(
               'div',
               { class: 'grid items-center gap-x-1 gap-y-1', style: { gridTemplateColumns: `120px repeat(${SHAPE_LIST.length}, ${size}px)` } },
@@ -87,7 +87,7 @@ export const FlatSheet3d: Component<Record<string, never>> = () => {
                 SHAPE_LIST.map((f) => bot(f, v, v.name + f.id))
               ])
             )
-          : // une variante par colonne, une forme par ligne
+          : // one variant per column, one shape per row
             h(
               'div',
               { class: 'grid items-center gap-x-2 gap-y-1', style: { gridTemplateColumns: `70px repeat(${VARIANTS.length}, ${size}px)` } },

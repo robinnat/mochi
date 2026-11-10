@@ -38,7 +38,7 @@
   </head>
   <body>
     <script>
-      // pose le theme avant le premier dessin : pas de flash light en mode dark
+      // set the theme before the first paint: no light flash in dark mode
       try {
         var c = localStorage.getItem('mochi-site-theme')
         var d = c === 'dark' || (c !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)

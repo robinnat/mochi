@@ -208,7 +208,7 @@ export function shadowsWorn(id: WornId, frame: BotFrame, g: Geo | null): Shadow[
   return [{ x: g.cx + 0.1 * g.rb, y: g.by + 0.14 * g.rb, rx: 1.0 * g.rb, ry: 0.32 * g.rb, a: 0.26 }]
 }
 
-/* ------------------------------------------------------------------ lunettes */
+/* ------------------------------------------------------------------ glasses */
 
 export interface Eye {
   x: number

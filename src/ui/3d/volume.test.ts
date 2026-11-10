@@ -83,7 +83,7 @@ describe('inflation', () => {
       const edges = new Map<string, number>()
       for (let i = 0; i < v.index.length; i += 3) {
         const t = [rang(v.index[i]!), rang(v.index[i + 1]!), rang(v.index[i + 2]!)]
-        if (new Set(t).size < 3) continue // triangle degenere (mur de hauteur nulle)
+        if (new Set(t).size < 3) continue // degenerate triangle (zero-height wall)
         for (let j = 0; j < 3; j++) {
           const a = t[j]!
           const b = t[(j + 1) % 3]!
@@ -291,7 +291,7 @@ describe('pyramid', () => {
   })
 })
 
-describe('gonflage coussin', () => {
+describe('cushion inflation', () => {
   const outline = (id: string) => bodyOutline(image(id).bodyPath)
 
   it.each(['star', 'hexagon', 'cloud', 'flower', 'heart'])('%s: smooth field, zero outside, maximal inside', (id) => {

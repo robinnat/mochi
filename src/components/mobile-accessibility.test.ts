@@ -88,7 +88,7 @@ describe('timeline: the card drops where the finger lifts', () => {
   })
 })
 
-describe('panneaux fermes hors du clavier', () => {
+describe('closed panels out of the keyboard\'s reach', () => {
   it('a closed panel is inert and aria-hidden, an open panel is not', async () => {
     const { App } = await import('@/App')
     const root = host()

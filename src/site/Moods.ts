@@ -54,7 +54,7 @@ export const Moods: Component<Record<string, never>> = () => {
             'p',
             { ref: rv[2], class: 'lede' },
             'A mood changes the face and the way the body moves, and loops until you change it. Set it with ',
-            h('code', null, 'mood="travaille"'),
+            h('code', null, 'mood="working"'),
             ' or call ',
             h('code', null, 'setMood()'),
             '.'

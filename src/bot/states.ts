@@ -6,9 +6,9 @@ import { circle, type Silhouette } from './shape'
 export interface EyeCfg {
   /** local width (short axis of the capsule), in ball radius units */
   w: number
-  /** hauteur locale (axe long) */
+  /** local height (long axis) */
   h: number
-  /** 1 = ouvert, 0 = ferme */
+  /** 1 = open, 0 = closed */
   open: number
   /**
    * Own tilt of the capsule, in degrees, positive = the top leans right. Applied AFTER the sphere's tangent frame.

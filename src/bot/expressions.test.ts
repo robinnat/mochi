@@ -19,7 +19,7 @@ function renderStyle(matrix: string, w: number, h: number) {
 }
 
 describe('expression catalog', () => {
-  it('expose 16 expressions aux identifiants uniques', () => {
+  it('exposes 16 expressions with unique ids', () => {
     expect(EXPRESSIONS).toHaveLength(16)
     expect(new Set(EXPRESSIONS.map((e) => e.id)).size).toBe(16)
     expect(EXPRESSION_BY_ID.size).toBe(16)

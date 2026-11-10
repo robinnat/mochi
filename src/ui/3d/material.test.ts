@@ -138,7 +138,7 @@ describe('maillage grossier (lowpoly)', () => {
   })
 })
 
-describe('doux : ombrage lisse et mat', () => {
+describe('soft: smooth, matte shading', () => {
   const ramp = (d: 'light' | 'strong') => Array.from(gradientMap(settingFlat('soft', d)!))
 
   it('no step: the ramp is continuous, increasing, with no jump', () => {

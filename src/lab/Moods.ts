@@ -4,9 +4,9 @@ import 'mochis'
 import { MOOD_IDS, REACTION_IDS, type MochiBotElement, type MoodId } from 'mochis'
 
 /**
- * `#moods` : le vrai composant, avec ses humeurs et ses interactions branchees sur le pointeur. On y survole, on tape,
- * on double-tape, on appuie longtemps, on tourne vite (glisser sur le cote). La case « interactions » coupe tout ;
- * les boutons jouent une reaction a la main. `?s=<size>` : cote d'un Mochi ; `?theme=dark`.
+ * `#moods`: the real component, with its moods and its interactions wired to the pointer. Hover, tap, double tap,
+ * long press, spin fast (drag sideways). The "interactions" box turns everything off; the buttons play a reaction by
+ * hand. `?s=<size>`: side of a Mochi; `?theme=dark`.
  */
 const SHAPE_LIST = [
   { shape: 'star', color: 'turquoise' },
@@ -24,7 +24,7 @@ export const Moods: Component<Record<string, never>> = () => {
   const bots: (MochiBotElement | null)[] = []
   const info = computed(() => `${mood.value}${interactions.value ? '' : ' (interactions coupees)'}`)
 
-  // glisser sur le cote fait tourner le Mochi : un tour rapide rend le Mochi etourdi (cf. `yaw`)
+  // dragging sideways turns the Mochi: a fast turn makes it dizzy (see `yaw`)
   let x0: number | null = null
   const moves = (e: PointerEvent) => {
     if (x0 === null) return

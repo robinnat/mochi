@@ -15,7 +15,7 @@ export interface OptionsExtrait {
   accessories: AccessorySelection
   /** `auto`: nothing to write, Mochi follows the page */
   theme: 'auto' | 'light' | 'dark'
-  /** ordinateur du mood `working` (defaut : oui) */
+  /** laptop of the `working` mood (default: yes) */
   laptop: boolean
   size?: number
 }

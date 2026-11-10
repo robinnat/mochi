@@ -7,7 +7,7 @@ import { SLOTS, type Slot } from 'mochis/catalogue'
 import { SITE_ACCESSORIES, PALETTE_SITE } from './catalog'
 
 export interface ItemStrip {
-  /** identifiant stable (cle de liste) */
+  /** stable id (list key) */
   key: string
   slot: Slot
   accessory: string
@@ -23,7 +23,7 @@ export interface DefStrip {
   slot: Slot
   title: string
   text: string
-  /** sens du defilement : alternance gauche, droite, gauche... */
+  /** scroll direction: alternating left, right, left... */
   direction: 'left' | 'right'
   /** seconds for a full turn: longer = slower */
   duration: number

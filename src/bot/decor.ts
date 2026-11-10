@@ -88,7 +88,7 @@ export interface ArcSeed {
   /** tours par seconde */
   speed: number
   phase: number
-  /** fraction du tour reellement tracee */
+  /** fraction of the turn actually drawn */
   sweep: number
   hue: number
   hueSpan: number

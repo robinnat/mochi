@@ -341,7 +341,7 @@ function headwear(c: Ctx, k = 1.18): Group {
 function visor(): BufferGeometry {
   const NR = 16
   const NT = 56
-  const WX = 0.9 // demi-largeur
+  const WX = 0.9 // half width
   const Z0 = -0.1 // foot of the visor (hidden in the crown)
   const LZ = 1.35 // length forward
   const Y0 = 0.02
@@ -487,7 +487,7 @@ const HEAD: Record<string, Gen> = {
       g.position.copy(p).addScaledVector(n, 0.07 * hw)
       orient(g, n)
       c.g.add(g)
-      // coque, coussin et cache exterieur
+      // shell, cushion and outer cover
       sph(c, c.c1, 1, [0.3 * hw, 0.37 * hw, 0.19 * hw], V(0, 0, 0), g)
     }
   },
@@ -710,7 +710,7 @@ const EYES: Record<string, Gen> = {
   }
 }
 
-/* ------------------------------------------------------------------ visage */
+/* ------------------------------------------------------------------ face */
 
 /** Face metrics: cheek and mouth line, relative to the eye size. */
 function face(c: Ctx) {
@@ -1335,7 +1335,7 @@ const BACK: Record<string, Gen> = {
   }
 }
 
-/** Table des generateurs par emplacement. */
+/** Builders by slot. */
 const GENERATEURS: Record<Slot, Record<string, Gen>> = { head: HEAD, eyes: EYES, face: FACE, neck: BOTTOM, back: BACK }
 
 /** Catalog ids (the builders of REMOVED accessories stay in the file but no longer count). */
@@ -1343,7 +1343,7 @@ export const IDS_IMPLEMENTED = (e: Slot) => Object.keys(GENERATEURS[e]).filter((
 
 /* ------------------------------------------------------------------ classe */
 
-/* ------------------------------------------------------------------ ordinateur portable (mood « travaille ») */
+/* ------------------------------------------------------------------ laptop (the "working" mood) */
 
 /** Laptop colors: light silver shell, small round logo a little lighter. */
 export const LAPTOP_COLORS = { shell: '#c7cad4', logo: '#eceef3' } as const

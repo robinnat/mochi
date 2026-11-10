@@ -11,7 +11,7 @@ import { SHAPE_BY_ID, SHAPES } from './skins'
  */
 
 const radiiOf = (id: string) => SHAPE_BY_ID.get(id)!.radii
-/** Angle ecran en degres (0 = droite, 90 = bas, -90 = haut). */
+/** Screen angle in degrees (0 = right, 90 = down, -90 = up). */
 const r = (id: string, deg: number) => radiusAtAngle(radiiOf(id), (deg * Math.PI) / 180)
 
 /** Number of strict local maxima of the profile, over the full turn. */

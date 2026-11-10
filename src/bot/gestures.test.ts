@@ -99,7 +99,7 @@ describe('gestures', () => {
     expect(bounce(-1)).toEqual({ ...NEUTRAL_GESTURE })
   })
 
-  it('sommeil : yeux fermes, respiration lente ; echec : affaisse', () => {
+  it('sleep: eyes closed, slow breathing; failure: slumped', () => {
     expect(sleepGesture(0).lid).toBeLessThan(0.1)
     expect(sleepGesture(0).sy).not.toBe(sleepGesture(2.3).sy)
     expect(gestureFailure(1).sy).toBeLessThan(1)

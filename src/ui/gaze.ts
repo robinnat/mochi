@@ -144,7 +144,7 @@ export function lookTarget({ nx, ny, turn, pointer }: Aim): Look {
     spin: SPIN * (1 - turn),
     // Without a pointer the head stays turned towards the panel, but its drift
     // comes back: otherwise the bot stares at a dead point, and arriving by keyboard or
-    // tactile donnait un avatar completement immobile.
+    // touch gave a fully still avatar.
     wander: pointer ? 0 : 1
   }
 }

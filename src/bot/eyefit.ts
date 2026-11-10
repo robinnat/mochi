@@ -72,7 +72,7 @@ interface Face {
  * combinations kept overflowing.
  */
 interface Footprint {
-  /** centre, en unites de viewBox */
+  /** center, in viewBox units */
   x: number
   y: number
   /** half vector of the axis */

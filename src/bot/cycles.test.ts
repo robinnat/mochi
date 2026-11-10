@@ -19,7 +19,7 @@ import {
 } from './cycles'
 import { SEQUENCE, STATES, STATE_BY_ID } from './states'
 
-describe('cycle par defaut', () => {
+describe('default cycle', () => {
   it('replays the sequence measured on the video, in order', () => {
     expect(defaultCycle().blocks.map((b) => b.state)).toEqual(SEQUENCE)
   })

@@ -67,7 +67,7 @@ const cloud = normalize(
   1.02
 )
 
-/** Goutte : gros disque en bas, pointe effilee en haut. */
+/** Drop: a big disc at the bottom, a sharp tip at the top. */
 const droplet = normalize(
   profileFromPolygon(hullOfCircles(0, 0.28, 0.66, 0, -0.96, 0.05), 0, 0),
   1.04

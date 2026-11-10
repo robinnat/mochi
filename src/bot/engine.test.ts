@@ -29,7 +29,7 @@ function footprint(d: string) {
 
 /** Footprints measured on the video (width x height, in ball diameters). */
 const FOOTPRINTS: Array<[StateId, number, number, number, number]> = [
-  // etat,        date,  largeur, hauteur, tolerance
+  // state,       time,  width,  height, tolerance
   ['idle', 0.5, 2.0, 2.0, 0.05],
   ['sleep', 0.6, 0.317, 0.317, 0.03]
 ]

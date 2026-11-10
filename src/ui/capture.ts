@@ -349,7 +349,7 @@ export async function sequenceOfBot<T>(
       bot.frozenAt = i * step
       await image()
       const svg = host.querySelector('svg')
-      if (!svg) throw new Error('bot hors ecran non rendu')
+      if (!svg) throw new Error('off-screen bot not rendered')
       out.push(await read(svg, i))
     }
     return out
@@ -421,7 +421,7 @@ export async function opensCycle(
   const svg = host.querySelector('svg')
   if (!svg) {
     close()
-    throw new Error('bot hors ecran non rendu')
+    throw new Error('off-screen bot not rendered')
   }
 
   return {

@@ -95,7 +95,7 @@ describe('gif anime', () => {
   })
 
   /* The GIF delay counts in hundredths of a second, not milliseconds. */
-  it('convertit le delai en centiemes', () => {
+  it('converts the delay to hundredths', () => {
     expect(litGif(suite.length ? gifAnimate(suite, 16, 16, 50) : new Uint8Array()).delay).toBe(5)
     expect(litGif(gifAnimate(suite, 16, 16, 100)).delay).toBe(10)
   })
@@ -216,7 +216,7 @@ describe('LZW round trip', () => {
     const gif = gifAnimate([px], 16, 16, 50)
     const [decode] = decodeGif(gif)
     expect(decode).toHaveLength(16 * 16)
-    // reconstruit les index attendus : 0 dehors, 1 dedans
+    // rebuilds the expected indices: 0 outside, 1 inside
     const expected: number[] = []
     for (let i = 0; i < 16 * 16; i++) expected.push(px[i * 4 + 3]! < 128 ? 0 : 1)
     expect(decode).toEqual(expected)

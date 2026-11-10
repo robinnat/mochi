@@ -236,7 +236,7 @@ export const MOODS: MoodDef[] = [
     }
   },
   {
-    // bloque : enerve, yeux fronces en miroir, tremblement par rafales
+    // blocked: annoyed, mirrored frowning eyes, trembling in bursts
     id: 'blocked',
     state: 'wide',
     period: 3,
@@ -264,7 +264,7 @@ export const MOODS: MoodDef[] = [
     }
   },
   {
-    // dort : yeux fermes, respiration lente
+    // asleep: eyes closed, slow breathing
     id: 'asleep',
     state: 'sleep',
     period: 4.6,
@@ -327,7 +327,7 @@ const LAUGH = face('laughing', 4, 14, 0, 18, pair(0.42, 0.17, 0))
 
 export const REACTIONS: ReactionDef[] = [
   {
-    // tap ou clic : sursaut, ecrasement, rebond amorti
+    // tap or click: startle, squash, damped bounce
     id: 'startle',
     trigger: 'tap',
     duration: 0.8,

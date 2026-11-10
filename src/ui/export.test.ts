@@ -117,7 +117,7 @@ describe('cycle export', () => {
   })
 
 
-  it('ne propose ni SVG anime ni format hors video', () => {
+  it('offers neither animated SVG nor a format other than video', () => {
     // the body morphs every frame: 2.5 kB of path times six hundred frames
     expect(FORMATS_CYCLE).toEqual(['mp4', 'gif'])
     expect(FORMATS_CYCLE).toContain(DEFAULT_CYCLE_FORMAT)
@@ -160,7 +160,7 @@ describe('gif background', () => {
     expect(animate.filter((a) => a.extension === 'gif')).toHaveLength(1)
   })
 
-  it('propose blanc et transparent, blanc par defaut', () => {
+  it('offers white and transparent, white by default', () => {
     expect(BACKGROUNDS_GIF).toEqual(['white', 'transparent'])
     expect(BACKGROUNDS_GIF).toContain(DEFAULT_GIF_BACKGROUND)
     expect(DEFAULT_GIF_BACKGROUND).toBe('white')
@@ -226,7 +226,7 @@ describe('file name', () => {
     expect(nameFile('Été 2026', '', '', 'gif')).toBe('mochi-ete-2026.gif')
   })
 
-  it('survit a des ids vides', () => {
+  it('survives empty ids', () => {
     expect(nameFile('', '', '', 'png')).toBe('mochi.png')
   })
 })

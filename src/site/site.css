@@ -1,7 +1,6 @@
 /*
- * Site de Mochi (v10) : grand, aere, pastel. Une typographie enorme et tres grasse, des cartes douces,
- * les Mochi portent les seules couleurs franches. Tous les mouvements passent par transform et opacity ;
- * prefers-reduced-motion les coupe (en bas du fichier).
+ * Mochis website (v10): big, airy. A huge, very bold type, soft cards, the Mochis carry the only strong colors. All
+ * motion goes through transform and opacity; prefers-reduced-motion turns it off (at the bottom of the file).
  */
 :root {
   --bg: #fbfbf9;
@@ -15,7 +14,7 @@
   --accent: #111113;
   --accent-ink: #111113;
   --accent-soft: #efefec;
-  /* P1 (09/11/2026) : interface neutre, aucune teinte ; les panneaux gardent leurs anciens noms mais sont des gris */
+  /* P1 (09/11/2026): neutral interface, no tint; the panels keep their old names but are greys */
   --p-lavande: #f0f0ed;
   --p-menthe: #f0f0ed;
   --p-peche: #f0f0ed;
@@ -128,7 +127,7 @@ header[id] {
   margin-top: 14px;
 }
 
-/* grilles a une colonne sur telephone : une colonne qui ne s'elargit jamais au contenu (blocs de code longs) */
+/* one-column grids on a phone: a column that never widens to its content (long code blocks) */
 .styles-track,
 .moods,
 .inter,
@@ -163,7 +162,7 @@ header[id] {
   }
 }
 
-/* ------------------------------------------------------------------ barre du haut */
+/* ------------------------------------------------------------------ top bar */
 .nav {
   position: fixed;
   inset: 0 0 auto;
@@ -246,7 +245,7 @@ header[id] {
 .nav-icon:hover {
   background: var(--bg-2);
 }
-/* lien GitHub avec le nombre d'etoiles : la pastille s'elargit pour loger le chiffre */
+/* GitHub link with the star count: the pill widens to hold the number */
 .nav-icon.nav-stars {
   width: auto;
   padding: 0 10px;
@@ -334,8 +333,10 @@ header[id] {
   pointer-events: none;
   z-index: -1;
 }
-/* fond du hero : un seul calque peint une fois (trois degres pastel), sans animation : les grandes taches animees
-   coutaient cher a peindre sur telephone (v11) */
+/*
+ * hero background: a single layer painted once (three soft gradients), no animation: the big animated spots
+ *    were costly to paint on a phone (v11)
+ */
 .hero-background {
   background: none;
 }
@@ -611,7 +612,7 @@ header[id] {
   }
 }
 
-/* ------------------------------------------------------------------ formes */
+/* ------------------------------------------------------------------ shapes */
 .shapes {
   list-style: none;
   margin: 0;
@@ -664,7 +665,7 @@ header[id] {
   }
 }
 
-/* ------------------------------------------------------------------ humeurs */
+/* ------------------------------------------------------------------ moods */
 .moods {
   display: grid;
   gap: 0;
@@ -931,7 +932,7 @@ header[id] {
   height: auto;
   transform-origin: 50% 88%;
 }
-/* transform et opacity seulement ; le plein effet ne joue que si le defilement tourne (pas de mouvement reduit) */
+/* transform and opacity only; the full effect only plays if scrolling runs (no reduced motion) */
 .acc-enter-active {
   animation: acc-pop 0.44s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
 }
@@ -1389,7 +1390,7 @@ header[id] {
   }
 }
 
-/* ------------------------------------------------------------------ blocs de code */
+/* ------------------------------------------------------------------ code blocks */
 .cb {
   background: #141416;
   color: #ececea;
@@ -1633,7 +1634,7 @@ header[id] {
   justify-content: center;
   gap: 4px 10px;
 }
-/* un exemple sans taille garde la taille par defaut (320) : on le reduit, le dessin suit sa boite */
+/* an example without a size keeps the default size (320): we shrink it, the drawing follows its box */
 .doc-preview-bots mochi-bot {
   width: 112px;
 }
@@ -1822,7 +1823,7 @@ header[id] {
   }
 }
 
-/* ------------------------------------------------------------------ mouvement reduit : rien ne bouge */
+/* ------------------------------------------------------------------ reduced motion: nothing moves */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1894,7 +1895,7 @@ header[id] {
 .custom-waiting {
   min-height: 1100px;
 }
-/* un Mochi vivant se tourne au doigt : le glisse horizontal est pour lui, le vertical fait defiler la page */
+/* a live Mochi turns with a finger: the horizontal drag is for it, the vertical one scrolls the page */
 .alive.turnable {
   touch-action: pan-y;
   cursor: grab;
@@ -1905,7 +1906,7 @@ header[id] {
   cursor: grabbing;
 }
 
-/* ------------------------------------------------------------------ hero : la foule */
+/* ------------------------------------------------------------------ hero: the crowd */
 .hx {
   position: relative;
   padding: 92px 0 0;
@@ -2012,7 +2013,7 @@ header[id] {
   min-height: 1.4em;
 }
 
-/* C : un visage pour chaque etat */
+/* C: a face for each state */
 @media (min-width: 700px) {
   .hx-crowd {
     grid-template-columns: repeat(6, minmax(0, 1fr));

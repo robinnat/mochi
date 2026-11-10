@@ -17,7 +17,7 @@ describe('<mochi-bot>: 3D rendering options', () => {
   })
 })
 
-describe('<mochi-bot> : chargement sans repli visible (v11)', () => {
+describe('<mochi-bot>: loading with no visible fallback (v11)', () => {
   it('maxPixelRatio caps the canvas density (2 by default)', () => {
     expect(initial('maxPixelRatio')).toBe(2)
   })

@@ -53,7 +53,7 @@ import { h, render, type Child, type VNode } from '@/ui/dom/h'
 
 /** The component's options (JavaScript properties). */
 export interface MochiBotProps {
-  /** Largeur et hauteur, en pixels. */
+  /** Width and height, in pixels. */
   size: number
   /** customizer shape id */
   shape: string
@@ -366,7 +366,7 @@ export class MochiBotElement extends BaseElement {
   }
 }
 
-// une propriete JavaScript par option
+// one JavaScript property per option
 for (const p of PROPERTIES) {
   Object.defineProperty(MochiBotElement.prototype, p.name, {
     get(this: MochiBotElement) {

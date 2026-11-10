@@ -15,12 +15,12 @@ export interface Point {
  */
 export interface Silhouette {
   radii: number[]
-  /** rotation du profil, en radians */
+  /** profile rotation, in radians */
   rot: number
   /** center offset, in ball radius units */
   cx: number
   cy: number
-  /** squash & stretch, applique en repere ecran (apres rotation) */
+  /** squash & stretch, applied in screen space (after rotation) */
   sx: number
   sy: number
 }
@@ -162,7 +162,7 @@ export function hullOfCircles(
   const dx = x2 - x1
   const dy = y2 - y1
   const dist = Math.hypot(dx, dy) || 1e-6
-  // angle des tangentes externes communes
+  // angle of the common outer tangents
   const base = Math.atan2(dy, dx)
   const spread = Math.acos(Math.max(-1, Math.min(1, (r1 - r2v) / dist)))
   const pts: Point[] = []
@@ -258,7 +258,7 @@ function roundedPolygon(green: Point[], rc: number, arcSteps = 10): Point[] {
   return out
 }
 
-/** Polygone regulier a coins arrondis, inscrit dans `radius`. */
+/** Regular polygon with rounded corners, inscribed in `radius`. */
 export function regularPolygonProfile(
   sides: number,
   radius: number,
@@ -274,7 +274,7 @@ export function regularPolygonProfile(
   return profileFromPolygon(roundedPolygon(green, rc), 0, 0)
 }
 
-/** Polyligne fermee exacte : garde les segments droits (contrairement a closedPath). */
+/** Exact closed polyline: keeps straight segments (unlike closedPath). */
 export function polyPath(pts: Point[], scale = 1): string {
   if (pts.length < 3) return ''
   let d = ''

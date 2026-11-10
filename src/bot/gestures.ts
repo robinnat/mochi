@@ -12,7 +12,7 @@ import { TAU, clamp, createRng, easings, loopNoise } from './math'
 import type { BotExpression } from './expressions'
 import type { StateId } from './states'
 
-/** Ecarts appliques par `sample()` : deplacements en rayons de boule, echelles, angles en degres. */
+/** Offsets applied by `sample()`: moves in ball radii, scales, angles in degrees. */
 export interface Gesture {
   /** body and eye offset, in radii */
   dx: number
@@ -20,7 +20,7 @@ export interface Gesture {
   /** body scales (1 = unchanged) */
   sx: number
   sy: number
-  /** ecarts de visee, en degres */
+  /** aim offsets, in degrees */
   yaw: number
   pitch: number
   roll: number
@@ -87,7 +87,7 @@ export type IdleGestureId = 'blink' | 'breathe' | 'jump' | 'balance' | 'gaze' | 
 
 interface GestureDef {
   id: IdleGestureId
-  /** duree en secondes */
+  /** duration in seconds */
   duration: number
   /** pose at local time u (seconds since the start of the gesture) */
   pose: (u: number) => Gesture
@@ -217,7 +217,7 @@ export function sleepZ(t: number, n = 2): Array<{ x: number; y: number; size: nu
   return out
 }
 
-/** Echec : affaissement, tete basse, soupir lent. */
+/** Failure: slumped, head down, slow sigh. */
 export function gestureFailure(t: number): Gesture {
   const sigh = 0.5 - 0.5 * Math.cos((t / 5.2) * TAU)
   return g({ sx: 1.03 + 0.01 * sigh, sy: 0.94 - 0.015 * sigh, dy: 0.04 + 0.01 * sigh, pitch: -8 - 3 * sigh, roll: 3 })

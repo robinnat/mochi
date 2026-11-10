@@ -152,11 +152,11 @@ export class Mochi3d {
   setWithoutBody(v: boolean) {
     this.withoutBody = v
   }
-  /** contour fonce (coque inversee), visible seulement en `toon-outline` */
+  /** dark outline (inverted shell), visible only in `toon-outline` */
   private readonly shell: Mesh<BufferGeometry, MeshBasicMaterial>
   private renderStyle: Material = DEFAULT_MATERIAL
   private softness: Softness = DEFAULT_SOFTNESS
-  /** petit reflet doux en haut a gauche (matiere `soft` seulement) */
+  /** small soft highlight at the top left (`soft` material only) */
   /** soft highlight in the shader: 1 = on (uniform shared by this body's materials) */
   private readonly uHighlight = { value: 1 }
   /** black eyes (dark theme): 1 = no emission, no glow added on the eyes */

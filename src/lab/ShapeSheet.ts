@@ -3,7 +3,7 @@ import 'mochis'
 import { SHAPES, type RenderStyleId } from 'mochis'
 import { sizeCell } from './width'
 
-/** Les trois styles, tous en 3D : Soft, Flat et Pixel. */
+/** The three styles, all in 3D: Soft, Flat and Pixel. */
 const STYLES: { id: RenderStyleId; name: string }[] = [
   { id: '3d', name: 'Soft' },
   { id: 'flat3d', name: 'Flat' },
@@ -11,7 +11,7 @@ const STYLES: { id: RenderStyleId; name: string }[] = [
 ]
 
 export const ShapeSheet: Component<Record<string, never>> = () => {
-  // `?c=` : couleur de la planche (par defaut, la couleur choisie du moteur)
+  // `?c=`: color of the sheet (by default, the engine's chosen color)
   const q = new URLSearchParams(location.search)
   const color = q.get('c') ?? 'ink'
   const size = sizeCell(120, STYLES.length, 90)
@@ -20,7 +20,7 @@ export const ShapeSheet: Component<Record<string, never>> = () => {
     h(
       'main',
       { class: 'p-4' },
-      h('h1', { class: 'mb-3 text-lg font-bold' }, 'Formes x styles'),
+      h('h1', { class: 'mb-3 text-lg font-bold' }, 'Shapes x styles'),
       h(
         'div',
         { class: 'max-w-full overflow-x-auto' },

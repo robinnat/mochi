@@ -194,7 +194,7 @@ function clear() {
     while (fileBefore.length || fileRender.length || fileAfter.length) {
       // guard: a loop of reactions that does not converge must not freeze the page
       if (++turns > 1000) {
-        console.error('mochi: reactions sans fin, file videe')
+        console.error('mochi: endless reactions, queue cleared')
         fileBefore.length = fileRender.length = fileAfter.length = 0
         break
       }

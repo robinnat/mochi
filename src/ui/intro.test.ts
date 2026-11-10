@@ -7,7 +7,7 @@ import { STATE_BY_ID } from '@/bot/states'
 import { SPIN_TIME, type GazeScript } from './gaze'
 import { INTRO, INTRO_GAZE, POSE_AT, introDue, type Arrival } from './intro'
 
-/** Arrivee ordinaire : URL nue, venue directe, aucune preference de calme. */
+/** Ordinary arrival: bare URL, direct visit, no calm preference. */
 const arrive = (o: Partial<Arrival> = {}): Arrival => ({
   named: false,
   gallery: false,

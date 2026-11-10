@@ -151,7 +151,7 @@ describe('<mochi-bot>: player, events and methods', () => {
   })
 })
 
-describe('<mochi-bot> : cycle de vie', () => {
+describe('<mochi-bot>: life cycle', () => {
   it('removed from the page, it stops its loop and clears its drawing', async () => {
     const cancels = vi.spyOn(window, 'cancelAnimationFrame')
     const el = create()

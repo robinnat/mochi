@@ -19,7 +19,7 @@ export const CodeBlock: Component<CodeBlockProps> = (props) => {
       clearTimeout(timer)
       timer = window.setTimeout(() => (copy.value = false), 1600)
     } catch {
-      // presse-papiers refuse : le texte reste selectionnable
+      // clipboard refused: the text stays selectable
     }
   }
   return () =>

@@ -3,8 +3,8 @@ import { h, onUnmount, onMount, type Component } from '@/ui/dom/h'
 import { ShapeSheet } from './ShapeSheet'
 
 /**
- * Page labo : quatre planches choisies par le hash. `#shapes` est la planche de toutes les formes dans les quatre
- * styles, `#turn`, `#moods` et `#shapes3d` les planches 3D (chargees a la demande).
+ * Lab page: four sheets chosen by the hash. `#shapes` is the sheet of every shape in the styles, `#turn`, `#moods`
+ * and `#shapes3d` the 3D sheets (loaded on demand).
  */
 type Sheet = 'shapes' | 'shapes3d' | 'turn' | 'moods'
 const read = (): Sheet =>
@@ -42,7 +42,7 @@ export const Lab: Component<Record<string, never>> = () => {
       h(
         'nav',
         { class: 'flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--line)] px-4 py-3 text-sm' },
-        h('strong', null, 'Mochi labo'),
+        h('strong', null, 'Mochi lab'),
         link('shapes', 'shapes'),
         link('shapes3d', 'shapes 3D'),
         link('moods', 'moods'),

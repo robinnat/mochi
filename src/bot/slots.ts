@@ -35,7 +35,7 @@ export const SLOT_NAMES: Record<Slot, string> = {
 export interface AccessoryDef {
   id: string
   slot: Slot
-  /** nom affiche en legende */
+  /** name shown as a caption */
   name: string
   /** main color and second color (can be changed when used) */
   c1: string

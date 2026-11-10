@@ -1,6 +1,6 @@
 /**
- * Cote d'une cellule de planche qui tient dans la largeur de l'ecran : `?s=` l'impose, sinon `initial`, reduit sur
- * telephone pour que toutes les colonnes tiennent (la planche ne deborde plus a droite).
+ * Side of a sheet cell that fits the screen width: `?s=` forces it, otherwise `initial`, reduced on a phone so every
+ * column fits (the sheet no longer overflows on the right).
  */
 export function sizeCell(initial: number, columns: number, header: number, gap = 8): number {
   const forced = Number(new URLSearchParams(location.search).get('s'))

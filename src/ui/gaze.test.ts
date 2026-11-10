@@ -38,7 +38,7 @@ describe('gaze target', () => {
   })
 
   it('turns the head to the left, towards the panel', () => {
-    // lacet negatif = le bot regarde a gauche
+    // negative yaw = the bot looks left
     expect(lookTarget(aims()).yaw).toBe(-TURN)
   })
 
@@ -107,7 +107,7 @@ describe('the spin on itself', () => {
     expect(image(0.5).eyes).toHaveLength(0)
     expect(image(1).eyes).toHaveLength(2)
 
-    // ...et un tour complet repose les yeux exactement ou un simple demi-tour
+    // ...and a full turn sets the eyes back exactly where a simple half turn
     // would have put them: that makes the landing right with no tuning
     const complet = image(1).eyes[0]!.matrix
     const withoutTurn = new BotEngine(100, 'idle', circle(), EXPRESSION_BY_ID.get('neutral')!)

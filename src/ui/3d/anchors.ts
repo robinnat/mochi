@@ -32,7 +32,7 @@ export interface Landmarks {
   neck: number
   hw: number
   zc: number
-  /** hauteur totale */
+  /** total height */
   H: number
   /** hat seat: where the body section is wide enough to carry the headwear */
   head: { cx: number; y: number; zc: number; R: number; rz: number }
