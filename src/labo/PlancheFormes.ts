@@ -1,15 +1,13 @@
 import { h, type Composant } from '@/ui/dom/h'
-import '@/components/mochi-bot'
-import { SHAPES } from '@/bot/skins'
-import type { RenduId } from '@/ui/rendu'
+import 'mochi-world'
+import { SHAPES, type RenduId } from 'mochi-world'
 import { tailleCellule } from './largeur'
 
-/** Les quatre styles : plat (l'original), pixel art, pate (argile) et vraie 3D. */
+/** Les trois styles, tous en 3D : Soft, Flat et Pixel. */
 const STYLES: { id: RenduId; nom: string }[] = [
-  { id: 'original', nom: 'flat' },
-  { id: 'pixel', nom: 'pixel' },
-  { id: 'argile', nom: 'pâte' },
-  { id: '3d', nom: '3D' }
+  { id: '3d', nom: 'Soft' },
+  { id: 'flat3d', nom: 'Flat' },
+  { id: 'pixel3d', nom: 'Pixel' }
 ]
 
 export const PlancheFormes: Composant<Record<string, never>> = () => {

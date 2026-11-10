@@ -74,20 +74,24 @@ export function corpsPourTheme(hex: string, theme: Theme, min = CONTRASTE_OEIL_M
 }
 
 /**
- * Contour des yeux sur corps tres clair (jaune, citron vert). Un oeil blanc sur un corps dont le contraste avec
- * le blanc est inferieur a `CONTRASTE_CORPS_CLAIR` se perd : on le cerne d'un trait de la teinte du corps, foncee.
- * `null` pour les autres couleurs, qui ne changent pas. Seulement en clair (en sombre l'oeil est noir).
+ * Yeux d'un Mochi a corps tres clair (jaune, citron vert). En clair, un oeil blanc sur un corps dont le contraste
+ * avec le blanc est inferieur a `CONTRASTE_CORPS_CLAIR` se perd. Plutot que de le cerner (contour retire le
+ * 10/11/2026, Robin), ce Mochi prend les yeux NOIRS pleins du theme sombre, qui contrastent fortement avec un
+ * corps clair. Une couleur claire mais presque neutre (creme, gris pale) garde ses yeux blancs.
  */
 export const CONTRASTE_CORPS_CLAIR = 1.6
-export function contourOeil(corps: string, theme: Theme, papier = '#ffffff'): string | null {
-  if (theme !== 'light' || contraste(corps, papier) >= CONTRASTE_CORPS_CLAIR) return null
+export function corpsTresClair(corps: string, papier = '#ffffff'): boolean {
+  if (contraste(corps, papier) >= CONTRASTE_CORPS_CLAIR) return false
   const a = rgb(corps)
-  // une couleur claire mais presque neutre (creme, gris pale) garde son rendu d'origine : seul le franc, jaune ou citron, est cerne
-  if (Math.max(...a) - Math.min(...a) < 128) return null
-  const b = rgb('#1c1600')
-  const k = 0.68
-  return '#' + a.map((x, i) => Math.round(x + (b[i]! - x) * k).toString(16).padStart(2, '0')).join('')
+  return Math.max(...a) - Math.min(...a) >= 128
 }
+
+/**
+ * Theme reellement applique aux YEUX : le theme demande, sauf un corps tres clair en theme clair, qui prend les
+ * yeux noirs du theme sombre (meme rendu que ce Mochi en mode sombre).
+ */
+export const themeDesYeux = (corps: string, theme: Theme, papier = '#ffffff'): Theme =>
+  theme === 'light' && corpsTresClair(corps, papier) ? 'dark' : theme
 
 /** Verre des lunettes de soleil en mode sombre : ardoise, pour se lire devant des yeux noirs (noir sur noir, plus rien ne se voit). */
 export const VERRE_SOLEIL_SOMBRE = '#4e4a63'

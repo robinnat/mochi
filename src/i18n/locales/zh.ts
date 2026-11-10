@@ -14,7 +14,8 @@ const zh: typeof fr = {
   app: {
     name: 'mochi world',
     title: 'Mochi World, 动画头像',
-    botAria: 'mochi 动画头像'
+    botAria: 'mochi 动画头像',
+    sans3d: '3D 需要 WebGL'
   },
 
   gallery: {
@@ -43,7 +44,6 @@ const zh: typeof fr = {
     more: '其他格式',
     png: '下载 PNG',
     svg: '下载 SVG',
-    anime: '下载 SVG 动图',
     gif: '下载 GIF 动图',
     cycleDetail: '视频更轻更流畅；GIF 到处都能播放。',
     cycleFormat: '格式',
@@ -127,10 +127,6 @@ const zh: typeof fr = {
   },
 
   styles: {
-    original: '原版',
-    pixel: '像素风',
-    argile: '3D 黏土',
-    bulle: '3D 气泡',
     '3d': '柔和',
     flat3d: '扁平',
     pixel3d: '像素'

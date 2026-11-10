@@ -51,10 +51,10 @@ export function viewBoxExport(demi = DEMI_CADRE) {
  */
 export const DEMI_ECRAN = DEMI_VIEWBOX
 
-export type ActionId = 'png' | 'svg' | 'anime' | 'gif' | 'copie' | 'copieSvg'
+export type ActionId = 'png' | 'svg' | 'gif' | 'copie' | 'copieSvg'
 
 /** Ce qu'on fait de l'image une fois produite. */
-export type ModeExport = 'telecharge' | 'anime' | 'gif' | 'copieImage' | 'copieTexte'
+export type ModeExport = 'telecharge' | 'gif' | 'copieImage' | 'copieTexte'
 
 export interface ActionExport {
   id: ActionId
@@ -62,42 +62,16 @@ export interface ActionExport {
   /** Cote de l'image en pixels. */
   taille: number
   extension: 'png' | 'svg' | 'gif'
-  /**
-   * Ajoute au nom du fichier. L'animation est un SVG elle aussi : sans ce suffixe
-   * elle ecraserait l'export fixe dans le dossier de telechargement.
-   */
+  /** Ajoute au nom du fichier. */
   suffixe?: string
 }
 
 /**
- * Images CLES par seconde — pas une cadence de lecture.
- *
- * L'animation exportee est un SVG : c'est le navigateur qui interpole entre les
- * cles, donc le mouvement est lisse a la frequence de l'ecran quel qu'en soit le
- * nombre. C'est toute la difference avec un feuilletage bitmap, ou une animation
- * a 20 images par seconde saccade parce que le clignement ne dure que 0,18 s
- * (`BLINK_DUR`, face.ts) et n'a donc que trois ou quatre images pour se jouer.
- *
- * 30 par seconde parce que ca ne coute presque rien — une cle, c'est une matrice
- * de texte — et que ca suit fidelement la courbe du clignement, qui ferme vite et
- * rouvre plus lentement.
- */
-export const ANIM_CLES_PAR_SEC = 30
-
-/**
- * Duree capturee. Le premier clignement tombe a 1,4 s puis les suivants toutes
- * les 1,9 a 4,6 s (`BLINKS`, face.ts) : trois secondes en contiennent donc
- * toujours au moins un. Plus court, on exporterait souvent une boule qui se
- * contente de deriver.
- *
- * La boucle, elle, est sans couture malgre une derive non periodique : l'animation
- * est jouee en aller-retour (`animation-direction: alternate`), donc elle reboucle
- * exactement sur elle-meme. Voir `svgAnime`.
+ * Duree du GIF anime de l'avatar. Le premier clignement tombe a 1,4 s puis les suivants
+ * toutes les 1,9 a 4,6 s (`BLINKS`, face.ts) : trois secondes en contiennent donc
+ * toujours au moins un.
  */
 export const ANIM_SECONDES = 3
-
-export const ANIM_IMAGES = ANIM_CLES_PAR_SEC * ANIM_SECONDES
-export const ANIM_PAS = 1 / ANIM_CLES_PAR_SEC
 
 /**
  * Le GIF, lui, est un vrai feuilletage : sa cadence EST sa fluidite, et rien ne
@@ -121,10 +95,8 @@ export const GIF_TAILLE = 320
 /* --------------------------------------------------- export d'un cycle */
 
 /**
- * Formats d'export d'un CYCLE. Pas de SVG anime ici, et c'est mesure : sur un
- * cycle le corps morphe a chaque image, or son chemin pese 2,5 ko — six cents
- * images en feraient 1,5 Mo, sans compter les arcs. Le SVG anime ne tient que
- * pour l'avatar au repos, ou la silhouette est immobile.
+ * Formats d'export d'un CYCLE : video et GIF, tous deux rendus image par image depuis
+ * la scene 3D. Pas de SVG anime : il n'y a pas de dessin vectoriel a animer en 3D.
  */
 export type FormatCycle = 'mp4' | 'gif'
 
@@ -185,12 +157,15 @@ export const couleurDeFond = (fond: FondGif) => (fond === 'blanc' ? BLANC : null
  * UNE seule taille de PNG, volontairement : proposer 1024 et 2048 obligeait
  * l'utilisateur a trancher une question qui n'est pas la sienne. 1024 couvre
  * toutes les specs de photo de profil (Discord 128, X 400, GitHub 500, Slack
- * 512) en se reduisant proprement, et un aplat vectoriel a cette taille ne pese
- * que quelques ko. Qui veut plus grand prend le SVG, qui n'a pas de taille.
+ * 512) en se reduisant proprement.
+ *
+ * Le SVG est un CONTENEUR : il porte l'image du canvas 3D (en `data:` PNG, voir
+ * `figeToiles`) et les petits effets vectoriels des etats. Il n'est donc pas
+ * agrandissable a l'infini comme l'etait l'ancien dessin 2D.
  *
  * Pas de GIF FIXE : 256 couleurs et une transparence sur 1 bit, donc un bord en
- * escalier la ou le PNG a 8 bits d'alpha. Le GIF n'existe ici qu'en ANIME, et
- * seulement parce que les avatars animes de Discord ou de Slack refusent le SVG.
+ * escalier la ou le PNG a 8 bits d'alpha. Le GIF n'existe ici qu'en ANIME, pour
+ * les avatars animes de Discord ou de Slack.
  *
  * Le catalogue ne porte que des **ids** : les libelles sont resolus par
  * `t('export.<id>')`, et l'union litterale au-dessus fait verifier a la
@@ -199,7 +174,6 @@ export const couleurDeFond = (fond: FondGif) => (fond === 'blanc' ? BLANC : null
 export const ACTIONS: ActionExport[] = [
   { id: 'png', mode: 'telecharge', taille: 1024, extension: 'png' },
   { id: 'svg', mode: 'telecharge', taille: DEMI_CADRE * 2, extension: 'svg' },
-  { id: 'anime', mode: 'anime', taille: DEMI_CADRE * 2, extension: 'svg', suffixe: 'anime' },
   { id: 'gif', mode: 'gif', taille: GIF_TAILLE, extension: 'gif' },
   { id: 'copie', mode: 'copieImage', taille: 1024, extension: 'png' },
   { id: 'copieSvg', mode: 'copieTexte', taille: DEMI_CADRE * 2, extension: 'svg' }

@@ -1,7 +1,7 @@
 import { c, h, type Composant } from '@/ui/dom/h'
 import { Affiche } from './Affiche'
 import { AccDefile } from './AccDefile'
-import { CATALOGUE, EMPLACEMENTS } from '@/bot/emplacements'
+import { CATALOGUE, EMPLACEMENTS } from 'mochi-world/catalogue'
 import { EMPLACEMENT_LABEL } from './catalog'
 import { reveal } from './motion'
 

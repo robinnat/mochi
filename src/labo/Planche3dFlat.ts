@@ -1,11 +1,10 @@
 import { h, type Composant } from '@/ui/dom/h'
-import '@/components/mochi-bot'
-import type { RenduId } from '@/ui/rendu'
-import type { Douceur, Rendu3d } from '@/ui/trois/rendu3d'
+import 'mochi-world'
+import type { Douceur, Rendu3d, RenduId } from 'mochi-world'
 import { tailleCellule } from './largeur'
 
 /**
- * `#formes3d` : le flat 2D, l'aplat (ancien defaut, sans puis avec contour cartoon) et la matiere `doux` (ombrage
+ * `#formes3d` : l'aplat (ancien defaut, sans puis avec contour cartoon) et la matiere `doux` (ombrage
  * lisse, deux reglages : leger et marque), sur cinq formes. `?s=<taille>` ; `?t=<date>` fige l'image ; `?c=<couleur>`
  * impose une seule couleur ; `?v=lignes` met un style par LIGNE et une forme par colonne (portrait, lisible sur
  * telephone). `?x=1,3,4` ne garde que ces variantes, `?f=etoile` (ou `?f=cercle,etoile,nuage`) que ces formes.
@@ -20,7 +19,6 @@ interface Variante {
   reflet?: boolean
 }
 const TOUTES: Variante[] = [
-  { lettre: '', nom: 'flat 2D (actuel)', rendu: 'original' },
   { lettre: '', nom: '3D aplat (ancien)', rendu: '3d', rendu3d: 'aplat', contour: false },
   { lettre: '', nom: '3D aplat + contour cartoon', rendu: '3d', rendu3d: 'aplat', contour: true },
   { lettre: '', nom: '3D doux (leger)', rendu: '3d', rendu3d: 'doux', douceur: 'leger', contour: false },

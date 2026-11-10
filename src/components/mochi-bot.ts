@@ -10,19 +10,22 @@
  * - Chaque option existe en ATTRIBUT (kebab-case, texte : `frozen-at="1.2"`, `contour`,
  *   `reflet="false"`, `accessoires='{"tete":"casquette"}'`) et en PROPRIETE JavaScript (camelCase,
  *   n'importe quelle valeur : `el.accessoires = { tete: 'casquette' }`, `el.geste = (t) => ...`).
- * - Evenements (`CustomEvent`, sans propagation) : `pret` a la premiere image 3D peinte, puis
+ * - Evenements (`CustomEvent`, sans propagation) : `pret` a la premiere image 3D peinte (ou `sans3d` si le
+ *   navigateur n'a pas WebGL), puis
  *   `statechange`, `blockchange`, `playingchange`, `elapsedchange` quand le lecteur avance
  *   (`event.detail` porte la nouvelle valeur).
  * - Methodes : `seek`, `rendAt`, `setMood`, `react`, `relacher`, `regarder`.
- * - Le dessin est un `<svg>` dans le DOM ordinaire (pas de shadow DOM) : il se serialise tel quel
- *   pour les exports, et `el.svg` le donne directement.
+ * - Le Mochi est TOUJOURS rendu en vraie 3D (WebGL) : un `<canvas>` pose dans un `<svg>` du DOM ordinaire (pas de
+ *   shadow DOM), qui porte aussi les petits effets des etats (points, anneaux, « z »). `el.svg` le donne directement ;
+ *   les exports le figent en image (`figeToiles`). Sans WebGL, un court message remplace le Mochi : il n'y a plus de
+ *   dessin 2D de secours.
  * - Retire de la page, il arrete sa boucle d'animation, ses ecouteurs et ses minuteurs. Deplace
  *   dans la page (meme tache), il garde son etat.
  * - La vraie 3D (Three.js) n'est chargee qu'au premier Mochi en 3D, et tous partagent UN contexte
  *   WebGL (voir `src/ui/trois/scene3d.ts`).
  *
  * Le moteur (`src/bot/`) rend une image pour une date donnee ; ce composant tient l'horloge, le
- * montage, les humeurs, le regard et les reactions, et peint l'image en SVG ou en 3D.
+ * montage, les humeurs, le regard et les reactions, et peint l'image en 3D.
  */
 
 import { BotEngine, type BotFrame } from '@/bot/engine'
@@ -34,27 +37,14 @@ import { couleurDe, DEFAULT_COLOR, DEFAULT_SHAPE, SHAPE_BY_ID, mixHex } from '@/
 import { blockAt, defaultCycle, offsetOf, type Block } from '@/bot/cycles'
 import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
 import { STATE_BY_ID, type StateId } from '@/bot/states'
-import { dessinPorte, porteSvg, type PorteId } from '@/bot/portes'
-import { ACCESSOIRE_BY_ID, ancreDuCorps, type AccessoireId } from '@/bot/accessoires'
+import { PORTE_IDS, type PorteId } from '@/bot/portes'
 import { composer, zSommeil, type Geste } from '@/bot/gestes'
 import { Humeurs, REACTION_DE_EVENEMENT, doitRedessiner, moodDe, type ReactionId } from '@/bot/humeurs'
-import { pixellise, pixellisePrims } from '@/ui/pixel'
 import { DOUCEUR_DEFAUT, RENDU_3D_DEFAUT, type Douceur, type Rendu3d } from '@/ui/trois/rendu3d'
 import { type Theme } from '@/ui/trois/theme'
 import { themeCourant } from '@/ui/trois/themeCourant'
 import type { Selection } from '@/bot/emplacements'
-import {
-  contourCourant,
-  est3d,
-  estVraie3d,
-  matiere3dDe,
-  grillePixel,
-  pixelEffectif,
-  renduEffectif,
-  teintes3d,
-  type RenduId,
-  type TaillePixelId
-} from '@/ui/rendu'
+import { contourCourant, matiere3dDe, grillePixel, pixelEffectif, renduEffectif, type RenduId, type TaillePixelId } from '@/ui/rendu'
 import { computed, dans, Portee, ref, sansSuivi, shallowRef, surNettoyage, triggerRef, watch, type Ref } from '@/ui/dom/reactif'
 import { h, rendre, type Enfant, type VNode } from '@/ui/dom/h'
 
@@ -87,9 +77,9 @@ export interface MochiBotProps {
   follow: boolean
   /** Regard scripte de l'arrivee : evalue a chaque image avec le temps ecoule depuis qu'il a ete pose. */
   gaze: GazeScript | null
-  /** Style de rendu (`3d`, `pixel3d`, `flat3d`, ou un ancien dessin SVG) ; absent, le reglage courant (`renduCourant`). */
+  /** Style de rendu (`3d` Soft, `flat3d` Flat, `pixel3d` Pixel) ; absent ou inconnu, le reglage courant (`renduCourant`). */
   rendu: RenduId | undefined
-  /** Taille des pixels du pixel art ; absente, le reglage courant. */
+  /** Taille des pixels du style Pixel (`gros`, `moyen`, `fin`) : resolution de sa toile ; absente, le reglage courant. */
   pixel: TaillePixelId | undefined
   /** Matiere de la vraie 3D (`rendu` = 3d seulement). Absente : le defaut (`doux`). */
   rendu3d: Rendu3d
@@ -109,9 +99,7 @@ export interface MochiBotProps {
   yaw: number
   /** Geste (`src/bot/gestes.ts`) : petits ecarts ajoutes a la pose, fonction du temps de la scene. */
   geste: ((t: number) => Geste) | null
-  /** Accessoire de metier (`src/bot/accessoires.ts`) dessine devant le corps, avec le geste qui va avec. */
-  accessoire: AccessoireId | null
-  /** Accessoire PORTE (`src/bot/portes.ts`) : lunettes, chapeau, noeud, couronne, casque. */
+  /** Accessoire PORTE en 3D (`src/bot/portes.ts`, ancien jeu) : lunettes, chapeau, noeud, couronne, casque. */
   porte: PorteId | null
   /** Humeur de travail jouee en boucle (`repos`, `reflechit`, `travaille`, `attend`, `termine`, `bloque`, `dort`, ou les alias anglais). */
   mood: string | null
@@ -174,7 +162,6 @@ export const PROPRIETES: DefProp[] = [
   { nom: 'ombrage', genre: 'booleen', defaut: d(true) },
   { nom: 'yaw', genre: 'nombre', defaut: d(0) },
   { nom: 'geste', genre: 'fonction', defaut: d(null), sansAttribut: true },
-  { nom: 'accessoire', genre: 'texte', defaut: d(null) },
   { nom: 'porte', genre: 'texte', defaut: d(null) },
   { nom: 'mood', genre: 'texte', defaut: d(null) },
   { nom: 'interactions', genre: 'booleen', defaut: d(true) },
@@ -433,26 +420,12 @@ function monterBot(hote: MochiBotElement): Interne {
   const rendu = computed(() => renduEffectif(props.rendu))
   const contourEffectif = computed(() => props.contour ?? contourCourant.value)
   const grille = computed(() => grillePixel(pixelEffectif(props.pixel)))
-  /** Teintes du volume, ou null hors 3D. La vraie 3D prend celles de l'argile : c'est aussi son dessin de secours. */
-  const t3d = computed(() => {
-    const x = rendu.value
-    if (est3d(x)) return teintes3d(ink.value, x)
-    return estVraie3d(x) ? teintes3d(ink.value, 'argile') : null
-  })
-  const argile = computed(() => rendu.value === 'argile' || estVraie3d(rendu.value))
 
   const engine = new BotEngine(R, state.value, shapeRadii.value, expression.value)
   const frame = shallowRef<BotFrame>(engine.sample(props.frozenAt ?? 0))
   const uid = Math.random().toString(36).slice(2, 8)
-  const maskId = `bot-mask-${uid}`
-
-  /* ------------------------------------------------- geste et accessoire */
 
   const temps = ref(props.frozenAt ?? 0)
-  const acc = computed(() => (props.accessoire ? (ACCESSOIRE_BY_ID.get(props.accessoire) ?? null) : null))
-  const ancre = computed(() =>
-    acc.value ? ancreDuCorps(new BotEngine(R, 'idle', shapeRadii.value, null).sample(1).bodyPath) : undefined
-  )
 
   /* ------------------------------------------------- humeurs et reactions */
 
@@ -475,49 +448,14 @@ function monterBot(hote: MochiBotElement): Interne {
   const couleurZ = computed(() => mixHex(ink.value, '#1a1630', 0.5))
   const humeurActive = computed(() => moodDe(props.mood) !== null)
 
-  const gesteBase = (t: number): Geste | undefined =>
-    props.geste
-      ? acc.value
-        ? composer(props.geste(t), acc.value.geste(t, { ancre: ancre.value }))
-        : props.geste(t)
-      : acc.value
-        ? acc.value.geste(t, { ancre: ancre.value })
-        : undefined
+  /** Accessoire porte connu, ou rien. */
+  const porte = computed<PorteId | null>(() => (props.porte && (PORTE_IDS as string[]).includes(props.porte) ? props.porte : null))
+
   const gesteA = (t: number): Geste | undefined => {
-    const b = gesteBase(t)
+    const b = props.geste ? props.geste(t) : undefined
     const x = humeurs.sample(t)
     return x ? (b ? composer(b, x) : x) : b
   }
-  const objetDecalage = computed(() => {
-    if (!acc.value || !props.geste || !ancre.value || vraie3d.value) return ''
-    const a = ancreDuCorps(frame.value.bodyPath)
-    return `translate(${Math.round((a.x - ancre.value.x) * 10) / 10} ${Math.round((a.y - ancre.value.y) * 10) / 10})`
-  })
-  const objetSvg = computed(() => {
-    const a = acc.value
-    if (!a) return ''
-    const c = teintes3d(ink.value, 'argile')
-    return a.dessin(temps.value, {
-      uid: `${uid}-o-`,
-      corps: { clair: c.clair, base: c.base, ombre: c.ombre },
-      papier: props.paper,
-      simple: props.size < 64,
-      ancre: ancre.value
-    })
-  })
-
-  /** L'image courante en pixel art ; `null` hors pixel art ou sans canvas (repli sur l'original). */
-  const pixels = computed(() => (rendu.value === 'pixel' ? pixellise(frame.value, ink.value, props.paper, grille.value) : null))
-
-  /** Accessoire porte en 2D : en attente (les accessoires portes ne sont exposes qu'en 3D). */
-  const PORTE_2D = false as boolean
-  const porteTexte = computed(() => {
-    if (!props.porte || pixels.value || vraie3d.value || !PORTE_2D) return ''
-    return porteSvg(props.porte, frame.value)
-  })
-  const portePixels = computed(() =>
-    PORTE_2D && props.porte && rendu.value === 'pixel' ? pixellisePrims(dessinPorte(props.porte, frame.value), grille.value) : null
-  )
 
   let raf = 0
   let nextAt = Infinity
@@ -597,29 +535,29 @@ function monterBot(hote: MochiBotElement): Interne {
 
   type Module3d = typeof import('@/ui/trois/scene3d')
   const m3d = shallowRef<Module3d | null>(null)
+  /** Le navigateur n'a pas de WebGL (ou le module 3D n'a pas pu se charger) : un message remplace le Mochi. */
+  const sans3d = ref(false)
   let toile: HTMLCanvasElement | null = null
   const toileRef = ref(0)
-  const vraie3d = computed(() => estVraie3d(rendu.value) && m3d.value !== null)
+  const vraie3d = computed(() => m3d.value !== null)
   const pxToile = computed(() =>
     rendu.value === 'pixel3d'
       ? grille.value
       : Math.round(props.size * Math.min(props.maxPixelRatio, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1))
   )
 
-  watch(
-    rendu,
-    async (x) => {
-      if (!estVraie3d(x) || m3d.value) return
-      try {
-        const m = await import('@/ui/trois/scene3d')
-        // sans WebGL on garde l'argile SVG, qui est deja a l'ecran
-        if (m.webglDisponible()) m3d.value = m
-      } catch {
-        // module introuvable ou contexte refuse : meme repli
-      }
-    },
-    { immediate: true }
-  )
+  // la 3D (Three.js) est chargee au montage, une fois pour tous les Mochi de la page
+  import('@/ui/trois/scene3d')
+    .then((m) => {
+      if (m.webglDisponible()) m3d.value = m
+      else signalerSans3d()
+    })
+    // module introuvable : meme repli que sans WebGL
+    .catch(signalerSans3d)
+  function signalerSans3d() {
+    sans3d.value = true
+    hote.dispatchEvent(new CustomEvent('sans3d'))
+  }
 
   const decorAlpha = computed(() => (vraie3d.value && props.yaw ? Math.max(0, Math.cos(props.yaw)) ** 3 : 1))
 
@@ -653,9 +591,10 @@ function monterBot(hote: MochiBotElement): Interne {
   function dessiner3d() {
     const m = m3d.value
     if (!vraie3d.value || !m || !toile) return
-    m.rendreAvatar(toile, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle(), props.ombre, props.ombrage, props.epaisseurContour)
+    m.rendreAvatar(toile, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), porte.value, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle(), props.ombre, props.ombrage, props.epaisseurContour)
     if (!pretEmis) {
       pretEmis = true
+      hote.dataset.pret = '1'
       hote.dispatchEvent(new CustomEvent('pret'))
     }
   }
@@ -676,7 +615,7 @@ function monterBot(hote: MochiBotElement): Interne {
   surNettoyage(() => clearTimeout(minuteurForme))
 
   watch(
-    [frame, vraie3d, toileRef, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, themeEff, () => props.accessoires, () => props.ombre, () => props.ombrage, () => contourEffectif.value, () => props.epaisseurContour],
+    [frame, vraie3d, toileRef, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, porte, themeEff, () => props.accessoires, () => props.ombre, () => props.ombrage, () => contourEffectif.value, () => props.epaisseurContour],
     dessiner3d,
     { flush: 'post' }
   )
@@ -758,7 +697,7 @@ function monterBot(hote: MochiBotElement): Interne {
   const APPUI_LONG = 450
   const DEPLACEMENT_MAX = 10
 
-  const interactif = computed(() => props.interactions && props.frozenAt === undefined && estVraie3d(rendu.value) && !props.follow)
+  const interactif = computed(() => props.interactions && props.frozenAt === undefined && !props.follow)
   let appui: { x: number; y: number; t: number; minuteur: number; long: boolean } | null = null
   let dernierTap = -1e9
   let secousse: { sens: number; t: number }[] = []
@@ -974,7 +913,7 @@ function monterBot(hote: MochiBotElement): Interne {
     },
     { immediate: true }
   )
-  watch([() => props.accessoire, () => props.geste, () => props.porte], redrawFrozen)
+  watch([() => props.geste, () => props.porte], redrawFrozen)
 
   /* ------------------------------------------------------------------ dessin */
 
@@ -986,26 +925,13 @@ function monterBot(hote: MochiBotElement): Interne {
       : { ...common, cx: dot.x, cy: dot.y, r: dot.r }
   }
 
-  const rect = (fill: string, extra: Record<string, unknown> = {}) =>
-    h('rect', { x: -VB, y: -VB, width: VB * 2, height: VB * 2, fill, ...extra })
-
   function dessin(): VNode {
     const f = frame.value
-    const px = pixels.value
-    const t3 = t3d.value
-    const arg = argile.value
     const enfants: Enfant[] = []
-    if (px) {
-      enfants.push(h('g', { 'data-pixels': '1', 'shape-rendering': 'crispEdges' }, px.map((c, i) => h('path', { key: i, d: c.d, fill: c.fill }))))
-    } else {
-      // les yeux sont de vrais trous perces dans le corps (rognes par la silhouette)
-      const defs: Enfant[] = [
-        h(
-          'mask',
-          { id: maskId, maskUnits: 'userSpaceOnUse', x: -VB, y: -VB, width: VB * 2, height: VB * 2 },
-          h('path', { d: f.bodyPath, fill: '#fff' }),
-          f.eyes.map((eye, i) => h('path', { key: i, d: eye.d, transform: eye.matrix, opacity: eye.alpha, fill: '#000' }))
-        ),
+    enfants.push(
+      h(
+        'defs',
+        null,
         f.arcs.map((arc) =>
           h(
             'linearGradient',
@@ -1013,111 +939,53 @@ function monterBot(hote: MochiBotElement): Interne {
             arc.grad.stops.map((c, i) => h('stop', { key: i, offset: i / (arc.grad.stops.length - 1), 'stop-color': c }))
           )
         )
-      ]
-      if (t3) {
-        defs.push(
-          // volume : lumiere en haut a gauche
-          h(
-            'radialGradient',
-            { id: `${uid}-vol`, gradientUnits: 'userSpaceOnUse', cx: '-28', cy: '-38', r: '172', fx: '-46', fy: '-58' },
-            h('stop', { offset: '0', 'stop-color': t3.clair }),
-            h('stop', { offset: arg ? 0.5 : 0.44, 'stop-color': t3.base }),
-            h('stop', { offset: '1', 'stop-color': t3.ombre })
-          ),
-          h('filter', { id: `${uid}-flou`, x: '-50%', y: '-50%', width: '200%', height: '200%' }, h('feGaussianBlur', { stdDeviation: arg ? 6 : 8 })),
-          h('filter', { id: `${uid}-creux`, x: '-20%', y: '-20%', width: '140%', height: '140%' }, h('feGaussianBlur', { stdDeviation: '2.5' })),
-          h('filter', { id: `${uid}-reflet`, x: '-100%', y: '-100%', width: '300%', height: '300%' }, h('feGaussianBlur', { stdDeviation: arg ? 13 : 6 })),
-          // ombre interne legere : le bord bas droit s'assombrit vers l'interieur
-          h(
-            'filter',
-            { id: `${uid}-interne`, x: '-10%', y: '-10%', width: '120%', height: '120%' },
-            h('feComponentTransfer', { in: 'SourceAlpha', result: 'inverse' }, h('feFuncA', { type: 'table', tableValues: '1 0' })),
-            h('feOffset', { in: 'inverse', dx: arg ? -7 : -5, dy: arg ? -10 : -7, result: 'decale' }),
-            h('feGaussianBlur', { in: 'decale', stdDeviation: arg ? 10 : 5, result: 'flou' }),
-            h('feComposite', { in: 'flou', in2: 'SourceAlpha', operator: 'in', result: 'bord' }),
-            h('feFlood', { 'flood-color': t3.ombre, 'flood-opacity': arg ? 0.7 : 0.45 }),
-            h('feComposite', { in2: 'bord', operator: 'in', result: 'teinte' }),
-            h('feMerge', null, h('feMergeNode', { in: 'SourceGraphic' }), h('feMergeNode', { in: 'teinte' }))
-          ),
-          h('clipPath', { id: `${uid}-clip` }, h('path', { d: f.bodyPath }))
-        )
-      }
-      enfants.push(h('defs', null, defs))
-      // moitie arriere des orbites : dessinee avant le corps, donc occultee
+      )
+    )
+    // moitie arriere des orbites : posee avant le corps 3D, donc cachee par lui
+    enfants.push(
+      h(
+        'g',
+        { fill: 'none', 'stroke-linecap': 'round' },
+        f.arcs.map((arc) => h('path', { key: `b${arc.id}`, d: arc.back, stroke: `url(#${uid}-${arc.id})`, 'stroke-width': arc.width, opacity: arc.opacity }))
+      )
+    )
+    if (vraie3d.value) {
+      // le corps, les yeux et les accessoires sont rendus par WebGL dans ce canvas, cale sur le viewBox
       enfants.push(
         h(
-          'g',
-          { fill: 'none', 'stroke-linecap': 'round' },
-          f.arcs.map((arc) => h('path', { key: `b${arc.id}`, d: arc.back, stroke: `url(#${uid}-${arc.id})`, 'stroke-width': arc.width, opacity: arc.opacity }))
+          'foreignObject',
+          { key: 'fo', x: -VB, y: -VB, width: VB * 2, height: VB * 2 },
+          h('canvas', {
+            width: pxToile.value,
+            height: pxToile.value,
+            'data-vraie3d': '1',
+            style: rendu.value === 'pixel3d' ? 'image-rendering: pixelated; display: block; width: 100%; height: 100%' : 'display: block; width: 100%; height: 100%',
+            ref: (el: Element | null) => {
+              toile = el as HTMLCanvasElement | null
+              toileRef.value++
+            }
+          })
         )
       )
-      if (vraie3d.value) {
-        // vraie 3D : le corps et les yeux sont rendus par WebGL dans ce canvas, cale sur le viewBox
-        enfants.push(
-          h(
-            'foreignObject',
-            { key: 'fo', x: -VB, y: -VB, width: VB * 2, height: VB * 2 },
-            h('canvas', {
-              width: pxToile.value,
-              height: pxToile.value,
-              'data-vraie3d': '1',
-              style: rendu.value === 'pixel3d' ? 'image-rendering: pixelated; display: block; width: 100%; height: 100%' : 'display: block; width: 100%; height: 100%',
-              ref: (el: Element | null) => {
-                toile = el as HTMLCanvasElement | null
-                toileRef.value++
-              }
-            })
-          )
-        )
-      } else {
-        const corps: Enfant[] = []
-        // 3D : ombre portee, coloree et floue, sous la forme
-        if (t3) corps.push(h('path', { d: f.bodyPath, fill: t3.portee, opacity: arg ? 0.36 : 0.4, transform: arg ? 'translate(0 8)' : 'translate(0 6)', filter: `url(#${uid}-flou)` }))
-        // fond opaque a la forme exacte du corps : un anneau qui passe derriere ne reapparait pas dans les yeux
-        corps.push(h('path', { d: f.bodyPath, fill: props.paper }))
-        if (t3) {
-          // profondeur des yeux : le corps perce, decale et flou, vu seulement a travers les trous
-          corps.push(
-            h('g', { 'clip-path': `url(#${uid}-clip)` }, h('g', { transform: 'translate(3 5)', filter: `url(#${uid}-creux)` }, h('g', { mask: `url(#${maskId})` }, rect(t3.ombre, { opacity: '0.5' }))))
-          )
-          corps.push(
-            h(
-              'g',
-              { filter: `url(#${uid}-interne)` },
-              h(
-                'g',
-                { mask: `url(#${maskId})` },
-                rect(`url(#${uid}-vol)`),
-                // reflet : large et doux sur l'argile, net et vif sur la bulle
-                h('ellipse', {
-                  cx: arg ? -34 : -40,
-                  cy: arg ? -46 : -54,
-                  rx: arg ? 48 : 30,
-                  ry: arg ? 32 : 17,
-                  fill: '#ffffff',
-                  opacity: arg ? 0.22 : 0.8,
-                  transform: 'rotate(-32 -40 -52)',
-                  filter: `url(#${uid}-reflet)`
-                }),
-                // lumiere renvoyee par le sol, en bas a droite : seulement la bulle
-                arg ? null : h('ellipse', { cx: '34', cy: '62', rx: '44', ry: '20', fill: '#ffffff', opacity: '0.1', transform: 'rotate(-32 34 62)', filter: `url(#${uid}-reflet)` })
-              )
-            )
-          )
-        } else corps.push(h('g', { mask: `url(#${maskId})` }, rect(ink.value)))
-        enfants.push(h('g', { key: 'corps', opacity: f.bodyAlpha }, corps))
-      }
-      enfants.push(h('g', { opacity: decorAlpha.value }, f.dots.map((dot, i) => h(dot.d ? 'path' : 'circle', { key: `pf${i}`, ...dotAttrs(dot) }))))
-      // moitie avant des orbites
+    } else if (sans3d.value) {
+      // pas de WebGL : pas de dessin 2D de secours, un message court a la place du Mochi
       enfants.push(
         h(
-          'g',
-          { fill: 'none', 'stroke-linecap': 'round' },
-          f.arcs.map((arc) => h('path', { key: `f${arc.id}`, d: arc.front, stroke: `url(#${uid}-${arc.id})`, 'stroke-width': arc.width, opacity: arc.opacity }))
+          'text',
+          { key: 'sans3d', 'data-sans3d': '1', x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': 18, 'font-family': 'system-ui, sans-serif', fill: '#8a8a8a' },
+          t('app.sans3d')
         )
       )
-      if (objetSvg.value) enfants.push(h('g', { key: 'objet', opacity: decorAlpha.value, transform: objetDecalage.value || undefined, innerHTML: objetSvg.value }))
     }
+    enfants.push(h('g', { opacity: decorAlpha.value }, f.dots.map((dot, i) => h(dot.d ? 'path' : 'circle', { key: `pf${i}`, ...dotAttrs(dot) }))))
+    // moitie avant des orbites
+    enfants.push(
+      h(
+        'g',
+        { fill: 'none', 'stroke-linecap': 'round' },
+        f.arcs.map((arc) => h('path', { key: `f${arc.id}`, d: arc.front, stroke: `url(#${uid}-${arc.id})`, 'stroke-width': arc.width, opacity: arc.opacity }))
+      )
+    )
     const z = zMarques.value
     if (z.length)
       enfants.push(
@@ -1127,11 +995,6 @@ function monterBot(hote: MochiBotElement): Interne {
           z.map((m) => h('path', { key: m.i, d: m.d, opacity: m.op }))
         )
       )
-    // accessoire porte : meme description pour tous les rendus (`portes.ts`)
-    if (porteTexte.value) enfants.push(h('g', { key: 'porte', 'data-porte': '1', innerHTML: porteTexte.value }))
-    if (portePixels.value)
-      enfants.push(h('g', { key: 'porte-px', 'data-porte': '1', 'shape-rendering': 'crispEdges' }, portePixels.value.map((c, i) => h('path', { key: i, d: c.d, fill: c.fill }))))
-
     return h(
       'svg',
       {
@@ -1140,7 +1003,7 @@ function monterBot(hote: MochiBotElement): Interne {
         viewBox: `${-VB} ${-VB} ${VB * 2} ${VB * 2}`,
         role: 'img',
         'aria-label': props.label ?? t('app.botAria'),
-        style: acc.value || props.porte || z.length ? 'overflow: visible' : undefined,
+        style: porte.value || z.length ? 'overflow: visible' : undefined,
         onPointerenter: onSurvol,
         onPointermove: onSurvol,
         onPointerleave: onQuitte,

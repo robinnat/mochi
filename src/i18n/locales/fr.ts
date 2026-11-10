@@ -21,7 +21,8 @@ export default {
      */
     name: 'mochi world',
     title: 'Mochi World, avatar animé',
-    botAria: 'Avatar mochi animé'
+    botAria: 'Avatar mochi animé',
+    sans3d: 'La 3D demande WebGL'
   },
 
   gallery: {
@@ -61,7 +62,6 @@ export default {
     more: 'Autres formats',
     png: 'Télécharger le PNG',
     svg: 'Télécharger le SVG',
-    anime: "Télécharger l'animation SVG",
     gif: 'Télécharger le GIF animé',
     cycleDetail: 'La vidéo est plus légère et plus fluide ; le GIF passe partout.',
     cycleFormat: 'Format',
@@ -149,10 +149,6 @@ export default {
   },
 
   styles: {
-    original: 'Original',
-    pixel: 'Pixel art',
-    argile: '3D argile',
-    bulle: '3D bulle',
     '3d': 'Doux',
     flat3d: 'Plat',
     pixel3d: 'Pixel'

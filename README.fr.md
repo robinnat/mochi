@@ -7,8 +7,8 @@
 Mochi World est un petit moteur d'avatars animés pour le web. Ses personnages, les Mochi, sont une
 forme pleine avec sept humeurs, deux yeux qui bougent tout seuls, et des réactions quand on les touche
 (survol, tape, double tape, appui long, secousse, un coucou à l'arrivée). Tout est dessiné en vraie 3D,
-en trois styles (Soft, Flat et Pixel), en clair et en sombre, avec 23 accessoires à cumuler par
-emplacement et par couleur, et des exports (SVG, PNG, GIF, MP4). Aucune bibliothèque d'animation.
+en trois styles (Soft, Flat et Pixel), en clair et en sombre, avec 22 accessoires à cumuler par
+emplacement et par couleur, et des exports (PNG, SVG, GIF, MP4). Aucune bibliothèque d'animation.
 
 **Site et bac à sable : https://mochi-red-phi.vercel.app** (l'app est sur `/app`).  
 **Code source : https://github.com/robinnat/mochi**
@@ -108,51 +108,20 @@ Indiquez au compilateur Vue que `mochi-bot` est un élément personnalisé
 <button onclick={() => (mood = 'termine')}>Terminé</button>
 ```
 
-### Moteur seul
+### Moteur et catalogues
 
-`src/bot/` n'a ni framework ni horloge : `engine.sample(t)` est une fonction pure du temps. Le fichier de
-la bibliothèque exporte aussi le moteur (`BotEngine`, `SHAPE_BY_ID`, `COLOR_BY_ID`, `RAYON`,
-`DEMI_VIEWBOX`). `tools/moteur.ts` est un point d'entrée plus petit, moteur seul :
+Deux points d'entrée, ceux-là mêmes qu'utilisent le site, la doc et le labo du dépôt (ils n'importent
+jamais un fichier interne, un test le vérifie) :
 
-```bash
-npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify --outfile=mochi-engine.js
-```
+- `mochi-world` (`dist-lib/mochi-world.js`) : déclare `<mochi-bot>` et exporte tout ce qui suit.
+- `mochi-world/catalogue` (`dist-lib/catalogue.js`) : les catalogues et réglages communs sans la balise
+  (`SHAPES`, `COLORS`, `CATALOGUE`, `EMPLACEMENTS`, `MOOD_IDS`, `REACTION_IDS`, `RENDUS`, `themeCourant`,
+  `cheminDeForme` pour une icône de forme, `charger3d` pour charger la 3D à la demande), pour construire
+  un sélecteur avant de charger la balise.
 
-Puis dessinez les images vous-même. Cet exemple dessine le corps et les yeux (les anneaux, les
-particules et la pastille de notification sont dans `frame.arcs`, `frame.dots` et `frame.notif`, et ne
-sont pas dessinés ici) :
-
-```html
-<svg id="mochi" width="200" height="200"></svg>
-<script type="module">
-  import { BotEngine, SHAPE_BY_ID, COLOR_BY_ID, RAYON, DEMI_VIEWBOX } from './mochi-engine.js'
-
-  const engine = new BotEngine(RAYON, 'idle', SHAPE_BY_ID.get('etoile').radii)
-  const color = COLOR_BY_ID.get('violet').hex
-  const svg = document.getElementById('mochi')
-  const V = DEMI_VIEWBOX
-  svg.setAttribute('viewBox', `${-V} ${-V} ${V * 2} ${V * 2}`)
-
-  function draw(t) {
-    const f = engine.sample(t)
-    // the eyes are holes in a mask, so they clip against the silhouette on their own
-    const eyes = f.eyes
-      .map((e) => `<path d="${e.d}" transform="${e.matrix}" opacity="${e.alpha}" fill="#000"/>`)
-      .join('')
-    svg.innerHTML =
-      `<mask id="m" maskUnits="userSpaceOnUse" x="${-V}" y="${-V}" width="${V * 2}" height="${V * 2}">` +
-      `<path d="${f.bodyPath}" fill="#fff"/>${eyes}</mask>` +
-      `<rect x="${-V}" y="${-V}" width="${V * 2}" height="${V * 2}" fill="${color}" mask="url(#m)" opacity="${f.bodyAlpha}"/>`
-  }
-
-  engine.setState('wink', 2) // at t = 2 s
-  const loop = (ms) => { draw(ms / 1000); requestAnimationFrame(loop) }
-  requestAnimationFrame(loop)
-</script>
-```
-
-Servez le dossier en HTTP (les modules ES ne se chargent pas depuis `file://`). Testé dans Chrome.
-Gardez l'en-tête MIT de `LICENSE` en haut du fichier que vous distribuez.
+`src/bot/` n'a ni framework ni horloge : `engine.sample(t)` est une fonction pure du temps, et `BotEngine`
+est exporté aussi. Le Mochi lui-même est toujours dessiné en 3D : l'image du moteur pilote le corps 3D, il
+n'y a pas de dessin 2D.
 
 ## Ce qu'il contient
 
@@ -160,8 +129,8 @@ Gardez l'en-tête MIT de `LICENSE` en haut du fichier que vous distribuez.
 bord et reflet calculés dans le repère de la caméra, pour que tout le volume soit éclairé de la même façon
 de tous les côtés), `flat3d` (Flat : deux ou trois tons en aplat, `contour` en option) et `pixel3d`
 (Pixel : rendu en basse résolution, palette courte, contour de 1 px ; `pixel` : `gros` 16, `moyen` 24,
-`fin` 32 px pour la boule). `yaw` fait tourner le modèle. Sans WebGL, et pour les exports SVG, PNG, GIF
-et MP4, l'avatar revient à son dessin SVG : il n'y a pas encore d'export 3D.
+`fin` 32 px pour la boule). `yaw` fait tourner le modèle. Tout est en 3D, exports compris : il n'y a pas
+de dessin 2D. Sans WebGL, un court message remplace le Mochi et l'élément envoie l'événement `sans3d`.
 
 **Formes** (12) : `cercle`, `galet`, `squircle`, `capsule`, `triangle`, `hexagone`, `nuage`,
 `goutte`, `etoile`, `fleur`, `oeuf`, `coeur`. Chaque forme a un vrai volume sous tous les angles : le
@@ -185,22 +154,24 @@ bonjour à l'arrivée (il sort du sol en grandissant). Cela fait 5 réactions : 
 vertical (en radians ; les yeux sont peints sur la face avant seulement). La section 3D du site le pilote
 au glisser.
 
-**Accessoires** (23, prop `accessoires`, catalogue dans `src/bot/emplacements.ts`) : un par
+**Accessoires** (22, prop `accessoires`, catalogue dans `src/bot/emplacements.ts`) : un par
 emplacement, tous cumulables, chacun une forme simple en une ou deux couleurs au choix.
 
 | Emplacement | Accessoires |
 |---|---|
 | `tete` (tête, 10) | `casquette`, `beret`, `haut-de-forme`, `couronne`, `paille`, `antenne`, `casque`, `ruban`, `fleur`, `toque` |
 | `yeux` (yeux, 6) | `rondes`, `carrees`, `soleil`, `coeur`, `etoile`, `monocle` |
-| `visage` (visage, 1) | `joues` |
 | `bas` (cou, 4) | `papillon`, `echarpe`, `perles`, `fleurs` |
 | `dos` (dos, 2) | `sac`, `cape` |
 
 `el.accessoires = { tete: { id: 'casquette', c1: '#e8505b' }, yeux: 'rondes' }`, ou la même chose en JSON dans l'attribut.
-**Thème** : `theme="dark"` rend les yeux noirs (sans lui, c'est le thème courant du site).
+**Thème** : `theme="dark"` rend les yeux noirs (sans lui, c'est le thème courant du site). Sur un corps
+très clair (jaune `#ffd60a`, citron vert `#b6e800`), les yeux sont noirs pleins en clair aussi : pas de contour.
 
-**Exports** : SVG, PNG, SVG animé, GIF animé, et un montage entier en GIF ou en MP4 (l'encodeur
-vidéo ne se charge qu'à la première utilisation).
+**Exports**, tous depuis la scène 3D : PNG et SVG (une image fixe du canvas 3D, intégrée comme image dans
+le SVG), un GIF animé, et un montage entier en GIF ou en MP4, rendus image par image (l'encodeur vidéo ne se
+charge qu'à la première utilisation). Le SVG animé n'existe plus : sans dessin 2D, il n'y a pas d'animation
+vectorielle à exporter.
 
 ## API principale
 
@@ -251,7 +222,7 @@ La documentation technique de `docs/` est en français.
 | [docs/moods.md](docs/moods.md) | Humeurs de travail et réactions à l'utilisateur (visage et corps seulement) |
 | [docs/intro.md](docs/intro.md) | La séquence d'arrivée |
 | [docs/interface.md](docs/interface.md) | Mise en page de l'app et pièges CSS |
-| [docs/export.md](docs/export.md) | Export SVG, PNG, GIF et MP4 |
+| [docs/export.md](docs/export.md) | Export PNG, SVG, GIF et MP4, tout depuis la 3D |
 | [docs/i18n.md](docs/i18n.md) | La couche de traduction faite maison |
 
 ## Développement

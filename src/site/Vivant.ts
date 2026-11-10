@@ -1,6 +1,6 @@
 import { ref, watch } from '@/ui/dom/reactif'
 import { h, surDemontage, surMontage, type Composant } from '@/ui/dom/h'
-import type { MochiBotElement, MochiBotProps } from '@/components/mochi-bot'
+import type { MochiBotElement, MochiBotProps } from 'mochi-world'
 import { urlAffiche } from './affiches'
 import { themeEffectif } from './theme'
 import { pagePrete, prechaufferStyles, RATIO_MAX, FPS_VIVANT } from './pret'
@@ -29,7 +29,7 @@ export interface VivantProps {
 let chargement: Promise<unknown> | null = null
 const composantCharge = ref(typeof customElements !== 'undefined' && !!customElements.get('mochi-bot'))
 function chargerComposant() {
-  chargement ??= import('@/components/mochi-bot').then(() => (composantCharge.value = true))
+  chargement ??= import('mochi-world').then(() => (composantCharge.value = true))
 }
 
 export const Vivant: Composant<VivantProps> = (props) => {

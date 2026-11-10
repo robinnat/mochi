@@ -3,13 +3,10 @@ import { c, h, surDemontage, surMontage, type Composant, type Enfant } from '@/u
 import { Nav } from '@/site/Nav'
 import { Pied } from '@/site/Pied'
 import { CodeBlock } from '@/site/CodeBlock'
-import { Vivant } from '@/site/Vivant'
-import { DOCS_BOT } from '@/site/affiches'
+import { Apercu } from './apercu'
 import { initTheme } from '@/site/theme'
 import { COLOR_LABEL, EMPLACEMENT_LABEL, EMPLACEMENTS_IDS, ACCESSOIRES_SITE, HUMEURS_SITE, SHAPE_LABEL } from '@/site/catalog'
-import { COLORS, SHAPES } from '@/bot/skins'
-import { closedPath, toPoints } from '@/bot/shape'
-import { REACTION_IDS } from '@/bot/humeurs'
+import { cheminDeForme, COLORS, REACTION_IDS, SHAPES } from 'mochi-world/catalogue'
 import {
   CHARGER,
   DEPOT,
@@ -34,7 +31,7 @@ import {
 } from './exemples'
 import { ALIAS_HUMEURS, REACTIONS_DOC } from './catalogues'
 
-const silhouette = (radii: number[]) => closedPath(toPoints({ radii, rot: 0, cx: 0, cy: 0, sx: 1, sy: 1 }, 10))
+const silhouette = (radii: number[]) => cheminDeForme(radii)
 const FORMES = SHAPES.map((s) => ({ id: s.id, label: SHAPE_LABEL[s.id] ?? s.id, d: silhouette(s.radii) }))
 const ACCS = EMPLACEMENTS_IDS.map((e) => ({ e, label: EMPLACEMENT_LABEL[e], items: ACCESSOIRES_SITE(e) }))
 
@@ -129,12 +126,7 @@ export const Docs: Composant<Record<string, never>> = () => {
                 'div',
                 { class: 'doc-duo' },
                 bloc(EXEMPLE_RAPIDE, 'index.html'),
-                h(
-                  'div',
-                  { class: 'doc-apercu' },
-                  c(Vivant, { taille: 180, affiche: 'docs', bot: DOCS_BOT, alt: 'A purple star Mochi, the result of the example' }),
-                  h('span', null, 'Result: live, it reacts to touch.')
-                )
+                c(Apercu, { exemple: EXEMPLE_RAPIDE, legende: 'Result: this very code, live. It reacts to touch.' })
               ),
               h(
                 'p',
@@ -163,6 +155,7 @@ export const Docs: Composant<Record<string, never>> = () => {
               h('h2', null, 'Shapes and colours'),
               h('p', null, code('shape'), ` takes one of the ${FORMES.length} shape ids. `, code('color'), ' takes a colour id or any hex colour.'),
               bloc(EX_FORME_COULEUR, 'HTML'),
+              c(Apercu, { exemple: EX_FORME_COULEUR }),
               h('h3', null, 'Shapes'),
               h(
                 'ul',
@@ -201,10 +194,11 @@ export const Docs: Composant<Record<string, never>> = () => {
                 ' (Flat). The model is the same, only the drawing changes.'
               ),
               bloc(EX_STYLES, 'HTML'),
+              c(Apercu, { exemple: EX_STYLES }),
               h(
                 'p',
                 { class: 'note' },
-                'Three.js is a dynamic import: it is downloaded the first time a 3D Mochi is shown, never before. Without WebGL, Mochi falls back to an SVG drawing.'
+                'Three.js is a dynamic import: it is downloaded the first time a Mochi is shown, never before. Mochi is always drawn in 3D: without WebGL, a short message takes its place (and the element fires a sans3d event).'
               )
             ),
             section(
@@ -212,6 +206,7 @@ export const Docs: Composant<Record<string, never>> = () => {
               h('h2', null, 'Moods'),
               h('p', null, 'A mood changes the face and the way the body moves. It loops until you change it, and the change glides.'),
               bloc(EX_MOODS, 'HTML'),
+              c(Apercu, { exemple: EX_MOODS }),
               tableau(
                 ['Id', 'Also accepted', 'What it does'],
                 HUMEURS_SITE.map((hm) =>
@@ -238,6 +233,7 @@ export const Docs: Composant<Record<string, never>> = () => {
                 ' (second colour, for two-colour pieces). As an attribute, write it in JSON.'
               ),
               bloc(EX_ACCESSOIRES, 'HTML'),
+              c(Apercu, { exemple: EX_ACCESSOIRES }),
               h(
                 'div',
                 { class: 'slots' },
@@ -275,7 +271,8 @@ export const Docs: Composant<Record<string, never>> = () => {
                 code('themeCourant'),
                 ' (light by default).'
               ),
-              bloc(EX_THEME, 'HTML')
+              bloc(EX_THEME, 'HTML'),
+              c(Apercu, { exemple: EX_THEME })
             ),
             section(
               'reactions',
@@ -311,7 +308,8 @@ export const Docs: Composant<Record<string, never>> = () => {
                 code('pret'),
                 ' event fires when the first 3D frame is painted: until then you can show a still image, as this site does. Removed from the page, a Mochi stops its loop and its listeners.'
               ),
-              bloc(EX_FIGE, 'HTML')
+              bloc(EX_FIGE, 'HTML'),
+              c(Apercu, { exemple: EX_FIGE })
             ),
             section(
               'props',
@@ -355,16 +353,19 @@ export const Docs: Composant<Record<string, never>> = () => {
             ),
             section(
               'engine',
-              h('h2', null, 'Engine only'),
+              h('h2', null, 'Engine and catalogues'),
               h(
                 'p',
                 null,
                 code('src/bot/'),
-                ' has no framework and no clock. The library file also exports it: draw the frames yourself (SVG, canvas). This gives the 2D drawing, not the 3D styles.'
+                ' has no framework and no clock. The library file exports the engine and the catalogues; ',
+                code('mochi-world/catalogue'),
+                ' (',
+                code('dist-lib/catalogue.js'),
+                ') gives the catalogues alone, without the tag, to build a picker. This site and these docs use only these two entry points. Mochi itself is always drawn in 3D.'
               ),
               bloc(EX_MOTEUR_BUILD, 'Terminal'),
-              bloc(EX_MOTEUR, 'main.js'),
-              h('p', { class: 'note' }, 'The README has a complete SVG drawing loop: ', h('a', { href: DEPOT + '#engine-only' }, 'Engine only'), '.')
+              bloc(EX_MOTEUR, 'main.js')
             )
           )
         )

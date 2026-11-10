@@ -1,7 +1,7 @@
 import { computed, ref, watch } from '@/ui/dom/reactif'
 import { h, surDemontage, surMontage, type Composant } from '@/ui/dom/h'
 import { DEFILE, TAILLE_DEFILE, urlAffiche } from './affiches'
-import type { Choix, Emplacement } from '@/bot/emplacements'
+import type { Choix, Emplacement } from 'mochi-world/catalogue'
 import { ACCESSOIRES_SITE } from './catalog'
 import { useReduit } from './reduced'
 import { themeEffectif } from './theme'

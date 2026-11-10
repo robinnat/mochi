@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { CATALOGUE, PAR_ID } from '@/bot/emplacements'
+import { CATALOGUE, PAR_ID } from 'mochi-world/catalogue'
 import { AFFICHES, DEFILE, PIECES, urlAffiche, urlPiece } from './affiches'
 
 const publicDir = new URL('../../public', import.meta.url)
@@ -33,7 +33,8 @@ describe('images pre-rendues (v11)', () => {
       expect(lire(f), f).not.toMatch(/^import [^\n]*components\/mochi-bot/m)
     }
     const v = lire('Vivant.ts')
-    expect(v).toContain("import('@/components/mochi-bot')")
+    // le composant arrive par l'entree publique du paquet, comme chez un utilisateur
+    expect(v).toContain("import('mochi-world')")
     expect(v).toContain('onPret: surPret')
     expect(v).toContain('IntersectionObserver')
   })
@@ -47,7 +48,7 @@ describe('images pre-rendues (v11)', () => {
       const n = m[1]!
       expect(noms.has(n), n).toBe(true)
     }
-    expect(vus).toBeGreaterThanOrEqual(3)
+    expect(vus).toBeGreaterThanOrEqual(2)
   })
 
   it('la carte des accessoires defile sur tout le catalogue (sans les quatre retires), compteur lu dans le catalogue, immobile si mouvement reduit', () => {

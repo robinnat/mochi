@@ -9,7 +9,7 @@ import {
   accessoiresSombres,
   contraste,
   CONTRASTE_OEIL_MIN,
-  contourOeil,
+  themeDesYeux,
   corpsPourTheme,
   couleurOeil,
   estTheme,
@@ -243,19 +243,20 @@ describe('epaisseur du contour (Mochi3d)', () => {
   })
 })
 
-describe('theme : contour des yeux sur corps tres clair (P1, 09/11/2026)', () => {
-  it('jaune et citron vert ont un contour fonce en clair, les autres couleurs rien', () => {
+describe('theme : yeux sur corps tres clair, sans contour (Robin, 10/11/2026)', () => {
+  it('jaune et citron vert prennent les yeux noirs pleins en clair, les autres couleurs gardent les yeux blancs', () => {
     for (const hex of ['#ffd60a', '#b6e800']) {
-      const c = contourOeil(hex, 'light', '#f9f9f9')
-      expect(c, hex).not.toBeNull()
-      expect(contraste(c!, '#f9f9f9'), hex).toBeGreaterThan(4)
+      expect(themeDesYeux(hex, 'light', '#f9f9f9'), hex).toBe('dark')
+      // l'oeil noir se lit bien sur ce corps (seuil WCAG des composants graphiques)
+      expect(contraste(hex, OEIL_SOMBRE), hex).toBeGreaterThan(3)
     }
     for (const c of COLORS) {
       if (c.id === 'ambre' || c.id === 'citron') continue
-      expect(contourOeil(c.hex, 'light', '#f9f9f9'), c.id).toBeNull()
+      expect(themeDesYeux(c.hex, 'light', '#f9f9f9'), c.id).toBe('light')
     }
   })
-  it('jamais en sombre', () => {
-    expect(contourOeil('#ffd60a', 'dark')).toBeNull()
+  it('en sombre, tous les yeux restent noirs', () => {
+    expect(themeDesYeux('#ffd60a', 'dark')).toBe('dark')
+    expect(themeDesYeux('#2d5bff', 'dark')).toBe('dark')
   })
 })

@@ -1,5 +1,4 @@
-import type { RenduId } from '@/ui/rendu'
-import { PAR_ID, type Emplacement, type Selection } from '@/bot/emplacements'
+import { EMPLACEMENTS, PAR_ID, type RenduId, type Selection } from 'mochi-world/catalogue'
 
 export interface OptionsExtrait {
   forme: string
@@ -20,8 +19,6 @@ export interface OptionsExtrait {
   ordinateur: boolean
   taille?: number
 }
-
-const EMPLACEMENTS: Emplacement[] = ['tete', 'yeux', 'visage', 'bas', 'dos']
 
 /** `{ tete: 'casquette' }` quand les couleurs sont celles du catalogue, sinon `{ id, c1, c2 }` (seulement ce qui change). */
 export function accessoiresEnCode(sel: Selection): string {

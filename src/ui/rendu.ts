@@ -1,5 +1,5 @@
 /**
- * Style de RENDU du bot : original, pixel art, ou 3D douce (argile, bulle).
+ * Style de RENDU du bot : Soft, Flat ou Pixel, tous en vraie 3D (WebGL, `src/ui/trois/`).
  *
  * Seul le dessin change. Le moteur (`src/bot/`), ses cinq etats et toutes ses
  * mesures restent identiques : `engine.sample(t)` rend la meme image, c'est `mochi-bot.ts`
@@ -12,14 +12,9 @@
 
 import { ref } from '@/ui/dom/reactif'
 import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
-import { mixHex } from '@/bot/skins'
 
-/**
- * `3d` (Soft), `flat3d` (Flat) et `pixel3d` (Pixel) sont les trois styles proposes : tous en vraie
- * 3D. `original`, `pixel`, `argile` et `bulle` sont les anciens dessins SVG ; ils ne sont plus
- * proposes (ni stockes) et ne servent plus que de REPLI quand WebGL manque et pour les exports.
- */
-export type RenduId = 'original' | 'pixel' | 'argile' | 'bulle' | '3d' | 'flat3d' | 'pixel3d'
+/** Les trois styles, tous en vraie 3D (WebGL) : `3d` (Soft), `flat3d` (Flat) et `pixel3d` (Pixel). */
+export type RenduId = '3d' | 'flat3d' | 'pixel3d'
 
 /** Les styles proposes dans l'interface. */
 export const RENDUS: RenduId[] = ['3d', 'flat3d', 'pixel3d']
@@ -29,27 +24,13 @@ export const RENDU_DEFAUT: RenduId = '3d'
 
 export const estRendu = (v: string): v is RenduId => (RENDUS as string[]).includes(v)
 
-/** Les deux 3D douces partagent le meme gabarit, seules leurs teintes different. */
-export const est3d = (r: RenduId): r is 'argile' | 'bulle' => r === 'argile' || r === 'bulle'
-
-/**
- * La vraie 3D (WebGL, `src/ui/trois/`). Chargee a la demande ; tant qu'elle n'est pas la,
- * ou si le navigateur n'a pas de WebGL, le bot est dessine en argile, sa version SVG.
- */
-export const estVraie3d = (r: RenduId): r is '3d' | 'flat3d' | 'pixel3d' => r === '3d' || r === 'flat3d' || r === 'pixel3d'
-
 /** Matiere 3D d'un style : Soft = celle choisie (`doux` par defaut), Flat = trois tons, Pixel = basse resolution + palette. */
 export const matiere3dDe = <T extends string>(r: RenduId, soft: T): T | 'toon' | 'pixel' =>
   r === 'flat3d' ? 'toon' : r === 'pixel3d' ? 'pixel' : soft
 
-/**
- * Style d'un EXPORT. Les exports serialisent le SVG ; le canvas WebGL n'y passe pas, donc
- * un export en 3D sort en argile (et son nom de fichier le dit).
- */
-export const renduExportable = (r: RenduId): Exclude<RenduId, '3d' | 'flat3d' | 'pixel3d'> => (estVraie3d(r) ? 'argile' : r)
-
 /* ----------------------------------------------------------------- pixel art */
 
+/** Taille des pixels du style Pixel (`pixel3d`) : elle fixe la resolution de sa toile. */
 export type TaillePixelId = 'gros' | 'moyen' | 'fin'
 
 /**
@@ -62,7 +43,7 @@ export const TAILLES_PIXEL: { id: TaillePixelId; diametre: number }[] = [
   { id: 'fin', diametre: 32 }
 ]
 
-/** Pixel : la densite la plus fine (32 pixels de diametre) est le rendu par defaut ; les autres restent acceptees par la prop `pixel`, sans choix dans l'interface. */
+/** Pixel (3D) : taille de la toile basse resolution. La densite la plus fine (32 pixels de diametre) est le defaut ; les autres restent acceptees par la prop `pixel`, sans choix dans l'interface. */
 export const PIXEL_DEFAUT: TaillePixelId = 'fin'
 
 export const estTaillePixel = (v: string): v is TaillePixelId =>
@@ -75,44 +56,6 @@ export const estTaillePixel = (v: string): v is TaillePixelId =>
 export function grillePixel(taille: TaillePixelId): number {
   const d = TAILLES_PIXEL.find((p) => p.id === taille)?.diametre ?? 24
   return Math.round((d * DEMI_VIEWBOX) / RAYON)
-}
-
-/* ------------------------------------------------------------------- 3D douce */
-
-export interface Teintes3d {
-  /** reflet de la lumiere, en haut a gauche */
-  clair: string
-  /** la couleur choisie, telle quelle */
-  base: string
-  /** cote a l'ombre, en bas a droite */
-  ombre: string
-  /** ombre portee sous la forme : coloree, pas grise */
-  portee: string
-}
-
-/**
- * Teintes du volume. La couleur choisie reste au milieu du degrade : on l'eclaire et on
- * l'assombrit. L'argile est mate et pastel (la couleur blanchie d'un sixieme, peu de
- * contraste), la bulle est lisse, saturee et lumineuse (la couleur telle quelle, reflet
- * franc).
- */
-export function teintes3d(hex: string, rendu: 'argile' | 'bulle'): Teintes3d {
-  if (rendu === 'bulle') {
-    return {
-      clair: mixHex(hex, '#ffffff', 0.62),
-      base: hex,
-      ombre: mixHex(hex, '#000000', 0.32),
-      portee: mixHex(hex, '#000000', 0.35)
-    }
-  }
-  // l'argile est une pate : la couleur passe au pastel, et son ombre reste douce
-  const pastel = mixHex(hex, '#ffffff', 0.16)
-  return {
-    clair: mixHex(hex, '#ffffff', 0.42),
-    base: pastel,
-    ombre: mixHex(hex, '#000000', 0.18),
-    portee: mixHex(hex, '#000000', 0.3)
-  }
 }
 
 /* ----------------------------------------------------------- reglage courant */
@@ -131,9 +74,10 @@ export const renduCourant = ref<RenduId>(RENDU_DEFAUT)
 export const contourCourant = ref(false)
 export const pixelCourant = ref<TaillePixelId>(PIXEL_DEFAUT)
 
-export const renduEffectif = (r: RenduId | undefined): RenduId => r ?? renduCourant.value
+/** Le style a rendre : celui donne s'il est connu, sinon le reglage courant. */
+export const renduEffectif = (r: string | undefined): RenduId => (r && estRendu(r) ? r : renduCourant.value)
 export const pixelEffectif = (p: TaillePixelId | undefined): TaillePixelId =>
   p ?? pixelCourant.value
 
-/** Ajoute au nom du fichier exporte ; rien pour l'original, dont le nom ne change pas. */
-export const suffixeRendu = (r: RenduId) => (r === 'original' ? '' : r)
+/** Ajoute au nom du fichier exporte : le style reel (`3d`, `flat3d`, `pixel3d`). */
+export const suffixeRendu = (r: RenduId) => r

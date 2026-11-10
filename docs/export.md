@@ -1,10 +1,9 @@
 # Export
 
 The Personnaliser view's export bar. `src/ui/export.ts` is pure and tested (frame,
-catalogue, filename); `src/ui/capture.ts` is the DOM layer (canvas, clipboard);
-`src/components/ExportBar.ts` is presentational and only emits a format, like
-`Customizer.ts`. Everything still images is dependency-free: `XMLSerializer` and a canvas
-are enough. Only the **cycle video** pulls a library, and only on demand (see below).
+catalogue, filename); `src/ui/capture.ts` is the DOM layer (canvas, clipboard, off-screen 3D
+player); `src/components/ExportBar.ts` is presentational and only emits a format, like
+`Customizer.ts`. Still images are dependency-free: `XMLSerializer` and a canvas are enough. Only the **cycle video** pulls a library, and only on demand (see below).
 
 ## Nothing is reserved for the bar, and nothing should be
 
@@ -48,25 +47,23 @@ so it is born already in position, and an element that doesn't move has no busin
 announcing itself. That is the montage bar's rule too: it doesn't animate between the
 settings and the animations, because it is already there.
 
-## The live SVG is serialised, not rebuilt
+## Every export comes from the 3D
 
-This works because the bot's SVG is already self-contained: no `var(--...)`, no
-Tailwind class, every shape carries its `fill` as a literal hex. Rebuilding a second
-render beside it would be a second source of drawing, and it would drift.
+There is no 2D drawing any more (removed on 10/11/2026): the Mochi is a WebGL canvas placed in a
+`<foreignObject>` of the element's `<svg>`, which also carries the small vector effects of the states
+(dots, rings, the "z" of sleep).
 
-Two things that make the raster safe: there is no `<foreignObject>` and no `<image>`,
-the only elements that would taint the canvas and break `toBlob`; and `width`/`height`
-are set explicitly, because without an intrinsic size Firefox refuses to rasterise an
-SVG loaded into an `<img>` and the canvas comes out empty.
+**Still images (PNG, SVG, copy)** serialise the live `<svg>` and `figeToiles` swaps each canvas for an
+`<image>` holding a `data:` PNG of what it shows. A `<foreignObject>` left in would taint the raster
+canvas (`toBlob` fails with `SecurityError`), and `cloneNode` does not copy a canvas's pixels. `width` and
+`height` are set explicitly, because without an intrinsic size Firefox refuses to rasterise an SVG loaded
+into an `<img>`. The SVG file is therefore a container around a bitmap of the 3D, not a scalable drawing.
 
-Measured on the output at 512²: 71.4 % transparent, 26.7 % body, 1.5 % `paper` for the
-eyes, the rest antialiasing.
-
-## The eyes export OPAQUE, in `paper`, and that's a win
-
-A paper-coloured `<path>` sits under the body (`mochi-bot.ts`), so the exported image
-keeps light eyes on a dark background: real holes would make them disappear there.
-Don't "fix" this into transparency.
+**Animations (GIF, MP4)** are rendered frame by frame on an off-screen `<mochi-bot>` in the screen's
+style: `attendre3d` waits for its first 3D frame (`pret`), then each `rendAt(t)` (montage) or `frozenAt`
+(avatar GIF) is followed by two `nextTick`s, the engine's redraw then the 3D one (`post` queue), before the
+`<svg>` is rasterised. Without WebGL the element fires `sans3d` and the export fails cleanly: there is no 2D
+fallback to export instead.
 
 ## The export frame is tighter than the screen's, and shared by all shapes
 
@@ -76,56 +73,23 @@ cropping each one separately would put them all back at the same size and break 
 tuning. A test checks the frame contains **every** shape, so adding a wider one moves
 the frame on its own instead of getting clipped.
 
-## The animation is an SVG, and that is what makes it smooth
+## No animated SVG
 
-A flipbook format (WebP, GIF, APNG) is capped by its frame count. The blink lasts
-0.18 s (`BLINK_DUR`), so at 20 fps it gets three or four frames and reads as a stutter.
-An animated **SVG** doesn't have frames: the browser interpolates between keyframes, so
-the motion is smooth at the display's refresh rate however few keyframes we emit. That is
-the whole reason for this choice: an animated WebP was built first, measured, and dropped
-for being both choppier and 10× heavier (167 kB against 16 kB).
-
-**Only the eyes are animated, and that is measured.** At rest the silhouette moves by
-1.17 units on a radius of 100 over three seconds, about a pixel and a half at export
-size. So the body is emitted once, static, and all the weight of a bot animation is in its
-gaze. `liveliness` says the same thing in words: "toute la vie passe par le regard et les
-clignements".
-
-**The drawing is not rebuilt.** `svgAnime` takes the SVG `MochiBot` already rendered for
-the first keyframe and swaps each eye's `transform` attribute for an animated class. One
-source of drawing, same rule as the still export.
-
-Three things that are not optional:
-
-- **`transform-box: view-box` and `transform-origin: 0 0`.** A CSS transform on an SVG
-  element rotates around its bounding-box centre, not the user-space origin, so without
-  these the eye flies to the other side of the ball.
-- **`animation-direction: alternate`.** The gaze drift is not periodic: the periods in
-  `liveliness` are deliberately coprime so the movement never visibly repeats, so a plain
-  loop would jump at the seam. Played forwards then backwards it rejoins itself exactly,
-  and a blink in reverse is still a blink. This is the one thing the bitmap export could
-  never have.
-- **The eyes are the only shapes in the mask carrying a `transform`** (the body has none),
-  which is what makes document order enough to identify them.
-
-Keyframes are emitted at 30/s: a keyframe is one matrix of text, so density is nearly free,
-and it follows the blink's asymmetric curve faithfully. Measured on the output: eye area
-921 → 193 → 933 px across the blink, sampled every 40 ms against 33 ms keyframes, the
-values fall between keyframes, which is the interpolation showing.
+The animated SVG animated the 2D eyes in CSS (one matrix per keyframe). The 3D has no vector drawing to
+animate, so it was removed with the 2D. The animated GIF and the MP4 cover animation.
 
 ## One PNG size, and no GIF
 
 1024 covers every profile-picture spec (Discord 128, X 400, GitHub 500, Slack 512) and
 downscales cleanly. Offering 2048 as well made the user decide something that isn't
-theirs to decide; whoever wants bigger takes the SVG, which has no size.
+theirs to decide.
 
 GIF is ruled out **for the still export** by its 1-bit transparency: a staircase edge where
 PNG has 8 bits of alpha.
 
 ## The animated GIF exists only for platform reach
 
-Discord and Slack accept a GIF as an animated avatar and an SVG nowhere, which is its whole
-reason to exist. Everywhere else the animated SVG is better on every axis.
+Discord and Slack accept a GIF as an animated avatar, which is its whole reason to exist.
 
 **It is the only export that asks a question**, and only because GIF alpha is one bit: the
 ball's antialiased rim has to be thresholded at 50 %, which comes out as a staircase. A solid
@@ -165,8 +129,8 @@ corner and 2033 pixels changing between frames.
 
 ## The SVG is copied as TEXT, the image as a blob
 
-`writeText` is what Figma and Illustrator paste back as editable vector; as
-`image/svg+xml` it would come back flattened. And the PNG blob goes into the
+`writeText` is what Figma and Illustrator paste back as an SVG (holding the 3D image);
+as `image/svg+xml` it would come back flattened. And the PNG blob goes into the
 `ClipboardItem` as a **promise**: Safari requires `write` to originate from the user's
 gesture, and any `await` slipped in before it loses that gesture.
 
@@ -185,10 +149,6 @@ frame removes is exactly the one holding the animated states' rings, which reach
 ball radius: 140, past the tight frame's 125. Nothing clamps those radii at runtime: it is
 the hand-tuned `RINGS`/`SWOOSH` tables in `decor.ts` that keep them under 158. A test locks
 the relationship.
-
-**No animated SVG here.** It worked at rest only because the body was static. Over a cycle
-the body path changes every frame and weighs 2.5 kB, so six hundred frames would be 1.5 MB
-before counting the arcs.
 
 **`frozenAt` does not walk the montage, and `seek` is not enough either.** `apply()` dates
 the engine with `clock`, which only advances in the rAF loop and therefore stays at 0 while

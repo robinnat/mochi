@@ -1,8 +1,7 @@
 import { computed, ref } from '@/ui/dom/reactif'
 import { h, type Composant } from '@/ui/dom/h'
-import type { MochiBotElement } from '@/components/mochi-bot'
-import '@/components/mochi-bot'
-import { MOOD_IDS, REACTION_IDS, type MoodId } from '@/bot/humeurs'
+import 'mochi-world'
+import { MOOD_IDS, REACTION_IDS, type MochiBotElement, type MoodId } from 'mochi-world'
 
 /**
  * `#moods` : le vrai composant, avec ses humeurs et ses interactions branchees sur le pointeur. On y survole, on tape,

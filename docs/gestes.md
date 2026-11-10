@@ -16,7 +16,7 @@ Sans second argument (ou avec `GESTE_NEUTRE`), `sample(t)` rend exactement la m�
 qu'avant, octet pour octet (test dans `gestes.test.ts`). Tout reste pur : fonction du temps
 et d'une graine, aucune horloge, aucun état.
 
-![Gestes, activités, sommeil, échec et rebond](gestes.png)
+Planche : `labo.html#moods` (humeurs et réactions, en 3D).
 
 ## Ce qu'un geste peut changer
 

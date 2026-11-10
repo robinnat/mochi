@@ -1,6 +1,6 @@
 import { ref } from '@/ui/dom/reactif'
 import { h, surDemontage, surMontage, type Composant } from '@/ui/dom/h'
-import { SHAPES } from '@/bot/skins'
+import { BotEngine, charger3d, COLOR_BY_ID, DEMI_VIEWBOX, RAYON, SHAPES } from 'mochi-world'
 import { tailleCellule } from './largeur'
 
 /**
@@ -30,13 +30,7 @@ export const TourFormes: Composant<Record<string, never>> = () => {
   let liberer = () => {}
 
   surMontage(async () => {
-    const [three, { Mochi3d, lumieres }, { BotEngine }, { DEMI_VIEWBOX, RAYON }, { COLOR_BY_ID }] = await Promise.all([
-      import('three'),
-      import('@/ui/trois/scene3d'),
-      import('@/bot/engine'),
-      import('@/bot/repere'),
-      import('@/bot/skins')
-    ])
+    const [three, { Mochi3d, lumieres }] = await Promise.all([import('three'), charger3d()])
     const cv = toile
     if (!cv) return
     const hex = COLOR_BY_ID.get(couleur)?.hex ?? couleur

@@ -3,25 +3,16 @@
  * d'un canvas et du presse-papiers, donc rien ici n'est testable en `node` — le
  * cadrage et le nommage, eux, vivent dans `export.ts` et le sont.
  *
- * Le SVG exporte est celui de l'ECRAN, recadre : on serialise le noeud vivant
- * plutot que de reconstruire un rendu a cote. Deux sources de dessin auraient
- * derive, et le moteur est deja la seule qui vaille. C'est possible parce que le
- * SVG du bot est deja auto-porteur : aucune `var(--...)`, aucune classe, chaque
- * forme porte son `fill` en hex.
+ * Tout export part de la 3D : l'image fixe est le noeud de l'ECRAN, recadre, dont le
+ * canvas WebGL est fige en image (`figeToiles`) ; les animations (GIF, video) sont
+ * rejouees image par image sur une instance hors ecran, elle aussi en 3D. Il n'y a
+ * pas d'autre source de dessin.
  */
 
 import { nextTick } from '@/ui/dom/reactif'
 import { MochiBotElement } from '@/components/mochi-bot'
 import type { Block } from '@/bot/cycles'
-import {
-  gifAnime,
-  gifIndexe,
-  indexe,
-  nouvellePalette,
-  recense,
-  svgAnime,
-  svgFeuilletage
-} from './anime'
+import { gifAnime, gifIndexe, indexe, nouvellePalette, recense } from './anime'
 import { arrete, DEMI_ECRAN, sansCommentaires, viewBoxExport } from './export'
 import type { RenduId, TaillePixelId } from './rendu'
 
@@ -296,6 +287,34 @@ export async function cycleVersGif(
   }
 }
 
+/**
+ * Attend la premiere image 3D d'un Mochi hors ecran (`pret`). Sans WebGL (`sans3d`) ou si
+ * rien ne vient, l'export echoue proprement : il n'y a pas de dessin 2D de secours.
+ */
+export function attendre3d(bot: MochiBotElement, delai = 15000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (bot.querySelector('canvas[data-vraie3d]') && bot.dataset.pret === '1') return resolve()
+    const fin = (ok: boolean) => {
+      clearTimeout(minuteur)
+      bot.removeEventListener('pret', bon)
+      bot.removeEventListener('sans3d', mauvais)
+      if (ok) resolve()
+      else reject(new Error('3D indisponible'))
+    }
+    const bon = () => fin(true)
+    const mauvais = () => fin(false)
+    const minuteur = setTimeout(mauvais, delai)
+    bot.addEventListener('pret', bon)
+    bot.addEventListener('sans3d', mauvais)
+  })
+}
+
+/** Laisse passer le dessin du moteur PUIS celui de la 3D (file `post`). */
+async function image() {
+  await nextTick()
+  await nextTick()
+}
+
 /** Ce que le bot doit porter sur l'animation exportee. */
 export interface ReglagesBot {
   shape: string
@@ -338,14 +357,16 @@ export async function sequenceDuBot<T>(
   hote.style.cssText = 'position:fixed;left:-99999px;top:0;width:0;height:0;overflow:hidden'
   document.body.appendChild(hote)
 
-  const bot = creerBot({ ...reglages, size: taille, frozenAt: 0, ...(paper ? { paper } : {}) })
+  const bot = creerBot({ ...reglages, size: taille, frozenAt: 0, maxPixelRatio: 2, ...(paper ? { paper } : {}) })
+  const pret = attendre3d(bot)
   hote.appendChild(bot)
 
   try {
+    await pret
     const out: T[] = []
     for (let i = 0; i < nombre; i++) {
       bot.frozenAt = i * pas
-      await nextTick()
+      await image()
       const svg = hote.querySelector('svg')
       if (!svg) throw new Error('bot hors ecran non rendu')
       out.push(await lis(svg, i))
@@ -402,16 +423,23 @@ export async function ouvreCycle(
     cycle: blocs,
     state: blocs[0]?.state ?? 'idle',
     frozenAt: 0,
+    maxPixelRatio: 1,
     ...(paper ? { paper } : {})
   })
+  const pret = attendre3d(bot)
   hote.appendChild(bot)
-  await nextTick()
-
-  const svg = hote.querySelector('svg')
   const fermer = () => {
     bot.remove()
     hote.remove()
   }
+  try {
+    await pret
+  } catch (e) {
+    fermer()
+    throw e
+  }
+
+  const svg = hote.querySelector('svg')
   if (!svg) {
     fermer()
     throw new Error('bot hors ecran non rendu')
@@ -420,7 +448,7 @@ export async function ouvreCycle(
   return {
     rendre: async (t: number) => {
       bot.rendAt(t)
-      await nextTick()
+      await image()
       return svg
     },
     ferme: fermer
@@ -428,56 +456,10 @@ export async function ouvreCycle(
 }
 
 /**
- * Les matrices des yeux d'une image, lues sur le masque.
- *
- * Les yeux sont les seules formes du masque a porter un `transform` — le corps
- * n'en a pas — donc l'ordre du document suffit a les identifier.
- */
-function matricesDesYeux(svg: SVGSVGElement) {
-  return [...svg.querySelectorAll('mask [transform]')].map((e) => e.getAttribute('transform')!)
-}
-
-/**
- * Assemble l'animation du bot en un SVG anime.
- *
- * Le corps est celui de la premiere image et n'est pas anime : au repos la
- * silhouette ne se deplace que de 1,17 unite sur un rayon de 100, soit environ un
- * pixel et demi. Tout le mouvement est dans les yeux.
- */
-export async function versSvgAnime(
-  reglages: ReglagesBot,
-  taille: number,
-  nombre: number,
-  pas: number
-): Promise<Blob> {
-  let base = ''
-  const images = await sequenceDuBot(reglages, taille, nombre, pas, (svg, i) => {
-    if (i === 0) base = svgAutonome(svg, taille)
-    // pixel art : pas d'yeux a matrices, chaque image est un jeu de cases
-    const pixels = svg.querySelector('[data-pixels]')
-    return { matrices: matricesDesYeux(svg), pixels: pixels ? pixels.innerHTML : null }
-  })
-  const markup = images.every((im) => im.pixels !== null)
-    ? svgFeuilletage(
-        base,
-        images.map((im) => sansCommentaires(im.pixels!)),
-        +(nombre * pas).toFixed(3)
-      )
-    : svgAnime(
-        base,
-        images.map((im) => im.matrices),
-        +((nombre - 1) * pas).toFixed(3)
-      )
-  return new Blob([markup], { type: 'image/svg+xml' })
-}
-
-/**
  * Assemble l'animation du bot en GIF anime.
  *
- * Le GIF est un vrai feuilletage : il faut donc rasteriser chaque image, la ou le
- * SVG anime ne collecte que des matrices. Il n'existe que pour les endroits qui
- * refusent le SVG — un avatar anime Discord ou Slack — et son bord sera dur, sa
- * transparence n'ayant qu'un bit.
+ * Un vrai feuilletage : chaque image est rendue en 3D hors ecran puis rasterisee. Pour
+ * les avatars animes (Discord, Slack) ; son bord est dur, sa transparence n'ayant qu'un bit.
  */
 export async function versGifAnime(
   reglages: ReglagesBot,

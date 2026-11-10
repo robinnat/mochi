@@ -1,4 +1,5 @@
 import { ref } from '@/ui/dom/reactif'
+import { charger3d } from 'mochi-world/catalogue'
 
 /**
  * La page est « prete » quand son chargement est fini et que le navigateur a un moment de libre : seulement alors
@@ -33,7 +34,7 @@ export function prechaufferStyles() {
   chauffe = true
   const ric = (window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number }).requestIdleCallback
   const lancer = () =>
-    import('@/ui/trois/scene3d')
+    charger3d()
       .then((m) => m.prechauffer())
       .catch(() => {})
   if (ric) ric(lancer, { timeout: 2000 })

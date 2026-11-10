@@ -4,9 +4,9 @@ import { nextTick } from '@/ui/dom/reactif'
 import { MochiBotElement, PROPRIETES, attributDe, lireAttribut } from './mochi-bot'
 
 /**
- * Le Web Component natif `<mochi-bot>` : options en attributs et en proprietes, dessin SVG dans le DOM ordinaire,
- * evenements, methodes et nettoyage. happy-dom n'a pas de WebGL : on dessine en `original` (SVG), comme un
- * navigateur sans 3D.
+ * Le Web Component natif `<mochi-bot>` : options en attributs et en proprietes, `<svg>` hote dans le DOM ordinaire,
+ * evenements, methodes et nettoyage. happy-dom n'a pas de WebGL : comme un navigateur sans 3D, le Mochi y est
+ * remplace par un court message (il n'y a plus de dessin 2D).
  */
 const hote = () => {
   const d = document.createElement('div')
@@ -15,10 +15,9 @@ const hote = () => {
 }
 const creer = (attrs: Record<string, string> = {}) => {
   const el = document.createElement('mochi-bot') as MochiBotElement
-  for (const [k, v] of Object.entries({ rendu: 'original', ...attrs })) el.setAttribute(k, v)
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v)
   return el
 }
-const corps = (el: MochiBotElement) => el.svg!.querySelector('mask path')!.getAttribute('d')!
 
 afterEach(() => {
   document.body.innerHTML = ''
@@ -68,16 +67,22 @@ describe('<mochi-bot> : dessin', () => {
   it('une option changee (attribut ou propriete) redessine a la tache suivante', async () => {
     const el = creer({ shape: 'cercle', 'frozen-at': '1' })
     hote().appendChild(el)
-    const avant = corps(el)
     el.setAttribute('shape', 'etoile')
     await nextTick()
-    // le moteur morphe vers la nouvelle forme : a la meme date figee, la silhouette n'est plus la meme
-    el.frozenAt = 3
-    await nextTick()
-    expect(corps(el)).not.toBe(avant)
+    expect(el.shape).toBe('etoile')
     el.size = 50
     await nextTick()
     expect(el.svg!.getAttribute('width')).toBe('50')
+  })
+
+  it("sans WebGL : un message et l'evenement sans3d, aucun dessin 2D de secours", async () => {
+    const el = creer({ 'frozen-at': '1' })
+    const sans3d = new Promise<void>((ok) => el.addEventListener('sans3d', () => ok()))
+    hote().appendChild(el)
+    await sans3d
+    await nextTick()
+    expect(el.svg!.querySelector('[data-sans3d]')).not.toBeNull()
+    expect(el.svg!.querySelector('mask, radialGradient, filter, [data-pixels]')).toBeNull()
   })
 
   it('retirer un attribut remet la valeur par defaut', async () => {
@@ -104,7 +109,7 @@ describe('<mochi-bot> : dessin', () => {
     const h = hote()
     h.append(a, b)
     await nextTick()
-    expect(corps(a)).toBe(corps(b))
+    expect(a.svg!.outerHTML).toBe(b.svg!.outerHTML)
   })
 })
 

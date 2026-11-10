@@ -1,9 +1,9 @@
 /**
- * Donnees des bandes d'accessoires du site : une bande par emplacement du paquet (tete, yeux, visage, bas, dos),
+ * Donnees des bandes d'accessoires du site : une bande par emplacement propose du paquet (tete, yeux, bas, dos),
  * remplie des PIECES SEULES (sans corps), dans beaucoup de variantes de couleurs. Tout est DETERMINISTE : memes
  * bandes a chaque visite, et testable sans navigateur. Aucun rendu ici : `vignettes.ts` dessine, `Habillage.ts` affiche.
  */
-import { EMPLACEMENTS, type Emplacement } from '@/bot/emplacements'
+import { EMPLACEMENTS, type Emplacement } from 'mochi-world/catalogue'
 import { ACCESSOIRES_SITE, PALETTE_SITE } from './catalog'
 
 export interface ItemBande {
@@ -33,9 +33,8 @@ export interface DefBande {
 export const BANDES: DefBande[] = [
   { emplacement: 'tete', titre: 'Hats', texte: 'Caps, crowns, berets, headphones, flowers', sens: 'gauche', duree: 64 },
   { emplacement: 'yeux', titre: 'Glasses', texte: 'Round, square, sun, heart, star and a monocle', sens: 'droite', duree: 60 },
-  { emplacement: 'visage', titre: 'Face', texte: 'Blush', sens: 'gauche', duree: 66 },
-  { emplacement: 'bas', titre: 'Neck', texte: 'Bow ties, scarves, necklaces', sens: 'droite', duree: 62 },
-  { emplacement: 'dos', titre: 'Back', texte: 'A backpack and a cape, seen from behind', sens: 'gauche', duree: 68 }
+  { emplacement: 'bas', titre: 'Neck', texte: 'Bow ties, scarves, necklaces', sens: 'gauche', duree: 62 },
+  { emplacement: 'dos', titre: 'Back', texte: 'A backpack and a cape, seen from behind', sens: 'droite', duree: 68 }
 ]
 
 /** Angle par emplacement : trois quarts (le signe alterne d'une piece a l'autre) ; visage presque de face ; dos de trois quarts arriere. */

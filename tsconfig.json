@@ -19,6 +19,8 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
+      "mochi-world": ["./src/index.ts"],
+      "mochi-world/catalogue": ["./src/catalogue.ts"],
       "@/*": ["./src/*"]
     }
   },

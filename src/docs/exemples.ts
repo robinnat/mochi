@@ -132,16 +132,18 @@ export const EX_SVELTE = `<!-- Svelte -->
 <mochi-bot shape="nuage" color="rose" {mood} size="160"></mochi-bot>
 <button onclick={() => (mood = 'termine')}>Done</button>`
 
-export const EX_MOTEUR_BUILD = `npx pnpm@11.17.0 build:lib   # dist-lib/mochi-world.js also exports the engine`
+export const EX_MOTEUR_BUILD = `npx pnpm@11.17.0 build:lib   # dist-lib/mochi-world.js (tag, engine, catalogues), dist-lib/catalogue.js (catalogues only)`
 
 export const EX_MOTEUR = `import { BotEngine, SHAPE_BY_ID, RAYON } from '/mochi/mochi-world.js'
+import { SHAPES, CATALOGUE, MOOD_IDS } from '/mochi/catalogue.js'
 
 const engine = new BotEngine(RAYON, 'idle', SHAPE_BY_ID.get('etoile').radii)
 engine.setState('wink', 2)        // change state at t = 2 s
+const frame = engine.sample(2.4)  // pure: same t, same frame (it drives the 3D body)
 
-const frame = engine.sample(2.4)  // pure: same t, same frame
-// frame.bodyPath: the SVG path of the body
-// frame.eyes: [{ d, matrix, alpha }], holes cut in the body`
+// a picker built from the catalogues, as this site does
+const shapes = SHAPES.map((s) => s.id)
+const hats = CATALOGUE.filter((a) => a.emplacement === 'tete').map((a) => a.id)`
 
 export interface PropDoc {
   /** nom de la propriete JavaScript de `<mochi-bot>` (camelCase) */
@@ -216,5 +218,5 @@ export const SOMMAIRE: { id: string; titre: string }[] = [
   { id: 'performance', titre: 'Still frames and performance' },
   { id: 'props', titre: 'All options' },
   { id: 'events', titre: 'Events' },
-  { id: 'engine', titre: 'Engine only' }
+  { id: 'engine', titre: 'Engine and catalogues' }
 ]

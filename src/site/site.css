@@ -233,6 +233,23 @@ header[id] {
 .nav-icone:hover {
   background: var(--bg-2);
 }
+/* lien GitHub avec le nombre d'etoiles : la pastille s'elargit pour loger le chiffre */
+.nav-icone.nav-etoiles {
+  width: auto;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+}
+.nav-nb-etoiles {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.82rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
 .nav-cta {
   margin-left: 8px;
   padding: 8px 15px;
@@ -1598,6 +1615,23 @@ header[id] {
   padding: 18px;
   font-size: 0.82rem;
   color: var(--muted);
+}
+.doc-apercu-bots {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+}
+/* un exemple sans taille garde la taille par defaut (320) : on le reduit, le dessin suit sa boite */
+.doc-apercu-bots mochi-bot {
+  width: 112px;
+}
+.doc-apercu-bots mochi-bot[size] {
+  width: auto;
+}
+.doc-apercu figcaption {
+  text-align: center;
 }
 .ids-formes,
 .ids-couleurs {

@@ -113,7 +113,36 @@ describe('docs : tout vient de la vraie API', () => {
   })
 
   it('les emplacements et le nombre d accessoires du catalogue sont ceux du moteur', () => {
-    expect(EMPLACEMENTS).toHaveLength(5)
+    expect(EMPLACEMENTS).toHaveLength(4)
     expect(CATALOGUE.length).toBeGreaterThan(20)
+  })
+})
+
+describe('docs : le code montre est celui qui tourne', () => {
+  it('chaque resultat vivant de la page insere les balises de l exemple affiche juste au-dessus', async () => {
+    const { balisesDe } = await import('./apercu')
+    const docs = source('./Docs.ts')
+    const apercus = [...docs.matchAll(/c\(Apercu, \{ exemple: (\w+)/g)].map((m) => m[1]!)
+    expect(apercus.length).toBeGreaterThanOrEqual(5)
+    for (const nom of apercus) {
+      expect(docs, nom).toContain(`bloc(${nom},`)
+      const ex = (EX as Record<string, unknown>)[nom] as string
+      const balises = balisesDe(ex)
+      expect(balises.length, nom).toBeGreaterThan(0)
+      for (const b of balises) expect(ex, nom).toContain(b)
+    }
+  })
+
+  it('les noms importes dans les exemples existent dans les entrees publiques', async () => {
+    const complet = (await import('mochi-world')) as Record<string, unknown>
+    const catalogue = (await import('mochi-world/catalogue')) as Record<string, unknown>
+    const tous = (Object.values(EX) as unknown[]).filter((v): v is string => typeof v === 'string').join('\n')
+    const noms = (fichier: string) =>
+      [...tous.matchAll(new RegExp(`import \\{([^}]+)\\} from '/mochi/${fichier.replace('.', '\\.')}'`, 'g'))].flatMap((m) =>
+        m[1]!.split(',').map((x) => x.trim()).filter(Boolean)
+      )
+    expect(noms('catalogue.js').length).toBeGreaterThan(0)
+    for (const n of noms('mochi-world.js')) expect(complet[n], n).toBeDefined()
+    for (const n of noms('catalogue.js')) expect(catalogue[n], n).toBeDefined()
   })
 })

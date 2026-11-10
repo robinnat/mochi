@@ -4,7 +4,12 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   // l'environnement reste `node` par defaut ; un DOM se demande fichier par fichier (`// @vitest-environment happy-dom`)
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }
+    // le site, la doc et le labo consomment Mochi comme un utilisateur du paquet : par ses entrees publiques
+    alias: [
+      { find: /^mochi-world$/, replacement: fileURLToPath(new URL('./src/index.ts', import.meta.url)) },
+      { find: /^mochi-world\/catalogue$/, replacement: fileURLToPath(new URL('./src/catalogue.ts', import.meta.url)) },
+      { find: /^@\//, replacement: fileURLToPath(new URL('./src/', import.meta.url)) }
+    ]
   },
   test: {
     globals: true,

@@ -3,7 +3,7 @@ import { c, h, type Composant } from '@/ui/dom/h'
 import { Affiche } from './Affiche'
 import { FORMES_3D } from './catalog'
 import { STYLES_SITE } from './style'
-import type { RenduId } from '@/ui/rendu'
+import type { RenduId } from 'mochi-world/catalogue'
 import { reveal, useLargeur } from './motion'
 
 /** Les douze formes, images figees (un rendu chacune, aucune boucle), qui apparaissent en cascade. */

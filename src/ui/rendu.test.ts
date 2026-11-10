@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
-import { COLORS } from '@/bot/skins'
 import {
   estRendu,
-  estVraie3d,
-  renduExportable,
   estTaillePixel,
   grillePixel,
   PIXEL_DEFAUT,
@@ -13,8 +10,7 @@ import {
   renduEffectif,
   renduCourant,
   suffixeRendu,
-  TAILLES_PIXEL,
-  teintes3d
+  TAILLES_PIXEL
 } from './rendu'
 
 /**
@@ -30,20 +26,10 @@ describe('catalogue des styles', () => {
 
   it('ne propose que trois styles, tous en vraie 3D : Soft, Flat, Pixel', () => {
     expect(RENDUS).toEqual(['3d', 'flat3d', 'pixel3d'])
-    for (const r of RENDUS) expect(estVraie3d(r)).toBe(true)
   })
 
   it("refuse les anciens styles 2D relus du stockage : l'application retombe sur Soft", () => {
     for (const ancien of ['original', 'pixel', 'argile', 'bulle']) expect(estRendu(ancien)).toBe(false)
-  })
-
-  it("exporte la vraie 3D en argile, sa version SVG", () => {
-    expect(renduExportable('3d')).toBe('argile')
-    expect(renduExportable('flat3d')).toBe('argile')
-    expect(renduExportable('pixel3d')).toBe('argile')
-    expect(renduExportable('pixel')).toBe('pixel')
-    expect(estVraie3d('3d')).toBe(true)
-    expect(estVraie3d('argile')).toBe(false)
   })
 
   it('refuse une valeur inconnue relue du stockage', () => {
@@ -61,10 +47,14 @@ describe('catalogue des styles', () => {
     expect(renduEffectif(undefined)).toBe('3d')
   })
 
-  it("n'ajoute rien au nom de fichier pour l'original", () => {
-    expect(suffixeRendu('original')).toBe('')
-    expect(suffixeRendu('pixel')).toBe('pixel')
-    expect(suffixeRendu('argile')).toBe('argile')
+  it('ignore un style inconnu passe au composant (ancien style 2D compris)', () => {
+    expect(renduEffectif('argile')).toBe('3d')
+    expect(renduEffectif('original')).toBe('3d')
+  })
+
+  it('nomme le fichier exporte avec le style reel', () => {
+    expect(suffixeRendu('3d')).toBe('3d')
+    expect(suffixeRendu('pixel3d')).toBe('pixel3d')
   })
 })
 
@@ -86,32 +76,5 @@ describe('taille des pixels', () => {
     }
     expect(grillePixel('gros')).toBeLessThan(grillePixel('moyen'))
     expect(grillePixel('moyen')).toBeLessThan(grillePixel('fin'))
-  })
-})
-
-describe('teintes de la 3D douce', () => {
-  it('eclaire et assombrit la couleur choisie, pour chaque couleur', () => {
-    const lum = (h: string) => {
-      const v = parseInt(h.slice(1), 16)
-      return ((v >> 16) & 255) + ((v >> 8) & 255) + (v & 255)
-    }
-    for (const c of COLORS) {
-      for (const r of ['argile', 'bulle'] as const) {
-        const t = teintes3d(c.hex, r)
-        // la bulle garde la couleur telle quelle, l'argile la passe au pastel
-        if (r === 'bulle') expect(t.base).toBe(c.hex)
-        else expect(lum(t.base)).toBeGreaterThanOrEqual(lum(c.hex))
-        expect(lum(t.clair)).toBeGreaterThan(lum(t.base))
-        expect(lum(t.ombre)).toBeLessThanOrEqual(lum(c.hex))
-        expect(t.clair).toMatch(/^#[0-9a-f]{6}$/)
-      }
-    }
-  })
-
-  it('rend la bulle plus lumineuse que l\'argile', () => {
-    const lum = (h: string) => parseInt(h.slice(1, 3), 16)
-    expect(lum(teintes3d('#e8483f', 'bulle').clair)).toBeGreaterThan(
-      lum(teintes3d('#e8483f', 'argile').clair)
-    )
   })
 })

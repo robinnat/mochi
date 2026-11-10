@@ -160,7 +160,7 @@ describe('export d un cycle', () => {
 describe('fond du gif', () => {
   /* Le GIF est le SEUL format a poser la question : lui seul a 1 bit d'alpha. */
   it('ne concerne que le gif', () => {
-    const anime = ACTIONS.filter((a) => a.mode === 'anime' || a.mode === 'gif')
+    const anime = ACTIONS.filter((a) => a.mode === 'gif')
     expect(anime.filter((a) => a.extension === 'gif')).toHaveLength(1)
   })
 

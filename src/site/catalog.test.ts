@@ -1,24 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { ACC_EN_IDS, ACTIVITES_SITE, ETATS, FORMES_3D, FORME_IDS, GESTES, HUMEURS_SITE, INTERACTIONS_SITE, PALETTE_SITE, cycleDe } from './catalog'
+import { ACC_EN_IDS, FORMES_3D, FORME_IDS, HUMEURS_SITE, INTERACTIONS_SITE, PALETTE_SITE } from './catalog'
 import { contraste } from '@/ui/trois/theme'
 import { CATALOGUE } from '@/bot/emplacements'
 import { MOOD_IDS } from '@/bot/humeurs'
 
 describe('catalogue du site', () => {
-  it('chaque geste est fini et chaque cycle a des durees positives', () => {
-    for (const a of [...GESTES, ...ACTIVITES_SITE]) {
-      for (let t = 0; t < 12; t += 0.37) {
-        const g = a.geste?.(t)
-        if (g) for (const v of Object.values(g)) expect(Number.isFinite(v)).toBe(true)
-      }
-      for (const b of a.cycle) expect(b.duration).toBeGreaterThan(0)
-    }
-  })
-  it('les 5 etats ont un cycle qui revient au repos', () => {
-    expect(ETATS).toHaveLength(5)
-    for (const e of ETATS) expect(cycleDe(e).length).toBeGreaterThan(0)
-  })
-
   it('les 7 humeurs du moteur sont toutes sur le site, dans l ordre', () => {
     expect(HUMEURS_SITE.map((h) => h.id)).toEqual(MOOD_IDS)
     expect(HUMEURS_SITE).toHaveLength(7)

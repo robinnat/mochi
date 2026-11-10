@@ -1,4 +1,4 @@
-import type { MoodId, ReactionId } from '@/bot/humeurs'
+import type { MoodId, ReactionId } from 'mochi-world/catalogue'
 
 /**
  * Noms anglais acceptes par `mood` (alias de `moodDe` dans `src/bot/humeurs.ts`, non exportes) : recopies ici pour la

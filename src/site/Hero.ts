@@ -4,7 +4,7 @@ import { Affiche } from './Affiche'
 import { HeroChiffres } from './HeroChiffres'
 import { DEFILE } from './affiches'
 import { ACCESSOIRES_SITE } from './catalog'
-import type { Choix, Emplacement } from '@/bot/emplacements'
+import type { Choix, Emplacement } from 'mochi-world/catalogue'
 
 /**
  * Hero : « la foule » (choisi par Robin le 09/11/2026). Aucune 3D au premier ecran : une petite foule de Mochi tous

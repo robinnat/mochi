@@ -11,11 +11,9 @@ import { Settings } from '@/components/Settings'
 import { SideRail, type ViewId } from '@/components/SideRail'
 import { Timeline } from '@/components/Timeline'
 import { nomDeCycle, t } from '@/i18n'
-import { copie, copieTexte, cycleVersGif, cycleVersMp4, svgAutonome, telecharge, versGifAnime, versPng, versSvgAnime } from '@/ui/capture'
+import { copie, copieTexte, cycleVersGif, cycleVersMp4, svgAutonome, telecharge, versGifAnime, versPng } from '@/ui/capture'
 import {
   ACTION_BY_ID,
-  ANIM_IMAGES,
-  ANIM_PAS,
   CYCLE_TAILLE,
   FOND_GIF_DEFAUT,
   FORMAT_CYCLE_DEFAUT,
@@ -42,7 +40,6 @@ import {
   PIXEL_DEFAUT,
   RENDU_DEFAUT,
   renduCourant,
-  renduExportable,
   suffixeRendu,
   type RenduId,
   type TaillePixelId
@@ -297,8 +294,8 @@ export const App: Composant<Record<string, never>> = () => {
     shape: shape.value,
     color: color.value,
     expression: expression.value,
-    // la vraie 3D est un canvas WebGL, que la serialisation du SVG n'emporte pas
-    rendu: renduExportable(rendu.value),
+    // les animations sont rendues en 3D, image par image, dans le style de l'ecran
+    rendu: rendu.value,
     pixel: pixel.value
   })
 
@@ -423,15 +420,11 @@ export const App: Composant<Record<string, never>> = () => {
         expression.value,
         color.value,
         action.extension,
-        // l'image fixe est le noeud AFFICHE (vraie 3D comprise) ; seules les animations repassent en argile
-        [suffixeRendu(action.mode === 'anime' || action.mode === 'gif' ? renduExportable(rendu.value) : rendu.value), action.suffixe].filter(Boolean).join('-')
+        [suffixeRendu(rendu.value), action.suffixe].filter(Boolean).join('-')
       )
     try {
-      if (action.mode === 'anime') {
-        // l'animation est rejouee depuis le debut sur une instance hors ecran
-        telecharge(await versSvgAnime(reglagesBot(), action.taille, ANIM_IMAGES, ANIM_PAS), nom())
-        etatExport.value = 'exporte'
-      } else if (action.mode === 'gif') {
+      if (action.mode === 'gif') {
+        // l'animation est rejouee depuis le debut sur une instance hors ecran, en 3D
         telecharge(await versGifAnime(reglagesBot(), action.taille, GIF_IMAGES, GIF_PAS, couleurDeFond(fondGif.value)), nom())
         etatExport.value = 'exporte'
       } else {

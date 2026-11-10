@@ -5,11 +5,7 @@ import { CodeBlock } from './CodeBlock'
 import { useReduit } from './reduced'
 import { reveal, useLargeur } from './motion'
 import { ACCESSOIRES_SITE, COLOR_LABEL, EMPLACEMENT_LABEL, EMPLACEMENTS_IDS, FORMES_3D, HUMEURS_SITE, PALETTE_SITE } from './catalog'
-import { couleurDe, hexValide, SHAPE_BY_ID } from '@/bot/skins'
-import { closedPath, toPoints } from '@/bot/shape'
-import { COULEURS, type Emplacement, type Selection } from '@/bot/emplacements'
-import type { RenduId } from '@/ui/rendu'
-import type { MoodId } from '@/bot/humeurs'
+import { cheminDeForme, couleurDe, hexValide, SHAPE_BY_ID, COULEURS_ACCESSOIRES as COULEURS, type Emplacement, type MoodId, type RenduId, type Selection } from 'mochi-world/catalogue'
 import { STYLES_SITE } from './style'
 import { extraitCode } from './extrait'
 import { urlPiece } from './affiches'
@@ -25,7 +21,7 @@ const PALETTE_ACC = Object.entries(COULEURS).map(([id, hex]) => ({ id, hex, labe
 /** Icones des formes : la vraie silhouette du moteur, en SVG. */
 const silhouette = (id: string) => {
   const radii = SHAPE_BY_ID.get(id)?.radii
-  return radii ? closedPath(toPoints({ radii, rot: 0, cx: 0, cy: 0, sx: 1, sy: 1 }, 10)) : ''
+  return radii ? cheminDeForme(radii) : ''
 }
 const FORMES = FORMES_3D.map((f) => ({ ...f, d: silhouette(f.id) }))
 

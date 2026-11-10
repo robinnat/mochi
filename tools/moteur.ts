@@ -9,7 +9,6 @@ export { BotEngine } from '../src/bot/engine'
 export { COLOR_BY_ID, SHAPE_BY_ID, mixHex } from '../src/bot/skins'
 export { EXPRESSION_BY_ID } from '../src/bot/expressions'
 export { DEMI_VIEWBOX, RAYON } from '../src/bot/repere'
-export { teintes3d } from '../src/ui/rendu'
 export {
   ACTIVITES,
   ACTIVITE_BY_ID,
@@ -25,11 +24,3 @@ export {
   tempsActivite,
   zSommeil
 } from '../src/bot/gestes'
-export {
-  ACCESSOIRES,
-  ACCESSOIRE_BY_ID,
-  ACCESSOIRE_DE_METIER,
-  TEINTES_OBJETS,
-  accessoireDuMetier,
-  ancreDuCorps
-} from '../src/bot/accessoires'
