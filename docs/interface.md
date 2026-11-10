@@ -8,7 +8,7 @@ packages (Solar, plus Remix for the palette). No dependency is installed, so
 **not** apply here.
 
 To add or change one, take the `<symbol>` body from `@iconify-json/<package>`.
-Don't redraw by hand (tried, rejected) and don't "re-centre" their coordinates.
+Don't redraw by hand (tried, rejected) and don't "re-center" their coordinates.
 
 ## Truncating is `truncated`, not `truncate`
 
@@ -18,7 +18,7 @@ falls between two words.
 
 ## The Tailwind reset breaks top-layer elements
 
-It sets `margin: 0` everywhere, and it's the auto margin that centres a `<dialog>`
+It sets `margin: 0` everywhere, and it's the auto margin that centers a `<dialog>`
 as a modal: without `m-auto` the box sticks to the top left. Same family of trap for
 a `popover`, whose default styles set `inset: 0`: any positioning must reset the
 sides it doesn't use to `auto`, otherwise `top: 0` wins.
@@ -38,7 +38,7 @@ for the transition to have something to interpolate. Don't try `order` or
 `flex-direction`, they don't animate.
 
 **Unmounting a panel does not remove its track**: the grid keeps its 20rem and the
-avatar stays centred 180 px too far left. Hence `.scene--alone`, which cancels both
+avatar stays centered 180 px too far left. Hence `.scene--alone`, which cancels both
 columns. The arrival and the preview both use it, so don't restrict it to one of
 them.
 
@@ -47,12 +47,12 @@ left track is `0`, but the gutter after it is not, so the avatar column starts a
 **4.5rem** (2rem of scene margin + 2.5rem of gutter), not at 2rem. That is why
 anything pinned to the window and meant to line up with the avatar (the montage bar,
 the export bar) uses `left: 4.5rem` as the counterpart of `right: 24.5rem`
-(20 + 2.5 + 2). Aiming at the scene's padding instead leaves it 20 px off centre,
+(20 + 2.5 + 2). Aiming at the scene's padding instead leaves it 20 px off center,
 which is exactly enough to see under the ball.
 
 ## The side rail floats and reserves nothing
 
-It is `fixed` and vertically centred on the window. The scene deliberately keeps **no**
+It is `fixed` and vertically centered on the window. The scene deliberately keeps **no**
 padding for it: reserving a column's worth of space pushed the avatar right, and the
 rail is supposed to sit over the page, not beside it. The only content that reaches far
 enough left to pass under it is the settings panel, so that panel carries its own
@@ -70,7 +70,7 @@ altogether, so the ball would appear all at once.
 The body's `overflow` is **propagated to the viewport** when the root is `visible`,
 so putting it there clips nothing. And `clip` rather than `hidden`, on the x axis
 only: `hidden` would make it a scroll container, which would force `overflow-y` to
-follow and cut off the bottom of the customiser in a short window.
+follow and cut off the bottom of the customizer in a short window.
 
 ## On a large screen the page doesn't scroll, the panels do
 
@@ -83,11 +83,11 @@ the height definite and arms `overflow-y`.
 ## Room for the timeline is reserved in the Animations view only
 
 Reserved in every view (a `padding-bottom` on the scene), it took 236 px off the
-right-hand panel in favour of emptiness that nothing filled: the customiser scrolled
+right-hand panel in favor of emptiness that nothing filled: the customizer scrolled
 under a third of a blank screen.
 
 What that reservation *also* held (the avatar and the settings panel, which must
-not re-centre when you switch tabs) is carried by those two columns themselves, in
+not re-center when you switch tabs) is carried by those two columns themselves, in
 the form of the same band height (`100dvh - 3rem - var(--timeline)`). That's why the
 settings panel is `self-start` plus internal centring rather than `self-center`:
 centring on the column would drop it a hundred pixels the moment the column ran to
@@ -117,7 +117,7 @@ resulting `hashchange` read as an incoming navigation, and the playhead jumped b
 to the first `idle`. Pausing on the second occurrence did the same, through `&stop`.
 
 Hence `writtenByUs` in `App.ts`: the fragment we just wrote is remembered and its
-`hashchange` is ignored. It is **consumed** on that first read rather than kept , 
+`hashchange` is ignored. It is **consumed** on that first read rather than kept:
 one write fires at most one event, and a browser Back to that same state later is a
 real navigation that must still move the playhead.
 

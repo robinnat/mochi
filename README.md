@@ -1,23 +1,32 @@
 **English** | [Français](README.fr.md)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
+  <img src="docs/banner.png" alt="Mochis" width="100%">
+</picture>
+
 # Mochis
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochi-red-phi.vercel.app)
 
-Mochis are small animated characters for the web. A Mochi is one soft 3D shape with two eyes. It breathes, blinks, has seven moods and reacts when you touch it. You add one to any page with a single HTML tag, `<mochi-bot>`, in plain HTML or in any framework.
+Mochis are small animated characters for the web. One character is called a Mochi: a soft 3D shape with two eyes. It breathes, blinks, shows a mood and reacts when you touch it.
 
-- 12 shapes, 18 colors (or any hex color)
+You add a Mochi to any page with one HTML tag, `<mochi-bot>`. It works in plain HTML and in any framework (React, Vue, Svelte, Angular...).
+
+- 12 shapes and 18 colors, or any hex color
 - 3 styles, all in real 3D: Soft, Flat and Pixel
-- 7 moods and 5 reactions (tap, double tap, long press, shake, hello)
-- 22 accessories you can stack, in the colors you choose
+- 7 moods, and 5 reactions (to a tap, a double tap, a long press, a shake, and a wave hello)
+- 22 accessories you can combine, in the colors you choose
 - light and dark themes
-- exports from the app: PNG, SVG, GIF and MP4
+- PNG, SVG, GIF and MP4 exports, from the app
 
-**Website and app:** https://mochi-red-phi.vercel.app (the app is at `/app`).
+**Website:** https://mochi-red-phi.vercel.app. The app, an online editor to design a Mochi and export it, is at `/app`.
 
 ## Quick start
 
 > The npm package is coming soon. Until then, build the library from this repository: see [Install](docs/getting-started.md#install).
+
+Load the library, then write the tag:
 
 ```html live
 <script type="module" src="/mochi/mochis.js"></script>
@@ -29,7 +38,7 @@ Mochis are small animated characters for the web. A Mochi is one soft 3D shape w
 
 The documentation lives in [docs/](docs/README.md). The website shows the same pages at [/docs](https://mochi-red-phi.vercel.app/docs).
 
-- [Getting started](docs/getting-started.md): install, your first Mochi, shapes, styles, moods, accessories, frameworks.
+- [Getting started](docs/getting-started.md): install, your first Mochi, options, moods, reactions, methods, events, accessories, styles, frameworks.
 - [Reference](docs/reference.md): every option, method, event and id.
 - [How it works](docs/README.md#how-it-works-for-contributors): architecture and design notes for contributors.
 
@@ -45,7 +54,7 @@ npx -y pnpm@11.17.0 build      # type check, then the website in dist/
 npx -y pnpm@11.17.0 build:lib  # the library alone, in dist-lib/
 ```
 
-TypeScript with no framework: the character is a native web component, and the website and app use a small in-house renderer (`src/ui/dom/`). Vite, Tailwind 4 (app only), Three.js (loaded on demand). [CHANGELOG.md](CHANGELOG.md) has one entry per version.
+The code is TypeScript with no framework. The character is a native web component. The website and the app use a small in-house renderer (`src/ui/dom/`). Tools: Vite, Tailwind 4 (app only) and Three.js (loaded on demand). [CHANGELOG.md](CHANGELOG.md) has one entry per version.
 
 ## Contributing
 

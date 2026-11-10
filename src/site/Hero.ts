@@ -53,7 +53,7 @@ export const Hero: Component<Record<string, never>> = () => {
         h(
           'p',
           { class: 'hx-lede rv-load', style: '--d: 2' },
-          'Mochi is a 3D avatar for the web: pick a shape, a colour and a few accessories. Each one breathes, blinks and reacts to touch.'
+          'Mochis are animated 3D characters for the web: pick a shape, a color and a few accessories. Each one breathes, blinks and reacts to touch.'
         ),
         h(
           'div',

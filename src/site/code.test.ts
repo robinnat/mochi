@@ -12,7 +12,7 @@ describe('example highlighting', () => {
     expect(text).toBe('<script>alert("x")</script> & <img onerror=1>')
   })
 
-  it('colore balises, attributs, chaines, mots-cles et commentaires', () => {
+  it('colors tags, attributes, strings, keywords and comments', () => {
     const h = highlight('<mochi-bot shape="star" size="200"></mochi-bot>\n// note\nimport x from \'y\'')
     expect(h).toContain('<span class="c-tag">&lt;mochi-bot</span>')
     expect(h).toContain('<span class="c-attr">shape</span>')

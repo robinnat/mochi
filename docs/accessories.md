@@ -19,6 +19,8 @@ One accessory per slot at most, and all slots stack:
 
 A fifth slot, `face`, still exists in the code but holds no accessory today: all its pieces were removed.
 
+Inside the code, the 3D object of `scene3d.ts` takes the selection (on a page, use the `accessories` option of `<mochi-bot>` instead):
+
 ```ts
 mochi.setAccessories({ head: 'cap', eyes: 'sunglasses', neck: 'bowtie' })
 // or with your own colors: { head: { id: 'cap', c1: '#e8505b' } }

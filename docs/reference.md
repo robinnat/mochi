@@ -2,7 +2,7 @@
 
 Everything `<mochi-bot>` accepts, in one place. New here? Start with [Getting started](getting-started.md).
 
-Each option is an attribute (dashes, text) and a property (camelCase, any value): the attribute `frozen-at` is the property `frozenAt`.
+Each option is both an attribute (written in HTML, with dashes, as text) and a property (set in JavaScript, in camelCase, with any value): the attribute `frozen-at` is the property `frozenAt`.
 
 ## Options
 
@@ -14,7 +14,7 @@ Each option is an attribute (dashes, text) and a property (camelCase, any value)
 | `render-style` | `3d`, `pixel3d` or `flat3d` | `3d` | Style: Soft, Pixel or Flat. |
 | `mood` | string | none | Mood played on a loop, see [Moods](#moods). |
 | `accessories` | JSON object | none | Accessories by slot, see [Accessories](#accessories). |
-| `theme` | `light` or `dark` | `currentTheme` | The dark theme turns the eyes black. |
+| `theme` | `light` or `dark` | `currentTheme` (`light`) | The dark theme turns the eyes black. |
 | `interactions` | boolean | `true` | Reactions to hover, tap, double tap, long press and shake. |
 | `wave` | boolean | `false` | Waves once when it appears. |
 | `follow` | boolean | `false` | The eyes follow the pointer anywhere in the window (turns the reactions off). |
@@ -22,29 +22,33 @@ Each option is an attribute (dashes, text) and a property (camelCase, any value)
 | `fps` | number | none | Caps the number of frames per second. |
 | `yaw` | number | `0` | Turns the model around its vertical axis, in radians. |
 | `laptop` | boolean | `true` | Shows the laptop of the `working` mood. |
-| `outline` | boolean | `false` | Cartoon outline, in all three styles. |
-| `outline-width` | number | `1` | Outline thickness factor, from 0.4 to 4. |
+| `outline` | boolean | `false` | Cartoon outline (a dark line around the body), in all three styles. |
+| `outline-width` | number | `1` | Outline thickness: `2` is twice as thick. From 0.4 to 4. |
 | `pixel` | `large`, `medium` or `fine` | `fine` | Pixel size of the Pixel style. |
-| `highlight` | boolean | `true` | Soft highlight of the Soft style. |
+| `highlight` | boolean | `true` | Small shine at the top left of the Soft style. |
 | `shadow` | boolean | `true` | Ground shadow under the body. |
 | `shading` | boolean | `true` | Shading of the body volume. `false` gives a flat color. |
-| `max-pixel-ratio` | number | `2` | Caps the 3D canvas density. `1.5` is lighter on phones. |
-| `label` | string | translated | Alternative text for screen readers. |
+| `max-pixel-ratio` | number | `2` | Caps the sharpness of the 3D canvas (screen pixels per CSS pixel). `1.5` is lighter on phones. |
+| `label` | string | a built-in text | Text read by screen readers instead of the drawing. |
 
-A boolean attribute is on when present (`wave`), and off with `"false"` or `"0"` (`shadow="false"`).
+A boolean (yes-or-no) attribute is on when present (`wave`), and off with `"false"` or `"0"` (`shadow="false"`).
 
 ### Advanced options
+
+You rarely need these. The app uses them for its animation editor.
 
 | Attribute | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `expression` | string | `neutral` | Resting expression, see [Expressions](#expressions). |
-| `cycle` | JSON array | the built-in cycle | Montage played by the player: a list of `{ "state": "wink", "duration": 1.2 }` blocks. |
-| `material` | string | `soft` | 3D material of the Soft style. |
-| `softness` | `light` or `strong` | `strong` | Setting of the `soft` material. |
-| `paper` | string | `#f9f9f9` | Background color, used for the depth haze. |
-| `worn` | string | none | Older set of worn accessories (`glasses`, `top-hat`...). Prefer `accessories`. |
+| `cycle` | JSON array | the built-in cycle | The animation played by the player, as a list of blocks: `{ "state": "wink", "duration": 1.2 }` plays the `wink` state for 1.2 seconds. |
+| `material` | string | `soft` | 3D material of the Soft style. `soft` is the only one supported. |
+| `softness` | `light` or `strong` | `strong` | How dark the shading of the `soft` material is. |
+| `paper` | string | `#f9f9f9` | Color of the page behind the Mochi, used for the depth haze. |
+| `worn` | string | none | One accessory from an older set (`glasses`, `top-hat`...). Use `accessories` instead. |
 
-Two more options exist only as properties, because they are functions: `gaze` (a scripted gaze) and `gesture` (small moves added to the pose).
+Two more options exist only as properties, because their value is a function: `gaze` (a scripted gaze) and `gesture` (small moves added to the pose).
+
+The player that plays `cycle` also has four properties, used by the app: `playing` (`true` to play the cycle), `block` (the index of the current block), and two values it writes itself, `state` (the current state) and `elapsed` (seconds spent in the current block).
 
 ## Methods
 
@@ -59,7 +63,7 @@ Two more options exist only as properties, because they are functions: `gaze` (a
 
 ## Events
 
-Standard `CustomEvent`s, listened to with `addEventListener`. They do not bubble. `event.detail` holds the new value.
+Listen to them with `addEventListener`. They are standard `CustomEvent`s and do not bubble (a parent element does not receive them). For the player events, `event.detail` holds the new value.
 
 | Event | When |
 | --- | --- |
@@ -119,7 +123,7 @@ Standard `CustomEvent`s, listened to with `addEventListener`. They do not bubble
 | `working` | | Types on a small 3D laptop seen from behind (hide it with `laptop="false"`). |
 | `waiting` | | Looks straight ahead, head tilted, a little impatient. |
 | `done` | | Happy crescent eyes and two small jumps of joy. |
-| `blocked` | | Frowning eyes and a shake that comes in bursts. |
+| `blocked` | | Frowning, slanted eyes and a shake that comes in bursts. |
 | `asleep` | `sleep`, `sleeping` | Eyes closed, slow breathing, a few "z". |
 
 ## Reactions
@@ -136,11 +140,11 @@ Ids for `react()`. Most also play by themselves when `interactions` is on.
 
 ## Expressions
 
-Resting expressions for the `expression` option: `neutral`, `attentive`, `surprised`, `excited`, `happy`, `laughing`, `angry`, `sad`, `scared`, `suspicious`, `confused`, `curious`, `proud`, `shy`, `unimpressed`, `sleepy`.
+Resting faces for the `expression` option: `neutral`, `attentive`, `surprised`, `excited`, `happy`, `laughing`, `angry`, `sad`, `scared`, `suspicious`, `confused`, `curious`, `proud`, `shy`, `unimpressed`, `sleepy`.
 
 ## Accessories
 
-One accessory per slot. Use the id alone, or `{ "id": "...", "c1": "#hex", "c2": "#hex" }` for your own colors.
+One accessory per slot (`head`, `eyes`, `neck`, `back`). Use the id alone, or `{ "id": "...", "c1": "#hex", "c2": "#hex" }` for your own colors (`c1` main, `c2` second).
 
 | Slot | Id | Name |
 | --- | --- | --- |
@@ -174,7 +178,7 @@ The library has two public entry points:
 - `mochis` (`dist-lib/mochis.js`): the `<mochi-bot>` tag, the engine and the catalogs;
 - `mochis/catalogue` (`dist-lib/catalogue.js`): the catalogs alone, without the tag, to build a picker.
 
-The engine (`src/bot/`) has no framework and no clock: `engine.sample(t)` gives the same frame for the same time `t`.
+The engine (`src/bot/`) computes each frame of a Mochi. It has no framework and no clock: `engine.sample(t)` gives the same frame for the same time `t`. It plays states, the basic animations of the body (`idle`, `thinking`, `wink`, `wide`, `sleep`); moods are built on top of them.
 
 ```js
 import { BotEngine, SHAPE_BY_ID, RADIUS } from '/mochi/mochis.js'

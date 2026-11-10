@@ -35,14 +35,14 @@ export const Bento: Component<Record<string, never>> = () => () =>
           h('div', { class: 'b-dark' }, c(Poster, { name: 'bento-dark', size: 146, alt: 'The same Mochi in dark mode, black eyes' }))
         ),
         h('h3', null, 'Light and dark'),
-        h('p', null, 'In dark mode the eyes turn black. Without ', h('code', null, 'theme'), ', Mochi follows the page.')
+        h('p', null, 'In dark mode the eyes turn black. Set it on one Mochi with ', h('code', null, 'theme'), ', or on all of them with ', h('code', null, 'currentTheme'), '.')
       ),
       h(
         'article',
         { ref: reveal(1), class: 'card-b b-acc' },
         h('div', { class: 'b-image' }, c(AccessoryScroller, {})),
         h('h3', null, `${N_ACC} accessories`),
-        h('p', null, `${SLOT_COUNT} slots (${SLOT_LABELS}), one piece per slot, in your colours.`)
+        h('p', null, `${SLOT_COUNT} slots (${SLOT_LABELS}), one piece per slot, in your colors.`)
       ),
       h(
         'article',

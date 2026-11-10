@@ -3,7 +3,7 @@ import { h, onUnmount, onMount, type Component } from '@/ui/dom/h'
 import { reveal } from './motion'
 
 /**
- * "Make it yours". The title is in the page at once (the #customise anchor always works); the customizer itself (its
+ * "Make it yours". The title is in the page at once (the #customize anchor always works); the customizer itself (its
  * code, its images) only loads as the section gets near.
  */
 type Body = Component<Record<string, never>>
@@ -39,16 +39,16 @@ export const Customization: Component<Record<string, never>> = () => {
   return () =>
     h(
       'section',
-      { id: 'customise', ref: (el: Element | null) => (zone = el as HTMLElement | null), class: 'sec perso', 'aria-labelledby': 't-custom' },
+      { id: 'customize', ref: (el: Element | null) => (zone = el as HTMLElement | null), class: 'sec perso', 'aria-labelledby': 't-custom' },
       h(
         'div',
         { class: 'wrap sec-head' },
-        h('p', { ref: rv[0], class: 'eyebrow' }, 'Customise'),
+        h('p', { ref: rv[0], class: 'eyebrow' }, 'Customize'),
         h('h2', { id: 't-custom', ref: rv[1], class: 'title-sec' }, 'Make it yours.'),
         h(
           'p',
           { ref: rv[2], class: 'lede' },
-          'Pick a style, a shape, any colour, a mood and a few accessories. The preview is the real component, and the code below follows every choice.'
+          'Pick a style, a shape, any color, a mood and a few accessories. The preview is the real component, and the code below follows every choice.'
         )
       ),
       body.value ? h(body.value as Component<never>, { key: 'body' }) : h('div', { key: 'waiting', class: 'custom-waiting', 'aria-hidden': 'true' })

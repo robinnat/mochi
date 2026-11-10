@@ -4,7 +4,7 @@ These pages are the documentation of Mochis. The website shows exactly the same 
 
 ## Use Mochis
 
-- [Getting started](getting-started.md): install, your first Mochi, shapes, styles, moods, accessories, frameworks.
+- [Getting started](getting-started.md): install, your first Mochi, options, moods, reactions, methods, events, accessories, styles, frameworks.
 - [Reference](reference.md): every option, method, event and id.
 
 ## How it works (for contributors)

@@ -1,7 +1,7 @@
 # The arrival sequence
 
 Played when you land on the site (`src/ui/intro.ts`, pure and tested): the ball
-appears alone in the centre, **its eyes travel a full turn around it**, so it
+appears alone in the center, **its eyes travel a full turn around it**, so it
 looks like it's spinning on the spot, then it slides into place while the
 interface appears around it.
 

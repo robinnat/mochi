@@ -2,11 +2,11 @@
 
 Nothing here was drawn by eye. The reference video was cut at 10 frames per
 second, then each state measured off the frames: silhouettes by sub-pixel ray
-casting, eyes by capsule fitting (PCA), colours and stroke widths by direct
+casting, eyes by capsule fitting (PCA), colors and stroke widths by direct
 sampling.
 
 **The numeric constants of the bot are measurements, not settings.** Gaze angles,
-eye sizes, radii, timings, colours: all of it comes from frame-by-frame analysis.
+eye sizes, radii, timings, colors: all of it comes from frame-by-frame analysis.
 Rounding them off, simplifying them, or replacing them with values that look
 tidier breaks the resemblance, which is the only success criterion here.
 
@@ -17,7 +17,7 @@ tidier breaks the resemblance, which is the only success criterion here.
 - Transitions are **exponential ease-outs**; the body **never** overshoots. The
   engine has no spring (the notification pop that used to be the one exception left
   with the non-face states). There is deliberately no spring engine.
-- At rest the avatar **doesn't float**: the video measures the centre stable to
+- At rest the avatar **doesn't float**: the video measures the center stable to
   ±0.003. The code keeps a deliberate trace of it (a drift of a few thousandths of
   the radius, and a 0.5% breath) purely so the image isn't completely frozen. The
   visible life is gaze drift and blinking. Don't add a float on top.
@@ -26,7 +26,7 @@ tidier breaks the resemblance, which is the only success criterion here.
 
 The eye nearer the edge is about 0.69 times the width of the other and 0.663 times
 its area, exactly the depth factor of a point on a sphere at that distance from
-the centre. So each eye takes the sphere's tangent frame, projected
+the center. So each eye takes the sphere's tangent frame, projected
 orthographically: the compression, the tilt and the passage behind the limb all
 follow on their own.
 
@@ -70,5 +70,5 @@ matrices** are what `engine.sample(1)` returns for `idle`, byte for byte. Hence 
 right eye being narrower than the left (0.64 against 0.87). That's depth
 compression, not a typo.
 
-`favicon.ico` and `apple-touch-icon.png` are rasterised from it. The `.ico` is
+`favicon.ico` and `apple-touch-icon.png` are rasterized from it. The `.ico` is
 still needed: Safari only reads the SVG from version 26, iOS not before 18.7.

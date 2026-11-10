@@ -248,10 +248,10 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
           h(
             'div',
             { ref: rv[2], class: 'group' },
-            h('h3', null, 'Colour', h('span', { class: 'value' }, nameColor.value)),
+            h('h3', null, 'Color', h('span', { class: 'value' }, nameColor.value)),
             h(
               'div',
-              { class: 'dots', role: 'group', 'aria-label': 'Colour' },
+              { class: 'dots', role: 'group', 'aria-label': 'Color' },
               PALETTE_SITE.map((p) =>
                 h('button', {
                   key: p.hex,
@@ -270,8 +270,8 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
               h(
                 'label',
                 { class: 'free-choice' },
-                h('input', { type: 'color', value: hexCurrent.value, 'aria-label': 'Pick any colour', onInput: (e: Event) => setColor((e.target as HTMLInputElement).value) }),
-                h('span', null, 'Any colour')
+                h('input', { type: 'color', value: hexCurrent.value, 'aria-label': 'Pick any color', onInput: (e: Event) => setColor((e.target as HTMLInputElement).value) }),
+                h('span', null, 'Any color')
               ),
               h(
                 'label',
@@ -283,7 +283,7 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
                   maxlength: '7',
                   spellcheck: 'false',
                   autocomplete: 'off',
-                  'aria-label': 'Hex colour code',
+                  'aria-label': 'Hex color code',
                   'aria-invalid': isValidHex(textHex.value) ? 'false' : 'true',
                   onInput: (e: Event) => enterHex((e.target as HTMLInputElement).value),
                   onBlur: () => (textHex.value = hexCurrent.value)
@@ -372,15 +372,15 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
                   { key: 'colors', class: 'colors-piece' },
                   h(
                     'div',
-                    { class: 'dots', role: 'group', 'aria-label': SLOT_LABEL[s] + 'colour' },
+                    { class: 'dots', role: 'group', 'aria-label': SLOT_LABEL[s] + 'color' },
                     PALETTE_ACC.map((cl) => dot(cl, ch.c1 === cl.hex, () => setC1(s, cl.hex)))
                   ),
                   hasTwoColors(s)
                     ? h(
                         'div',
-                        { key: 'c2', class: 'dots', role: 'group', 'aria-label': SLOT_LABEL[s] + 'second colour' },
-                        h('span', { class: 'dots-title' }, 'Second colour'),
-                        PALETTE_ACC.map((cl) => dot(cl, ch.c2 === cl.hex, () => assign(s, { ...choice.value[s], c2: cl.hex }), ' (second colour)'))
+                        { key: 'c2', class: 'dots', role: 'group', 'aria-label': SLOT_LABEL[s] + 'second color' },
+                        h('span', { class: 'dots-title' }, 'Second color'),
+                        PALETTE_ACC.map((cl) => dot(cl, ch.c2 === cl.hex, () => assign(s, { ...choice.value[s], c2: cl.hex }), ' (second color)'))
                       )
                     : null
                 )

@@ -88,7 +88,7 @@ export function itemsStrip(slot: Slot, n = 24): ItemStrip[] {
       key: `${slot}-${i}`,
       slot,
       accessory: acc.id,
-      label: `${acc.label}${turn > 0 ? ` (colour ${turn + 1})` : ''}`,
+      label: `${acc.label}${turn > 0 ? ` (color ${turn + 1})` : ''}`,
       c1,
       c2,
       yaw: direction * YAW[slot]

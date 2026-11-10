@@ -59,8 +59,8 @@ export const SITE_MOODS: { id: MoodId; label: string; text: string }[] = [
   { id: 'working', label: 'Working', text: 'Types on a small 3D laptop seen from behind: quick uneven bounces, a lean from side to side, gaze down, and pauses to think. It grows in and out as the mood starts and ends (the laptop option hides it).' },
   { id: 'waiting', label: 'Waiting', text: 'Looking straight ahead, head tilted, a little impatient.' },
   { id: 'done', label: 'Done', text: 'Happy crescent eyes and two small jumps of joy.' },
-  { id: 'blocked', label: 'Blocked', text: 'Frowning eyes in mirror and a shake that comes in bursts.' },
-  { id: 'asleep', label: 'Asleep', text: 'Eyes closed, slow breathing.' }
+  { id: 'blocked', label: 'Blocked', text: 'Frowning, slanted eyes and a shake that comes in bursts.' },
+  { id: 'asleep', label: 'Asleep', text: 'Eyes closed, slow breathing, a few "z".' }
 ]
 export const MOOD_ID_LIST: MoodId[] = MOOD_IDS
 
@@ -71,7 +71,7 @@ export const INTERACTIONS_SITE: { gesture: string; name: string; text: string }[
   { gesture: 'Double tap', name: 'Laugh', text: 'Crescent eyes and a shaking body.' },
   { gesture: 'Long press', name: 'Blush', text: 'Closes its eyes, content, for as long as you press.' },
   { gesture: 'Shake or spin fast', name: 'Dizzy', text: 'Spinning eyes, a swaying body.' },
-  { gesture: 'On arrival', name: 'Hello', text: 'It grows out of the floor with a small rebound, then waves its head.' }
+  { gesture: 'On arrival', name: 'Hello', text: 'It grows out of the floor with a small rebound, then nods hello.' }
 ]
 
 export const SLOT_LABEL: Record<Slot, string> = {

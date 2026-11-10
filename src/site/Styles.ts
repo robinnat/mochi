@@ -31,7 +31,7 @@ const STEPS: { id: RenderStyleId; name: string; code: string; text: string; back
     id: 'flat3d',
     name: 'Flat',
     code: 'render-style="flat3d"',
-    text: 'Two or three flat tones and no gloss, for a bold, graphic look. Add an outline with contour.',
+    text: 'Two or three flat tones and no gloss, for a bold, graphic look. Add a cartoon outline with the outline attribute.',
     background: 'var(--p-peche)'
   }
 ]
@@ -91,7 +91,7 @@ export const Styles: Component<Record<string, never>> = () => {
         { class: 'wrap sec-head' },
         h('p', { ref: reveal(), class: 'eyebrow' }, 'Three styles'),
         h('h2', { id: 't-styles', ref: reveal(1), class: 'title-sec' }, 'One model.', h('br'), 'Three looks.'),
-        h('p', { ref: reveal(2), class: 'lede' }, 'Every Mochi is a real 3D volume, so it can turn and still be itself. Switch the look with a single prop.')
+        h('p', { ref: reveal(2), class: 'lede' }, 'Every Mochi is a real 3D volume, so it can turn and still be itself. Switch the look with a single attribute.')
       ),
       h(
         'div',

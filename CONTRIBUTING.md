@@ -29,7 +29,7 @@ npx -y pnpm@11.17.0 install
 npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site at /, app at /app.html, lab at /lab.html)
 ```
 
-The 3D needs WebGL. If your browser has none, the avatar falls back to its SVG drawing.
+The 3D needs WebGL. If your browser has none, a short message replaces the Mochi: there is no 2D fallback.
 
 ## Test
 

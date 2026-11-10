@@ -30,7 +30,7 @@ describe('interface rendering', () => {
     expect(after[1]).toBe(before[0])
   })
 
-  it('evenements, attributs aria booleens et SVG', () => {
+  it('events, boolean aria attributes and SVG', () => {
     const el = document.createElement('div')
     let n = 0
     render(h('button', { 'aria-pressed': false, onClick: () => n++ }, h('svg', { viewBox: '0 0 1 1' }, h('path', { d: 'M0 0' }))), el)

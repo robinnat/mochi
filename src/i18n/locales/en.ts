@@ -18,7 +18,7 @@ const en: typeof fr = {
 
   rail: {
     nav: 'Sections',
-    customize: 'Customise',
+    customize: 'Customize',
     animations: 'Animations',
     settings: 'Settings'
   },
@@ -27,7 +27,7 @@ const en: typeof fr = {
     animations: 'Animation',
     shape: 'Shape',
     expression: 'Expression',
-    color: 'Colour',
+    color: 'Color',
     style: 'Style',
     pixelSize: 'Pixel size',
     outline: 'Cartoon outline'
