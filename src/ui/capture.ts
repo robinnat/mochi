@@ -34,6 +34,7 @@ import type { RenduId, TaillePixelId } from './rendu'
  */
 export function svgAutonome(svg: SVGSVGElement, taille: number, viewBox = viewBoxExport()) {
   const clone = svg.cloneNode(true) as SVGSVGElement
+  figeToiles(svg, clone)
   // Les classes Tailwind de la page n'existent pas dans le fichier livre.
   clone.removeAttribute('class')
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
@@ -41,6 +42,50 @@ export function svgAutonome(svg: SVGSVGElement, taille: number, viewBox = viewBo
   clone.setAttribute('width', String(taille))
   clone.setAttribute('height', String(taille))
   return sansCommentaires(new XMLSerializer().serializeToString(clone))
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
+
+/**
+ * Remplace, dans le CLONE, chaque `<foreignObject>` qui porte un canvas par une `<image>` en `data:` URL de ce
+ * qu'affiche le canvas d'origine.
+ *
+ * C'est le cas de la vraie 3D : le corps et les yeux sont rendus par WebGL dans un canvas pose dans un
+ * `<foreignObject>`. Laisse tel quel, il casse les deux exports :
+ * - en PNG, un SVG qui contient un `<foreignObject>` souille le canvas de rasterisation (Chrome, Safari) et
+ *   `toBlob` echoue en `SecurityError`, d'ou « Export failed » sur le style par defaut ;
+ * - en SVG, `cloneNode` ne copie pas les pixels d'un canvas : le fichier livre aurait un canvas vide.
+ *
+ * Une `<image>` en `data:` URL est autonome et ne souille pas le canvas : le fichier SVG garde le corps, et le
+ * PNG se rasterise. On lit le canvas VIVANT (le clone n'a pas de pixels), apparie par ordre du document.
+ */
+export function figeToiles(source: SVGSVGElement, clone: SVGSVGElement) {
+  const origines = [...source.querySelectorAll('foreignObject')]
+  const copies = [...clone.querySelectorAll('foreignObject')]
+  copies.forEach((fo, i) => {
+    const toile = origines[i]?.querySelector('canvas')
+    let href = ''
+    try {
+      // un canvas de largeur nulle (pas encore rendu) donne « data:, » : pas d'image plutot qu'une image cassee
+      if (toile && toile.width > 0 && toile.height > 0) href = toile.toDataURL('image/png')
+    } catch {
+      href = ''
+    }
+    if (!href.startsWith('data:image/')) {
+      fo.remove()
+      return
+    }
+    const img = clone.ownerDocument.createElementNS(SVG_NS, 'image')
+    for (const k of ['x', 'y', 'width', 'height']) {
+      const v = fo.getAttribute(k)
+      if (v !== null) img.setAttribute(k, v)
+    }
+    img.setAttribute('href', href)
+    img.setAttribute('preserveAspectRatio', 'none')
+    // pixel art : garder les cases nettes a l'agrandissement
+    if (toile?.style.imageRendering === 'pixelated') img.setAttribute('style', 'image-rendering: pixelated')
+    fo.replaceWith(img)
+  })
 }
 
 /**
@@ -51,8 +96,9 @@ export function svgAutonome(svg: SVGSVGElement, taille: number, viewBox = viewBo
  * long. L'URL est relachee dans un `finally` — un objet non revoque tient le blob
  * en memoire jusqu'au rechargement de la page.
  *
- * Le canvas n'est jamais souille : le SVG du bot n'a ni `<foreignObject>` ni
- * `<image>`, les deux seules choses qui feraient echouer `toBlob`.
+ * Le canvas n'est jamais souille : `svgAutonome` a remplace le `<foreignObject>` de la
+ * vraie 3D par une `<image>` en `data:` URL (voir `figeToiles`). Un `<foreignObject>`
+ * restant ferait echouer `toBlob` ; une `data:` URL, elle, est sure.
  */
 async function dessine(
   markup: string,
