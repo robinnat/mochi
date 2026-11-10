@@ -31,10 +31,12 @@ Ce fichier est une traduction pour les lecteurs francophones. La documentation d
 Chargez la bibliothèque, puis écrivez la balise :
 
 ```html
-<script type="module" src="/mochi/mochis.js"></script>
+<script type="module" src="/mochis/mochis.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
+
+C'est la façon HTML simple. Dans une app avec un bundler (Vite, webpack...), copiez la bibliothèque dans `src/vendor/mochis/` et écrivez `import './vendor/mochis/mochis.js'` : voir [Install](docs/getting-started.md#install).
 
 ## Documentation
 
@@ -46,7 +48,7 @@ La documentation est dans [docs/](docs/README.md), en anglais. Le site montre le
 
 ## Développement
 
-Il faut Node.js 20 ou plus récent.
+Il faut Node.js 22.12 ou plus récent (champ `engines` de package.json). La CI tourne sous Node 24.
 
 ```bash
 npx -y pnpm@11.17.0 install

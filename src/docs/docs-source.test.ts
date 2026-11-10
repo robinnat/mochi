@@ -158,7 +158,7 @@ describe('the documentation says what the code does', () => {
     const catalog = (await import('mochis/catalog')) as Record<string, unknown>
     const all = USER_CODE.map((b) => b.code).join('\n')
     const names = (file: string) =>
-      [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '/mochi/${file.replace('.', '\\.')}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
+      [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '\\./vendor/mochis/${file.replace('.', '\\.')}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
     expect(names('catalog.js').length).toBeGreaterThan(0)
     for (const n of names('mochis.js')) expect(full[n], n).toBeDefined()
     for (const n of names('catalog.js')) expect(catalog[n], n).toBeDefined()
@@ -169,5 +169,25 @@ describe('the documentation says what the code does', () => {
     expect(GUIDE).toContain('does not work today')
     const pkg = JSON.parse(read('package.json'))
     expect(pkg.scripts['build:lib']).toContain('vite.lib.config.ts')
+  })
+
+  it('library paths: /mochis/ in plain HTML, ./vendor/mochis/ with a bundler, never imported from public/', () => {
+    const all = [README, ...DOC_FILES.map((f) => read('docs/' + f))].join('\n')
+    // the folder name of the old docs; a bundler cannot import from public/ (Vite fails to resolve it)
+    expect(all).not.toMatch(/['"]\/mochi\/(mochis|catalog)\.js/)
+    expect(all).not.toMatch(/public\/mochis?\b(?!\/\*)/)
+    for (const { code } of USER_CODE) {
+      for (const m of code.matchAll(/\bimport\s+(?:[^'"]+from\s+)?'([^']+)'/g)) expect(m[1], code).toMatch(/^\.\/vendor\/mochis\/(mochis|catalog)\.js$/)
+      for (const m of code.matchAll(/<script type="module" src="([^"]+)"/g)) expect(m[1], code).toMatch(/^\/mochis\/mochis\.js$/)
+    }
+    expect(GUIDE).toContain('cp -r dist-lib ../my-app/src/vendor/mochis')
+    expect(GUIDE).toContain("import './vendor/mochis/mochis.js'")
+  })
+
+  it('the Node version is the same in package.json and the READMEs', () => {
+    const pkg = JSON.parse(read('package.json'))
+    expect(pkg.engines.node).toBe('>=22.12.0')
+    for (const f of [README, read('README.fr.md'), GUIDE]) expect(f).toContain('22.12')
+    expect(read('.github/workflows/ci.yml')).toContain('node-version: 24')
   })
 })

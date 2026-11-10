@@ -181,8 +181,8 @@ The library has two public entry points:
 The engine (`src/bot/`) computes each frame of a Mochi. It has no framework and no clock: `engine.sample(t)` gives the same frame for the same time `t`. It plays states, the basic animations of the body (`idle`, `thinking`, `wink`, `wide`, `sleep`); moods are built on top of them.
 
 ```js
-import { BotEngine, SHAPE_BY_ID, RADIUS } from '/mochi/mochis.js'
-import { SHAPES, ACCESSORIES, MOOD_IDS } from '/mochi/catalog.js'
+import { BotEngine, SHAPE_BY_ID, RADIUS } from './vendor/mochis/mochis.js'
+import { SHAPES, ACCESSORIES, MOOD_IDS } from './vendor/mochis/catalog.js'
 
 const engine = new BotEngine(RADIUS, 'idle', SHAPE_BY_ID.get('star').radii)
 engine.setState('wink', 2) // change state at t = 2 s

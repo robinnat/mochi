@@ -29,10 +29,12 @@ You add a Mochi to any page with one HTML tag, `<mochi-bot>`. It works in plain 
 Load the library, then write the tag:
 
 ```html live
-<script type="module" src="/mochi/mochis.js"></script>
+<script type="module" src="/mochis/mochis.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
+
+This is the plain HTML way. In an app with a bundler (Vite, webpack...), copy the library into `src/vendor/mochis/` and write `import './vendor/mochis/mochis.js'`: see [Install](docs/getting-started.md#install).
 
 ## Documentation
 
@@ -44,7 +46,7 @@ The documentation lives in [docs/](docs/README.md). The website shows the same p
 
 ## Development
 
-You need Node.js 20 or later.
+You need Node.js 22.12 or later (the `engines` field of package.json). The CI runs Node 24.
 
 ```bash
 npx -y pnpm@11.17.0 install

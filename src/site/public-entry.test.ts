@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest'
  */
 const SRC = fileURLToPath(new URL('..', import.meta.url))
 const FOLDERS = ['site', 'docs', 'lab']
-const ALLOWED = [/^mochis(\/catalog)?$/, /^\/mochi\/(mochis|catalog)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|lab)\//, /^(\.\.\/)+docs\/[\w-]+\.md\?raw$/, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
+const ALLOWED = [/^mochis(\/catalog)?$/, /^\/mochis\/(mochis|catalog)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|lab)\//, /^(\.\.\/)+docs\/[\w-]+\.md\?raw$/, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
 
 const sources = FOLDERS.flatMap((d) =>
   readdirSync(join(SRC, d))
