@@ -3,25 +3,16 @@
  * d'un canvas et du presse-papiers, donc rien ici n'est testable en `node` — le
  * cadrage et le nommage, eux, vivent dans `export.ts` et le sont.
  *
- * Le SVG exporte est celui de l'ECRAN, recadre : on serialise le noeud vivant
- * plutot que de reconstruire un rendu a cote. Deux sources de dessin auraient
- * derive, et le moteur est deja la seule qui vaille. C'est possible parce que le
- * SVG du bot est deja auto-porteur : aucune `var(--...)`, aucune classe, chaque
- * forme porte son `fill` en hex.
+ * Tout export part de la 3D : l'image fixe est le noeud de l'ECRAN, recadre, dont le
+ * canvas WebGL est fige en image (`figeToiles`) ; les animations (GIF, video) sont
+ * rejouees image par image sur une instance hors ecran, elle aussi en 3D. Il n'y a
+ * pas d'autre source de dessin.
  */
 
-import { createApp, h, nextTick, ref } from 'vue'
-import MochiBot from '@/components/MochiBot.vue'
+import { nextTick } from '@/ui/dom/reactif'
+import { MochiBotElement } from '@/components/mochi-bot'
 import type { Block } from '@/bot/cycles'
-import {
-  gifAnime,
-  gifIndexe,
-  indexe,
-  nouvellePalette,
-  recense,
-  svgAnime,
-  svgFeuilletage
-} from './anime'
+import { gifAnime, gifIndexe, indexe, nouvellePalette, recense } from './anime'
 import { arrete, DEMI_ECRAN, sansCommentaires, viewBoxExport } from './export'
 import type { RenduId, TaillePixelId } from './rendu'
 
@@ -34,6 +25,7 @@ import type { RenduId, TaillePixelId } from './rendu'
  */
 export function svgAutonome(svg: SVGSVGElement, taille: number, viewBox = viewBoxExport()) {
   const clone = svg.cloneNode(true) as SVGSVGElement
+  figeToiles(svg, clone)
   // Les classes Tailwind de la page n'existent pas dans le fichier livre.
   clone.removeAttribute('class')
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
@@ -41,6 +33,50 @@ export function svgAutonome(svg: SVGSVGElement, taille: number, viewBox = viewBo
   clone.setAttribute('width', String(taille))
   clone.setAttribute('height', String(taille))
   return sansCommentaires(new XMLSerializer().serializeToString(clone))
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
+
+/**
+ * Remplace, dans le CLONE, chaque `<foreignObject>` qui porte un canvas par une `<image>` en `data:` URL de ce
+ * qu'affiche le canvas d'origine.
+ *
+ * C'est le cas de la vraie 3D : le corps et les yeux sont rendus par WebGL dans un canvas pose dans un
+ * `<foreignObject>`. Laisse tel quel, il casse les deux exports :
+ * - en PNG, un SVG qui contient un `<foreignObject>` souille le canvas de rasterisation (Chrome, Safari) et
+ *   `toBlob` echoue en `SecurityError`, d'ou « Export failed » sur le style par defaut ;
+ * - en SVG, `cloneNode` ne copie pas les pixels d'un canvas : le fichier livre aurait un canvas vide.
+ *
+ * Une `<image>` en `data:` URL est autonome et ne souille pas le canvas : le fichier SVG garde le corps, et le
+ * PNG se rasterise. On lit le canvas VIVANT (le clone n'a pas de pixels), apparie par ordre du document.
+ */
+export function figeToiles(source: SVGSVGElement, clone: SVGSVGElement) {
+  const origines = [...source.querySelectorAll('foreignObject')]
+  const copies = [...clone.querySelectorAll('foreignObject')]
+  copies.forEach((fo, i) => {
+    const toile = origines[i]?.querySelector('canvas')
+    let href = ''
+    try {
+      // un canvas de largeur nulle (pas encore rendu) donne « data:, » : pas d'image plutot qu'une image cassee
+      if (toile && toile.width > 0 && toile.height > 0) href = toile.toDataURL('image/png')
+    } catch {
+      href = ''
+    }
+    if (!href.startsWith('data:image/')) {
+      fo.remove()
+      return
+    }
+    const img = clone.ownerDocument.createElementNS(SVG_NS, 'image')
+    for (const k of ['x', 'y', 'width', 'height']) {
+      const v = fo.getAttribute(k)
+      if (v !== null) img.setAttribute(k, v)
+    }
+    img.setAttribute('href', href)
+    img.setAttribute('preserveAspectRatio', 'none')
+    // pixel art : garder les cases nettes a l'agrandissement
+    if (toile?.style.imageRendering === 'pixelated') img.setAttribute('style', 'image-rendering: pixelated')
+    fo.replaceWith(img)
+  })
 }
 
 /**
@@ -51,8 +87,9 @@ export function svgAutonome(svg: SVGSVGElement, taille: number, viewBox = viewBo
  * long. L'URL est relachee dans un `finally` — un objet non revoque tient le blob
  * en memoire jusqu'au rechargement de la page.
  *
- * Le canvas n'est jamais souille : le SVG du bot n'a ni `<foreignObject>` ni
- * `<image>`, les deux seules choses qui feraient echouer `toBlob`.
+ * Le canvas n'est jamais souille : `svgAutonome` a remplace le `<foreignObject>` de la
+ * vraie 3D par une `<image>` en `data:` URL (voir `figeToiles`). Un `<foreignObject>`
+ * restant ferait echouer `toBlob` ; une `data:` URL, elle, est sure.
  */
 async function dessine(
   markup: string,
@@ -186,7 +223,7 @@ export async function cycleVersMp4(
  * Exporte le cycle en GIF.
  *
  * DEUX passes sur la sequence, et c'est pour la memoire : un GIF a besoin d'une
- * palette commune a toutes les images, donc de les avoir toutes vues avant d'en
+ * palette commune a toutes les images, donc de les avoir toutes recensees avant d'en
  * encoder une seule. Les garder en pixels bruts couterait 255 Mo sur un cycle de
  * trente secondes. La premiere passe ne retient que les couleurs, la seconde
  * encode — le rendu est deterministe, donc rejouer la sequence redonne exactement
@@ -214,7 +251,7 @@ export async function cycleVersGif(
   // Un seul canvas et un seul lecteur pour les deux passes : le canvas est reinitialise a
   // chaque image, et le lecteur sait rembobiner.
   const canvas = document.createElement('canvas')
-  const vue = viewBoxExport(DEMI_ECRAN)
+  const boite = viewBoxExport(DEMI_ECRAN)
   const lecteur = await ouvreCycle(reglages, blocs, taille, fond ?? undefined)
 
   /** Une passe complete sur la sequence. */
@@ -224,7 +261,7 @@ export async function cycleVersGif(
       // images, et l'abandon ne doit pas attendre la fin d'une passe
       arrete(signal)
       const svg = await lecteur.rendre(i * pas)
-      const ctx = await dessine(svgAutonome(svg, taille, vue), taille, canvas, fond)
+      const ctx = await dessine(svgAutonome(svg, taille, boite), taille, canvas, fond)
       lis(i, ctx.getImageData(0, 0, taille, taille).data)
     }
   }
@@ -248,6 +285,34 @@ export async function cycleVersGif(
   } finally {
     lecteur.ferme()
   }
+}
+
+/**
+ * Attend la premiere image 3D d'un Mochi hors ecran (`pret`). Sans WebGL (`sans3d`) ou si
+ * rien ne vient, l'export echoue proprement : il n'y a pas de dessin 2D de secours.
+ */
+export function attendre3d(bot: MochiBotElement, delai = 15000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (bot.querySelector('canvas[data-vraie3d]') && bot.dataset.pret === '1') return resolve()
+    const fin = (ok: boolean) => {
+      clearTimeout(minuteur)
+      bot.removeEventListener('pret', bon)
+      bot.removeEventListener('sans3d', mauvais)
+      if (ok) resolve()
+      else reject(new Error('3D indisponible'))
+    }
+    const bon = () => fin(true)
+    const mauvais = () => fin(false)
+    const minuteur = setTimeout(mauvais, delai)
+    bot.addEventListener('pret', bon)
+    bot.addEventListener('sans3d', mauvais)
+  })
+}
+
+/** Laisse passer le dessin du moteur PUIS celui de la 3D (file `post`). */
+async function image() {
+  await nextTick()
+  await nextTick()
 }
 
 /** Ce que le bot doit porter sur l'animation exportee. */
@@ -287,32 +352,37 @@ export async function sequenceDuBot<T>(
   paper?: string
 ): Promise<T[]> {
   const hote = document.createElement('div')
-  // hors du flux et hors de vue, mais RENDU : un `display:none` ne donnerait pas
+  // hors du flux et hors de l'ecran, mais RENDU : un `display:none` ne donnerait pas
   // de SVG a serialiser.
   hote.style.cssText = 'position:fixed;left:-99999px;top:0;width:0;height:0;overflow:hidden'
   document.body.appendChild(hote)
 
-  const date = ref(0)
-  const app = createApp({
-    render: () =>
-      h(MochiBot, { ...reglages, size: taille, frozenAt: date.value, ...(paper ? { paper } : {}) })
-  })
-  app.mount(hote)
+  const bot = creerBot({ ...reglages, size: taille, frozenAt: 0, maxPixelRatio: 2, ...(paper ? { paper } : {}) })
+  const pret = attendre3d(bot)
+  hote.appendChild(bot)
 
   try {
+    await pret
     const out: T[] = []
     for (let i = 0; i < nombre; i++) {
-      date.value = i * pas
-      await nextTick()
+      bot.frozenAt = i * pas
+      await image()
       const svg = hote.querySelector('svg')
       if (!svg) throw new Error('bot hors ecran non rendu')
       out.push(await lis(svg, i))
     }
     return out
   } finally {
-    app.unmount()
+    bot.remove()
     hote.remove()
   }
+}
+
+/** Un `<mochi-bot>` avec ses options posees en proprietes, pas encore dans la page. */
+export function creerBot(options: Record<string, unknown>): MochiBotElement {
+  const bot = document.createElement('mochi-bot') as MochiBotElement
+  Object.assign(bot, options)
+  return bot
 }
 
 /**
@@ -325,7 +395,7 @@ export async function sequenceDuBot<T>(
  * Le rendu passe par `rendAt` et non par `frozenAt` : seul `rendAt` parcourt les
  * blocs en datant chaque changement d'etat a son offset absolu, ce qui donne les
  * memes fondus aux jointures que la lecture temps reel. Voir sa doc dans
- * `MochiBot.vue`.
+ * `components/mochi-bot.ts`.
  */
 export interface LecteurHorsEcran {
   /** Rend l'instant `t` du cycle et renvoie le SVG a lire. */
@@ -343,102 +413,53 @@ export async function ouvreCycle(
   hote.style.cssText = 'position:fixed;left:-99999px;top:0;width:0;height:0;overflow:hidden'
   document.body.appendChild(hote)
 
-  const bot = ref<{ rendAt: (t: number) => void } | null>(null)
-  const app = createApp({
-    render: () =>
-      h(MochiBot, {
-        ...reglages,
-        size: taille,
-        cycle: blocs,
-        /*
-         * Le moteur se construit sur l'etat qu'on lui donne, et l'image 0 doit
-         * etre le PREMIER etat du montage. Sans cette prop le modele prenait son
-         * defaut `idle` : un montage commencant par le sommeil s'ouvrait sur une
-         * boule au repos qui morphait vers la petite boule pendant 0,5 s. C'est la
-         * meme precaution qu'a l'ecran, ou `state` est amorce sur le bloc courant
-         * « pour ne pas entrer en morphant depuis un etat qui n'a jamais ete
-         * affiche » (cf. `App.vue`).
-         */
-        state: blocs[0]?.state ?? 'idle',
-        frozenAt: 0,
-        ref: bot,
-        ...(paper ? { paper } : {})
-      })
+  /*
+   * `state` : le moteur se construit sur l'etat qu'on lui donne, et l'image 0 doit etre le PREMIER etat du
+   * montage, sans morph depuis un repos jamais affiche.
+   */
+  const bot = creerBot({
+    ...reglages,
+    size: taille,
+    cycle: blocs,
+    state: blocs[0]?.state ?? 'idle',
+    frozenAt: 0,
+    maxPixelRatio: 1,
+    ...(paper ? { paper } : {})
   })
-  app.mount(hote)
-  await nextTick()
+  const pret = attendre3d(bot)
+  hote.appendChild(bot)
+  const fermer = () => {
+    bot.remove()
+    hote.remove()
+  }
+  try {
+    await pret
+  } catch (e) {
+    fermer()
+    throw e
+  }
 
   const svg = hote.querySelector('svg')
-  if (!svg || !bot.value) {
-    app.unmount()
-    hote.remove()
+  if (!svg) {
+    fermer()
     throw new Error('bot hors ecran non rendu')
   }
 
   return {
     rendre: async (t: number) => {
-      bot.value!.rendAt(t)
-      await nextTick()
+      bot.rendAt(t)
+      await image()
       return svg
     },
-    ferme: () => {
-      app.unmount()
-      hote.remove()
-    }
+    ferme: fermer
   }
-}
-
-/**
- * Les matrices des yeux d'une image, lues sur le masque.
- *
- * Les yeux sont les seules formes du masque a porter un `transform` — le corps
- * n'en a pas — donc l'ordre du document suffit a les identifier.
- */
-function matricesDesYeux(svg: SVGSVGElement) {
-  return [...svg.querySelectorAll('mask [transform]')].map((e) => e.getAttribute('transform')!)
-}
-
-/**
- * Assemble l'animation du bot en un SVG anime.
- *
- * Le corps est celui de la premiere image et n'est pas anime : au repos la
- * silhouette ne se deplace que de 1,17 unite sur un rayon de 100, soit environ un
- * pixel et demi. Tout le mouvement est dans les yeux.
- */
-export async function versSvgAnime(
-  reglages: ReglagesBot,
-  taille: number,
-  nombre: number,
-  pas: number
-): Promise<Blob> {
-  let base = ''
-  const images = await sequenceDuBot(reglages, taille, nombre, pas, (svg, i) => {
-    if (i === 0) base = svgAutonome(svg, taille)
-    // pixel art : pas d'yeux a matrices, chaque image est un jeu de cases
-    const pixels = svg.querySelector('[data-pixels]')
-    return { matrices: matricesDesYeux(svg), pixels: pixels ? pixels.innerHTML : null }
-  })
-  const markup = images.every((im) => im.pixels !== null)
-    ? svgFeuilletage(
-        base,
-        images.map((im) => sansCommentaires(im.pixels!)),
-        +(nombre * pas).toFixed(3)
-      )
-    : svgAnime(
-        base,
-        images.map((im) => im.matrices),
-        +((nombre - 1) * pas).toFixed(3)
-      )
-  return new Blob([markup], { type: 'image/svg+xml' })
 }
 
 /**
  * Assemble l'animation du bot en GIF anime.
  *
- * Le GIF est un vrai feuilletage : il faut donc rasteriser chaque image, la ou le
- * SVG anime ne collecte que des matrices. Il n'existe que pour les endroits qui
- * refusent le SVG — un avatar anime Discord ou Slack — et son bord sera dur, sa
- * transparence n'ayant qu'un bit.
+ * Un vrai feuilletage : chaque image est rendue en 3D hors ecran puis rasterisee. Pour
+ * les avatars animes (Discord, Slack) ; son bord est dur, sa transparence n'ayant qu'un bit.
  */
 export async function versGifAnime(
   reglages: ReglagesBot,

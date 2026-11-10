@@ -1,10 +1,9 @@
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
-import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [vue(), tailwindcss()],
+  plugins: [tailwindcss()],
   // Le port est fixe : c'est celui que le README annonce, il doit donc valoir pour
   // un `pnpm dev` nu.
   server: { port: 5190 },
@@ -31,6 +30,11 @@ export default defineConfig({
     }
   },
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }
+    // le site, la doc et le labo consomment Mochi comme un utilisateur du paquet : par ses entrees publiques
+    alias: [
+      { find: /^mochi-world$/, replacement: fileURLToPath(new URL('./src/index.ts', import.meta.url)) },
+      { find: /^mochi-world\/catalogue$/, replacement: fileURLToPath(new URL('./src/catalogue.ts', import.meta.url)) },
+      { find: /^@\//, replacement: fileURLToPath(new URL('./src/', import.meta.url)) }
+    ]
   }
 })

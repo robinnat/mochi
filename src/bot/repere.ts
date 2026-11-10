@@ -3,11 +3,11 @@
  *
  * `engine.sample()` sort des coordonnees en unites de viewBox, et ces deux nombres en sont
  * la definition : sans eux, une sortie du moteur ne veut rien dire. Ils vivaient dans
- * `MochiBot.vue`, donc hors d'atteinte — un `<script setup>` n'exporte rien — et
+ * le composant, donc hors d'atteinte, et
  * `export.ts` en redisait un a la main avec le commentaire qui nommait le probleme.
  *
  * Ils sont ici parce que `src/bot/` est ce qui se lit et se consomme du dehors : le
- * composant Vue est UN client du moteur, pas sa definition.
+ * composant `<mochi-bot>` est UN client du moteur, pas sa definition.
  */
 
 /**

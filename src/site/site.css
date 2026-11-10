@@ -197,6 +197,15 @@ header[id] {
   color: var(--ink);
   text-decoration: none;
 }
+.marque img,
+.pied-marque img {
+  transition: filter 0.2s;
+}
+/* le logo est noir (favicon.svg) : en sombre il passe en clair, sinon il disparait sur le fond */
+:root[data-theme='dark'] .marque img,
+:root[data-theme='dark'] .pied-marque img {
+  filter: invert(1);
+}
 .nav-liens {
   display: flex;
   gap: 26px;
@@ -232,6 +241,23 @@ header[id] {
 }
 .nav-icone:hover {
   background: var(--bg-2);
+}
+/* lien GitHub avec le nombre d'etoiles : la pastille s'elargit pour loger le chiffre */
+.nav-icone.nav-etoiles {
+  width: auto;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+}
+.nav-nb-etoiles {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.82rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 .nav-cta {
   margin-left: 8px;
@@ -1598,6 +1624,23 @@ header[id] {
   padding: 18px;
   font-size: 0.82rem;
   color: var(--muted);
+}
+.doc-apercu-bots {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+}
+/* un exemple sans taille garde la taille par defaut (320) : on le reduit, le dessin suit sa boite */
+.doc-apercu-bots mochi-bot {
+  width: 112px;
+}
+.doc-apercu-bots mochi-bot[size] {
+  width: auto;
+}
+.doc-apercu figcaption {
+  text-align: center;
 }
 .ids-formes,
 .ids-couleurs {

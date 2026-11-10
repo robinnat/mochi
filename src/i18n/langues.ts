@@ -1,5 +1,5 @@
 /**
- * Langues proposees et regle de choix. Volontairement sans DOM ni Vue : le
+ * Langues proposees et regle de choix. Volontairement sans DOM ni interface : le
  * navigateur ne rentre que par les arguments, donc la regle se teste sans
  * simuler `navigator` ni `localStorage`.
  */

@@ -1,5 +1,5 @@
 /**
- * Ombrage de matiere en repere de la VUE : tout est calcule a partir de la normale vue de la
+ * Ombrage de matiere en repere de la CAMERA : tout est calcule a partir de la normale exprimee depuis la
  * camera, sur TOUT le volume (face, flancs, dos) et pas dans la texture de visage. Le corps
  * est donc ombre de facon continue sur 360 degres, et la lumiere reste « en haut a gauche »
  * pour le spectateur quand le modele tourne.

@@ -1,8 +1,5 @@
-import { createApp } from 'vue'
-import Site from './Site.vue'
-import { vReveal } from './motion'
+import { monterApp } from '@/ui/dom/h'
+import { Site } from './Site'
 import './site.css'
 
-createApp(Site).directive('reveal', vReveal).mount('#site')
-// le moteur d'interface de l'application regle `lang` sur la langue du navigateur : ici, le site est en anglais
-document.documentElement.lang = 'en'
+monterApp(Site, '#site')

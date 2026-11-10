@@ -1,0 +1,4 @@
+# Reglages pnpm (pnpm 11 ne lit plus le champ "pnpm" de package.json).
+# source-map-js < 1.2.2 : GHSA-68fv-2mgg-jv7q (Dependabot n°5), tire par @tailwindcss/vite > @tailwindcss/node.
+overrides:
+  source-map-js: 1.2.2

@@ -1,181 +1,168 @@
 /**
- * Contenu de la page docs (anglais) : exemples de code et tableau des props. Tout vient de la VRAIE API du depot :
- * `exemples.test.ts` verifie que chaque prop citee existe dans `MochiBot.vue`, que chaque methode est exposee, et que
- * les ids des exemples (formes, couleurs, humeurs, accessoires, styles) sont ceux des catalogues du moteur.
+ * Contenu de la page docs (anglais) : exemples de code et tableau des options. Tout vient de la VRAIE API du depot :
+ * `exemples.test.ts` verifie que chaque option citee est declaree par `<mochi-bot>` (`PROPRIETES`), que chaque
+ * methode existe sur l'element, et que les ids des exemples (formes, couleurs, humeurs, accessoires, styles) sont
+ * ceux des catalogues du moteur.
  */
 
 export const DEPOT = 'https://github.com/robinnat/mochi'
 
-/** Installation depuis le depot : le paquet npm n'est PAS publie (06/11/2026). Essai fait dans une app Vue 3 + Vite neuve. */
-export const INSTALL_DEPOT = `# 1. Get the source
+/** Installation depuis le depot : le paquet npm n'est PAS publie. On construit le fichier de la bibliotheque. */
+export const INSTALL_DEPOT = `# 1. Get the source and build the library
 git clone https://github.com/robinnat/mochi.git
+cd mochi
+npx pnpm@11.17.0 install
+npx pnpm@11.17.0 build:lib
 
-# 2. Copy the engine and the component into your Vue 3 + Vite app
-cp -r mochi/src/bot mochi/src/ui mochi/src/i18n my-app/src/
-mkdir -p my-app/src/components
-cp mochi/src/components/MochiBot.vue my-app/src/components/
-find my-app/src/bot my-app/src/ui my-app/src/i18n -name '*.test.ts' -delete
-
-# 3. Add Three.js (it is only loaded when a 3D Mochi is shown)
-cd my-app
-npm install three
-npm install -D @types/three`
+# 2. Copy the built files into your project (keep them together:
+#    the 3D part and Three.js are separate files, loaded on demand)
+cp -r dist-lib ../my-app/public/mochi`
 
 export const INSTALL_NPM = 'npm install mochi-world'
 
-/** L'alias `@` vers `src/` : celui de create-vue ; le code de Mochi importe avec `@/bot/...`. */
-export const VITE_ALIAS = `// vite.config.ts
-import { fileURLToPath, URL } from 'node:url'
-import vue from '@vitejs/plugin-vue'
-import { defineConfig } from 'vite'
+/** Charger le composant : une balise de script, ou un import dans une app construite. */
+export const CHARGER = `<!-- plain HTML -->
+<script type="module" src="/mochi/mochi-world.js"></script>
 
-export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }
-  }
-})`
+// or, in an app with a bundler (React, Svelte, Angular...)
+import '/mochi/mochi-world.js'`
 
-export const TSCONFIG_ALIAS = `// tsconfig.json (compilerOptions)
-"paths": { "@/*": ["./src/*"] }`
+export const EXEMPLE_RAPIDE = `<script type="module" src="/mochi/mochi-world.js"></script>
 
-export const EXEMPLE_RAPIDE = `<script setup lang="ts">
-import MochiBot from './components/MochiBot.vue'
-</script>
-
-<template>
-  <MochiBot
-    shape="etoile"
-    color="#2d5bff"
-    mood="repos"
-    :size="200"
-    coucou
-  />
-</template>`
+<mochi-bot
+  shape="etoile"
+  color="#2d5bff"
+  mood="repos"
+  size="200"
+  coucou
+></mochi-bot>`
 
 export const EX_FORME_COULEUR = `<!-- a catalogue colour id -->
-<MochiBot shape="nuage" color="rose" />
+<mochi-bot shape="nuage" color="rose"></mochi-bot>
 
 <!-- or any hex colour, long or short -->
-<MochiBot shape="coeur" color="#ff8800" />
-<MochiBot shape="squircle" color="#f80" />`
+<mochi-bot shape="coeur" color="#ff8800"></mochi-bot>
+<mochi-bot shape="squircle" color="#f80"></mochi-bot>`
 
 export const EX_STYLES = `<!-- Soft is the default -->
-<MochiBot rendu="3d" />
+<mochi-bot rendu="3d"></mochi-bot>
 
 <!-- Pixel: pixel sizes gros, moyen or fin (the default) -->
-<MochiBot rendu="pixel3d" pixel="moyen" />
+<mochi-bot rendu="pixel3d" pixel="moyen"></mochi-bot>
 
 <!-- Flat, with a cartoon outline twice as thick -->
-<MochiBot rendu="flat3d" contour :epaisseur-contour="2" />
+<mochi-bot rendu="flat3d" contour epaisseur-contour="2"></mochi-bot>
 
 <!-- turn the model: radians around the vertical axis -->
-<MochiBot :yaw="0.5" />
+<mochi-bot yaw="0.5"></mochi-bot>
 
 <!-- no highlight, no ground shadow, no body shading -->
-<MochiBot :reflet="false" :ombre="false" :ombrage="false" />`
+<mochi-bot reflet="false" ombre="false" ombrage="false"></mochi-bot>`
 
-export const EX_MOODS = `<script setup lang="ts">
-import { ref } from 'vue'
-import MochiBot from './components/MochiBot.vue'
+export const EX_MOODS = `<!-- French ids, or the English aliases: working, done, sleeping... -->
+<mochi-bot id="bot" mood="travaille" shape="squircle"></mochi-bot>
 
-const mood = ref('travaille')
-<\/script>
+<!-- travaille shows a small 3D laptop; hide it -->
+<mochi-bot mood="travaille" ordinateur="false"></mochi-bot>
 
-<template>
-  <!-- French ids, or the English aliases: working, done, sleeping... -->
-  <MochiBot :mood="mood" shape="squircle" />
+<button onclick="bot.setAttribute('mood', 'termine')">Done</button>`
 
-  <!-- travaille shows a small 3D laptop; hide it -->
-  <MochiBot mood="travaille" :ordinateur="false" />
+export const EX_ACCESSOIRES = `<!-- one accessory per slot, in its catalogue colours (JSON) -->
+<mochi-bot accessoires='{"tete": "casquette", "yeux": "rondes"}'></mochi-bot>
 
-  <button @click="mood = 'termine'">Done</button>
-</template>`
-
-export const EX_ACCESSOIRES = `<!-- one accessory per slot, in its catalogue colours -->
-<MochiBot :accessoires="{ tete: 'casquette', yeux: 'rondes' }" />
-
-<!-- or with your colours: c1 is the main colour, c2 the second one -->
-<MochiBot
-  :accessoires="{
+<script type="module">
+  // or as a property, with your colours: c1 is the main colour, c2 the second one
+  document.querySelector('mochi-bot').accessoires = {
     tete: { id: 'fleur', c1: '#ff4d94', c2: '#ffd60a' },
     bas: { id: 'echarpe', c1: '#2d5bff' },
     dos: 'cape'
-  }"
-/>`
+  }
+</script>`
 
 export const EX_THEME = `<!-- one avatar -->
-<MochiBot theme="dark" />
+<mochi-bot theme="dark"></mochi-bot>
 
-<!-- or every Mochi without a theme prop, at once -->
-<script setup lang="ts">
-import { themeCourant } from '@/ui/trois/themeCourant'
+<script type="module">
+  // or every Mochi without a theme, at once
+  import { themeCourant } from '/mochi/mochi-world.js'
+  themeCourant.value = 'dark'
+</script>`
 
-themeCourant.value = 'dark'
-<\/script>`
+export const EX_METHODES = `<mochi-bot id="bot" mood="repos"></mochi-bot>
+<button id="celebrate">Celebrate</button>
 
-export const EX_METHODES = `<script setup lang="ts">
-import { ref } from 'vue'
-import MochiBot from './components/MochiBot.vue'
-
-const bot = ref<InstanceType<typeof MochiBot> | null>(null)
-
-function celebrate() {
-  bot.value?.setMood('termine')   // glide to another mood
-  bot.value?.react('rigole')      // play a reaction, then back to the mood
-}
-function lookAtTopRight() {
-  bot.value?.regarder({ nx: 1, ny: -1 }) // -1 to 1, right and down positive
-}
-<\/script>
-
-<template>
-  <MochiBot ref="bot" mood="repos" />
-  <button @click="celebrate">Celebrate</button>
-</template>`
+<script type="module">
+  const bot = document.getElementById('bot')
+  document.getElementById('celebrate').addEventListener('click', () => {
+    bot.setMood('termine')            // glide to another mood
+    bot.react('rigole')               // play a reaction, then back to the mood
+  })
+  bot.regarder({ nx: 1, ny: -1 })     // -1 to 1, right and down positive
+</script>`
 
 export const EX_FIGE = `<!-- a still frame: no animation loop, the same image every time -->
-<MochiBot mood="termine" :frozen-at="1.2" :size="96" />
+<mochi-bot mood="termine" frozen-at="1.2" size="96"></mochi-bot>
 
 <!-- a live Mochi capped at 12 frames per second (the clock does not slow down) -->
-<MochiBot mood="repos" :fps="12" />
+<mochi-bot mood="repos" fps="12"></mochi-bot>
 
 <!-- no reactions to the pointer -->
-<MochiBot :interactions="false" />
+<mochi-bot interactions="false"></mochi-bot>
 
 <!-- show your own image until the first 3D frame is painted -->
-<MochiBot mood="repos" :max-pixel-ratio="1.5" @pret="loaded = true" />`
+<mochi-bot id="live" mood="repos" max-pixel-ratio="1.5"></mochi-bot>
+<script type="module">
+  document.getElementById('live').addEventListener('pret', () => (loaded = true))
+</script>`
 
-export const EX_MOTEUR_BUILD = `npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify \\
-  --alias:vue=./tools/vue-stub.ts --outfile=mochi-engine.js`
+export const EX_REACT = `// React 19
+import '/mochi/mochi-world.js'
 
-export const EX_MOTEUR = `import { BotEngine, SHAPE_BY_ID, RAYON } from './mochi-engine.js'
+export function Avatar({ mood }) {
+  // attributes as in HTML; objects go through a ref or as properties (React 19)
+  return <mochi-bot shape="etoile" color="#2d5bff" mood={mood} size="160" onpret={() => console.log('ready')} />
+}`
+
+export const EX_SVELTE = `<!-- Svelte -->
+<script>
+  import '/mochi/mochi-world.js'
+  let mood = $state('repos')
+</script>
+
+<mochi-bot shape="nuage" color="rose" {mood} size="160"></mochi-bot>
+<button onclick={() => (mood = 'termine')}>Done</button>`
+
+export const EX_MOTEUR_BUILD = `npx pnpm@11.17.0 build:lib   # dist-lib/mochi-world.js (tag, engine, catalogues), dist-lib/catalogue.js (catalogues only)`
+
+export const EX_MOTEUR = `import { BotEngine, SHAPE_BY_ID, RAYON } from '/mochi/mochi-world.js'
+import { SHAPES, CATALOGUE, MOOD_IDS } from '/mochi/catalogue.js'
 
 const engine = new BotEngine(RAYON, 'idle', SHAPE_BY_ID.get('etoile').radii)
 engine.setState('wink', 2)        // change state at t = 2 s
+const frame = engine.sample(2.4)  // pure: same t, same frame (it drives the 3D body)
 
-const frame = engine.sample(2.4)  // pure: same t, same frame
-// frame.bodyPath: the SVG path of the body
-// frame.eyes: [{ d, matrix, alpha }], holes cut in the body`
+// a picker built from the catalogues, as this site does
+const shapes = SHAPES.map((s) => s.id)
+const hats = CATALOGUE.filter((a) => a.emplacement === 'tete').map((a) => a.id)`
 
 export interface PropDoc {
-  /** nom de la prop dans `MochiBot.vue` (camelCase) */
+  /** nom de la propriete JavaScript de `<mochi-bot>` (camelCase) */
   nom: string
-  /** nom ecrit dans un template (kebab-case) */
+  /** nom de l'attribut HTML (kebab-case) */
   attr: string
   type: string
   defaut: string
   texte: string
 }
 
-/** Les props principales de `<MochiBot>` (les autres, plus anciennes, restent dans `MochiBot.vue`). */
+/** Les options principales de `<mochi-bot>` (les autres, plus anciennes, sont dans `src/components/mochi-bot.ts`). */
 export const PROPS: PropDoc[] = [
   { nom: 'size', attr: 'size', type: 'number', defaut: '320', texte: 'Width and height in pixels.' },
   { nom: 'shape', attr: 'shape', type: 'string', defaut: "'cercle'", texte: 'Shape id, see Shapes.' },
   { nom: 'color', attr: 'color', type: 'string', defaut: "'encre'", texte: 'Colour id, or any hex colour (#ff8800, #f80).' },
   { nom: 'rendu', attr: 'rendu', type: "'3d' | 'pixel3d' | 'flat3d'", defaut: "'3d'", texte: 'Style: Soft, Pixel or Flat.' },
   { nom: 'mood', attr: 'mood', type: 'string | null', defaut: 'null', texte: 'Mood played on a loop, see Moods.' },
-  { nom: 'accessoires', attr: 'accessoires', type: 'Selection | null', defaut: 'null', texte: 'Accessories by slot, see Accessories.' },
+  { nom: 'accessoires', attr: 'accessoires', type: 'Selection | null (JSON)', defaut: 'null', texte: 'Accessories by slot, see Accessories.' },
   { nom: 'theme', attr: 'theme', type: "'light' | 'dark'", defaut: 'themeCourant', texte: 'Dark turns the eyes black.' },
   { nom: 'interactions', attr: 'interactions', type: 'boolean', defaut: 'true', texte: 'Reactions to hover, tap, double tap, long press and shake.' },
   { nom: 'coucou', attr: 'coucou', type: 'boolean', defaut: 'false', texte: 'Says hello once when mounted.' },
@@ -194,13 +181,22 @@ export const PROPS: PropDoc[] = [
   { nom: 'label', attr: 'label', type: 'string', defaut: 'translated', texte: 'Alternative text for screen readers.' }
 ]
 
+/** Evenements (`CustomEvent`, `event.detail` = nouvelle valeur). */
+export const EVENEMENTS: { nom: string; texte: string }[] = [
+  { nom: 'pret', texte: 'The first 3D frame is painted.' },
+  { nom: 'statechange', texte: 'The player moved to another state (detail: the state id).' },
+  { nom: 'blockchange', texte: 'The player moved to another block of the cycle (detail: its index).' },
+  { nom: 'playingchange', texte: 'The cycle started or stopped (detail: true or false).' },
+  { nom: 'elapsedchange', texte: 'Time spent in the current block, every frame while playing (detail: seconds).' }
+]
+
 export interface MethodeDoc {
   nom: string
   signature: string
   texte: string
 }
 
-/** Methodes exposees par `defineExpose` (a appeler par une ref de template). */
+/** Methodes de l'element `<mochi-bot>`. */
 export const METHODES: MethodeDoc[] = [
   { nom: 'setMood', signature: 'setMood(id: string | null)', texte: 'Glides to another mood; null turns the mood layer off.' },
   { nom: 'react', signature: 'react(id: string): boolean', texte: 'Plays a reaction, then goes back to the mood.' },
@@ -212,6 +208,7 @@ export const METHODES: MethodeDoc[] = [
 export const SOMMAIRE: { id: string; titre: string }[] = [
   { id: 'install', titre: 'Installation' },
   { id: 'first', titre: 'Your first Mochi' },
+  { id: 'frameworks', titre: 'In a framework' },
   { id: 'shapes', titre: 'Shapes and colours' },
   { id: 'styles', titre: 'Styles' },
   { id: 'moods', titre: 'Moods' },
@@ -219,6 +216,7 @@ export const SOMMAIRE: { id: string; titre: string }[] = [
   { id: 'theme', titre: 'Light and dark' },
   { id: 'reactions', titre: 'Reactions and methods' },
   { id: 'performance', titre: 'Still frames and performance' },
-  { id: 'props', titre: 'All props' },
-  { id: 'engine', titre: 'Engine without Vue' }
+  { id: 'props', titre: 'All options' },
+  { id: 'events', titre: 'Events' },
+  { id: 'engine', titre: 'Engine and catalogues' }
 ]

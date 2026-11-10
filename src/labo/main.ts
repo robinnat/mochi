@@ -1,5 +1,5 @@
-import { createApp } from 'vue'
-import Labo from './Labo.vue'
+import { monterApp } from '@/ui/dom/h'
+import { Labo } from './Labo'
 import '@/styles.css'
 
-createApp(Labo).mount('#labo')
+monterApp(Labo, '#labo')

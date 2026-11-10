@@ -28,8 +28,8 @@ body:
     id: code
     attributes:
       label: Props or code
-      description: The `<MochiBot>` props or the smallest code that shows the problem, if any.
-      render: vue
+      description: The `<mochi-bot>` attributes or the smallest code that shows the problem, if any.
+      render: html
   - type: dropdown
     id: style
     attributes:

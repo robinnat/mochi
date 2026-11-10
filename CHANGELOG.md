@@ -5,13 +5,52 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Removed
+
+- **No 2D any more.** The old SVG drawings (`original`, `pixel`, `argile`, `bulle`, partly derived from bloub) are
+  gone, with their pixel-art rasteriser, the 2D drawing of worn accessories and the 2D job accessories (the
+  `accessoire` prop). Mochi is always drawn in 3D (Soft, Flat, Pixel). An unknown `rendu` (old ids included) falls
+  back to the current style. Without WebGL, a short message takes the Mochi's place and the element fires `sans3d`.
+- The animated SVG export: it animated the 2D eyes, and the 3D has no vector drawing to animate.
+- The blush accessory (`visage: 'joues'`) and with it the face slot in pickers: 22 accessories, four slots
+  (head, eyes, neck, back). Glasses and the monocle stay under eyes. Blushing on long press (an expression) stays.
+
 ### Changed
+
+- Exports come from the 3D: PNG and SVG are a still of the 3D canvas (an image inside the SVG); the animated GIF
+  and the montage (GIF, MP4) are rendered frame by frame from an off-screen 3D Mochi, in the screen's style.
+- No outline around the eyes any more: in the light theme the eyes are always white, for every colour (yellow
+  and lime included); in the dark theme they stay black.
+- The site, the docs and the lab use Mochi only through its public entry points, `mochi-world` and the new
+  `mochi-world/catalogue` (catalogues and shared settings without the tag; `dist-lib/catalogue.js`). A test fails
+  if they import an internal file. The docs show each example's result live, from the example's own tags.
+
+### Added
+
+- GitHub star count next to the GitHub icon in the site header (public API, no token, cached one hour; just the
+  icon when the call fails).
+
+- **No framework any more.** The avatar is now a native web component, `<mochi-bot>`, with no dependency:
+  it works in plain HTML, React, Svelte, Angular or any other framework. Every option is an attribute
+  (kebab-case text, JSON for `accessoires` and `cycle`) and a property (camelCase, any value); methods
+  (`seek`, `rendAt`, `setMood`, `react`, `relacher`, `regarder`) are on the element; events are
+  `CustomEvent`s (`pret`, `statechange`, `blockchange`, `playingchange`, `elapsedchange`). The drawing is an
+  `<svg>` in the light DOM, so exports serialise it as before. Removed from the page, it stops its loop,
+  listeners and timers. The site, the app, the docs and the lab are plain TypeScript on a small in-house
+  renderer (`src/ui/dom/`). Same pages, texts and URLs. The JavaScript loaded on first visit drops by about
+  a third (site: 75 to 49 kB gzip, app: 92 to 65 kB gzip).
+- Pages that host a Mochi keep their own language and title: only the app follows its language setting.
+- The lab (`/labo`) fits a phone screen.
+- Dev dependencies: Vite 8.3, Vitest 4.1.12, happy-dom 21.0.4 (security fixes).
 
 - The project is now called **Mochi World** (the characters are still Mochi). The package name in
   `package.json` is `mochi-world` (not published yet). Page titles, meta tags, the site header and footer
-  follow. Code names do not change: `MochiBot.vue`, the `mochi:` storage keys and every prop stay as they are.
+  follow. Code names do not change: the component (`MochiBot`), the `mochi:` storage keys and every prop stay as they are.
 
 ### Added
+
+- `pnpm build:lib`: the library alone in `dist-lib/` (`mochi-world.js` plus the lazy 3D chunks), to copy
+  into any project until the npm package is published.
 
 - Community files: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, issue and pull request templates,
   and a Dependabot config (weekly, at most 3 open pull requests).
@@ -138,7 +177,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   every 4 to 12 s with a per-seed personality, a bounce on touch, sleep and failure
   postures, seven working activities. `engine.sample(t, geste)` takes it as an optional
   second argument; without it the frame is byte-identical (tested).
-- `tools/moteur.ts`: engine-only entry point (no Vue) to bundle the engine for another page.
+- `tools/moteur.ts`: engine-only entry point (no framework) to bundle the engine for another page.
 - **Job accessories** (`src/bot/accessoires.ts`, `docs/accessoires.md`): nine animated props
   drawn in code (notebook, laptop, clapperboard, chart, paper plane, palette, clipboard,
   list, gear), each with its gesture, a job-to-prop map and a `simple` mode for tiny sizes.

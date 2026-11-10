@@ -275,7 +275,7 @@ describe('regard qui suit le pointeur', () => {
 
   it('garde les deux yeux visibles aux amplitudes extremes', () => {
     // au-dela, l oeil exterieur passe derriere le limbe de la sphere et le
-    // moteur le retire : la butee de MochiBot.vue doit rester en dessous
+    // moteur le retire : la butee de <mochi-bot> doit rester en dessous
     for (const yaw of [-42, -26, -10]) {
       for (const pitch of [-3, 10, 23]) {
         const e = new BotEngine(100, 'idle')
@@ -348,7 +348,7 @@ describe('robustesse du regard', () => {
   it('garde une tete tournee vivante quand aucun pointeur ne la commande', () => {
     /**
      * Regression corrigee : `mix` eteignait la derive en meme temps qu'il prenait
-     * la direction. Arriver sur la vue au clavier ou au tactile donnait alors un
+     * la direction. Arriver sur l'onglet au clavier ou au tactile donnait alors un
      * avatar completement fige, ce qui contredit la definition de l'etat de repos
      * (« derive du regard et clignements »).
      */

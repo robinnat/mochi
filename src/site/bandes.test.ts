@@ -66,20 +66,20 @@ describe('bandes d accessoires (pieces seules)', () => {
   })
 
   it('les bandes defilantes ne sont plus sur la page (06/11/2026) : les pieces sont des images pre-rendues dans le selecteur', () => {
-    const site = source('./Site.vue')
+    const site = source('./Site.ts')
     expect(site).not.toMatch(/Habillage|BandeAccessoires/)
-    const perso = source('./PersoCorps.vue')
+    const perso = source('./PersoCorps.ts')
     // icones : images pre-rendues (public/rendus), jamais un rendu 3D au chargement ni au changement de theme
     expect(perso).toContain('urlPiece')
     expect(perso).not.toContain('rendreVignette')
-    expect(perso.match(/<Vivant/g)).toHaveLength(1)
+    expect(perso.match(/c\(Vivant/g)).toHaveLength(1)
     // les images sont faites par tools/rendus.ts avec rendreVignette et itemPiece
     const outil = readFileSync(new URL('../../tools/rendus.ts', import.meta.url), 'utf8')
     expect(outil).toContain('rendreVignette')
     expect(outil).toContain('itemPiece')
   })
 
-  it('itemPiece : chaque accessoire du catalogue a son icone, dans ses couleurs, vue de trois quarts', () => {
+  it('itemPiece : chaque accessoire du catalogue a son icone, dans ses couleurs, vu de trois quarts', () => {
     for (const a of CATALOGUE) {
       const it = itemPiece(a.emplacement, a.id)!
       expect(it, a.id).not.toBeNull()

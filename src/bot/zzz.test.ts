@@ -18,9 +18,9 @@ describe('les « z » de l humeur dort', () => {
     expect(zSommeil(0.9)[0]!.y).toBeLessThan(y0) // ils montent (y vers le bas)
   })
 
-  it('MochiBot les dessine par-dessus tous les rendus quand l humeur est dort, une image fixe en mouvement reduit', () => {
-    const src = readFileSync(new URL('../components/MochiBot.vue', import.meta.url), 'utf8')
-    expect(src).toContain('data-zzz="1"')
+  it('<mochi-bot> les dessine par-dessus tous les rendus quand l humeur est dort, une image fixe en mouvement reduit', () => {
+    const src = readFileSync(new URL('../components/mochi-bot.ts', import.meta.url), 'utf8')
+    expect(src).toContain("'data-zzz': '1'")
     expect(src).toContain("moodDe(props.mood) !== 'dort'")
     expect(src).toMatch(/reduit\.value \|\| props\.frozenAt !== undefined \? 1\.2/)
   })

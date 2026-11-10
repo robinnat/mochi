@@ -142,7 +142,7 @@ const egg = normalize(
 
 /**
  * Coeur : la courbe classique (16 sin^3 t, 13 cos t - 5 cos 2t - 2 cos 3t - cos 4t), retournee pour l'ecran
- * (y vers le bas), vue depuis un centre un peu sous l'echancrure pour que chaque rayon ne croise le contour
+ * (y vers le bas), vu depuis un centre un peu sous l'echancrure pour que chaque rayon ne croise le contour
  * qu'une fois. Creux doux en haut, pointe en bas ARRONDIE (lissage), deux lobes bien pleins : les yeux
  * tiennent dans la partie large. Volume gonfle comme les autres formes (`volume.ts`, profil coussin).
  */

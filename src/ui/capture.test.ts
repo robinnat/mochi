@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from 'vitest'
-import { BotEngine } from '@/bot/engine'
+import { describe, expect, it, vi } from 'vitest'
+import { BotEngine, type BotFrame } from '@/bot/engine'
 import { blockAt, defaultCycle, offsetOf, type Block } from '@/bot/cycles'
 import { RAYON } from '@/bot/repere'
 import { SHAPE_BY_ID } from '@/bot/skins'
@@ -11,26 +11,38 @@ import { DEMI_ECRAN, viewBoxExport } from './export'
 /**
  * Le lecteur hors ecran, celui qui rend les images d'un export de montage.
  *
- * C'est le seul test du depot a demander un DOM, d'ou l'environnement `happy-dom` en tete
- * de fichier : le reste de la suite tourne en `node`, ce qui rendait `capture.ts` — et avec
- * lui toute la chaine d'export — intestable.
+ * Il demande un DOM, d'ou l'environnement `happy-dom` en tete de fichier.
  *
  * Ce qu'il attrape n'est visible d'aucune autre facon qu'en regardant un MP4 image par
  * image, et c'est precisement ce qui l'a laisse passer : trois defauts abimaient
  * silencieusement chaque video exportee.
  */
 
+/**
+ * happy-dom n'a pas de WebGL : la scene 3D est remplacee par un double qui retient l'image du moteur qu'on lui
+ * demande de rendre. C'est exactement ce que la vraie 3D recevrait, donc ce que l'export capture.
+ */
+const scene = vi.hoisted(() => ({ webgl: true, derniere: null as null | { bodyPath: string; eyes: { matrix: string }[] } }))
+vi.mock('@/ui/trois/scene3d', () => ({
+  webglDisponible: () => scene.webgl,
+  rendreAvatar: (_cible: unknown, frame: BotFrame) => {
+    scene.derniere = frame
+  },
+  invaliderAccessoires3d: () => {},
+  prechauffer: () => {}
+}))
+
 const REGLAGES = { shape: 'cercle', color: 'encre', expression: 'neutre' }
 const TAILLE = 128
 
-/** Le `d` du corps, tel que le composant l'a mis dans le masque. */
-function corpsDe(svg: SVGSVGElement) {
-  return svg.querySelector('mask path')!.getAttribute('d')!
+/** Le `d` du corps de la derniere image envoyee a la 3D. */
+function corpsDe(_svg: SVGSVGElement) {
+  return scene.derniere!.bodyPath
 }
 
-/** Les matrices des yeux, dans l'ordre du document. */
-function yeuxDe(svg: SVGSVGElement) {
-  return [...svg.querySelectorAll('mask [transform]')].map((e) => e.getAttribute('transform')!)
+/** Les matrices des yeux de la derniere image envoyee a la 3D. */
+function yeuxDe(_svg: SVGSVGElement) {
+  return scene.derniere!.eyes.map((e) => e.matrix)
 }
 
 /** Le moteur seul, cale comme `rendAt` le fait : chaque etat date de son offset absolu. */
@@ -158,55 +170,14 @@ describe('lecteur hors ecran', () => {
   })
 })
 
-/**
- * Le style de rendu ne change que le DESSIN : le moteur rend la meme image, donc le masque
- * des yeux doit etre identique en original et en 3D — c'est lui que lit l'export anime.
- */
-describe('style de rendu', () => {
-  async function monte(props: Record<string, unknown>) {
-    const { createApp, h, nextTick } = await import('vue')
-    const MochiBot = (await import('@/components/MochiBot.vue')).default
-    const hote = document.createElement('div')
-    document.body.appendChild(hote)
-    const app = createApp({ render: () => h(MochiBot, { ...REGLAGES, size: TAILLE, frozenAt: 1, ...props }) })
-    app.mount(hote)
-    await nextTick()
-    const svg = hote.querySelector('svg')!
-    return { svg, ferme: () => (app.unmount(), hote.remove()) }
-  }
-
-  it("laisse l'original sans degrade ni filtre", async () => {
-    const { svg, ferme } = await monte({ rendu: 'original' })
-    expect(svg.querySelector('radialGradient')).toBeNull()
-    expect(svg.querySelector('filter')).toBeNull()
-    expect(svg.querySelector('[data-pixels]')).toBeNull()
-    ferme()
-  })
-
-  for (const rendu of ['argile', 'bulle']) {
-    it(`${rendu} : volume, ombre portee, et les memes yeux que l'original`, async () => {
-      const original = await monte({ rendu: 'original' })
-      const yeux = yeuxDe(original.svg)
-      const corps = corpsDe(original.svg)
-      original.ferme()
-
-      const { svg, ferme } = await monte({ rendu })
-      expect(svg.querySelector('radialGradient')).not.toBeNull()
-      expect(svg.querySelectorAll('filter').length).toBeGreaterThanOrEqual(3)
-      // un seul masque, le premier du document : l'export anime le lit
-      expect(svg.querySelectorAll('mask').length).toBe(1)
-      expect(yeuxDe(svg)).toEqual(yeux)
-      expect(corpsDe(svg)).toBe(corps)
-      // aucune couleur en variable CSS : le SVG exporte doit rester autoporteur
-      expect(svg.outerHTML).not.toContain('var(--')
-      ferme()
-    })
-  }
-
-  it('retombe sur le rendu original quand le navigateur ne sait pas pixelliser', async () => {
-    // happy-dom n'a pas de canvas 2D : le pixel art doit afficher l'original, pas un vide
-    const { svg, ferme } = await monte({ rendu: 'pixel' })
-    if (!svg.querySelector('[data-pixels]')) expect(svg.querySelector('mask')).not.toBeNull()
-    ferme()
+/** Sans WebGL, pas de dessin 2D de secours : l'export echoue proprement au lieu de sortir une autre image. */
+describe('export sans WebGL', () => {
+  it('le lecteur hors ecran refuse de demarrer', async () => {
+    scene.webgl = false
+    try {
+      await expect(ouvreCycle(REGLAGES, defaultCycle().blocks, TAILLE)).rejects.toThrow('3D indisponible')
+    } finally {
+      scene.webgl = true
+    }
   })
 })

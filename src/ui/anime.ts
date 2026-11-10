@@ -1,9 +1,11 @@
 /**
- * Assemblage de l'animation exportee : un SVG dont les yeux sont animes en CSS.
+ * Encodage du GIF anime exporte, image par image depuis la scene 3D.
  *
- * Tout est pur — de la chaine vers de la chaine — donc testable en `node` comme le
- * reste de `src/ui/`. C'est la capture des images cles qui a besoin du DOM, et elle
- * vit dans `capture.ts`.
+ * Tout est pur (des pixels vers des octets), donc testable en `node`. La capture des
+ * images, elle, a besoin du DOM et du canvas 3D : elle vit dans `capture.ts`.
+ *
+ * Il n'y a plus de SVG anime : il animait les yeux du dessin 2D en CSS, et la 3D n'a
+ * pas de dessin vectoriel a animer.
  */
 
 /** Ecrit un entier non signe sur `n` octets, petit-boutiste. */
@@ -14,116 +16,6 @@ function le(valeur: number, n: number): number[] {
 }
 
 const ascii = (s: string) => Array.from(s, (c) => c.charCodeAt(0))
-
-/**
- * Injecte l'animation des yeux dans un SVG deja rendu.
- *
- * On ne reconstruit PAS le dessin : on part du SVG que `MochiBot` a produit pour
- * la premiere image et on remplace le `transform` de chaque oeil par une classe
- * animee. Une seule source de dessin, donc aucune derive possible — c'est la
- * meme regle que pour l'export fixe.
- *
- * Seuls les yeux bougent, et c'est mesure : au repos la silhouette ne se deplace
- * que de 1,17 unite sur un rayon de 100 en trois secondes, soit environ un pixel
- * et demi a la taille d'export. Le corps reste donc tel quel, ce qui rend le
- * fichier minuscule — tout le poids d'une animation du bot est dans son regard.
- *
- * L'interpolation est faite par le NAVIGATEUR : c'est ce qui rend l'animation
- * lisse a la frequence de l'ecran au lieu de sauter d'image en image comme un
- * feuilletage. C'est tout l'interet par rapport a un WebP ou un GIF.
- */
-export function svgAnime(base: string, matrices: string[][], duree: number): string {
-  if (matrices.length < 2) throw new Error('il faut au moins deux images cles')
-
-  const mask = base.match(/<mask[\s\S]*?<\/mask>/)
-  if (!mask) throw new Error('masque introuvable')
-
-  // Les yeux sont les seules formes du masque a porter un `transform` : le corps
-  // n'en a pas. On les numerote dans l'ordre du document.
-  let n = 0
-  const maskAnime = mask[0].replace(/transform="matrix\([^)]*\)"/g, () => `class="oeil${n++}"`)
-  if (n === 0) throw new Error('aucun oeil a animer')
-
-  const parImage = matrices[0]!.length
-  if (parImage !== n) throw new Error(`${n} yeux dans le masque, ${parImage} par image cle`)
-
-  const pas = 100 / (matrices.length - 1)
-  const regles = Array.from({ length: n }, (_, oeil) => {
-    const etapes = matrices
-      .map((m, i) => `${+(i * pas).toFixed(3)}%{transform:${m[oeil]}}`)
-      .join('')
-    return `@keyframes oeil${oeil}{${etapes}}`
-  })
-
-  const style =
-    '<style>' +
-    // `transform-box`/`transform-origin` ne sont pas decoratifs : sans eux, une
-    // transformation CSS sur un element SVG tourne autour du centre de sa boite
-    // au lieu de l'origine du repere, et l'oeil part a l'autre bout de la boule.
-    `.oeil0,.oeil1{transform-box:view-box;transform-origin:0 0;` +
-    // `alternate` donne une boucle SANS COUTURE : la derive du regard n'est pas
-    // periodique (ses periodes sont premieres entre elles pour ne jamais se
-    // repeter), donc une boucle simple montrerait un saut au raccord. Jouee puis
-    // rejouee a l'envers, elle reboucle exactement sur elle-meme — et un
-    // clignement a l'envers reste un clignement.
-    `animation-duration:${duree}s;animation-iteration-count:infinite;` +
-    `animation-timing-function:linear;animation-direction:alternate}` +
-    Array.from({ length: n }, (_, i) => `.oeil${i}{animation-name:oeil${i}}`).join('') +
-    regles.join('') +
-    '</style>'
-
-  return base.replace(mask[0], maskAnime).replace('</svg>', `${style}</svg>`)
-}
-
-/**
- * Animation exportee du rendu PIXEL ART : un feuilletage, pas une interpolation.
- *
- * Le pixel art n'a pas d'yeux a matrices : chaque image est un jeu de cases, et
- * interpoler entre deux grilles n'a pas de sens. On empile donc les images dans des
- * calques et on n'en montre qu'un a la fois (`step-end`, aucune transition). Les images
- * identiques qui se suivent sont fusionnees : au repos, les yeux ne changent de case que
- * de loin en loin, et la plupart des images sont des doublons.
- *
- * `alternate` comme pour l'original : la derive du regard n'est pas periodique, et un
- * aller-retour reboucle sans couture. `.p0` reste visible sans animation CSS, pour qu'un
- * lecteur qui ne les joue pas montre au moins la premiere image.
- */
-export function svgFeuilletage(base: string, images: string[], duree: number): string {
-  if (images.length < 2) throw new Error('il faut au moins deux images')
-  const calque = base.match(/(<g[^>]*data-pixels="1"[^>]*>)([\s\S]*?)(<\/g>)/)
-  if (!calque) throw new Error('calque pixel introuvable')
-
-  const n = images.length
-  const segments: { contenu: string; debut: number; fin: number }[] = []
-  images.forEach((contenu, i) => {
-    const dernier = segments[segments.length - 1]
-    if (dernier && dernier.contenu === contenu) dernier.fin = i + 1
-    else segments.push({ contenu, debut: i, fin: i + 1 })
-  })
-
-  const pc = (i: number) => +((i / n) * 100).toFixed(3)
-  const regles = segments.map((s, k) => {
-    const debut = pc(s.debut)
-    const fin = pc(s.fin)
-    const entree = debut > 0 ? `0%{opacity:0}${debut}%{opacity:1}` : '0%{opacity:1}'
-    const sortie = fin < 100 ? `${fin}%{opacity:0}100%{opacity:0}` : '100%{opacity:1}'
-    return `@keyframes p${k}{${entree}${sortie}}`
-  })
-
-  const style =
-    '<style>' +
-    `.p{opacity:0;animation-duration:${duree}s;animation-iteration-count:infinite;` +
-    'animation-timing-function:step-end;animation-direction:alternate}' +
-    '.p0{opacity:1}' +
-    segments.map((_, k) => `.p${k}{animation-name:p${k}}`).join('') +
-    regles.join('') +
-    '</style>'
-
-  const contenu = segments.map((s, k) => `<g class="p p${k}">${s.contenu}</g>`).join('')
-  return base
-    .replace(calque[0], `${calque[1]}${contenu}${calque[3]}`)
-    .replace('</svg>', `${style}</svg>`)
-}
 
 /* ------------------------------------------------------------------- gif */
 
@@ -209,7 +101,7 @@ function lzw(indices: Uint8Array, bitsParPixel: number): number[] {
  */
 export interface PaletteGif {
   /** Combien de pixels par teinte, pendant le recensement. */
-  vues: Map<number, number>
+  comptes: Map<number, number>
   /** RGB compacte sur 24 bits -> index, une fois la palette arretee. */
   index: Map<number, number>
   /** Resolution des teintes absentes vers la plus proche retenue. */
@@ -219,7 +111,7 @@ export interface PaletteGif {
 }
 
 export const nouvellePalette = (): PaletteGif => ({
-  vues: new Map(),
+  comptes: new Map(),
   index: new Map(),
   proches: new Map(),
   transparence: false
@@ -241,14 +133,14 @@ export function recense(palette: PaletteGif, px: Uint8ClampedArray) {
       continue
     }
     const cle = (px[p]! << 16) | (px[p + 1]! << 8) | px[p + 2]!
-    palette.vues.set(cle, (palette.vues.get(cle) ?? 0) + 1)
+    palette.comptes.set(cle, (palette.comptes.get(cle) ?? 0) + 1)
   }
 }
 
 /** Arrete la palette sur les 255 teintes les plus presentes. */
 function arrete(palette: PaletteGif) {
   if (palette.index.size) return
-  const tries = [...palette.vues.entries()].sort((a, b) => b[1] - a[1]).slice(0, 255)
+  const tries = [...palette.comptes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 255)
   for (const [cle] of tries) palette.index.set(cle, palette.index.size + 1)
 }
 
@@ -303,8 +195,7 @@ export function indexe(palette: PaletteGif, px: Uint8ClampedArray): Uint8Array {
  * sur un fond n'ont pas a declarer d'index transparent, et surtout pas a etre
  * eliminees « retour au fond » entre deux — ce qui ferait clignoter le fond.
  *
- * Le GIF n'existe que pour les endroits qui refusent le SVG anime, comme les
- * avatars animes de Discord ou de Slack. Partout ailleurs le SVG est meilleur.
+ * Le GIF sert aux avatars animes (Discord, Slack) ; le montage entier sort aussi en MP4.
  */
 export function gifAnime(
   images: Uint8ClampedArray[],

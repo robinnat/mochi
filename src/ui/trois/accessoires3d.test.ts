@@ -83,10 +83,13 @@ const corpsDe = (f: string) => {
 }
 
 describe('catalogue', () => {
-  it('23 accessoires, repartis sur les cinq emplacements (sans taches de rousseur, grain de beaute, moustache ni moustaches de chat)', () => {
-    expect(CATALOGUE.length).toBe(23)
+  it('22 accessoires, repartis sur les quatre emplacements proposes (sans joues roses ni taches de rousseur, grain de beaute, moustache, moustaches de chat)', () => {
+    expect(CATALOGUE.length).toBe(22)
     for (const e of EMPLACEMENTS) expect(parEmplacement(e).length).toBeGreaterThanOrEqual(1)
-    expect(CATALOGUE.some((a) => ['chat', 'rousseur', 'grain', 'moustache'].includes(a.id))).toBe(false)
+    expect(CATALOGUE.some((a) => ['chat', 'rousseur', 'grain', 'moustache', 'joues'].includes(a.id))).toBe(false)
+    // lunettes et monocle restent, dans « yeux » (Robin, 10/11/2026)
+    expect(parEmplacement('yeux').map((a) => a.id)).toEqual(['rondes', 'carrees', 'soleil', 'coeur', 'etoile', 'monocle'])
+    expect(parEmplacement('visage')).toEqual([])
   })
 
   it('chaque accessoire a un generateur, des identifiants uniques par emplacement, des couleurs hex et un nom sans tiret cadratin', () => {
@@ -165,9 +168,9 @@ describe('ancrage sur les 12 formes', () => {
 })
 
 describe('combinaison des emplacements', () => {
-  const tout: Selection = { tete: 'haut-de-forme', yeux: 'soleil', visage: 'joues', bas: 'papillon', dos: 'sac' }
+  const tout: Selection = { tete: 'haut-de-forme', yeux: 'soleil', bas: 'papillon', dos: 'sac' }
 
-  it.each(FORMES)('%s : les cinq emplacements ensemble, sans erreur', (forme) => {
+  it.each(FORMES)('%s : les quatre emplacements ensemble, sans erreur', (forme) => {
     const { R } = corpsDe(forme)
     const acc = new Accessoires3d()
     acc.maj(tout, forme, mat(), () => R)
@@ -178,26 +181,25 @@ describe('combinaison des emplacements', () => {
     }
     expect(acc.couleurs.length).toBeGreaterThanOrEqual(3)
     // chaque emplacement ne produit qu'un groupe : un seul accessoire par emplacement
-    expect(new Set(acc.groupe.children.map((c) => c.name)).size).toBe(5)
+    expect(new Set(acc.groupe.children.map((c) => c.name)).size).toBe(4)
     acc.liberer()
   })
 
-  it('toutes les paires (tete, yeux, visage, bas) du catalogue se construisent sur une forme sans erreur', () => {
+  it('toutes les paires (tete, yeux, bas, dos) du catalogue se construisent sur une forme sans erreur', () => {
     const { R } = corpsDe('cercle')
     const sels: Selection[] = []
     const t = parEmplacement('tete')
     const y = parEmplacement('yeux')
-    const v = parEmplacement('visage')
     const b = parEmplacement('bas')
     const d = parEmplacement('dos')
-    const n = Math.max(t.length, y.length, v.length, b.length, d.length)
+    const n = Math.max(t.length, y.length, b.length, d.length)
     for (let i = 0; i < n; i++) {
-      sels.push({ tete: t[i % t.length]!.id, yeux: y[(i + 1) % y.length]!.id, visage: v[(i + 2) % v.length]!.id, bas: b[(i + 3) % b.length]!.id, dos: d[i % d.length]!.id })
+      sels.push({ tete: t[i % t.length]!.id, yeux: y[(i + 1) % y.length]!.id, bas: b[(i + 3) % b.length]!.id, dos: d[i % d.length]!.id })
     }
     for (const sel of sels) {
       const acc = new Accessoires3d()
       acc.maj(sel, JSON.stringify(sel), mat(), () => R)
-      expect(acc.groupe.children).toHaveLength(5)
+      expect(acc.groupe.children).toHaveLength(4)
       for (const g of acc.groupe.children) expect(sommetsFinis(g), JSON.stringify(sel)).toBe(true)
       acc.liberer()
     }
@@ -242,15 +244,15 @@ describe('combinaison des emplacements', () => {
 })
 
 describe('liste des emplacements', () => {
-  it('cinq emplacements dans un ordre stable', () => {
-    expect(EMPLACEMENTS).toEqual(['tete', 'yeux', 'visage', 'bas', 'dos'] as Emplacement[])
+  it('quatre emplacements proposes dans un ordre stable (visage vide depuis le 10/11/2026)', () => {
+    expect(EMPLACEMENTS).toEqual(['tete', 'yeux', 'bas', 'dos'] as Emplacement[])
   })
 })
 
 describe('retours de Robin du 05/11/2026', () => {
   it('les accessoires retires ne sont plus au catalogue ni resolus, mais restent listes dans RETIRES', () => {
     expect(RETIRES.map((r) => `${r.emplacement}:${r.id}`).sort()).toEqual(
-      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'bas:cravate', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski', 'visage:chat', 'visage:rousseur', 'visage:grain', 'bas:moustache', 'dos:ailes', 'dos:diable'].sort()
+      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'bas:cravate', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski', 'visage:chat', 'visage:rousseur', 'visage:grain', 'bas:moustache', 'dos:ailes', 'dos:diable', 'visage:joues'].sort()
     )
     for (const r of RETIRES) {
       expect(CATALOGUE.some((a) => a.emplacement === r.emplacement && a.id === r.id)).toBe(false)
@@ -290,7 +292,7 @@ describe('retours de Robin du 05/11/2026', () => {
   it('le casque occupe l emplacement tete : il ne se cumule pas avec un chapeau (documente), mais avec tous les autres', () => {
     const { R } = corpsDe('squircle')
     const acc = new Accessoires3d()
-    acc.maj({ tete: 'casque', yeux: 'soleil', visage: 'joues', bas: 'echarpe', dos: 'sac' }, 'x', mat(), () => R)
+    acc.maj({ tete: 'casque', yeux: 'soleil', bas: 'echarpe', dos: 'sac' }, 'x', mat(), () => R)
     expect(acc.groupe.children.map((c) => c.name)).toEqual(EMPLACEMENTS)
     for (const g of acc.groupe.children) expect(sommetsFinis(g)).toBe(true)
     acc.liberer()
@@ -711,8 +713,8 @@ describe('changement de forme du personnalisateur (09/11/2026)', () => {
     neuf.liberer()
   })
 
-  it('MochiBot invalide la pose des accessoires apres le morph quand la forme change', () => {
-    const src = readFileSync(new URL('../../components/MochiBot.vue', import.meta.url), 'utf8')
+  it('<mochi-bot> invalide la pose des accessoires apres le morph quand la forme change', () => {
+    const src = readFileSync(new URL('../../components/mochi-bot.ts', import.meta.url), 'utf8')
     expect(src).toContain('invaliderAccessoires3d()')
     expect(src).toMatch(/watch\(\s*\(\) => props\.shape/)
     expect(src).toContain('BotEngine.SHAPE_MORPH')

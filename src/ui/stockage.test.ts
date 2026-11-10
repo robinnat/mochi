@@ -8,7 +8,7 @@ import { cle, ecris, lis } from './stockage'
  * DEMARRE quand le stockage est interdit. Tout ce qu'elle relit l'est a l'evaluation des
  * modules, et toucher `localStorage` peut lever un `SecurityError` — Chrome regle sur
  * « bloquer tous les cookies », iframe tierce, politique d'entreprise. L'exception
- * remontait le `setup` de `App.vue` et la page restait blanche : aucun bot, pour un
+ * remontait le `setup` de `App.ts` et la page restait blanche : aucun bot, pour un
  * reglage de navigateur qui n'a rien a voir avec le fait de regarder une animation.
  */
 

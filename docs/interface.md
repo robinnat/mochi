@@ -2,7 +2,7 @@
 
 ## The icons come from a library, not from a pencil
 
-The paths in `SideRail.vue` and `Timeline.vue` are copied verbatim from Iconify
+The paths in `SideRail.ts` and `Timeline.ts` are copied verbatim from Iconify
 packages (Solar, plus Remix for the palette). No dependency is installed, so
 `package.json` doesn't mention it, and the "everything is measured" rule does
 **not** apply here.
@@ -116,7 +116,7 @@ therefore never get past the second one: reaching it wrote `#etat=idle`, the
 resulting `hashchange` read as an incoming navigation, and the playhead jumped back
 to the first `idle`. Pausing on the second occurrence did the same, through `&stop`.
 
-Hence `ecritParNous` in `App.vue`: the fragment we just wrote is remembered and its
+Hence `ecritParNous` in `App.ts`: the fragment we just wrote is remembered and its
 `hashchange` is ignored. It is **consumed** on that first read rather than kept —
 one write fires at most one event, and a browser Back to that same state later is a
 real navigation that must still move the playhead.

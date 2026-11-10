@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.1",
   "type": "module",
-  "description": "Mochi World: animated avatar engine for the web. Mochi characters in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch, 23 accessories and exports.",
+  "description": "Mochi World: animated avatar engine for the web. Mochi characters in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch, 22 accessories and exports (PNG, SVG, GIF, MP4), all from the 3D.",
   "license": "MIT",
   "author": "SYGEN SAS",
   "repository": {
@@ -19,32 +19,31 @@
     "threejs",
     "animation",
     "avatar",
-    "vue",
-    "morphing"
+    "morphing",
+    "web-components",
+    "custom-element"
   ],
   "packageManager": "pnpm@11.17.0",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:lib": "vite build --config vite.lib.config.ts"
   },
   "dependencies": {
     "mediabunny": "^1.54.0",
-    "three": "0.186.1",
-    "vue": "^3.5.41"
+    "three": "0.186.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.0.0",
     "@types/three": "0.186.0",
-    "@vitejs/plugin-vue": "^6.0.8",
-    "happy-dom": "^20.11.2",
+    "happy-dom": "^21.0.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vite": "^8.2.1",
-    "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.9"
+    "vite": "^8.3.5",
+    "vitest": "^4.1.12"
   }
 }

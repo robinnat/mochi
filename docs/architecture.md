@@ -6,8 +6,8 @@
 prop, the frozen state board and the DOM-less tests possible.
 
 So `src/bot/` must not gain internal state that depends on real time, nor
-`Date.now()`, nor a Vue import. Vue code shared between components (composables,
-display settings) goes in `src/ui/` instead.
+`Date.now()`, nor an interface import. Interface code shared between components (reactive
+state, display settings) goes in `src/ui/` instead.
 
 **A state change landing inside a fade blends from the frozen frame.** The engine keeps
 only one slot of history, so the origin of the new blend used to become the *full* pose of
@@ -66,19 +66,17 @@ picks only replaces the body on states flagged `baseBody`: `idle`, `wink`,
 `wide` and `swirl`. Everywhere else the silhouette *is* the animation
 and must not be overwritten.
 
-## The eyes are holes in a `<mask>`
+## The eyes are painted inside the body's face texture
 
-Not white shapes laid on top. That is what makes them clip themselves against the
-silhouette when they slide towards the edge, with no cropping code. 
-Because a hole shows whatever is drawn behind it, and the back half of the rings
-*is* drawn behind the body to be occluded by it, the body
-is backed by an opaque path in the page's `paper` colour. Without it, a ring
-passing behind the ball reappears inside the eyes.
+The engine gives each eye as a path and a matrix (`frame.eyes`); the 3D paints them into the
+body's face texture (`scene3d.ts`, `peindre`), so they clip against the silhouette on their own
+when they slide towards the edge, with no cropping code. (The old 2D drawing cut them as holes in
+a `<mask>`; it was removed on 10/11/2026.)
 
 ## Anything sitting "on" the body must follow its real radius
 
 The eyes live on a sphere of radius 1; on a non-circular shape they leave the
-silhouette and the mask cuts them. Hence `radiusAtAngle`, defined in `shape.ts`,
+silhouette and get cut. Hence `radiusAtAngle`, defined in `shape.ts`,
 applied by `engine.ts` to the eyes and to the notification pastille. Any new
 element anchored to the outline needs the same treatment.
 

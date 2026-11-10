@@ -163,7 +163,7 @@ describe('relecture du stockage', () => {
    * Le stockage est modifiable et tient quelques megaoctets, alors que rien en aval n'est
    * dimensionne pour ca. Un seul cycle de 150 000 blocs — environ 4 Mo de JSON, donc dans
    * le budget — donnait 1 500 000 s de duree, autant de graduations a allouer et une piste
-   * de 29 700 000 px : l'onglet figeait en entrant dans la vue Animations.
+   * de 29 700 000 px : l'onglet figeait en entrant dans l'onglet Animations.
    */
   it('borne la taille d un montage relu', () => {
     const blocs = Array.from({ length: 200_000 }, () => ({ state: 'idle', duration: 10 }))

@@ -35,17 +35,18 @@ The 3D needs WebGL. If your browser has none, the avatar falls back to its SVG d
 
 ```bash
 npx -y pnpm@11.17.0 test     # vitest
-npx -y pnpm@11.17.0 build    # vue-tsc --noEmit && vite build
+npx -y pnpm@11.17.0 build    # tsc --noEmit && vite build
 ```
 
-Both must pass before you open a pull request. `vue-tsc` (run by `build`) is the only type
+Both must pass before you open a pull request. `tsc` (run by `build`) is the only type
 check, so run the build, not only the tests. Add a test with every fix when you can.
 
 ## Code style
 
 There is no formatter or linter config: follow the code around you.
 
-- TypeScript and Vue 3 single-file components with `<script setup lang="ts">`.
+- Plain TypeScript, no framework: interface components are functions built with the small renderer of
+  `src/ui/dom/`, and the avatar is the `<mochi-bot>` web component.
 - 2 spaces, single quotes, no semicolons.
 - `three`, `src/ui/trois/scene3d.ts` and the rest of the 3D are only ever imported dynamically
   (`await import(...)`), never with a static `import` (`src/site/site.test.ts` checks it for the site).

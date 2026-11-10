@@ -3,7 +3,7 @@ import { SEQUENCE, STATES, STATE_BY_ID, type StateId } from './states'
 /**
  * Un cycle est un montage : une suite de blocs, chacun un etat tenu pendant une
  * duree choisie. C'est la partie "editeur" du dossier, et elle en garde les
- * regles — donnees pures, aucune horloge, aucun import Vue : le meme cycle doit
+ * regles — donnees pures, aucune horloge, aucun import d'interface : le meme cycle doit
  * pouvoir etre relu par les tests, par le lecteur et par la timeline.
  *
  * Un bloc n'a pas d'identifiant : c'est une position dans une liste, la cle de
@@ -47,7 +47,7 @@ export const MAX_BLOCK = 10
  * est modifiable et tient quelques megaoctets alors que rien en aval n'est dimensionne
  * pour ca : un seul cycle de 150 000 blocs, soit environ 4 Mo de JSON, donne 1 500 000 s
  * de duree, autant de graduations a allouer et une piste de 29 700 000 px de large.
- * L'onglet figeait en entrant dans la vue Animations.
+ * L'onglet figeait en entrant dans l'onglet Animations.
  *
  * 200 blocs font une demi-heure de montage, largement au-dela de tout usage.
  */
@@ -140,7 +140,7 @@ export function blocksWith(blocks: Block[], state: StateId): Block[] {
   return [...blocks, makeBlock(state)]
 }
 
-/** Deplace un bloc, en rendant une nouvelle liste (les etats Vue sont remplaces). */
+/** Deplace un bloc, en rendant une nouvelle liste (les etats reactifs sont remplaces). */
 export function moveBlock(blocks: Block[], from: number, to: number): Block[] {
   const next = blocks.slice()
   const [moved] = next.splice(from, 1)

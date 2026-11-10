@@ -140,7 +140,7 @@ function planCatalogue() {
 /** Casquette : les 11 formes, de face, de 3/4 et de profil, en clair puis en sombre. */
 function planCasquette() {
   const formes = SHAPES.map((s) => s.id)
-  const vues = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }]
+  const angles = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }]
   const themes: Array<'light' | 'dark'> = ['light', 'dark']
   const cell = 240
   const W2 = cell * 6
@@ -152,7 +152,7 @@ function planCasquette() {
   formes.forEach((f, i) => {
     const y0 = 150 + i * ligne
     themes.forEach((th, ti) =>
-      vues.forEach((v, k) => {
+      angles.forEach((v, k) => {
         const x = (ti * 3 + k) * cell
         if (th === 'dark') {
           ctx.fillStyle = '#121212'
@@ -200,7 +200,7 @@ function planCasquetteCombos() {
 function planLunettes() {
   const modeles = ['rondes', 'carrees', 'soleil', 'coeur', 'etoile', 'monocle']
   const formes = SHAPES.map((s) => s.id)
-  const vues = [0.62, 1.5708]
+  const angles = [0.62, 1.5708]
   const cell = 150
   const { c, ctx } = nouvelle(cell * modeles.length * 2, 150 + formes.length * cell + 20)
   texte(ctx, 'Lunettes v7 : branches ancrées dans le corps', 40, 78, 52, ENCRE, true)
@@ -208,7 +208,7 @@ function planLunettes() {
   const couleurs = ['turquoise', 'ambre', 'rose', 'vert', 'violet', 'orange', 'bleu', 'turquoise', 'ambre', 'rose', 'vert']
   formes.forEach((f, i) => {
     modeles.forEach((m, mi) =>
-      vues.forEach((yaw, vi) => {
+      angles.forEach((yaw, vi) => {
         const x = (mi * 2 + vi) * cell
         const y = 150 + i * cell
         cellule(ctx, x, y, cell, { forme: f, couleur: hexDe(couleurs[i]!), sel: { yeux: { id: m, c1: COULEURS.noir, c2: COULEURS.noir } }, yaw, cadre: 150 })
@@ -224,7 +224,7 @@ function planLunettes() {
 function planCapeCravate() {
   const formes = ['cercle', 'squircle', 'etoile', 'triangle', 'goutte', 'nuage']
   const couleurs = ['turquoise', 'ambre', 'rose', 'violet', 'orange', 'bleu']
-  const vues = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }, { yaw: 3.1416, nom: 'dos' }]
+  const angles = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }, { yaw: 3.1416, nom: 'dos' }]
   const cell = 300
   const W2 = cell * 4
   const bloc = 70 + formes.length * (cell + 8)
@@ -234,7 +234,7 @@ function planCapeCravate() {
     texte(ctx, titre, 40, y0 + 40, 40, ENCRE, true)
     formes.forEach((f, i) => {
       const y = y0 + 60 + i * (cell + 8)
-      vues.slice(0, nv).forEach((v, k) => {
+      angles.slice(0, nv).forEach((v, k) => {
         cellule(ctx, k * cell, y, cell, { forme: f, couleur: hexDe(couleurs[i]!), sel: { [id]: acc }, yaw: v.yaw, cadre })
         texte(ctx, `${NOMS_FORMES[f]} · ${v.nom}`, k * cell + cell / 2, y + cell - 4, 19, GRIS, false, 'center')
       })
@@ -249,7 +249,7 @@ function planCapeCravate() {
 function planCravate() {
   const formes = SHAPES.map((s) => s.id)
   const couleurs = ['turquoise', 'ambre', 'rose', 'vert', 'violet', 'orange', 'bleu', 'turquoise', 'ambre', 'rose', 'vert']
-  const vues = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }]
+  const angles = [{ yaw: 0, nom: 'face' }, { yaw: 0.62, nom: '3/4' }, { yaw: 1.5708, nom: 'profil' }]
   const cell = 300
   const { c, ctx } = nouvelle(cell * 3, 170 + formes.length * (cell + 8) + 200)
   texte(ctx, 'Cravate v11', 40, 70, 54, ENCRE, true)
@@ -258,7 +258,7 @@ function planCravate() {
   texte(ctx, 'papillon (référence)', cell * 3 - 95, 150, 16, GRIS, false, 'center')
   formes.forEach((f, i) => {
     const y = 170 + i * (cell + 8)
-    vues.forEach((v, k) => {
+    angles.forEach((v, k) => {
       cellule(ctx, k * cell, y, cell, { forme: f, couleur: hexDe(couleurs[i]!), sel: { bas: 'cravate' }, yaw: v.yaw, cadre: 185 })
       texte(ctx, `${NOMS_FORMES[f]} · ${v.nom}`, k * cell + cell / 2, y + cell - 4, 19, GRIS, false, 'center')
     })
@@ -292,15 +292,15 @@ function planOmbrage() {
   return c
 }
 
-/** Vues : face, 3/4, profil, dos pour la cape et la cravate. */
-function planVues() {
+/** Angles : face, 3/4, profil, dos pour la cape et la cravate. */
+function planAngles() {
   const lignes: Array<{ nom: string; sel: Selection; forme: string; couleur: string; cadre: number }> = [
     { nom: 'Cape (rond)', sel: { dos: 'cape' }, forme: 'cercle', couleur: hexDe('turquoise'), cadre: 235 },
     { nom: 'Cape (cube)', sel: { dos: 'cape' }, forme: 'squircle', couleur: hexDe('ambre'), cadre: 235 },
     { nom: 'Cravate (rond)', sel: { bas: 'cravate' }, forme: 'cercle', couleur: hexDe('ambre'), cadre: 185 },
     { nom: 'Cravate (cube)', sel: { bas: 'cravate' }, forme: 'squircle', couleur: hexDe('orange'), cadre: 185 }
   ]
-  const vues = [
+  const angles = [
     { yaw: 0, nom: 'face' },
     { yaw: 0.62, nom: '3/4' },
     { yaw: 1.5708, nom: 'profil' },
@@ -309,12 +309,12 @@ function planVues() {
   const cell = W / 4
   const ligne = cell + 70
   const { c, ctx } = nouvelle(W, 150 + lignes.length * ligne + 20)
-  texte(ctx, 'Vues : face, 3/4, profil, dos', 40, 78, 52, ENCRE, true)
+  texte(ctx, 'Angles : face, 3/4, profil, dos', 40, 78, 52, ENCRE, true)
   texte(ctx, 'Le corps tourne, la lumière reste en haut à gauche', 40, 122, 26, GRIS)
   lignes.forEach((t, i) => {
     const y0 = 150 + i * ligne
     texte(ctx, t.nom, 40, y0 + 30, 32, ENCRE, true)
-    vues.forEach((v, k) => {
+    angles.forEach((v, k) => {
       cellule(ctx, k * cell, y0 + 34, cell, { forme: t.forme, couleur: t.couleur, sel: t.sel, yaw: v.yaw, cadre: t.cadre })
       texte(ctx, v.nom, k * cell + cell / 2, y0 + ligne - 8, 20, GRIS, false, 'center')
     })
@@ -363,7 +363,7 @@ async function main() {
     ['cravate', planCravate],
     ['ombrage', planOmbrage],
     ['catalogue', planCatalogue],
-    ['vues', planVues],
+    ['angles', planAngles],
     ['alfred', planAlfred]
   ]
   for (const [nom, f] of faire) {

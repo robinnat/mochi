@@ -16,7 +16,7 @@ Sans second argument (ou avec `GESTE_NEUTRE`), `sample(t)` rend exactement la m�
 qu'avant, octet pour octet (test dans `gestes.test.ts`). Tout reste pur : fonction du temps
 et d'une graine, aucune horloge, aucun état.
 
-![Gestes, activités, sommeil, échec et rebond](gestes.png)
+Planche : `labo.html#moods` (humeurs et réactions, en 3D).
 
 ## Ce qu'un geste peut changer
 
@@ -52,8 +52,8 @@ L'application choisit l'activité de chaque rôle.
 
 ## Moteur seul pour une autre page
 
-`tools/moteur.ts` exporte le moteur, les teintes 3D et les gestes, sans Vue :
+`tools/moteur.ts` exporte le moteur, les teintes 3D et les gestes, sans framework :
 
-    npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify --alias:vue=./tools/vue-stub.ts --outfile=mochi-engine.js
+    npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify --outfile=mochi-engine.js
 
 Recopier l'en-tête MIT de `LICENSE` en tête du fichier produit.

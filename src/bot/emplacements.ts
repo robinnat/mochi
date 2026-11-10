@@ -13,14 +13,18 @@
  * Emplacements, chacun sur sa propre zone du corps pour ne pas entrer en collision :
  *   tete   : au-dessus du sommet (chapeaux, coiffes, antenne, fleur)
  *   yeux   : a la hauteur des yeux (lunettes, masques)
- *   visage : joues et dessous des yeux (taches de rousseur...)
+ *   visage : joues et dessous des yeux (vide pour le moment : tous ses accessoires sont RETIRES)
  *   bas    : le « cou » du corps, vers 72 % de la hauteur (noeud papillon, cravate, moustache, echarpe, collier...)
  *   dos    : les cotes et le dos (sac, cape)
  */
 
 export type Emplacement = 'tete' | 'yeux' | 'visage' | 'bas' | 'dos'
 
-export const EMPLACEMENTS: Emplacement[] = ['tete', 'yeux', 'visage', 'bas', 'dos']
+/** Tous les emplacements, y compris `visage` (vide depuis le 10/11/2026, garde pour les accessoires RETIRES). */
+export const TOUS_EMPLACEMENTS: Emplacement[] = ['tete', 'yeux', 'visage', 'bas', 'dos']
+
+/** Les emplacements PROPOSES : ceux qui ont au moins un accessoire au catalogue. */
+export const EMPLACEMENTS: Emplacement[] = ['tete', 'yeux', 'bas', 'dos']
 
 export const NOMS_EMPLACEMENTS: Record<Emplacement, string> = {
   tete: 'Tête',
@@ -80,8 +84,6 @@ export const CATALOGUE: AccessoireDef[] = [
   def('yeux', 'coeur', 'Lunettes cœur', C.rose, C.rose),
   def('yeux', 'etoile', 'Lunettes étoile', C.or, C.or),
   def('yeux', 'monocle', 'Monocle', C.or, C.or),
-  // visage
-  def('visage', 'joues', 'Joues roses', C.rose, C.rose),
   // bas
   def('bas', 'papillon', 'Nœud papillon', C.noir, C.noir),
   def('bas', 'echarpe', 'Écharpe', C.orange, C.orange),
@@ -99,6 +101,9 @@ export const CATALOGUE: AccessoireDef[] = [
  * remettre un, le recopier dans `CATALOGUE`.
  */
 export const RETIRES: AccessoireDef[] = [
+  // v14 (10/11/2026, Robin) : joues roses retirees (la rougeur de l'appui long, une EXPRESSION, reste) ; plus
+  // aucun accessoire dans l'emplacement visage, qui n'est plus propose (lunettes et monocle restent dans « yeux »)
+  def('visage', 'joues', 'Joues roses', C.rose, C.rose),
   // v13 (09/11/2026, Robin) : les deux paires d'ailes (ange et chauve-souris) sont retirees
   def('dos', 'ailes', 'Ailes d’ange', C.creme, C.creme),
   def('dos', 'diable', 'Ailes de chauve-souris', C.violet, C.violet),

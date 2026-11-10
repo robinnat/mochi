@@ -35,10 +35,10 @@ La 3D a besoin de WebGL. Si votre navigateur n'en a pas, l'avatar revient à son
 
 ```bash
 npx -y pnpm@11.17.0 test     # vitest
-npx -y pnpm@11.17.0 build    # vue-tsc --noEmit && vite build
+npx -y pnpm@11.17.0 build    # tsc --noEmit && vite build
 ```
 
-Les deux doivent passer avant d'ouvrir une pull request. `vue-tsc` (lancé par `build`) est le seul
+Les deux doivent passer avant d'ouvrir une pull request. `tsc` (lancé par `build`) est le seul
 contrôle de types : lancez le build, pas seulement les tests. Ajoutez un test avec chaque correctif
 quand c'est possible.
 
@@ -46,7 +46,8 @@ quand c'est possible.
 
 Il n'y a pas de configuration de formateur ni de linter : suivez le code autour.
 
-- TypeScript et composants Vue 3 en un seul fichier avec `<script setup lang="ts">`.
+- TypeScript simple, sans framework : les composants d'interface sont des fonctions construites avec le
+  petit moteur de rendu de `src/ui/dom/`, et l'avatar est le Web Component `<mochi-bot>`.
 - 2 espaces, apostrophes simples, pas de points-virgules.
 - `three`, `src/ui/trois/scene3d.ts` et le reste de la 3D ne sont importés que dynamiquement
   (`await import(...)`), jamais par un `import` statique (`src/site/site.test.ts` le vérifie pour le site).

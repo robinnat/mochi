@@ -9,7 +9,8 @@ const en: typeof fr = {
   app: {
     name: 'mochi world',
     title: 'Mochi World, animated avatar',
-    botAria: 'Animated mochi avatar'
+    botAria: 'Animated mochi avatar',
+    sans3d: '3D needs WebGL'
   },
 
   gallery: {
@@ -38,7 +39,6 @@ const en: typeof fr = {
     more: 'Other formats',
     png: 'Download PNG',
     svg: 'Download SVG',
-    anime: 'Download animated SVG',
     gif: 'Download animated GIF',
     cycleDetail: 'The video is lighter and smoother; the GIF plays anywhere.',
     cycleFormat: 'Format',
@@ -124,10 +124,6 @@ const en: typeof fr = {
   },
 
   styles: {
-    original: 'Original',
-    pixel: 'Pixel art',
-    argile: '3D clay',
-    bulle: '3D bubble',
     '3d': 'Soft',
     flat3d: 'Flat',
     pixel3d: 'Pixel'

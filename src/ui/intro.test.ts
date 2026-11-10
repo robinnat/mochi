@@ -110,7 +110,7 @@ describe('montage de l arrivee', () => {
  * ils parcourent une grande distance.
  *
  * La logique de lecture est reproduite ici plutot qu'importee parce qu'elle vit
- * dans un composant Vue, hors de portee de ces tests sans DOM. Elle tient en
+ * dans le composant `<mochi-bot>`, hors de portee de ces tests sans DOM. Elle tient en
  * quelques lignes et suit `MochiBot.apply`.
  */
 describe('fluidite de l arrivee', () => {
@@ -183,7 +183,7 @@ describe('fluidite de l arrivee', () => {
 
   /*
    * Pourquoi la boule est RONDE le temps du tour, quelle que soit la forme
-   * choisie (voir `forme` dans `App.vue`).
+   * choisie (voir `forme` dans `App.ts`).
    *
    * Les yeux sont recolles au contour reel pour ne pas deborder de la silhouette
    * (`radiusAtAngle`). Sur un cercle ce rayon est constant, donc le tour est

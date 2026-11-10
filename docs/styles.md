@@ -5,26 +5,31 @@ Depuis la refonte « 3D seule », l'interface ne propose plus que trois styles, 
 
 | Style | id `rendu` | Principe |
 |---|---|---|
-| **Soft** (défaut) | `3d` | matière douce : ombrage lisse, lueurs et reflet calculés en shader dans le repère de la vue |
+| **Soft** (défaut) | `3d` | matière douce : ombrage lisse, lueurs et reflet calculés en shader dans le repère de la caméra |
 | **Flat** | `flat3d` | `toon` : trois tons nets, contour optionnel (`contour`) |
 | **Pixel** | `pixel3d` | rendu à basse résolution (grille de `pixel`), réduit à une palette courte (3 tons du corps, tons des accessoires, blanc des yeux), contour de 1 px, agrandi avec `image-rendering: pixelated` (`src/ui/trois/pixel3d.ts`) |
 
-Les anciens styles SVG (`original`, `pixel`, `argile`, `bulle`) ne sont plus proposés ni
-relus du stockage (un ancien réglage retombe sur Soft). Le code SVG de `MochiBot.vue` ne sert
-plus que de repli sans WebGL et pour les exports SVG/PNG/GIF/MP4, qui sérialisent encore le
-SVG : tant qu'il n'y a pas d'export 3D, un mochi 3D s'exporte « argile ». Les sections
-ci-dessous décrivent ces anciens dessins (historique).
+**Aucune 2D (Robin, 10/11/2026).** Les anciens dessins SVG (`original`, `pixel`, `argile`, `bulle`,
+issus en partie de bloub) sont RETIRÉS du code : plus de repli 2D, plus d'export 2D. Une valeur
+`rendu` inconnue (dont ces anciens ids) retombe sur le réglage courant. Sans WebGL, un court message
+remplace le Mochi (événement `sans3d`). Les exports (PNG, SVG, GIF, MP4) sont produits depuis la 3D :
+image fixe du canvas, ou rendu image par image hors écran (`docs/export.md`). Le SVG animé est retiré.
+
+**Yeux (Robin, 10/11/2026).** En thème clair, les yeux sont TOUJOURS blancs, pour toutes les couleurs
+(jaune `#ffd60a` et citron vert `#b6e800` compris), sans contour ni liseré ; seul l'ombrage 3D normal
+de l'œil reste. En thème sombre, ils sont noirs. Le contour du 09/11 et l'essai « yeux noirs en clair »
+du 10/11 sont retirés.
 
 ## Ombrage continu sur 360 degrés (`src/ui/trois/lisere.ts`)
 
 L'ombrage n'est PAS peint dans la texture de visage (c'est ce qui assombrissait le dos et les
-flancs et laissait une couture) : tout est calculé dans le shader, en repère de la vue, sur tout
+flancs et laissait une couture) : tout est calculé dans le shader, en repère de la caméra, sur tout
 le volume. Ombrage doux (AO) vers le bas et les bords, lueur bas-droite (4 h), lueur légère
 haut-gauche (10 h), reflet doux. La texture ne porte que la couleur et les yeux.
 
 ## Formes 3D
 
-Les 11 formes du catalogue ont un vrai volume sous tous les angles : sphère (cercle), galet
+Les 12 formes du catalogue ont un vrai volume sous tous les angles : sphère (cercle), galet
 (ellipsoïde), squircle (galet-cube très arrondi), capsule (tube couché), triangle (cône arrondi),
 hexagone (profond), nuage, goutte, étoile, fleur, œuf. Étoile, hexagone, nuage et fleur sont gonflés en « coussin » (`ProfilVolume.coussin`) : la hauteur est
 la solution d'une équation de Poisson sur l'intérieur du contour (u = 0 au bord), calculée une fois par
@@ -35,42 +40,11 @@ solides de révolution (`ProfilVolume.revolution`) : la profondeur d'un point es
 du contour à sa hauteur.
 
 Le moteur ne change pas : `engine.sample(t)` rend la même image et les 5 états, leurs
-mesures et leurs durées sont identiques. Seul `MochiBot.vue` peint l'image autrement.
+mesures et leurs durées sont identiques. Seul `mochi-bot.ts` peint l'image autrement.
 Le catalogue et le réglage courant vivent dans `src/ui/rendu.ts`.
 
-> **LEGACY, NON DISPONIBLE** : les sections « Pixel art (`src/ui/pixel.ts`) », « 3D douce » et
-> « Vraie 3D » plus bas decrivent l'ancien rendu SVG et l'historique de la 3D. Elles ne sont plus
-> proposees dans l'interface et ne sont gardees que comme memoire du code encore present (repli sans
-> WebGL, exports). Pour les styles actuels, voir le tableau et les trois sections ci-dessus.
-
-## [LEGACY] Pixel art SVG (`src/ui/pixel.ts`)
-
-Chaque image du moteur est rasterisée sur une petite grille (boule de 16, 24 ou 32 pixels,
-réglage « Taille des pixels »), puis chaque case reçoit une couleur :
-
-- corps : la couleur choisie en deux tons plus un reflet (ombre en bas à droite, clair en
-  haut à gauche) ;
-- yeux : le papier, comme l'original ;
-- contour sombre d'un pixel autour du corps et des points de sa couleur ;
-- anneaux, particules colorées, pastille : ramenés à la palette PICO-8 (16 couleurs).
-
-Le morphing reste fluide parce que l'image est re-pixellisée à chaque frame. Le résultat
-est un SVG ordinaire (`<path>` en `crispEdges`), donc PNG, SVG, GIF et MP4 marchent sans
-code à part. L'animation SVG exportée est un feuilletage (`svgFeuilletage`, `anime.ts`),
-les images identiques consécutives fusionnées. Sans canvas (tests `node`, `happy-dom`),
-le composant retombe sur l'original.
-
-## [LEGACY] 3D douce en SVG
-
-Tout est dans le SVG : dégradé radial (lumière en haut à gauche), reflet flou, ombre
-portée colorée et floue, ombre interne légère, et le corps percé décalé et flou derrière
-les trous pour donner un peu de creux aux yeux. Le masque des yeux reste le seul et le
-premier du document, ses seules formes à matrice sont les yeux : l'export SVG animé
-continue de fonctionner tel quel.
-
-- **argile** (icônes 3D d'Airbnb) : couleur passée au pastel, reflet large et doux,
-  ombre interne plus marquée, mat ;
-- **bulle** (le « dot » d'OpenAI) : couleur saturée, reflet net, lumière renvoyée en bas.
+> Les sections « Pixel art SVG » et « 3D douce en SVG » ont été retirées avec le code le 10/11/2026
+> (historique dans git). La section suivante garde l'historique de la vraie 3D.
 
 ## [LEGACY] Vraie 3D, historique (WebGL, Three.js)
 
@@ -97,14 +71,13 @@ lit `engine.sample(t)` et on le dessine.
 - **Les yeux sont peints dans une texture** projetée de face, aux positions exactes du
   moteur, et AUSSI dans une texture d'émission (blanc sur noir) : un œil est un trou clair,
   la lumière ne doit pas le griser. Sans cela, les yeux disparaissaient sur le dos du
-  corps et en vue trois quarts.
+  corps et de trois quarts.
 - **Un seul contexte WebGL** pour tous les avatars de la page (`rendreAvatar`) : chaque
   vignette demande une image, elle est rendue puis recopiée dans son canvas 2D. Le contour
   et le visage ne sont refaits que s'ils ont changé d'une image à l'autre.
 - **Chargement à la demande** : `scene3d.ts` n'est jamais importé statiquement
-  (133 ko gzip). `MochiBot.vue` le charge quand le style 3D est choisi et garde l'argile
-  SVG tant qu'il n'est pas là, ou sans WebGL, ou dans un export (le canvas WebGL n'est pas
-  du SVG : un export en 3D sort en argile, et son nom de fichier le dit).
+  (133 ko gzip). `mochi-bot.ts` le charge au montage ; tant qu'il n'est pas là, le Mochi
+  n'est pas dessiné (événement `pret` à la première image), et sans WebGL un message le remplace.
 - **Intégration** : le canvas est dans un `<foreignObject>` calé sur le viewBox, entre la
   moitié arrière et la moitié avant des anneaux, qui restent en SVG.
 
@@ -116,7 +89,7 @@ variantes ont été comparées (A toon, B toon + contour, C low poly, D aplat) ;
 prop `rendu3d` et `contour` de `MochiBot`, options `rendu3d` et `contour` de `EspaceIso`,
 arguments de `rendreAvatar`.
 
-- **`aplat`** (n'est plus le défaut) : deux tons seulement, la couleur du flat 2D telle quelle et une teinte
+- **`aplat`** (n'est plus le défaut) : deux tons seulement, la couleur choisie telle quelle et une teinte
   d'ombre ; ombre au sol en ellipse pleine semi-transparente ; yeux blancs en aplat (texture
   et émission), sans creux ombré.
 - **Contour cartoon** (`contour: boolean`, défaut `false`) : coque inversée, teinte du corps
@@ -136,8 +109,7 @@ arguments de `rendreAvatar`.
   pastel. Dans la scène isométrique, les dalles prennent la même rampe et l'ombre au sol est
   l'ellipse pleine (pas d'ombre portée du soleil).
 
-Captures : `docs/variantes/3d-choix-D-planche.png` (flat 2D, aplat, aplat + contour) et
-`3d-choix-D-etoile.png` (avant et après l'adoucissement) ; `3d-flat-*.png` : la comparaison
+Captures : `docs/variantes/3d-choix-D-etoile.png` (avant et après l'adoucissement) ; `3d-flat-*.png` : la comparaison
 A, B, C, D qui a mené au choix.
 À voir : `labo.html#formes3d` (`?v=lignes` : une ligne par style, portrait), `#gros` et
 `#iso` (`?contour=1`, `?r=<id>`).
@@ -155,7 +127,7 @@ Une seule matière, un paramètre `douceur` (prop `douceur` de `MochiBot`, optio
 `EspaceIso`, argument de `rendreAvatar`) : `leger` (ton le plus sombre = 0,70 en linéaire,
 soit environ 16 % plus sombre à l'écran) et `marque` (0,56, environ 24 %). **Défaut depuis le 03/11/2026 (choix de design)** : `doux`
 marqué ; le style « 3D » de Personnaliser = doux marqué. `leger` reste un paramètre, `aplat`
-(jugé trop lourd, un gros bloc d'ombre) reste dans le code hors interface. À voir : `labo.html#formes3d` (5 lignes : flat 2D, aplat, aplat +
+(jugé trop lourd, un gros bloc d'ombre) reste dans le code hors interface. À voir : `labo.html#formes3d` (lignes : aplat, aplat +
 contour, doux léger, doux marqué ; `?x=1,3,4` filtre les lignes, `?f=etoile` une forme),
 `#gros` et `#iso` avec `?r=doux&d=marque`. Captures : `docs/variantes/3d-doux-*.png`.
 
@@ -198,6 +170,4 @@ des formes dans les quatre styles (flat, pixel, pâte, 3D ; `?c=<couleur>`, `?s=
   couleurs, le GIF en garde 256.
 - Le reflet et le dégradé 3D sont fixes dans l'espace : sur un état où le corps se déplace
   ou se réduit (veille), la lumière ne le suit pas exactement.
-- En pixel art, les yeux à 16 pixels sont de simples traits.
-
-Captures : `docs/variantes/` (gros plans, écran Personnaliser).
+Captures : `docs/variantes/` (3D seulement ; les captures des anciens styles 2D sont retirées).

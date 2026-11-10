@@ -8,7 +8,7 @@ import { TOUR_TIME, tourLook } from './gaze'
  * l'interface apparait autour d'elle.
  *
  * Pur, comme `gaze.ts` et `timeline.ts` : le montage et la regle de declenchement
- * se decident ici et se testent sans DOM ni composant. `App.vue` ne fait que les
+ * se decident ici et se testent sans DOM ni composant. `App.ts` ne fait que les
  * brancher, la mise en scene elle-meme etant du CSS (`.scene--seule`,
  * `.avatar--intro` dans `styles.css`).
  */

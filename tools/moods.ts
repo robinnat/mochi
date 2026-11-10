@@ -93,7 +93,7 @@ interface Anim {
   /** decalage de phase par Mochi (humeurs : ils ne bougent pas en bloc) */
   phase: number[]
   evts?: Evt[]
-  /** angle de la vue 3D de chaque Mochi a la date t */
+  /** angle de la scene 3D de chaque Mochi a la date t */
   yaw?: (i: number, t: number) => number
   visible?: (i: number, t: number) => boolean
   /** echelle de l'ordinateur (0 a ~1) a la date t */
@@ -246,7 +246,7 @@ ANIMS.push({
   incruste: doigtsTaps([], APPUIS)
 })
 
-/* --- secoue : la vue 3D tourne tres vite, puis il est etourdi */
+/* --- secoue : la scene 3D tourne tres vite, puis il est etourdi */
 const TOURS = [0.5, 0.68, 0.86]
 ANIMS.push({
   id: 'secoue', groupe: 'interaction', nom: 'Secoué ou tourné vite', code: 'drag rapide : étourdi', duree: 4.2, cle: 2.1, mood: 'repos',

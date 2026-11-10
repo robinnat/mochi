@@ -23,10 +23,10 @@ import {
   viewBoxExport
 } from './export'
 
-/** Rayon de la boule au repos, cf. le `R` de MochiBot.vue. */
+/** Rayon de la boule au repos, cf. le `R` de <mochi-bot>. */
 
 
-/** Demi-cote du viewBox affiche a l'ecran, cf. le `VB` de MochiBot.vue. */
+/** Demi-cote du viewBox affiche a l'ecran, cf. le `VB` de <mochi-bot>. */
 const VB_ECRAN = 158
 
 describe('cadre d export', () => {
@@ -160,7 +160,7 @@ describe('export d un cycle', () => {
 describe('fond du gif', () => {
   /* Le GIF est le SEUL format a poser la question : lui seul a 1 bit d'alpha. */
   it('ne concerne que le gif', () => {
-    const anime = ACTIONS.filter((a) => a.mode === 'anime' || a.mode === 'gif')
+    const anime = ACTIONS.filter((a) => a.mode === 'gif')
     expect(anime.filter((a) => a.extension === 'gif')).toHaveLength(1)
   })
 
@@ -210,7 +210,7 @@ describe('nom de fichier', () => {
   })
 
   /*
-   * `App.vue` relit forme / expression / couleur du localStorage sans les
+   * `App.ts` relit forme / expression / couleur du localStorage sans les
    * valider : une valeur trafiquee ne doit pas pouvoir composer un chemin.
    */
   it('ne laisse pas passer de separateur de chemin', () => {

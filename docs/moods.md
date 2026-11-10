@@ -5,7 +5,7 @@ marks, orbits, comets or particles. Everything is real-time 3D with the existing
 the 11 shapes, in Soft, Flat and Pixel, in light and dark themes (black eyes), and with worn
 accessories (they read the rendered body, so they follow every squash, stretch and tilt).
 
-Code: `src/bot/humeurs.ts` (pure, no framework, no clock), wired into `MochiBot.vue`. It reuses the
+Code: `src/bot/humeurs.ts` (pure, no framework, no clock), wired into `mochi-bot.ts`. It reuses the
 `Geste` type of `gestes.ts`, the 16 expressions of `expressions.ts` (`neutre`, `colere`, `heureux`,
 `hilare`, `somnolent`, ...) and the state names of `states.ts` (`idle`, `thinking`, `wide`, `wink`,
 `sleep`).
@@ -42,7 +42,7 @@ An interaction plays once on top of the mood, then hands back: the mood resumes 
 
 ```ts
 // component
-<MochiBot rendu="3d" mood="travaille" :interactions="true" coucou :fps="12" />
+<mochi-bot rendu="3d" mood="travaille" interactions coucou fps="12"></mochi-bot>
 bot.setMood('termine')        // 'repos' | 'reflechit' | 'travaille' | 'attend' | 'termine' | 'bloque' | 'dort' | null
 bot.react('sursaut')          // 'sursaut' | 'rigole' | 'rougit' | 'etourdi' | 'coucou'
 bot.relacher()                // end of a held reaction (long press)

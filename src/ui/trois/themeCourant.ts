@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref } from '@/ui/dom/reactif'
 import { THEME_DEFAUT, type Theme } from './theme'
 
 /**

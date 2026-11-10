@@ -37,7 +37,7 @@ export function cle(nom: NomStocke): string {
  * — Chrome regle sur « bloquer tous les cookies », iframe tierce, politique d'entreprise —
  * la simple lecture de la propriete leve un `SecurityError`. Or tout ce que l'application
  * relit l'est a l'evaluation des modules, donc l'exception remontait le `setup` de
- * `App.vue` et la page restait BLANCHE : pas de bot du tout, pour un reglage de navigateur
+ * `App.ts` et la page restait BLANCHE : pas de bot du tout, pour un reglage de navigateur
  * qui n'a rien a voir avec le fait de regarder une animation.
  *
  * On perd la persistance, jamais l'application. C'est le seul arbitrage possible ici : il

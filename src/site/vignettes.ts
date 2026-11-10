@@ -2,12 +2,9 @@
  * Vignettes des bandes : chaque PIECE (chapeau, lunettes, etc., sans corps) est rendue UNE SEULE FOIS par le rendu 3D
  * partage (`rendreAvatar`, corps invisible mais qui ancre la piece), cadree serre et centree, puis gardee sous forme
  * d'image. Les bandes defilent ensuite en CSS pur sur des images : aucun rendu 3D pendant le defilement, fluide meme
- * sur iPhone. Importe `three` via `scene3d` : chargement dynamique seulement.
+ * sur iPhone. La 3D arrive par `charger3d` (entree publique) : chargement dynamique seulement. Sert a `tools/rendus.ts`.
  */
-import { BotEngine } from '@/bot/engine'
-import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
-import { SHAPE_BY_ID, mixHex } from '@/bot/skins'
-import { contraste } from '@/ui/trois/theme'
+import { BotEngine, charger3d, contraste, DEMI_VIEWBOX, mixHex, RAYON, SHAPE_BY_ID } from 'mochi-world'
 import type { ItemBande } from './bandes'
 
 /** Cote d'une vignette en pixels (affichee a la moitie : ecrans denses). */
@@ -28,7 +25,7 @@ const MIN_BOITE: Record<ItemBande['emplacement'], number> = { tete: 40, yeux: 40
 /** Fond sombre du site : une couleur trop proche (noir de la plupart des lunettes) est eclaircie pour rester lisible. */
 const FOND_SOMBRE = '#1b1922'
 
-type Scene3d = typeof import('@/ui/trois/scene3d')
+type Scene3d = Awaited<ReturnType<typeof charger3d>>
 let scene: Promise<Scene3d> | null = null
 let moteur: BotEngine | null = null
 
@@ -97,7 +94,7 @@ export const boiteOpaque = (data: Uint8ClampedArray, px: number, cadre: number):
  */
 export async function rendreVignette(item: ItemBande, theme: 'light' | 'dark'): Promise<string | null> {
   try {
-    scene ??= import('@/ui/trois/scene3d')
+    scene ??= charger3d()
     const m = await scene
     moteur ??= new BotEngine(RAYON, 'idle', SHAPE_BY_ID.get('cercle')!.radii, null)
     const frame = moteur.sample(T_IMAGE)

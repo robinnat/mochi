@@ -1,7 +1,7 @@
 /**
  * Rendu 3D reel (WebGL, Three.js) d'une image du moteur.
  *
- * Ce module n'est JAMAIS importe statiquement : `MochiBot.vue` et la page labo le
+ * Ce module n'est JAMAIS importe statiquement : `mochi-bot.ts` et la page labo le
  * chargent par `await import(...)` quand le style 3D est choisi. Le reste de l'application
  * ne porte donc pas Three.js (meme regle que `mediabunny`).
  *
@@ -40,7 +40,6 @@ import {
 import type { BotFrame } from '@/bot/engine'
 import { DEMI_VIEWBOX } from '@/bot/repere'
 import { mixHex } from '@/bot/skins'
-import { teintes3d } from '@/ui/rendu'
 import { mesuresPorte, ombresPorte, rayonVerre, yeuxDe, type Ombre, type PorteId } from '@/bot/portes'
 import { Porte3d } from './porte3d'
 import { Accessoires3d } from './accessoires3d'
@@ -66,7 +65,7 @@ import {
   RENDU_3D_DEFAUT
 } from './rendu3d'
 import { peindreReflet, REFLET_DEFAUT, type Reflet } from './reflet'
-import { accessoiresSombres, CONTRASTE_OEIL_MIN, contourOeil, corpsPourTheme, couleurOeil, OEIL_RGB, THEME_DEFAUT, type Theme } from './theme'
+import { accessoiresSombres, CONTRASTE_OEIL_MIN, corpsPourTheme, couleurOeil, OEIL_RGB, THEME_DEFAUT, type Theme } from './theme'
 import {
   centreDe,
   champDeRepos,
@@ -86,10 +85,12 @@ export type { Rendu3d } from './rendu3d'
 
 const VB = DEMI_VIEWBOX
 
-/** Teintes de la matiere : celles de l'argile, pour rester coherent avec la 3D douce. */
+/**
+ * Teintes de la matiere : la couleur choisie a peine eclaircie (base), son cote a l'ombre (creux, fond des yeux)
+ * et l'ombre portee au sol, coloree et non grise.
+ */
 export function matiere(hex: string) {
-  const t = teintes3d(hex, 'argile')
-  return { base: t.base, creux: t.ombre, portee: t.portee }
+  return { base: mixHex(hex, '#ffffff', 0.16), creux: mixHex(hex, '#000000', 0.18), portee: mixHex(hex, '#000000', 0.3) }
 }
 
 /**
@@ -407,7 +408,7 @@ export class Mochi3d {
     // le contour des accessoires suit celui du corps (meme visibilite, meme epaisseur)
     this.acc3d.contour(this.coque.visible, this.epaisseur.value)
     const ombres: Ombre[] = [...(this.porte ? ombresPorte(this.porte, frame, mesuresPorte(frameCorps)) : []), ...this.acc3d.ombres]
-    // le reflet doux est un effet de matiere (shader, repere de la vue) : plus rien n'est peint dans la
+    // le reflet doux est un effet de matiere (shader, repere de la camera) : plus rien n'est peint dans la
     // texture hors des yeux, donc le dos et les flancs recoivent le meme ombrage que la face
     const reflet = null as Reflet | null
     const cleReflet = reflet ? [reflet.x, reflet.y, reflet.rx].map((v) => Math.round(v * 2)).join(',') : '-'
@@ -566,7 +567,6 @@ export class Mochi3d {
       m: lireMatrice(e.matrix),
       alpha: e.alpha
     }))
-    const contour = contourOeil(base, this.theme, papier)
     const y = this.ctxYeux
     y.setTransform(1, 0, 0, 1, 0, 0)
     y.globalAlpha = 1
@@ -585,19 +585,6 @@ export class Mochi3d {
       c.globalAlpha = alpha
       c.fillStyle = papier
       c.fill(chemin)
-      // corps tres clair (jaune, citron vert) : l'oeil blanc est cerne d'un trait fonce, dessine HORS de l'oeil
-      if (contour) {
-        c.save()
-        const dehors = new Path2D()
-        dehors.rect(-400, -400, 800, 800)
-        dehors.addPath(chemin)
-        c.clip(dehors, 'evenodd')
-        c.lineWidth = 9
-        c.lineJoin = 'round'
-        c.strokeStyle = contour
-        c.stroke(chemin)
-        c.restore()
-      }
       if (!creuser) continue
       // ombre interne : un grand cadre perce de l'oeil, dont seule l'ombre entre dans le trou
       c.save()
@@ -857,7 +844,7 @@ export function prechauffer() {
   ctx3.douceur = avant.douceur
 }
 
-/** true si le navigateur sait faire du WebGL ; sinon l'avatar garde l'argile en SVG. */
+/** true si le navigateur sait faire du WebGL ; sinon l'avatar affiche un message a la place du Mochi. */
 export function webglDisponible(): boolean {
   try {
     contexte()
