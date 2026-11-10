@@ -31,20 +31,20 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "mediabunny": "^1.54.0",
-    "three": "0.186.1",
-    "vue": "^3.5.41"
+    "mediabunny": "^1.65.2",
+    "three": "0.187.0",
+    "vue": "^3.5.45"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/node": "^26.0.0",
-    "@types/three": "0.186.0",
-    "@vitejs/plugin-vue": "^6.0.8",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/three": "0.187.0",
+    "@vitejs/plugin-vue": "^6.0.10",
     "happy-dom": "^20.11.2",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.3.5",
     "typescript": "^5.9.3",
-    "vite": "^8.2.1",
+    "vite": "^8.3.6",
     "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.9"
+    "vue-tsc": "^3.3.14"
   }
 }
