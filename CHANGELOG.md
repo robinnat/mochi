@@ -5,6 +5,32 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed (breaking)
+
+- **Everything is in English, and the product is now called Mochis.** Public ids, attributes, events, methods and
+  entry points were renamed. The package is not published yet, so there are no aliases; settings saved in the browser
+  by older versions of `/app` are migrated on the first visit (`src/ui/legacy.ts`).
+
+  | Before | Now |
+  | --- | --- |
+  | `mochi-world`, `mochi-world/catalogue`, `dist-lib/mochi-world.js` | `mochis`, `mochis/catalogue`, `dist-lib/mochis.js` |
+  | shapes `cercle`, `galet`, `hexagone`, `nuage`, `goutte`, `etoile`, `fleur`, `oeuf`, `coeur` | `circle`, `pebble`, `hexagon`, `cloud`, `drop`, `star`, `flower`, `egg`, `heart` |
+  | colors `encre`, `brun`, `rouge`, `corail`, `ambre`, `citron`, `pomme`, `vert`, `ciel`, `bleu`, `rose`, `cerise`, `gris`, `creme` | `ink`, `brown`, `red`, `coral`, `amber`, `lime`, `apple`, `green`, `sky`, `blue`, `pink`, `cherry`, `grey`, `cream` |
+  | moods `repos`, `reflechit`, `travaille`, `attend`, `termine`, `bloque`, `dort` | `idle`, `thinking`, `working`, `waiting`, `done`, `blocked`, `asleep` |
+  | reactions `sursaut`, `rigole`, `rougit`, `etourdi`, `coucou` | `startle`, `laugh`, `blush`, `dizzy`, `wave` |
+  | slots `tete`, `yeux`, `visage`, `bas`, `dos` | `head`, `eyes`, `face`, `neck`, `back` |
+  | attributes `rendu`, `rendu3d`, `douceur`, `contour`, `epaisseur-contour`, `reflet`, `ombre`, `ombrage`, `accessoires`, `coucou`, `ordinateur`, `porte` | `render-style`, `material`, `softness`, `outline`, `outline-width`, `highlight`, `shadow`, `shading`, `accessories`, `wave`, `laptop`, `worn` |
+  | events `pret`, `sans3d` | `ready`, `no3d` |
+  | methods `rendAt`, `relacher`, `regarder` | `renderAt`, `release`, `lookAt` |
+  | pixel sizes `gros`, `moyen`, `fin` | `large`, `medium`, `fine` |
+
+- **One documentation.** The website's `/docs` page is now built from `README.md` and `docs/*.md` (new
+  `docs/getting-started.md` and `docs/reference.md`), with live examples taken from their code blocks. A test fails if
+  the site and the repository could say different things, or if the docs and the code disagree.
+- The app falls back to English when the browser asks for a language it does not speak.
+- The lab moved from `/labo` to `/lab` (`/labo` redirects).
+- New icons (favicon, app icons, web manifest) and the Mochis name in the site's bar and footer.
+
 ### Removed
 
 - **No 2D any more.** The old SVG drawings (`original`, `pixel`, `argile`, `bubble`, partly derived from bloub) are

@@ -2,10 +2,10 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 
 /**
- * Bibliotheque seule : `pnpm build:lib` ecrit `dist-lib/mochis.js` (le Web Component `<mochi-bot>`, le moteur et les
- * catalogues), `dist-lib/catalogue.js` (les catalogues seuls, sans la balise)
- * et, a cote, les morceaux charges a la demande (la 3D et Three.js). A copier tel quel dans un projet, quel que soit
- * son framework, ou a servir avec `<script type="module">`.
+ * Library only: `pnpm build:lib` writes `dist-lib/mochis.js` (the `<mochi-bot>` Web Component, the engine and the
+ * catalogs), `dist-lib/catalogue.js` (the catalogs alone, without the tag) and, next to them, the chunks loaded on demand
+ * (the 3D and Three.js). Copy them as they are into a project, whatever its framework, or serve them with
+ * `<script type="module">`.
  */
 export default defineConfig({
   publicDir: false,
@@ -13,7 +13,7 @@ export default defineConfig({
     outDir: 'dist-lib',
     emptyOutDir: true,
     lib: {
-      // deux entrees publiques : `mochis` (la balise et tout le reste) et `mochis/catalogue` (sans la balise)
+      // two public entries: `mochis` (the tag and everything else) and `mochis/catalogue` (without the tag)
       entry: {
         'mochis': fileURLToPath(new URL('./src/index.ts', import.meta.url)),
         catalogue: fileURLToPath(new URL('./src/catalogue.ts', import.meta.url))

@@ -26,7 +26,7 @@ npx -y pnpm@11.17.0 install
 ## Lancer
 
 ```bash
-npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site sur /, app sur /app.html, labo sur /labo.html)
+npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site sur /, app sur /app.html, labo sur /lab.html)
 ```
 
 La 3D a besoin de WebGL. Si votre navigateur n'en a pas, l'avatar revient à son dessin SVG.
@@ -53,8 +53,11 @@ Il n'y a pas de configuration de formateur ni de linter : suivez le code autour.
   (`await import(...)`), jamais par un `import` statique (`src/site/site.test.ts` le vérifie pour le site).
 - Les constantes de `src/bot/` sont des mesures, pas des choix. Ne les arrondissez pas et ne les
   « nettoyez » pas (voir [docs/measurements.md](docs/measurements.md)).
-- Les commentaires du code, les identifiants (`star`, `renderStyle`) et la plupart des fichiers de `docs/`
-  sont en français. Vous pouvez écrire les nouveaux commentaires et la nouvelle documentation en anglais.
+- Tout est en anglais : code, commentaires, identifiants, tests et documentation (`src/english.test.ts` le
+  vérifie). Seules les traductions française et chinoise de l'interface de l'app (`src/i18n/locales/`) et les
+  fichiers `*.fr.md` sont en français.
+- La page `/docs` du site est construite à partir de `README.md` et de `docs/*.md` : modifiez les fichiers
+  Markdown, jamais la page (`src/docs/docs-source.test.ts` les garde identiques).
 - Gardez l'en-tête MIT de [LICENSE](LICENSE) tel quel, avec ses deux lignes de copyright.
 
 ## Pull requests
