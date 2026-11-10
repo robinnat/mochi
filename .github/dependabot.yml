@@ -1,21 +1,19 @@
-# Weekly, grouped, and capped: at most 3 open Dependabot pull requests in total
-# (2 for npm, 1 for GitHub Actions). Minor and patch updates are grouped into one pull request.
+# Monthly and grouped: one pull request for all npm updates (majors included)
+# and one for GitHub Actions, at most one open pull request per ecosystem.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 2
+      interval: monthly
+    open-pull-requests-limit: 1
     groups:
-      npm-minor-and-patch:
-        update-types: [minor, patch]
+      npm:
+        patterns: ['*']
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 1
     groups:
       actions:
