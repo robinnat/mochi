@@ -2058,3 +2058,7 @@ header[id] {
   max-width: 100%;
   height: auto;
 }
+.docs-body h2,
+.docs-body h3 {
+  scroll-margin-top: 84px;
+}
