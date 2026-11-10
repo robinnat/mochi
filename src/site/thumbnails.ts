@@ -1,35 +1,37 @@
 /**
- * Vignettes des bandes : chaque PIECE (chapeau, lunettes, etc., sans corps) est rendue UNE SEULE FOIS par le rendu 3D
- * partage (`renderAvatar`, corps invisible mais qui ancre la piece), cadree serre et centree, puis gardee sous forme
- * d'image. Les bandes defilent ensuite en CSS pur sur des images : aucun rendu 3D pendant le defilement, fluide meme
- * sur iPhone. La 3D arrive par `load3d` (entree publique) : chargement dynamique seulement. Sert a `tools/rendus.ts`.
+ * Strip thumbnails: each PIECE (hat, glasses, etc., without a body) is rendered ONCE by the shared 3D renderer
+ * (`renderAvatar`, invisible body that still anchors the piece), framed tight and centered, then kept as an image.
+ * The strips then scroll in pure CSS over images: no 3D rendering while scrolling, smooth even on iPhone. The 3D
+ * comes through `load3d` (public entry): dynamic loading only. Used by `tools/renders.ts`.
  */
 import { BotEngine, load3d, contrast, HALF_VIEWBOX, mixHex, RADIUS, SHAPE_BY_ID } from 'mochis'
 import type { ItemStrip } from './strips'
 
-/** Cote d'une vignette en pixels (affichee a la moitie : ecrans denses). */
+/** Side of a thumbnail in pixels (shown at half size: dense screens). */
 export const SIZE_THUMBNAIL = 256
-/** Passe de mesure : plus petite, elle sert seulement a trouver la boite de la piece. */
+/** Measuring pass: smaller, it only finds the box of the piece. */
 const SIZE_MEASURE = 320
 const PAPER = '#f9f9f9'
 const T_IMAGE = 1.2
-/** Part de la case occupee par la plus grande dimension de la piece : toutes les pieces ont la meme taille apparente. */
+/** Share of the cell taken by the piece's largest dimension: every piece has the same apparent size. */
 const FILL = 0.78
-/** Part du demi-cadre que la piece entiere (branches comprises) ne depasse jamais. */
+/** Share of the half frame that the whole piece (arms included) never exceeds. */
 const EDGE = 0.96
 /**
- * Dimension minimale de la boite (unites du moteur), par emplacement : une piece minuscule (un grain de beaute) n'est pas
- * agrandie sans fin, elle reste une petite piece dans sa case.
+ * Minimum box dimension (engine units), per slot: a tiny piece is not enlarged forever, it stays a small piece in its
+ * cell.
  */
 const MIN_BOX: Record<ItemStrip['slot'], number> = { head: 40, eyes: 40, face: 78, neck: 40, back: 40 }
-/** Fond sombre du site : une couleur trop proche (noir de la plupart des lunettes) est eclaircie pour rester lisible. */
+/**
+ * Dark site background: a color too close to it (the black of most glasses) is lightened to stay readable.
+ */
 const BACKGROUND_DARK = '#1b1922'
 
 type Scene3d = Awaited<ReturnType<typeof load3d>>
 let scene: Promise<Scene3d> | null = null
 let engine: BotEngine | null = null
 
-/** Couleur de la piece selon le theme : en sombre, ce qui se confond avec le fond est eclairci. */
+/** Color of the piece by theme: in dark, what blends with the background is lightened. */
 export function colorForTheme(hex: string, theme: 'light' | 'dark'): string {
   if (theme === 'light' || contrast(hex, BACKGROUND_DARK) >= 3) return hex
   return mixHex(hex, '#ffffff', 0.62)
@@ -43,10 +45,10 @@ export interface Box {
 }
 
 /**
- * Boites (en unites du moteur, y vers le haut) des pixels non transparents d'un canvas rendu avec le cadre `frame` centre en 0 :
- * `full` (tout ce qui est dessine) et `heart` (sans les parties fines : branches de lunettes, tiges, fils, qui ne
- * doivent pas decider de la taille apparente). Une colonne ou une ligne compte dans le coeur si elle porte au moins
- * `threshold` (part du maximum) de pixels opaques.
+ * Boxes (in engine units, y up) of the non transparent pixels of a canvas rendered with the frame `frame` centered on
+ * 0: `full` (everything drawn) and `heart` (without thin parts: glasses arms, stems, wires, which must not decide the
+ * apparent size). A column or a row counts in the core if it holds at least `threshold` (share of the maximum) of
+ * opaque pixels.
  */
 export function boxesOpaque(data: Uint8ClampedArray, px: number, frame: number, threshold = 0.4): { full: Box; heart: Box } | null {
   const col = new Uint32Array(px)
@@ -85,12 +87,13 @@ export function boxesOpaque(data: Uint8ClampedArray, px: number, frame: number, 
   return { full: box(fullX, fullY), heart: box(heartX, heartY) }
 }
 
-/** Compat : la boite pleine seule. */
+/** Compat: the full box alone. */
 export const boxOpaque = (data: Uint8ClampedArray, px: number, frame: number): Box | null => boxesOpaque(data, px, frame)?.full ?? null
 
 /**
- * Rend une piece seule en image (URL d'objet, a liberer avec `URL.revokeObjectURL`) ; `null` si le rendu 3D n'est pas disponible.
- * Deux passes : une passe large mesure la boite de la piece, la seconde la cadre serre, centree, a taille homogene.
+ * Renders a piece alone as an image (object URL, to free with `URL.revokeObjectURL`); `null` if 3D rendering is not
+ * available. Two passes: a wide pass measures the box of the piece, the second frames it tight, centered, at a
+ * uniform size.
  */
 export async function renderThumbnail(item: ItemStrip, theme: 'light' | 'dark'): Promise<string | null> {
   try {
@@ -110,8 +113,8 @@ export async function renderThumbnail(item: ItemStrip, theme: 'light' | 'dark'):
     const boxes = boxesOpaque(data, SIZE_MEASURE, frame1)
     if (!boxes) return null
     const { full, heart } = boxes
-    // passe 2 : cadre carre centre sur le coeur de la piece, pour que sa plus grande dimension occupe `FILL` de la case ;
-    // les parties fines (branches, tiges) peuvent depasser un peu, mais jamais sortir de l'image
+    // pass 2: square frame centered on the core of the piece, so its largest dimension takes `FILL` of the cell;
+    // thin parts (arms, stems) can stick out a little, but never leave the image
     const most = Math.max(heart.w, heart.h, MIN_BOX[item.slot])
     const dehors = Math.max(Math.abs(full.cx - heart.cx) + full.w / 2, Math.abs(full.cy - heart.cy) + full.h / 2)
     const frame2 = Math.max(most / 2 / FILL, dehors / EDGE)

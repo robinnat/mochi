@@ -4,10 +4,11 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 /**
- * Le site (accueil, docs) et le labo sont des VITRINES : ils utilisent Mochi exactement comme un utilisateur du
- * paquet, par ses entrees publiques (`mochis`, `mochis/catalogue`) et la balise `<mochi-bot>`. Aucun import
- * d'un fichier interne du moteur (`src/bot`, `src/ui/trois`, `src/components`...). Restent permis : leur propre code,
- * la petite bibliotheque d'interface du depot (`@/ui/dom`, ce n'est pas Mochi), les textes (`@/i18n`) et les styles.
+ * The site (home, docs) and the lab are SHOWCASES: they use Mochis exactly like a user of the package, through its
+ * public entries (`mochis`, `mochis/catalogue`) and the `<mochi-bot>` tag. No import of an internal engine file
+ * (`src/bot`, `src/ui/3d`, `src/components`...). Still allowed: their own code, the repository's small interface
+ * library (`@/ui/dom`, which is not Mochis), the texts (`@/i18n`), the styles and the Markdown docs
+ * (`docs/*.md?raw`).
  */
 const SRC = fileURLToPath(new URL('..', import.meta.url))
 const FOLDERS = ['site', 'docs', 'lab']
@@ -19,7 +20,7 @@ const sources = FOLDERS.flatMap((d) =>
     .map((f) => ({ file: `${d}/${f}`, text: readFileSync(join(SRC, d, f), 'utf8') }))
 )
 
-/** Toutes les cibles d'import d'un fichier : statiques, `import type`, effets de bord et `import()` dynamiques. */
+/** Every import target of a file: static, `import type`, side effects and dynamic `import()`. */
 export function targetsImport(text: string): string[] {
   const out: string[] = []
   for (const m of text.matchAll(/(?:^|\n)\s*import\s+(?:type\s+)?(?:[^'";]*?\sfrom\s*)?['"]([^'"]+)['"]/g)) out.push(m[1]!)
@@ -28,26 +29,26 @@ export function targetsImport(text: string): string[] {
   return out
 }
 
-describe('le site consomme Mochi par son entree publique', () => {
-  it('trouve bien les fichiers du site, de la doc et du labo', () => {
+describe('the site uses Mochis through its public entry', () => {
+  it('finds the files of the site, the docs and the lab', () => {
     expect(sources.length).toBeGreaterThan(20)
   })
 
-  it.each(sources)('$fichier n importe none fichier interne du moteur', ({ file, text }) => {
+  it.each(sources)('$file imports no internal engine file', ({ file, text }) => {
     const forbidden = targetsImport(text).filter((c) => !ALLOWED.some((p) => p.test(c)))
     expect(forbidden, file).toEqual([])
   })
 
-  it("l'accueil et la doc ne chargent la balise qu'a la demande : en import statique, seulement le catalogue", () => {
+  it("home and docs only load the tag on demand: as a static import, only the catalog", () => {
     for (const { file, text } of sources) {
-      // le labo monte des Mochi des le chargement ; vignettes.ts ne sert qu'a l'outil tools/rendus.ts
+      // the lab mounts Mochis on load; thumbnails.ts only serves the tools/renders.ts tool
       if (file.startsWith('labo/') || file === 'site/vignettes.ts') continue
       expect(text, file).not.toMatch(/(?:^|\n)\s*import\s+(?!type\b)[^'";]*['"]mochis['"]/)
     }
   })
 
-  it('reconnait un import interne (le garde-fou mord)', () => {
-    const fake = "import { SHAPES } from '@/bot/skins'\nconst m = await import('@/ui/trois/scene3d')"
+  it('recognizes an internal import (the guard bites)', () => {
+    const fake = "import { SHAPES } from '@/bot/skins'\nconst m = await import('@/ui/3d/scene3d')"
     expect(targetsImport(fake).filter((c) => !ALLOWED.some((p) => p.test(c)))).toEqual(['@/bot/skins', '@/ui/3d/scene3d'])
   })
 })

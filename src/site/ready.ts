@@ -2,8 +2,8 @@ import { ref } from '@/ui/dom/reactive'
 import { load3d } from 'mochis/catalogue'
 
 /**
- * La page est « prete » quand son chargement est fini et que le navigateur a un moment de libre : seulement alors
- * les Mochi vivants (Three.js, rendu 3D) se montent. Jusque-la, la page montre leurs images pre-rendues.
+ * The page is "ready" when it has finished loading and the browser has a free moment: only then do live Mochis
+ * (Three.js, 3D rendering) mount. Until then, the page shows their pre-rendered images.
  */
 export const pageReady = ref(false)
 if (typeof window !== 'undefined') {
@@ -17,16 +17,16 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * Telephone (pointeur grossier) : moins de pixels pour les Mochi vivants. Les images par seconde ne sont plus plafonnees
- * (v12) : le plafond a 30 donnait des a-coups (une image sur deux sautee, irregulierement) et le cout par image a baisse.
+ * Phone (coarse pointer): fewer pixels for live Mochis. Frames per second are no longer capped (v12): the cap at 30
+ * gave jolts (one frame out of two skipped, irregularly) and the cost per frame went down.
  */
 export const mobile = typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(pointer: coarse)').matches
 export const RATIO_MAX = mobile ? 1.5 : 2
 export const FPS_ALIVE: number | undefined = undefined
 
 /**
- * Apres la premiere image 3D de la page, pendant un moment libre : compile les shaders des trois styles, pour que
- * le premier changement de style (Soft, Pixel, Flat) reponde tout de suite. Une seule fois par page.
+ * After the page's first 3D frame, during a free moment: compiles the shaders of the three styles, so the first style
+ * change (Soft, Pixel, Flat) answers at once. Only once per page.
  */
 let warm = false
 export function warmUpStyles() {

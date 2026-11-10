@@ -1,23 +1,19 @@
 /**
- * Locale de reference. Les deux autres sont typees `typeof fr`, donc c'est ce
- * fichier qui definit le contrat : y ajouter une cle fait echouer `tsc` sur
- * `en.ts` et `zh.ts` jusqu'a ce qu'elles soient traduites.
+ * Reference locale. The other two are typed `typeof fr`, so this file defines the contract: adding a key here makes
+ * `tsc` fail on `en.ts` and `zh.ts` until they are translated.
  *
- * Surtout PAS de `as const` : chaque valeur deviendrait son propre type
- * litteral, et toute traduction serait alors refusee comme n'etant pas la
- * chaine francaise.
+ * Above all NO `as const`: each value would become its own literal type, and any translation would then be refused as
+ * not being the French string.
  *
- * Les guillemets et les espaces font partie de la traduction, pas du code : le
- * francais veut « ... » avec espaces insecables, l'anglais "...", le chinois
- * n'a pas d'espace avant ses unites. Aucun composant ne doit les ajouter.
+ * Quotes and spaces belong to the translation, not the code: French wants « ... » with non-breaking spaces, English
+ * "...", Chinese has no space before its units. No component must add them.
  */
 export default {
   app: {
     /**
-     * Nom du produit. En minuscules dans les trois langues, ce n'est pas une
-     * coquille : les capitales de `NAME` (App.ts) sont un logotype, pas le nom.
-     * Un nom propre ne se traduit pas non plus. `title` sert de `document.title`.
-     * Voir aussi le <title> de index.html, qui est statique.
+     * Product name. Lowercase in the three languages, it is not a typo: the capitals of `NAME` (App.ts) are a
+     * logotype, not the name. A proper name is not translated either. `title` serves as `document.title`. See also
+     * the <title> of index.html, which is static.
      */
     name: 'mochis',
     title: 'Mochis, avatar animé',
@@ -38,9 +34,8 @@ export default {
 
   panel: {
     /**
-     * Au SINGULIER, comme les trois autres : un titre de grille nomme ce qu'un
-     * clic pose, pas le nombre de vignettes proposees. Le pluriel reste au rail,
-     * qui nomme l'onglet et non le choix (`rail.animations`).
+     * SINGULAR, like the three others: a grid title names what a click sets, not the number of thumbnails offered.
+     * The plural stays on the rail, which names the tab and not the choice (`rail.animations`).
      */
     animations: 'Animation',
     shape: 'Forme',
@@ -52,10 +47,8 @@ export default {
   },
 
   /**
-   * Barre d'export de l'onglet Personnaliser. Les libelles du menu sont des
-   * ACTIONS et pas des noms de format : « Télécharger le PNG » se comprend sans
-   * savoir ce qu'est un PNG, « PNG · 1024 px » demande de trancher une question
-   * qui n'est pas celle de l'utilisateur.
+   * Export bar of the Customize tab. Menu labels are ACTIONS and not format names: "Download the PNG" is understood
+   * without knowing what a PNG is, "PNG · 1024 px" asks a question that is not the user's.
    */
   export: {
     action: 'Exporter en PNG',
@@ -89,7 +82,7 @@ export default {
 
   preview: {
     exit: "Quitter l'aperçu",
-    /** Nom de la touche tel qu'il est grave sur le clavier de la langue. */
+    /** Name of the key as engraved on the language's keyboard. */
     key: 'Échap'
   },
 
@@ -128,7 +121,7 @@ export default {
 
   units: {
     seconds: '{n} s',
-    /** Graduation de la règle : serré, le chiffre est déjà petit. */
+    /** Ruler tick: tight, the figure is already small. */
     secondsShort: '{n}s'
   },
 

@@ -7,8 +7,8 @@ import { boxOpaque, boxesOpaque, colorForTheme } from './thumbnails'
 
 const source = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8')
 
-describe('bandes d accessoires (pieces seules)', () => {
-  it('une bande par emplacement du paquet, dans l ordre, et le sens alterne', () => {
+describe('accessory strips (pieces alone)', () => {
+  it('one strip per package slot, in order, and the direction alternates', () => {
     expect(STRIPS.map((b) => b.slot)).toEqual(SLOTS)
     STRIPS.forEach((b, i) => expect(b.direction).toBe(i % 2 === 0 ? 'left' : 'right'))
     for (const b of STRIPS) {
@@ -17,23 +17,23 @@ describe('bandes d accessoires (pieces seules)', () => {
     }
   })
 
-  it.each(SLOTS)('%s : beaucoup de pieces, toutes valides, toutes differentes', (e) => {
+  it.each(SLOTS)('%s: many pieces, all valid, all different', (e) => {
     const items = itemsStrip(e)
     expect(items.length).toBeGreaterThanOrEqual(20)
     expect(new Set(items.map((i) => i.key)).size).toBe(items.length)
-    // peu de doublons exacts (accessoire + couleurs) ; un emplacement a un seul accessoire (visage : joues) boucle sur la palette
+    // few exact duplicates (accessory + colors); a slot with a single accessory loops through the palette
     expect(new Set(items.map((i) => [i.accessory, i.c1, i.c2].join('|'))).size).toBeGreaterThanOrEqual(8)
     for (const it of items) {
       expect(ACCESSORY_BY_KEY.has(`${e}:${it.accessory}`), it.accessory).toBe(true)
       for (const c of [it.c1, it.c2]) expect(c).toMatch(/^#[0-9a-f]{6}$/i)
       expect(Number.isFinite(it.yaw)).toBe(true)
       expect(it.label).not.toMatch(/[—–à-ÿ]/)
-      // une piece a deux couleurs a deux couleurs bien distinctes ; sinon une seule
+      // a two-color piece has two clearly different colors; otherwise a single one
       if (it.c1 !== it.c2) expect(distanceColor(it.c1, it.c2), it.key).toBeGreaterThanOrEqual(GAP_MIN - 1e-9)
     }
   })
 
-  it('beaucoup de variantes de couleurs : chaque accessoire revient dans plusieurs teintes', () => {
+  it('many color variants: each accessory comes back in several tints', () => {
     for (const e of SLOTS) {
       const items = itemsStrip(e)
       const byAcc = new Map<string, Set<string>>()
@@ -43,7 +43,7 @@ describe('bandes d accessoires (pieces seules)', () => {
     }
   })
 
-  it('les pieces se voient de trois quarts, celles du dos de dos ou de trois quarts arriere', () => {
+  it('pieces are seen at three quarters, back pieces from behind or three quarters behind', () => {
     for (const e of SLOTS) {
       for (const it of itemsStrip(e)) {
         const a = Math.abs(it.yaw)
@@ -54,32 +54,32 @@ describe('bandes d accessoires (pieces seules)', () => {
     }
   })
 
-  it('c est deterministe : memes bandes a chaque visite', () => {
+  it('it is deterministic: the same strips on every visit', () => {
     expect(itemsStrip('neck')).toEqual(itemsStrip('neck'))
   })
 
-  it('none corps dans les bandes : le rendu des pieces est demande sans corps, cadre serre et centre', () => {
+  it('no body in the strips: pieces are rendered without a body, tightly framed and centered', () => {
     const v = source('./thumbnails.ts')
     // rendreAvatar(..., sansCorps = true, centre)
     expect(v).toMatch(/undefined, true, centre\)/)
     expect(v).toContain('boxOpaque')
   })
 
-  it('les bandes defilantes ne sont plus sur la page (06/11/2026) : les pieces sont des images pre-rendues dans le selecteur', () => {
+  it('scrolling strips are no longer on the page (06/11/2026): pieces are pre-rendered images in the picker', () => {
     const site = source('./Site.ts')
     expect(site).not.toMatch(/Habillage|BandeAccessoires/)
     const custom = source('./BodyCustomizer.ts')
-    // icones : images pre-rendues (public/rendus), jamais un rendu 3D au chargement ni au changement de theme
+    // icons: pre-rendered images (public/renders), never a 3D render on load or on theme change
     expect(custom).toContain('urlPiece')
     expect(custom).not.toContain('renderThumbnail')
     expect(custom.match(/c\(Vivant/g)).toHaveLength(1)
-    // les images sont faites par tools/rendus.ts avec rendreVignette et itemPiece
+    // the images are made by tools/renders.ts with renderThumbnail and itemPiece
     const tool = readFileSync(new URL('../../tools/renders.ts', import.meta.url), 'utf8')
     expect(tool).toContain('renderThumbnail')
     expect(tool).toContain('itemPiece')
   })
 
-  it('itemPiece : chaque accessoire du catalogue a son icone, dans ses couleurs, vu de trois quarts', () => {
+  it('itemPiece: each catalog accessory has its icon, in its colors, seen at three quarters', () => {
     for (const a of ACCESSORIES) {
       const it = itemPiece(a.slot, a.id)!
       expect(it, a.id).not.toBeNull()
@@ -92,25 +92,25 @@ describe('bandes d accessoires (pieces seules)', () => {
   })
 })
 
-describe('vignettes : cadrage et couleurs', () => {
-  it('boiteOpaque trouve la boite des pixels non transparents, en unites du moteur (y vers le haut)', () => {
+describe('thumbnails: framing and colors', () => {
+  it('boxOpaque finds the box of non transparent pixels, in engine units (y up)', () => {
     const px = 100
     const d = new Uint8ClampedArray(px * px * 4)
-    // un rectangle opaque : x 20..39, y 10..29 (haut de l image)
+    // an opaque rectangle: x 20..39, y 10..29 (top of the image)
     for (let y = 10; y < 30; y++) for (let x = 20; x < 40; x++) d[(y * px + x) * 4 + 3] = 255
     const b = boxOpaque(d, px, 50)!
     expect(b.w).toBeCloseTo(20, 5)
     expect(b.h).toBeCloseTo(20, 5)
     expect(b.cx).toBeCloseTo(30 - 50, 5)
-    // le haut de l image est vers y > 0
+    // the top of the image is towards y > 0
     expect(b.cy).toBeCloseTo(-(20 - 50), 5)
     expect(boxOpaque(new Uint8ClampedArray(px * px * 4), px, 50)).toBeNull()
   })
 
-  it('boitesOpaques : une branche fine ne decide pas de la taille du coeur de la piece', () => {
+  it('boxesOpaque: a thin arm does not decide the size of the piece\'s core', () => {
     const px = 200
     const d = new Uint8ClampedArray(px * px * 4)
-    // une monture 40x40 centree en (100, 100) et une branche d un pixel d epaisseur qui part vers la droite jusqu a x = 190
+    // a 40x40 frame centered at (100, 100) and a one-pixel arm going right up to x = 190
     for (let y = 80; y < 120; y++) for (let x = 80; x < 120; x++) d[(y * px + x) * 4 + 3] = 255
     for (let x = 120; x < 190; x++) d[(100 * px + x) * 4 + 3] = 255
     const b = boxesOpaque(d, px, 100)!
@@ -120,7 +120,7 @@ describe('vignettes : cadrage et couleurs', () => {
     expect(b.heart.cx).toBeCloseTo(0, 5)
   })
 
-  it('en dark, une piece noire est eclaircie ; en light, rien ne change', () => {
+  it('in dark, a black piece is lightened; in light, nothing changes', () => {
     expect(colorForTheme('#26222f', 'light')).toBe('#26222f')
     const c = colorForTheme('#26222f', 'dark')
     expect(c).not.toBe('#26222f')

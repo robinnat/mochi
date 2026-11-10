@@ -2,10 +2,9 @@ import { ref, type Ref } from '@/ui/dom/reactive'
 import { onUnmount as onBeforeUnmount, onMount as onMounted } from '@/ui/dom/h'
 
 /**
- * Mouvements du site, sans bibliotheque : tout passe par `transform` et `opacity` (composites, 60 i/s),
- * un seul IntersectionObserver partage pour les apparitions, et une seule boucle `requestAnimationFrame`
- * par effet, qui ne tourne que pendant un defilement ou un mouvement du pointeur.
- * Avec `prefers-reduced-motion`, rien ne bouge : les elements sont visibles d'emblee.
+ * Site motion, with no library: everything goes through `transform` and `opacity` (composited, 60 fps), a single
+ * shared IntersectionObserver for reveals, and a single `requestAnimationFrame` loop per effect, which only runs
+ * during a scroll or a pointer move. With `prefers-reduced-motion`, nothing moves: elements are visible right away.
  */
 
 export const motionReduced = (): boolean =>
@@ -28,18 +27,18 @@ function observer(): IntersectionObserver | null {
 }
 
 /**
- * `reveal(rang)` : a poser en `ref` d'un element. L'element apparait en glissant vers le haut quand il entre a
- * l'ecran, une seule fois. Le rang (facultatif) est sa place dans un groupe : le decalage en cascade se lit dans `--i`.
+ * `reveal(rank)`: set as the `ref` of an element. The element appears sliding up when it enters the screen, only
+ * once. The rank (optional) is its place in a group: the cascade delay reads from `--i`.
  */
 export function reveal(rang?: number): (el: Element | null) => void {
   return (el) => {
-    // retrait : rien a faire (l'observateur lache l'element des qu'il est apparu)
+    // removal: nothing to do (the observer lets go of the element as soon as it appeared)
     if (!el) return
     const e = el as HTMLElement & { __rv?: boolean; __keep?: string[] }
-    // deja pris en charge (un nouveau dessin redonne une nouvelle fonction pour le meme element)
+    // already handled (a new drawing gives a new function for the same element)
     if (e.__rv) return
     e.__rv = true
-    // ces classes survivent a un changement de `class` par le dessin
+    // these classes survive a `class` change by the drawing
     e.__keep = ['rv', 'in']
     e.classList.add('rv')
     if (rang !== undefined) e.style.setProperty('--i', String(rang))
@@ -53,9 +52,9 @@ export function reveal(rang?: number): (el: Element | null) => void {
 }
 
 /**
- * Progression du defilement d'un element : 0 quand son haut touche le haut de la fenetre, 1 quand il en
- * est sorti de toute sa hauteur. Ecrite dans la variable CSS `--s` de l'element (et rendue), mise a jour
- * dans une image d'animation seulement quand la page defile. Rien sous `prefers-reduced-motion`.
+ * Scroll progress of an element: 0 when its top touches the top of the window, 1 when it has left by its full height.
+ * Written to the element's CSS variable `--s` (and returned), updated in an animation frame only while the page
+ * scrolls. Nothing under `prefers-reduced-motion`.
  */
 export function useScroll(el: Ref<HTMLElement | null>, onChange?: (s: number) => void) {
   const s = ref(0)
@@ -87,9 +86,9 @@ export function useScroll(el: Ref<HTMLElement | null>, onChange?: (s: number) =>
 }
 
 /**
- * Position du pointeur dans la fenetre, de -1 a 1 sur chaque axe, lissee (ressort critique simple) :
- * ecrite dans `--mx` et `--my` de l'element. La boucle s'arrete quand la valeur est atteinte.
- * Sur un ecran tactile sans survol, elle reste a 0.
+ * Pointer position in the window, from -1 to 1 on each axis, smoothed (simple critical spring): written to the
+ * element's `--mx` and `--my`. The loop stops once the value is reached. On a touch screen without hover, it stays at
+ * 0.
  */
 export function usePointer(el: Ref<HTMLElement | null>, onChange?: (x: number, y: number) => void) {
   let cx = 0
@@ -129,7 +128,7 @@ export function usePointer(el: Ref<HTMLElement | null>, onChange?: (x: number, y
   })
 }
 
-/** Largeur de la fenetre, suivie (pour la taille des Mochi, qui est en pixels). */
+/** Window width, tracked (for the Mochi size, which is in pixels). */
 export function useWidth() {
   const w = ref(typeof window === 'undefined' ? 1200 : window.innerWidth)
   const update = () => (w.value = window.innerWidth)
@@ -138,7 +137,7 @@ export function useWidth() {
   return w
 }
 
-/** Element visible a l'ecran (pour mettre en pause une boucle hors champ). */
+/** Element visible on screen (to pause a loop out of view). */
 export function useVisible(el: Ref<HTMLElement | null>, margin = '0px') {
   const v = ref(typeof IntersectionObserver === 'undefined')
   let o: IntersectionObserver | null = null

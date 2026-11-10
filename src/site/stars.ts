@@ -1,9 +1,9 @@
 import { ref } from '@/ui/dom/reactive'
 
 /**
- * Nombre d'etoiles GitHub du depot, lu dans le navigateur sur l'API publique de GitHub, SANS jeton (le depot est
- * public : aucun secret). Un seul appel par visite, garde une heure dans le navigateur. Si l'appel echoue, depasse la
- * limite de GitHub ou rend autre chose qu'un nombre : `null`, et la barre montre l'icone seule. Jamais de faux nombre.
+ * GitHub star count of the repository, read in the browser from GitHub's public API, WITHOUT a token (the repository
+ * is public: no secret). A single call per visit, kept one hour in the browser. If the call fails, hits GitHub's
+ * limit or returns something else than a number: `null`, and the bar shows the icon alone. Never a fake number.
  */
 export const API_REPO = 'https://api.github.com/repos/robinnat/mochi'
 export const KEY_CACHE = 'mochi:stars'
@@ -17,7 +17,7 @@ export function formatStars(n: number): string {
   return `${String(t).replace(/\.0$/, '')}k`
 }
 
-/** Valeur gardee si elle est recente et valide ; sinon `null`. */
+/** Kept value if it is recent and valid; otherwise `null`. */
 export function readCache(raw: string | null, maintenant: number): number | null {
   if (!raw) return null
   try {
@@ -30,17 +30,17 @@ export function readCache(raw: string | null, maintenant: number): number | null
   }
 }
 
-/** Le champ `stargazers_count` de la reponse, s'il est un entier positif ; sinon `null`. */
+/** The `stargazers_count` field of the response, if it is a positive integer; otherwise `null`. */
 export function readResponse(json: unknown): number | null {
   const n = (json as { stargazers_count?: unknown } | null)?.stargazers_count
   return typeof n === 'number' && Number.isInteger(n) && n >= 0 ? n : null
 }
 
-/** Le nombre d'etoiles, `null` tant qu'il n'est pas connu (ou s'il ne peut pas l'etre). */
+/** The star count, `null` until it is known (or if it cannot be). */
 export const stars = ref<number | null>(null)
 let request = false
 
-/** Lance la lecture une fois par page (cache d'abord, puis l'API). Sans effet hors navigateur. */
+/** Starts the read once per page (cache first, then the API). No effect outside a browser. */
 export function loadStars(f: typeof fetch | undefined = typeof fetch === 'undefined' ? undefined : fetch) {
   if (request || typeof window === 'undefined' || !f) return
   request = true
@@ -48,7 +48,7 @@ export function loadStars(f: typeof fetch | undefined = typeof fetch === 'undefi
   try {
     cache = localStorage.getItem(KEY_CACHE)
   } catch {
-    // stockage bloque : on lit l'API sans garder
+    // storage blocked: read the API without keeping it
   }
   const kept = readCache(cache, Date.now())
   if (kept !== null) {
@@ -64,10 +64,10 @@ export function loadStars(f: typeof fetch | undefined = typeof fetch === 'undefi
       try {
         localStorage.setItem(KEY_CACHE, JSON.stringify({ n, t: Date.now() }))
       } catch {
-        // rien a garder : on relira a la prochaine visite
+        // nothing to keep: read again on the next visit
       }
     })
     .catch(() => {
-      // hors ligne, limite de GitHub atteinte : l'icone seule
+      // offline, GitHub limit reached: the icon alone
     })
 }

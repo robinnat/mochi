@@ -5,7 +5,9 @@ import { ACCESSORIES, SLOTS } from 'mochis/catalogue'
 import { SLOT_LABEL } from './catalog'
 import { reveal } from './motion'
 
-/** Le reste, en cartes : clair et sombre, accessoires, chargement a la demande, moteur pur, exports. Images figees seulement. */
+/**
+ * The rest, as cards: light and dark, accessories, loading on demand, pure engine, exports. Still images only.
+ */
 const N_ACC = ACCESSORIES.length
 const SLOT_COUNT = SLOTS.length
 const SLOT_LABELS = SLOTS.map((e) => SLOT_LABEL[e].toLowerCase()).join(', ')

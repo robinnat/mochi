@@ -4,23 +4,23 @@ export interface OptionsExtrait {
   shape: string
   color: string
   renderStyle: RenderStyleId
-  /** contour : options du PAQUET, plus exposees sur le site (06/11/2026) ; absent = pas de contour */
+  /** outline: options of the PACKAGE, no longer shown on the site (06/11/2026); absent = no outline */
   outline?: boolean
-  /** epaisseur du contour (facteur, 1 = defaut) ; ecrite seulement si elle differe et si le contour est actif */
+  /** outline width (factor, 1 = default); written only if it differs and the outline is on */
   thickness?: number
-  /** reflet doux du 3D Soft : actif de base, `false` seulement pour le code qui le coupe */
+  /** soft highlight of the Soft 3D: on by default, `false` only for code that turns it off */
   highlight?: boolean
   mood: string
-  /** accessoires par emplacement, avec leurs couleurs */
+  /** accessories by slot, with their colors */
   accessories: AccessorySelection
-  /** `auto` : rien a ecrire, Mochi suit la page */
+  /** `auto`: nothing to write, Mochi follows the page */
   theme: 'auto' | 'light' | 'dark'
   /** ordinateur du mood `working` (defaut : oui) */
   laptop: boolean
   size?: number
 }
 
-/** `{ head: 'cap' }` quand les couleurs sont celles du catalogue, sinon `{ id, c1, c2 }` (seulement ce qui change). */
+/** `{ head: 'cap' }` when the colors are the catalog's, else `{ id, c1, c2 }` (only what changes). */
 export function accessoriesAsCode(sel: AccessorySelection): string {
   const l: string[] = []
   for (const e of SLOTS) {
@@ -37,7 +37,9 @@ export function accessoriesAsCode(sel: AccessorySelection): string {
   return l.length ? `{ ${l.join(', ')} }` : ''
 }
 
-/** Meme selection en JSON, pour l'attribut `accessories` de `<mochi-bot>` (seulement ce qui change du catalogue). */
+/**
+ * Same selection as JSON, for the `accessories` attribute of `<mochi-bot>` (only what changes from the catalog).
+ */
 export function accessoriesAsJson(sel: AccessorySelection): string {
   const o: Record<string, string | { id: string; c1?: string; c2?: string }> = {}
   for (const e of SLOTS) {
@@ -55,17 +57,17 @@ export function accessoriesAsJson(sel: AccessorySelection): string {
 }
 
 /**
- * L'extrait de code montre par la section « Make it yours » : la balise `<mochi-bot>` en HTML (valable telle quelle
- * dans n'importe quel framework), seulement ce qui differe des valeurs par defaut.
+ * The code excerpt shown by the "Make it yours" section: the `<mochi-bot>` tag in HTML (valid as is in any
+ * framework), only what differs from the default values.
  */
 export function extraitCode(o: OptionsExtrait): string {
   const l = [`  shape="${o.shape}"`, `  color="${o.color}"`]
   if (o.renderStyle !== '3d') l.push(`  renderStyle="${o.renderStyle}"`)
   if (o.outline) {
-    l.push('  contour')
+    l.push('  outline')
     if (o.thickness !== undefined && Math.abs(o.thickness - 1) > 1e-6) l.push(`  outline-width="${Number(o.thickness.toFixed(2))}"`)
   }
-  if (o.renderStyle === '3d' && o.highlight === false) l.push('  reflet="false"')
+  if (o.renderStyle === '3d' && o.highlight === false) l.push('  highlight="false"')
   l.push(`  mood="${o.mood}"`)
   if (o.mood === 'working' && !o.laptop) l.push('  ordinateur="false"')
   const acc = accessoriesAsJson(o.accessories)

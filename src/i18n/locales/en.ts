@@ -1,9 +1,8 @@
 import type fr from './fr'
 
 /**
- * Le type `typeof fr` est le verrou : une cle oubliee ou mal orthographiee est
- * une erreur de compilation nommee, pas une chaine manquante decouverte a
- * l'ecran.
+ * The `typeof fr` type is the lock: a forgotten or misspelled key is a named compile error, not a missing string
+ * found on screen.
  */
 const en: typeof fr = {
   app: {

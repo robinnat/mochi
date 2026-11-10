@@ -1,7 +1,7 @@
 /**
- * Coloration syntaxique minimale des exemples du site (HTML, TypeScript, shell), en une seule passe
- * d'expression reguliere : commentaires, chaines, balises, attributs, mots-cles, nombres. Le texte est
- * TOUJOURS echappe avant d'etre enveloppe, le resultat peut donc aller dans `innerHTML` sans risque.
+ * Minimal syntax highlighting of the site's examples (HTML, TypeScript, shell), in a single regular expression pass:
+ * comments, strings, tags, attributes, keywords, numbers. The text is ALWAYS escaped before being wrapped, so the
+ * result can safely go into `innerHTML`.
  */
 
 const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')

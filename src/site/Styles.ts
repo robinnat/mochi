@@ -8,9 +8,9 @@ import { reveal, useWidth, useVisible } from './motion'
 import type { RenderStyleId } from 'mochis/catalogue'
 
 /**
- * Les trois styles, au defilement : la scene reste collee pendant que les trois etapes passent, et le Mochi change
- * de style quand une etape arrive au milieu de l'ecran. Il tourne doucement sur lui-meme (vraie 3D, `yaw`) tant que
- * la scene est visible. Sur telephone, chaque etape porte sa propre image figee.
+ * The three styles, on scroll: the scene stays stuck while the three steps go by, and the Mochi changes style when a
+ * step reaches the middle of the screen. It turns slowly on itself (real 3D, `yaw`) as long as the scene is visible.
+ * On a phone, each step carries its own frozen image.
  */
 const STEPS: { id: RenderStyleId; name: string; code: string; text: string; background: string }[] = [
   {
@@ -48,7 +48,7 @@ export const Styles: Component<Record<string, never>> = () => {
   let obs: IntersectionObserver | null = null
   onMount(() => {
     if (typeof IntersectionObserver === 'undefined') return
-    // une etape devient active quand elle traverse la bande du milieu de l'ecran
+    // a step becomes active when it crosses the band in the middle of the screen
     obs = new IntersectionObserver(
       (es) => {
         for (const e of es) if (e.isIntersecting) active.value = Number((e.target as HTMLElement).dataset.i ?? 0)
@@ -58,7 +58,7 @@ export const Styles: Component<Record<string, never>> = () => {
     for (const el of steps) obs.observe(el)
   })
 
-  /** Tourne-disque : un aller-retour lent de +-0,55 rad, seulement quand la scene est a l'ecran. */
+  /** Turntable: a slow back and forth of +-0.55 rad, only when the scene is on screen. */
   const yaw = ref(0)
   let raf = 0
   let t0 = 0

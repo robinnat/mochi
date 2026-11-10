@@ -6,12 +6,11 @@ import { effectiveTheme } from './theme'
 import { pageReady, warmUpStyles, RATIO_MAX, FPS_ALIVE } from './ready'
 
 /**
- * Un Mochi vivant, sans jamais de 2D a l'ecran :
- * 1. l'affiche (image pre-rendue de la vraie 3D, meme cadrage, meme pose) s'affiche tout de suite ;
- * 2. quand l'element est a l'ecran ET que la page est prete, le composant (et Three.js) se charge, invisible ;
- * 3. a sa premiere image 3D (`ready`), il apparait en fondu par-dessus l'affiche.
- * Hors de l'ecran, il est retire (aucune boucle ne tourne) et l'affiche reprend sa place.
- * Sans affiche (`poster` nul), la place reste vide jusqu'au fondu.
+ * A live Mochi, with never any 2D on screen:
+ * 1. the poster (a pre-rendered image of the real 3D, same framing, same pose) shows at once;
+ * 2. when the element is on screen AND the page is ready, the component (and Three.js) loads, invisible;
+ * 3. on its first 3D frame (`ready`), it fades in over the poster. Off screen, it is removed (no loop runs) and the
+ *    poster takes its place back. Without a poster (`poster` null), the place stays empty until the fade.
  */
 export interface AliveProps {
   size: number
@@ -21,11 +20,11 @@ export interface AliveProps {
   eager?: boolean
   yaw?: number
   rotate?: boolean
-  /** les options du `<mochi-bot>` (forme, couleur, humeur...) */
+  /** the options of the `<mochi-bot>` (shape, color, mood...) */
   bot?: Partial<MochiBotProps>
 }
 
-/** Le composant `<mochi-bot>` n'est charge qu'au premier Mochi vivant a monter (import dynamique, partage). */
+/** The `<mochi-bot>` component only loads with the first live Mochi to mount (dynamic import, shared). */
 let loading: Promise<unknown> | null = null
 const componentLoaded = ref(typeof customElements !== 'undefined' && !!customElements.get('mochi-bot'))
 function loadComponent() {
@@ -49,14 +48,16 @@ export const Alive: Component<AliveProps> = (props) => {
   })
   onUnmount(() => obs?.disconnect())
 
-  /* ------------------------------------------------------------------ tourner au doigt (ou a la souris), avec inertie */
+  /*
+ * ------------------------------------------------------------------ turn with a finger (or the mouse), with inertia
+ */
   /**
-   * Un glisse plutot horizontal sur le Mochi le fait tourner (`yaw`) ; un glisse plutot vertical laisse la page
-   * defiler (`touch-action: pan-y`). Au lacher, il continue sur sa lancee et ralentit. Le tap, le double tap et
-   * l'appui long restent ceux du composant.
+   * A mostly horizontal drag on the Mochi turns it (`yaw`); a mostly vertical drag lets the page scroll
+   * (`touch-action: pan-y`). On release, it keeps going and slows down. Tap, double tap and long press stay the
+   * component's.
    */
   const spin = ref(0)
-  /** radians par pixel glisse : un glisse de la largeur du Mochi fait a peu pres un tour */
+  /** radians per dragged pixel: a drag the width of the Mochi makes about one turn */
   const K = () => (2 * Math.PI) / Math.max(120, props.size * 1.1)
   let drag: { id: number; x0: number; y0: number; x: number; t: number; active: boolean } | null = null
   let speed = 0
@@ -84,7 +85,7 @@ export const Alive: Component<AliveProps> = (props) => {
         try {
           root?.setPointerCapture(e.pointerId)
         } catch {
-          // pointeur deja relache
+          // pointer already released
         }
       } else if (Math.abs(dy) > 10) {
         drag = null
@@ -94,7 +95,7 @@ export const Alive: Component<AliveProps> = (props) => {
     const d = (e.clientX - g.x) * K()
     const dt = Math.max(1, e.timeStamp - g.t)
     spin.value += d
-    // vitesse lissee (radians par ms), pour une lancee reguliere
+    // smoothed speed (radians per ms), for a steady spin
     speed = speed * 0.6 + (d / dt) * 0.4
     g.x = e.clientX
     g.t = e.timeStamp

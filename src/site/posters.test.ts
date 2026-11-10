@@ -6,40 +6,40 @@ import { POSTERS, SCROLL, PIECES, urlPoster, urlPiece } from './posters'
 const publicDir = new URL('../../public', import.meta.url)
 const exists = (url: string) => existsSync(new URL('.' + url, publicDir + '/'))
 const folder = new URL('./', import.meta.url)
-// les composants du site : un fichier .ts par section, nomme en majuscule
+// the site components: one .ts file per section, named with a capital
 const pages = readdirSync(folder).filter((f) => /^[A-Z].*\.ts$/.test(f))
 const read = (f: string) => readFileSync(new URL(f, folder), 'utf8')
 
 describe('images pre-rendues (v11)', () => {
-  it('chaque poster et chaque piece a son image, en light et en dark', () => {
+  it('each poster and each piece has its image, in light and in dark', () => {
     for (const t of ['light', 'dark'] as const) {
       for (const a of POSTERS) expect(exists(urlPoster(a.name, t)), urlPoster(a.name, t)).toBe(true)
       for (const p of PIECES) expect(exists(urlPiece(p.slot, p.id, t)), urlPiece(p.slot, p.id, t)).toBe(true)
     }
   })
 
-  it('les anciennes sections ne sont plus dans la page', () => {
+  it('the old sections are no longer in the page', () => {
     expect(read('Site.ts')).not.toMatch(/Faces|Gestes|Metiers/)
   })
 
-  it('les noms sont uniques', () => {
+  it('names are unique', () => {
     expect(new Set(POSTERS.map((a) => a.name)).size).toBe(POSTERS.length)
   })
 
-  it('aucune section du site ne monte <mochi-bot> directement : images ou Vivant (poster puis 3D en fondu, jamais de 2D)', () => {
+  it('no site section mounts <mochi-bot> directly: images or Alive (poster then 3D fading in, never 2D)', () => {
     for (const f of pages) {
       if (f === 'Vivant.ts') continue
       expect(read(f), f).not.toMatch(/'mochi-bot'/)
       expect(read(f), f).not.toMatch(/^import [^\n]*components\/mochi-bot/m)
     }
     const v = read('Vivant.ts')
-    // le composant arrive par l'entree publique du paquet, comme chez un utilisateur
+    // the component arrives through the package's public entry, as for a user
     expect(v).toContain("import('mochis')")
     expect(v).toContain('onPret: surPret')
     expect(v).toContain('IntersectionObserver')
   })
 
-  it('les affiches utilisees par les pages existent dans le manifeste', () => {
+  it('the posters used by the pages exist in the manifest', () => {
     const names = new Set(POSTERS.map((a) => a.name))
     const everything = pages.map(read).join('\n') + readFileSync(new URL('../docs/Docs.ts', import.meta.url), 'utf8')
     let seen = 0
@@ -51,7 +51,7 @@ describe('images pre-rendues (v11)', () => {
     expect(seen).toBeGreaterThanOrEqual(2)
   })
 
-  it('la carte des accessoires scroll sur tout le catalogue (sans les quatre retires), compteur lu dans le catalogue, immobile si mouvement reduit', () => {
+  it('the accessories card scrolls through the whole catalog (without the four removed), counter read from the catalog, still with reduced motion', () => {
     const seen = new Set<string>()
     for (const d of SCROLL) {
       for (const [e, ch] of Object.entries(d.variant.acc)) {

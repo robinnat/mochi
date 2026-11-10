@@ -1,8 +1,7 @@
 /**
- * Catalogue du site : libelles ANGLAIS. Les ids viennent du paquet (`mochis`, l'entree
- * publique de la bibliotheque, comme pour n'importe quel utilisateur) ; le site ne definit
- * aucune mesure. Les libelles de formes, couleurs, etats et styles reprennent ceux de
- * l'application (`src/i18n/locales/en.ts`).
+ * Site catalog: ENGLISH labels. Ids come from the package (`mochis`, the library's public entry, as for any user);
+ * the site defines no measurement. Labels of shapes, colors, states and styles reuse the app's
+ * (`src/i18n/locales/en.ts`).
  */
 import en from '@/i18n/locales/en'
 import { ACCESSORIES, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochis/catalogue'
@@ -12,8 +11,8 @@ export const COLOR_LABEL = en.colors as Record<string, string>
 export const SHAPE_ID_LIST = SHAPES.map((s) => s.id)
 
 /**
- * Palette des exemples du site : 14 teintes vives (P1 « Bonbons et jouets »), toutes lisibles sur le fond clair
- * ET sur le fond sombre de la page (aucune quasi-blanche ni quasi-noire ; `catalog.test.ts` le verifie).
+ * Palette of the site's examples: 14 bright tints (P1 "Candy and toys"), all readable on the light AND the dark page
+ * background (none almost white or almost black; `catalog.test.ts` checks it).
  */
 export const PALETTE_SITE: { name: string; hex: string }[] = [
   { name: 'Tomato', hex: '#ff3b30' },
@@ -32,7 +31,7 @@ export const PALETTE_SITE: { name: string; hex: string }[] = [
   { name: 'Cherry', hex: '#e6194b' }
 ]
 
-/** Les formes 3D du site, chacune avec SA couleur (12 formes, 12 teintes differentes de la palette). */
+/** The site's 3D shapes, each with ITS color (12 shapes, 12 different tints of the palette). */
 export const SHAPES_3D: { id: string; label: string; color: string }[] = [
   { id: 'circle', label: 'Circle', color: '#00c46a' },
   { id: 'pebble', label: 'Pebble', color: '#21b0ff' },
@@ -48,14 +47,16 @@ export const SHAPES_3D: { id: string; label: string; color: string }[] = [
   { id: 'heart', label: 'Heart', color: '#ff3b30' }
 ]
 
-/* ------------------------------------------------------------------ humeurs, interactions, accessoires par emplacements */
+/*
+ * ------------------------------------------------------------------ moods, interactions, accessories by slot
+ */
 
 
-/** Les sept humeurs : nom et une phrase, en anglais. */
+/** The seven moods: name and one sentence, in English. */
 export const SITE_MOODS: { id: MoodId; label: string; text: string }[] = [
   { id: 'idle', label: 'Rest', text: 'Soft breathing, blinks, a gaze that wanders.' },
   { id: 'thinking', label: 'Thinking', text: 'Eyes up, squinting, one a little more closed than the other.' },
-  { id: 'working', label: 'Working', text: 'Types on a small 3D laptop seen from behind: quick uneven bounces, a lean from side to side, gaze down, and pauses to think. It grows in and out as the mood starts and ends (the ordinateur prop hides it).' },
+  { id: 'working', label: 'Working', text: 'Types on a small 3D laptop seen from behind: quick uneven bounces, a lean from side to side, gaze down, and pauses to think. It grows in and out as the mood starts and ends (the laptop option hides it).' },
   { id: 'waiting', label: 'Waiting', text: 'Looking straight ahead, head tilted, a little impatient.' },
   { id: 'done', label: 'Done', text: 'Happy crescent eyes and two small jumps of joy.' },
   { id: 'blocked', label: 'Blocked', text: 'Frowning eyes in mirror and a shake that comes in bursts.' },
@@ -63,7 +64,7 @@ export const SITE_MOODS: { id: MoodId; label: string; text: string }[] = [
 ]
 export const MOOD_ID_LIST: MoodId[] = MOOD_IDS
 
-/** Les reactions a l'utilisateur, avec le geste qui les declenche. */
+/** Reactions to the user, with the gesture that triggers them. */
 export const INTERACTIONS_SITE: { gesture: string; name: string; text: string }[] = [
   { gesture: 'Hover', name: 'Follows you', text: 'The gaze and a small head turn follow the pointer.' },
   { gesture: 'Tap', name: 'Startle', text: 'A squash and a damped bounce.' },
@@ -82,10 +83,10 @@ export const SLOT_LABEL: Record<Slot, string> = {
 }
 export const SLOT_IDS = SLOTS
 
-/** Libelles anglais des accessoires du catalogue. */
+/** English names of the catalog accessories. */
 export const SITE_ACCESSORIES = (e: Slot) => accessoriesInSlot(e).map((a) => ({ id: a.id, label: a.name, c1: a.c1, c2: a.c2 }))
 
-/** Les chiffres du hero : tous lus dans les catalogues du moteur, aucun n'est ecrit a la main. */
+/** The hero figures: all read from the engine's catalogs, none written by hand. */
 export const FIGURES: { value: number; label: string }[] = [
   { value: SHAPES.length, label: 'shapes' },
   { value: RENDER_STYLES.length, label: '3D styles' },

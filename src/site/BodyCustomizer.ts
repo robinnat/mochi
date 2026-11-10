@@ -15,10 +15,10 @@ const COLOR_NAMES: Record<string, string> = {
   red: 'Red', yellow: 'Yellow', turquoise: 'Teal', navy: 'Navy', pink: 'Pink', cream: 'Cream', black: 'Black',
   gold: 'Gold', green: 'Green', orange: 'Orange', violet: 'Purple', blue: 'Blue', straw: 'Straw'
 }
-/** Couleurs des accessoires : la palette du catalogue des accessoires (les pieces naissent dans ces teintes). */
+/** Accessory colors: the palette of the accessory catalog (pieces come in these tints). */
 const PALETTE_ACC = Object.entries(ACCESSORY_PALETTE).map(([id, hex]) => ({ id, hex, label: COLOR_NAMES[id] ?? id }))
 
-/** Icones des formes : la vraie silhouette du moteur, en SVG. */
+/** Shape icons: the engine's real silhouette, in SVG. */
 const silhouette = (id: string) => {
   const radii = SHAPE_BY_ID.get(id)?.radii
   return radii ? shapePath(radii) : ''
@@ -37,7 +37,7 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
 
   /* ------------------------------------------------------------------ choix */
   const shape = ref('star')
-  /** une couleur libre en hex (`#ff8800`) ou un id du catalogue du moteur */
+  /** any hex color (`#ff8800`) or an id of the engine's catalog */
   const color = ref('#21b0ff')
   const textHex = ref('#21b0ff')
   const hexCurrent = computed(() => colorOf(color.value))
@@ -55,10 +55,10 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
   const mood = ref<MoodId>('idle')
   const laptop = ref(true)
   const theme = ref<'auto' | 'light' | 'dark'>('auto')
-  /** Rejouer le salut a l'arrivee. */
+  /** Replay the hello on arrival. */
   const arrival = ref(0)
 
-  /** Les pieces portees, une par emplacement ; remplacees en bloc a chaque changement (jamais mutees). */
+  /** Worn pieces, one per slot; replaced as a whole on each change (never mutated). */
   const choice = ref<Record<Slot, ChoicePiece>>({
     head: { id: 'cap', c1: ACCESSORY_PALETTE.red, c2: ACCESSORY_PALETTE.red },
     eyes: NONE,
@@ -86,7 +86,7 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
     return s
   })
   const nWorn = computed(() => SLOT_IDS.filter((e) => choice.value[e].id).length)
-  /** Onglets : fleches gauche et droite, Debut et Fin (contrat clavier du role `tablist`), le focus suit. */
+  /** Tabs: left and right arrows, Home and End (keyboard contract of the `tablist` role), focus follows. */
   function keyboardTabs(ev: KeyboardEvent) {
     const i = SLOT_IDS.indexOf(slot.value)
     const n = SLOT_IDS.length
@@ -101,7 +101,7 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
     for (const e of SLOT_IDS) choose(e, '')
   }
 
-  /** Rejouer le salut remonte le Mochi ; forme, style, couleur et humeur changent sans le remonter. */
+  /** Replaying the hello remounts the Mochi; shape, style, color and mood change without remounting it. */
   const key = computed(() => [arrival.value, reduced.value].join('|'))
 
   const excerpt = computed(() =>
@@ -116,12 +116,12 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
     })
   )
 
-  /** Icones des accessoires : images pre-rendues (public/rendus). */
+  /** Accessory icons: pre-rendered images (public/renders). */
   const icon = (e: Slot, id: string) => urlPiece(e, id, effectiveTheme.value)
 
   /**
-   * Reponse immediate (v12) : un clic change d'abord le bouton (peint a l'image suivante), et le Mochi recoit le
-   * changement juste APRES cette image. Plusieurs changements rapides se regroupent en un seul rendu.
+   * Immediate response (v12): a click first changes the button (painted on the next frame), and the Mochi gets the
+   * change right AFTER that frame. Several quick changes group into a single render.
    */
   const stateBot = () => ({
     shape: shape.value,
@@ -134,7 +134,9 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
   })
   const bot = shallowRef(stateBot())
   let pending = false
-  /** L'affiche (image pre-rendue) ne vaut que pour le Mochi de depart : au premier changement, plus d'affiche. */
+  /**
+ * The poster (pre-rendered image) only holds for the starting Mochi: on the first change, no more poster.
+ */
   const pressedKey = ref(false)
   watch([shape, color, renderStyle, mood, laptop, theme, accessories], () => {
     pressedKey.value = true

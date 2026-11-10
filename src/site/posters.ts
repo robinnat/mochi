@@ -1,11 +1,11 @@
 /**
- * Images PRE-RENDUES du site : chaque Mochi fige de la page (petits Mochi du hero, formes, cartes, icones des
- * accessoires) et l'affiche de chaque Mochi vivant (montree tout de suite, avant que la 3D ne soit prete) est une
- * image de la VRAIE 3D, rendue une fois par le vrai composant (`tools/rendus.html`, Chrome headless) dans
- * `public/rendus/`, en clair et en sombre. Au chargement, la page n'a donc ni Three.js a telecharger ni rendu 3D a
- * faire pour ces images, et jamais de repli 2D a l'ecran.
+ * PRE-RENDERED images of the site: each frozen Mochi of the page (small hero Mochis, shapes, cards, accessory icons)
+ * and the poster of each live Mochi (shown at once, before the 3D is ready) is an image of the REAL 3D, rendered once
+ * by the real component (`tools/renders.html`, headless Chrome) into `public/renders/`, in light and dark. On load,
+ * the page has neither Three.js to download nor 3D rendering to do for these images, and never a 2D fallback on
+ * screen.
  *
- * Les props ecrites ici sont celles que la page passe au Mochi vivant : l'affiche et la 3D vivante sont la meme image.
+ * The props written here are those the page passes to the live Mochi: the poster and the live 3D are the same image.
  */
 import { ACCESSORIES, type Slot, type RenderStyleId, type AccessorySelection } from 'mochis/catalogue'
 import { SHAPES_3D } from './catalog'
@@ -13,7 +13,7 @@ import { STYLES_SITE } from './style'
 
 export type ThemeSite = 'light' | 'dark'
 
-/** Props d'un Mochi du site (sous-ensemble de celles de `<mochi-bot>`). */
+/** Props of a site Mochi (a subset of those of `<mochi-bot>`). */
 export interface PropsMochi {
   shape: string
   color: string
@@ -27,18 +27,20 @@ export interface PropsMochi {
 
 export interface Poster {
   name: string
-  /** cote affiche, en pixels CSS (l'image fait le double) */
+  /** displayed side, in CSS pixels (the image is twice that) */
   size: number
   props: PropsMochi
-  /** instant fige : 0 pour l'affiche d'un Mochi vivant (sa premiere image), 1,2 pour une vignette */
+  /** frozen instant: 0 for a live Mochi's poster (its first frame), 1.2 for a thumbnail */
   t: number
 }
 
-/* ------------------------------------------------------------------ les Mochi vivants (et leur affiche) */
+/*
+ * ------------------------------------------------------------------ the live Mochis (and their poster)
+ */
 export const MOODS_BOT: PropsMochi = { shape: 'squircle', color: '#00c7be', renderStyle: '3d', mood: 'idle' }
 export const INTER_BOT: PropsMochi = { shape: 'star', color: '#ffd60a', renderStyle: '3d', mood: 'idle' }
 export const STYLE_BOT = (renderStyle: RenderStyleId): PropsMochi => ({ shape: 'circle', color: '#2d5bff', renderStyle, mood: 'idle' })
-/** Le Mochi de « Make it yours » tel qu'il arrive (casquette rouge du catalogue). */
+/** The "Make it yours" Mochi as it arrives (red catalog cap). */
 export const CUSTOM_START: PropsMochi = {
   shape: 'star',
   color: '#21b0ff',
@@ -48,12 +50,12 @@ export const CUSTOM_START: PropsMochi = {
   accessories: { head: { id: 'cap', c1: '#ff3b30', c2: '#ff3b30' } }
 }
 
-/* ------------------------------------------------------------------ les vignettes figees */
+/* ------------------------------------------------------------------ the frozen thumbnails */
 export const BENTO_THEME: PropsMochi = { shape: 'star', color: '#ffd60a', renderStyle: '3d' }
 /**
- * Carte « accessoires » : une liste FIXE et soignee de variantes (corps, couleurs d'accessoires, une piece par
- * emplacement), une image pre-rendue par variante (`scroll-NN`). Chaque accessoire du catalogue y figure au moins
- * une fois (teste). Les variantes avec une piece du dos sont vus de trois quarts arriere (pas de lunettes alors).
+ * "Accessories" card: a FIXED, curated list of variants (body, accessory colors, one piece per slot), one
+ * pre-rendered image per variant (`scroll-NN`). Each catalog accessory appears at least once (tested). Variants with
+ * a back piece are seen from three quarters behind (no glasses then).
  */
 export interface Variant {
   shape: string
@@ -111,11 +113,11 @@ export const POSTERS: Poster[] = [
 ]
 
 const suffix = (theme: ThemeSite) => (theme === 'dark' ? 'dark' : 'light')
-/** Adresse d'une image pre-rendue (une par theme). */
+/** Address of a pre-rendered image (one per theme). */
 export const urlPoster = (name: string, theme: ThemeSite) => `/rendus/${name}-${suffix(theme)}.webp`
 
-/** Icone d'un accessoire seul (la piece, sans corps), dans les couleurs du catalogue. */
+/** Icon of an accessory alone (the piece, without a body), in the catalog colors. */
 export const PIECES = ACCESSORIES.map((a) => ({ slot: a.slot, id: a.id }))
 export const urlPiece = (e: Slot, id: string, theme: ThemeSite) => `/rendus/piece-${e}-${id}-${suffix(theme)}.webp`
-/** Cote de l'image d'une piece, en pixels. */
+/** Side of a piece's image, in pixels. */
 export const SIZE_PIECE = 160

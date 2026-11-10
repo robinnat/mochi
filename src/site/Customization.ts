@@ -3,8 +3,8 @@ import { h, onUnmount, onMount, type Component } from '@/ui/dom/h'
 import { reveal } from './motion'
 
 /**
- * « Make it yours ». Le titre est dans la page tout de suite (l'ancre #customise marche toujours) ; le
- * personnalisateur lui-meme (son code, ses images) n'est charge qu'a l'approche de la section.
+ * "Make it yours". The title is in the page at once (the #customise anchor always works); the customizer itself (its
+ * code, its images) only loads as the section gets near.
  */
 type Body = Component<Record<string, never>>
 

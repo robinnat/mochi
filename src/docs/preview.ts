@@ -1,23 +1,25 @@
 import { h, onMount, type Component } from '@/ui/dom/h'
 
 /**
- * Les balises `<mochi-bot ...></mochi-bot>` d'un exemple de code, TELLES QU'ECRITES dans l'exemple (attributs compris).
- * La page docs les insere telles quelles : le Mochi affiche a cote du code est donc celui que le code produit.
+ * The `<mochi-bot ...></mochi-bot>` tags of a code example, AS WRITTEN in the example (attributes included). The docs
+ * page inserts them as is: the Mochi shown next to the code is therefore the one the code produces.
  */
 export function tagsOf(example: string): string[] {
   return [...example.matchAll(/<mochi-bot\b[\s\S]*?><\/mochi-bot>/g)].map((m) => m[0])
 }
 
 export interface PreviewProps {
-  /** l'exemple de code (HTML) dont on montre le resultat */
+  /** the code example (HTML) whose result is shown */
   example: string
-  /** legende sous le resultat */
+  /** caption under the result */
   caption?: string
 }
 
-/** Le resultat VIVANT d'un exemple : ses balises inserees telles quelles, le composant charge par l'entree publique. */
+/**
+ * The LIVE result of an example: its tags inserted as is, the component loaded through the public entry.
+ */
 export const Preview: Component<PreviewProps> = (props) => {
-  // la balise n'est declaree qu'une fois la bibliotheque chargee : les elements deja poses se mettent a jour seuls
+  // the tag is only declared once the library is loaded: elements already placed update by themselves
   onMount(() => {
     import('mochis').catch(() => {})
   })

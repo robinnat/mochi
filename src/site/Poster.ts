@@ -2,7 +2,7 @@ import { h, type Component } from '@/ui/dom/h'
 import { urlPoster } from './posters'
 import { effectiveTheme } from './theme'
 
-/** Un Mochi fige, en image pre-rendue de la vraie 3D (`public/rendus/`), dans le theme de la page. */
+/** A frozen Mochi, as a pre-rendered image of the real 3D (`public/renders/`), in the page's theme. */
 export interface PosterProps {
   name: string
   size: number

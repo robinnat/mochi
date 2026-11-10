@@ -7,9 +7,9 @@ import { SITE_ACCESSORIES } from './catalog'
 import type { AccessoryChoice, Slot } from 'mochis/catalogue'
 
 /**
- * Hero : « la foule » (choisi par Robin le 09/11/2026). Aucune 3D au premier ecran : une petite foule de Mochi tous
- * differents, en images pre-rendues qui flottent en CSS. Un tap sur l'un d'eux le fait sauter et dit ce qu'il porte ;
- * « Shuffle » en appelle d'autres de la meme liste soignee que la carte des accessoires. Tres leger sur iPhone.
+ * Hero: "the crowd" (chosen on 09/11/2026). No 3D on the first screen: a small crowd of all different Mochis, as
+ * pre-rendered images floating in CSS. Tapping one makes it jump and tells what it wears; "Shuffle" calls others from
+ * the same curated list as the accessories card. Very light on iPhone.
  */
 const OF_FACE = SCROLL.filter((d) => !d.variant.back)
 const N = 12
@@ -76,7 +76,7 @@ export const Hero: Component<Record<string, never>> = () => {
                   'aria-label': OF_FACE[m.i]!.variant.shape + ' Mochi wearing ' + labelOf(m.i),
                   onClick: () => toucher(m.i)
                 },
-                // la cle change a chaque tap : le saut repart du debut
+                // the key changes on each tap: the jump starts over
                 h('span', { key: active.value === m.i ? jump.value : 0, class: 'hx-mochi-i' }, c(Poster, { name: m.name, size: 166, eager: k < 4 }))
               )
             )

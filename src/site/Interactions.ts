@@ -8,7 +8,9 @@ import { reveal } from './motion'
 
 export const Interactions: Component<Record<string, never>> = () => {
   const reduced = useReduced()
-  /** Changer la cle remonte le Mochi : il arrive de nouveau, et dit coucou (sans affiche : il pousse du sol). */
+  /**
+ * Changing the key remounts the Mochi: it arrives again and waves (without a poster: it grows from the ground).
+ */
   const arrival = ref(0)
   const rv = [reveal(), reveal(), reveal(1), reveal(2)]
   const rvList = INTERACTIONS_SITE.map((_, k) => reveal(k))

@@ -1,7 +1,7 @@
 /**
- * Donnees des bandes d'accessoires du site : une bande par emplacement propose du paquet (tete, yeux, bas, dos),
- * remplie des PIECES SEULES (sans corps), dans beaucoup de variantes de couleurs. Tout est DETERMINISTE : memes
- * bandes a chaque visite, et testable sans navigateur. Aucun rendu ici : `vignettes.ts` dessine, `Habillage.ts` affiche.
+ * Data of the site's accessory strips: one strip per offered package slot (head, eyes, neck, back), filled with
+ * PIECES ALONE (without a body), in many color variants. Everything is DETERMINISTIC: the same strips on every visit,
+ * and testable without a browser. No rendering here: `thumbnails.ts` draws.
  */
 import { SLOTS, type Slot } from 'mochis/catalogue'
 import { SITE_ACCESSORIES, PALETTE_SITE } from './catalog'
@@ -15,7 +15,7 @@ export interface ItemStrip {
   label: string
   c1: string
   c2: string
-  /** rotation de la piece, en radians : de trois quarts pour qu'on lise le volume ; les pieces du dos se montrent de dos */
+  /** rotation of the piece, in radians: three quarters so the volume reads; back pieces show from behind */
   yaw: number
 }
 
@@ -25,11 +25,11 @@ export interface DefStrip {
   text: string
   /** sens du defilement : alternance gauche, droite, gauche... */
   direction: 'left' | 'right'
-  /** secondes pour un tour complet : plus long = plus lent */
+  /** seconds for a full turn: longer = slower */
   duration: number
 }
 
-/** Les bandes, dans l'ordre des emplacements du paquet ; le sens alterne d'une ligne a l'autre. */
+/** The strips, in the order of the package slots; the direction alternates from one row to the next. */
 export const STRIPS: DefStrip[] = [
   { slot: 'head', title: 'Hats', text: 'Caps, crowns, berets, headphones, flowers', direction: 'left', duration: 64 },
   { slot: 'eyes', title: 'Glasses', text: 'Round, square, sun, heart, star and a monocle', direction: 'right', duration: 60 },
@@ -37,26 +37,32 @@ export const STRIPS: DefStrip[] = [
   { slot: 'back', title: 'Back', text: 'A backpack and a cape, seen from behind', direction: 'right', duration: 68 }
 ]
 
-/** Angle par emplacement : trois quarts (le signe alterne d'une piece a l'autre) ; visage presque de face ; dos de trois quarts arriere. */
+/**
+ * Angle per slot: three quarters (the sign alternates from one piece to the next); face almost front; back three
+ * quarters behind.
+ */
 const YAW: Record<Slot, number> = { head: 0.55, eyes: 0.24, face: 0.2, neck: 0.5, back: Math.PI - 0.6 }
 
-/** Pas du cycle de couleurs (14), choisi pour que le cycle ne se referme pas trop vite, donc toute la palette est parcourue sans repetition proche. */
+/**
+ * Step of the color cycle (14), chosen so the cycle does not close too fast, so the whole palette is walked through
+ * without close repeats.
+ */
 const STEP_COLOR = 6
 
 const rgb = (hex: string): [number, number, number] => {
   const v = parseInt(hex.slice(1), 16)
   return [(v >> 16) & 255, (v >> 8) & 255, v & 255]
 }
-/** Distance de deux couleurs, de 0 a ~441 : sert a ne pas faire une piece a deux couleurs presque unies. */
+/** Distance of two colors, from 0 to about 441: used to avoid a two-color piece that is almost plain. */
 export function distanceColor(a: string, b: string): number {
   const [r1, g1, b1] = rgb(a)
   const [r2, g2, b2] = rgb(b)
   return Math.hypot(r1 - r2, g1 - g2, b1 - b2)
 }
-/** Ecart minimal entre les deux couleurs d'une piece a deux couleurs. */
+/** Minimum gap between the two colors of a two-color piece. */
 export const GAP_MIN = 85
 
-/** Premiere couleur de la palette, a partir de `startPos`, assez loin des couleurs `avoid`. */
+/** First palette color, from `startPos`, far enough from the `avoid` colors. */
 function far(startPos: number, avoid: string[]): string {
   for (let k = 0; k < PALETTE_SITE.length; k++) {
     const h = PALETTE_SITE[(startPos + k) % PALETTE_SITE.length]!.hex
@@ -65,7 +71,7 @@ function far(startPos: number, avoid: string[]): string {
   return '#26222f'
 }
 
-/** `n` pieces pour un emplacement : tout le catalogue de l'emplacement, plusieurs fois, a chaque tour dans d'autres couleurs. */
+/** `n` pieces for a slot: the whole catalog of the slot, several times, in other colors each round. */
 export function itemsStrip(slot: Slot, n = 24): ItemStrip[] {
   const rang = SLOTS.indexOf(slot)
   const list = SITE_ACCESSORIES(slot)
@@ -74,7 +80,7 @@ export function itemsStrip(slot: Slot, n = 24): ItemStrip[] {
     const acc = list[i % list.length]!
     const turn = Math.floor(i / list.length)
     const twoColors = acc.c1 !== acc.c2
-    // premier tour : les couleurs d'origine du catalogue ; ensuite, d'autres teintes de la palette
+    // first round: the catalog's original colors; then, other tints of the palette
     const c1 = turn === 0 ? acc.c1 : PALETTE_SITE[(i * STEP_COLOR + rang * 5 + turn * 3) % PALETTE_SITE.length]!.hex
     const c2 = !twoColors ? c1 : turn === 0 ? acc.c2 : far(i * 5 + rang * 3 + turn * 9 + 4, [c1])
     const direction = i % 2 === 0 ? 1 : -1
@@ -92,8 +98,8 @@ export function itemsStrip(slot: Slot, n = 24): ItemStrip[] {
 }
 
 /**
- * Une piece seule, dans les couleurs du catalogue, vu de trois quarts : c'est l'icone d'un accessoire dans le
- * selecteur de « Make it yours » (rendue par `vignettes.ts`, comme les anciennes bandes).
+ * A piece alone, in the catalog colors, seen at three quarters: the icon of an accessory in the "Make it yours"
+ * picker (rendered by `thumbnails.ts`).
  */
 export function itemPiece(slot: Slot, id: string): ItemStrip | null {
   const acc = SITE_ACCESSORIES(slot).find((a) => a.id === id)

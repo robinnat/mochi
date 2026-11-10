@@ -6,12 +6,12 @@ import { STYLES_SITE } from './style'
 import type { RenderStyleId } from 'mochis/catalogue'
 import { reveal, useWidth } from './motion'
 
-/** Les douze formes, images figees (un rendu chacune, aucune boucle), qui apparaissent en cascade. */
+/** The twelve shapes, frozen images (one render each, no loop), appearing in a cascade. */
 export const Shapes: Component<Record<string, never>> = () => {
   const style = ref<RenderStyleId>('3d')
   const width = useWidth()
   const size = computed(() => (width.value >= 1100 ? 128 : width.value >= 760 ? 104 : 88))
-  // les `reveal` sont crees une fois : un nouveau a chaque dessin relancerait l'observation
+  // the `reveal`s are created once: a new one on each drawing would restart observation
   const rv = [reveal(), reveal(1), reveal(2)]
   const rvShape = SHAPES_3D.map((_, i) => reveal(i % 6))
   return () =>

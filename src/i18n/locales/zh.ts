@@ -1,14 +1,11 @@
 import type fr from './fr'
 
 /**
- * Chinois simplifie. Trois differences typographiques portees par la traduction
- * et pas par le code :
+ * Simplified Chinese. Three typographic differences carried by the translation and not by the code:
  *
- * - ponctuation pleine largeur (， 。 ？ “ ”), y compris dans les gabarits ;
- * - pas de pluriel : `removeDetail` n'a qu'une forme, et le classificateur `个`
- *   est obligatoire devant le nom compte ;
- * - une espace fine separe les chiffres latins des caracteres chinois, sauf
- *   dans la graduation de la regle ou la place manque.
+ * - full width punctuation (， 。 ？ “ ”), templates included;
+ * - no plural: `removeDetail` has a single form, and the classifier `个` is required before the counted noun;
+ * - a thin space separates Latin digits from Chinese characters, except in the ruler ticks where room is short.
  */
 const zh: typeof fr = {
   app: {

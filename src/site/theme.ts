@@ -2,8 +2,8 @@ import { computed, ref, watch } from '@/ui/dom/reactive'
 import { currentTheme } from 'mochis/catalogue'
 
 /**
- * Clair, sombre ou celui de l'appareil. Le choix est range dans le navigateur (si possible) ; la page porte
- * `data-theme` et tous les Mochi du site passent en 3D sombre (yeux noirs) avec elle.
+ * Light, dark or the device's. The choice is kept in the browser (if possible); the page carries `data-theme` and
+ * every Mochi of the site switches to dark 3D (black eyes) with it.
  */
 export type ChoiceTheme = 'auto' | 'light' | 'dark'
 export const CHOICE_THEMES: { id: ChoiceTheme; label: string }[] = [
@@ -27,7 +27,7 @@ const deviceDark = ref(false)
 export const effectiveTheme = computed<'light' | 'dark'>(() => (choiceTheme.value === 'auto' ? (deviceDark.value ? 'dark' : 'light') : choiceTheme.value))
 
 let ready = false
-/** A appeler une fois, au montage de la page. */
+/** Call once, when the page mounts. */
 export function initTheme() {
   if (ready || typeof window === 'undefined') return
   ready = true
@@ -54,6 +54,6 @@ export function chooseTheme(c: ChoiceTheme) {
     if (c === 'auto') localStorage.removeItem(KEY)
     else localStorage.setItem(KEY, c)
   } catch {
-    // stockage refuse : le choix vaut pour cette visite
+    // storage refused: the choice holds for this visit
   }
 }

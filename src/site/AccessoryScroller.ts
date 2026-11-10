@@ -7,13 +7,13 @@ import { useReduced } from './reduced'
 import { effectiveTheme } from './theme'
 
 /**
- * Carte « accessoires » : une liste fixe de Mochi (corps, couleurs, une piece par emplacement) defile en boucle
- * (environ 1,3 s chacun). Aucune 3D ici : chaque etape est une image pre-rendue de la vraie 3D
- * (`public/rendus/scroll-*.webp`), on ne fait que changer d'image. Le minuteur ne tourne que si la carte est a
- * l'ecran et l'onglet visible ; avec `prefers-reduced-motion`, un seul accessoire reste affiche, fixe.
+ * "Accessories" card: a fixed list of Mochis (body, colors, one piece per slot) scrolls on a loop (about 1.3 s each).
+ * No 3D here: each step is a pre-rendered image of the real 3D (`public/renders/scroll-*.webp`), we only swap images.
+ * The timer only runs when the card is on screen and the tab visible; with `prefers-reduced-motion`, a single
+ * accessory stays, still.
  *
- * Le Mochi qui part s'ecrase puis s'etire vers le haut (`acc-leave-active`) ; le suivant arrive avec un petit
- * « pop » a ressort (`acc-enter-active`). Les deux images se superposent le temps de la transition.
+ * The leaving Mochi squashes then stretches upwards (`acc-leave-active`); the next one arrives with a small springy
+ * "pop" (`acc-enter-active`). Both images overlap during the transition.
  */
 const PAUSE_MS = 1300
 
@@ -37,7 +37,7 @@ export const AccessoryScroller: Component<Record<string, never>> = () => {
   const current = computed(() => steps[reduced.value ? 0 : rang.value % steps.length]!)
   const src = computed(() => urlPoster(current.value.name, effectiveTheme.value))
 
-  /** Charge les images de l'autre etape a l'avance, pour que le changement soit instantane. */
+  /** Loads the images of the other step in advance, so the change is instant. */
   const preloaded = new Set<string>()
   function preload() {
     for (const e of steps) {
@@ -61,7 +61,7 @@ export const AccessoryScroller: Component<Record<string, never>> = () => {
   }
   const onVisibility = () => (document.hidden ? stop() : begin())
 
-  /* --------------------------------------------- transition d'image (entree et sortie) */
+  /* --------------------------------------------- image transition (enter and leave) */
 
   function image(): HTMLImageElement {
     const im = document.createElement('img')
@@ -78,7 +78,9 @@ export const AccessoryScroller: Component<Record<string, never>> = () => {
     im.alt = `A Mochi wearing: ${current.value.label}`
   }
   let shown: HTMLImageElement | null = null
-  /** Classe d'animation posee le temps de l'animation, puis retiree (ou l'element retire) a sa fin. */
+  /**
+ * Animation class set for the duration of the animation, then removed (or the element removed) at its end.
+ */
   function play(el: HTMLElement, cls: string, end: () => void) {
     el.classList.add(cls)
     let done = false
@@ -89,7 +91,7 @@ export const AccessoryScroller: Component<Record<string, never>> = () => {
       end()
     }
     el.addEventListener('animationend', finish, { once: true })
-    // sans animation (mouvement reduit, image cachee) : pas d'`animationend`
+    // without animation (reduced motion, hidden image): no `animationend`
     const duration = parseFloat(getComputedStyle(el).animationDuration || '0') + parseFloat(getComputedStyle(el).animationDelay || '0')
     window.setTimeout(finish, duration > 0 ? duration * 1000 + 60 : 0)
   }
@@ -105,7 +107,7 @@ export const AccessoryScroller: Component<Record<string, never>> = () => {
       if (outgoing) play(outgoing, 'acc-leave-active', () => outgoing.remove())
     }
   )
-  // changement de theme sans changement d'etape : meme image, autre fichier
+  // theme change without a step change: same image, another file
   watch(src, () => {
     if (shown) updateImage(shown)
   })
@@ -133,7 +135,7 @@ export const AccessoryScroller: Component<Record<string, never>> = () => {
     document.removeEventListener('visibilitychange', onVisibility)
   })
 
-  // la scene est remplie a la main (deux images le temps d'une transition) : le dessin ne la touche pas
+  // the scene is filled by hand (two images during a transition): the drawing does not touch it
   return () =>
     h(
       'div',

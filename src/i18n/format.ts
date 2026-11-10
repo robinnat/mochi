@@ -1,19 +1,17 @@
 /**
- * Mecanique de texte de la couche i18n : substitution et choix de forme.
+ * Text mechanics of the i18n layer: substitution and plural form choice.
  *
- * Separee de `index.ts` parce qu'elle est pure — ni dictionnaire, ni langue
- * courante, ni DOM. C'est la partie ou les regles sont subtiles (le francais
- * compte zero comme un singulier, le chinois n'a qu'une forme), donc celle qui
- * merite d'etre testee sans avoir a simuler un navigateur.
+ * Separate from `index.ts` because it is pure: no dictionary, no current language, no DOM. It is the part where the
+ * rules are subtle (French counts zero as singular, Chinese has a single form), so the one worth testing without
+ * simulating a browser.
  */
 
-/** Separateur des formes de pluriel dans les dictionnaires. */
+/** Separator of plural forms in the dictionaries. */
 const SEPARATOR = ' | '
 
 /**
- * Remplace les `{name}` par leur valeur. Un `{name}` sans valeur fournie reste
- * tel quel : visible a l'ecran, donc reperable, la ou une chaine vide se
- * confondrait avec un texte simplement mal ecrit.
+ * Replaces `{name}` with its value. A `{name}` with no value stays as is: visible on screen, so easy to spot, while
+ * an empty string would look like a simply badly written text.
  */
 export function interpolate(text: string, values?: Record<string, string | number>): string {
   if (!values) return text
@@ -25,13 +23,11 @@ export function interpolate(text: string, values?: Record<string, string | numbe
 }
 
 /**
- * Choisit la forme qui convient a `n` parmi celles du gabarit, separees par
- * ` | ` dans l'ordre singulier puis pluriel.
+ * Picks the form that fits `n` among those of the template, separated by ` | ` in singular then plural order.
  *
- * C'est `Intl.PluralRules` qui tranche, et pas un `n === 1` : le francais range
- * zero avec le singulier (« 0 animation »), l'anglais avec le pluriel
- * (« 0 animations »). Un gabarit d'une seule forme la rend toujours — c'est le
- * cas du chinois, qui n'a pas de pluriel.
+ * `Intl.PluralRules` decides, not an `n === 1`: French puts zero with the singular ("0 animation"), English with the
+ * plural ("0 animations"). A single-form template always returns it: that is the case of Chinese, which has no
+ * plural.
  */
 export function pluralForm(template: string, n: number, tag: string): string {
   const shapes = template.split(SEPARATOR)

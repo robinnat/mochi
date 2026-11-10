@@ -2,7 +2,7 @@ import { computed, ref } from '@/ui/dom/reactive'
 import { h, type Component } from '@/ui/dom/h'
 import { highlight } from './code'
 
-/** Bloc de code colore, avec un titre (nom de fichier ou langage) et un bouton Copier. */
+/** Highlighted code block, with a title (file name or language) and a Copy button. */
 export interface CodeBlockProps {
   code: string
   title?: string
@@ -49,7 +49,7 @@ export const CodeBlock: Component<CodeBlockProps> = (props) => {
           h('span', null, copy.value ? 'Copied' : 'Copy')
         )
       ),
-      // le code est TOUJOURS echappe par `highlight` avant d'etre enveloppe
+      // the code is ALWAYS escaped by `highlight` before being wrapped
       h('pre', { class: 'cb-code' }, h('code', { innerHTML: html.value }))
     )
 }

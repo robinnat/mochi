@@ -1,17 +1,14 @@
 /**
- * Langues proposees et regle de choix. Volontairement sans DOM ni interface : le
- * navigateur ne rentre que par les arguments, donc la regle se teste sans
- * simuler `navigator` ni `localStorage`.
+ * Offered languages and the choice rule. Deliberately without DOM or interface: the browser only comes in through the
+ * arguments, so the rule is tested without simulating `navigator` or `localStorage`.
  */
 
 /**
- * `tag` est l'etiquette BCP 47, pas l'identifiant : elle sert a `Intl` et a
- * l'attribut `lang` du document. `zh` seul ne dit pas si l'ecriture est
- * simplifiee ou traditionnelle, d'ou `zh-Hans`.
+ * `tag` is the BCP 47 tag, not the id: it serves `Intl` and the document's `lang` attribute. `zh` alone does not say
+ * whether the script is simplified or traditional, hence `zh-Hans`.
  *
- * `name` est l'endonyme — le nom de la langue DANS cette langue. Une liste de
- * langues traduite serait absurde : on la lit justement quand on ne comprend
- * pas la langue affichee.
+ * `name` is the endonym: the language's name IN that language. A translated language list would be absurd: you read
+ * it precisely when you do not understand the displayed language.
  */
 export const LANGUAGES = [
   { id: 'fr', tag: 'fr', emoji: '🇫🇷', name: 'Français' },
@@ -21,7 +18,7 @@ export const LANGUAGES = [
 
 export type Language = (typeof LANGUAGES)[number]['id']
 
-export const DEFAULT_LANGUAGE: Language = 'fr'
+export const DEFAULT_LANGUAGE: Language = 'en'
 
 export function isLanguage(value: string | null | undefined): value is Language {
   return LANGUAGES.some((l) => l.id === value)
@@ -32,16 +29,14 @@ export function tagOf(language: Language): string {
 }
 
 /**
- * Langue a afficher au demarrage.
+ * Language to show at startup.
  *
- * Un choix explicite gagne toujours : quelqu'un qui a mis l'interface en
- * anglais ne veut pas la retrouver en francais parce qu'il a change de reseau.
- * Sinon on parcourt les preferences du navigateur DANS L'ORDRE — c'est un
- * classement, pas un ensemble — et on retient la premiere qu'on sait parler.
+ * An explicit choice always wins: someone who set the interface to English does not want it back in French because
+ * they changed network. Otherwise we walk the browser preferences IN ORDER (a ranking, not a set) and keep the first
+ * one we speak. Nothing matches: English.
  *
- * Le decoupage passe par `Intl.Locale` plutot que par `tag.split('-')[0]` :
- * `zh-Hans-CN` doit donner `zh`, et les etiquettes exotiques ne se coupent pas
- * toutes au premier tiret.
+ * Splitting goes through `Intl.Locale` rather than `tag.split('-')[0]`: `zh-Hans-CN` must give `zh`, and exotic tags
+ * do not all split at the first dash.
  */
 export function pickLanguage(remembered: string | null, preferences: readonly string[]): Language {
   if (isLanguage(remembered)) return remembered
@@ -50,7 +45,7 @@ export function pickLanguage(remembered: string | null, preferences: readonly st
     try {
       base = new Intl.Locale(tag).language
     } catch {
-      // une etiquette invalide dans navigator.languages n'a pas a tout casser
+      // an invalid tag in navigator.languages must not break everything
       continue
     }
     if (isLanguage(base)) return base

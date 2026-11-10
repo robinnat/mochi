@@ -7,9 +7,9 @@ import { reveal, useVisible } from './motion'
 import { SITE_MOODS } from './catalog'
 
 /**
- * Les sept humeurs. Elles defilent seules tant que la section est a l'ecran (une barre montre le temps qui reste) ;
- * un clic choisit une humeur et arrete le defilement. Le Mochi n'est pas remonte : `mood` change et le moteur glisse
- * d'une humeur a l'autre.
+ * The seven moods. They play in turn as long as the section is on screen (a bar shows the time left); a click picks a
+ * mood and stops the rotation. The Mochi is not remounted: `mood` changes and the engine glides from one mood to
+ * another.
  */
 const DURATION = 4200
 
