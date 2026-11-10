@@ -22,7 +22,7 @@ describe('catalogue du site', () => {
     }
   })
 
-  it('le site montre les 12 formes, coeur compris, chacune avec sa couleur', () => {
+  it('le site montre les 12 shapes, coeur compris, chacune avec sa couleur', () => {
     expect(SHAPES_3D).toHaveLength(12)
     expect(SHAPES_3D.map((f) => f.id).sort()).toEqual([...SHAPE_ID_LIST].sort())
     expect(SHAPE_ID_LIST).toContain('heart')
@@ -31,7 +31,7 @@ describe('catalogue du site', () => {
     for (const c of colors) expect(PALETTE_SITE.map((p) => p.hex)).toContain(c)
   })
 
-  it('la palette des exemples : au moins 12 teintes distinctes, lisibles sur fond clair ET sombre', () => {
+  it('la palette des exemples : au moins 12 teintes distinctes, lisibles sur fond light ET dark', () => {
     expect(PALETTE_SITE.length).toBeGreaterThanOrEqual(12)
     expect(new Set(PALETTE_SITE.map((p) => p.hex)).size).toBe(PALETTE_SITE.length)
     for (const { name, hex } of PALETTE_SITE) {

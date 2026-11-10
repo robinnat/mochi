@@ -143,7 +143,7 @@ describe('arrival turn on the site', () => {
     expect(turnLook(SPIN_TIME / 2).wander).toBe(1)
   })
 
-  it('n impose aucune direction, a aucun moment', () => {
+  it('n impose aucune direction, a none moment', () => {
     // `mix` at zero all along: only `spin` works, which takes
     // the eyes behind the ball instead of sliding them across
     for (const k of [0, 0.25, 0.5, 0.75, 1]) {

@@ -44,7 +44,7 @@ export const Lab: Component<Record<string, never>> = () => {
         { class: 'flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--line)] px-4 py-3 text-sm' },
         h('strong', null, 'Mochi labo'),
         link('shapes', 'shapes'),
-        link('shapes3d', 'formes 3D'),
+        link('shapes3d', 'shapes 3D'),
         link('moods', 'moods'),
         link('turn', 'turn')
       ),

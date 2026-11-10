@@ -184,7 +184,7 @@ function sheetAngles() {
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
   text(ctx, 'Vraie 3D : face, 3/4, profil, dos', 40, 78, 52, INK, true)
-  text(ctx, 'Le corps tourne, la lumière reste en haut à gauche', 40, 122, 28, GREY)
+  text(ctx, 'Le corps tourne, la lumière reste en haut à left', 40, 122, 28, GREY)
   rows.forEach((t, i) => {
     const y0 = 150 + i * row
     text(ctx, t.name, 40, y0 + 30, 32, INK, true)
@@ -206,7 +206,7 @@ function sheetBowtie() {
   const cell = 360
   const { c, ctx } = fresh(W, 150 + 2 * (cell + 50) + 20)
   text(ctx, 'Nœud papillon', 40, 78, 58, INK, true)
-  text(ctx, 'Deux triangles arrondis, petit nœud central, volume doux et mat', 40, 122, 28, GREY)
+  text(ctx, 'Deux triangles arrondis, small nœud central, volume doux et mat', 40, 122, 28, GREY)
   ;[
     { name: 'face', yaw: 0 },
     { name: '3/4', yaw: 0.62 }

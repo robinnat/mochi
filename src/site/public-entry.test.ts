@@ -33,7 +33,7 @@ describe('le site consomme Mochi par son entree publique', () => {
     expect(sources.length).toBeGreaterThan(20)
   })
 
-  it.each(sources)('$fichier n importe aucun fichier interne du moteur', ({ file, text }) => {
+  it.each(sources)('$fichier n importe none fichier interne du moteur', ({ file, text }) => {
     const forbidden = targetsImport(text).filter((c) => !ALLOWED.some((p) => p.test(c)))
     expect(forbidden, file).toEqual([])
   })

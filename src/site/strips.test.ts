@@ -58,7 +58,7 @@ describe('bandes d accessoires (pieces seules)', () => {
     expect(itemsStrip('neck')).toEqual(itemsStrip('neck'))
   })
 
-  it('aucun corps dans les bandes : le rendu des pieces est demande sans corps, cadre serre et centre', () => {
+  it('none corps dans les bandes : le rendu des pieces est demande sans corps, cadre serre et centre', () => {
     const v = source('./thumbnails.ts')
     // rendreAvatar(..., sansCorps = true, centre)
     expect(v).toMatch(/undefined, true, centre\)/)
@@ -120,7 +120,7 @@ describe('vignettes : cadrage et couleurs', () => {
     expect(b.heart.cx).toBeCloseTo(0, 5)
   })
 
-  it('en sombre, une piece noire est eclaircie ; en clair, rien ne change', () => {
+  it('en dark, une piece noire est eclaircie ; en light, rien ne change', () => {
     expect(colorForTheme('#26222f', 'light')).toBe('#26222f')
     const c = colorForTheme('#26222f', 'dark')
     expect(c).not.toBe('#26222f')

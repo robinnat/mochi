@@ -45,7 +45,7 @@ describe('<mochi-bot> : declaration', () => {
     expect(readAttribute('number', 'abc')).toBeUndefined()
     expect(readAttribute('boolean', '')).toBe(true)
     expect(readAttribute('boolean', 'false')).toBe(false)
-    expect(readAttribute('json', '{"tete":"casquette"}')).toEqual({ head: 'cap' })
+    expect(readAttribute('json', '{"head":"cap"}')).toEqual({ head: 'cap' })
     expect(readAttribute('json', '{oups')).toBeUndefined()
     expect(readAttribute('text', 'star')).toBe('star')
     expect(readAttribute('text', null)).toBeUndefined()
@@ -95,7 +95,7 @@ describe('<mochi-bot>: drawing', () => {
   })
 
   it('accepts objects as properties and as JSON (accessories, cycle)', () => {
-    const el = create({ accessories: '{"tete":"casquette"}' })
+    const el = create({ accessories: '{"head":"cap"}' })
     expect(el.accessories).toEqual({ head: 'cap' })
     el.accessories = { eyes: 'round' }
     expect(el.accessories).toEqual({ eyes: 'round' })

@@ -529,8 +529,8 @@ export const App: Component<Record<string, never>> = () => {
               {
                 key: 'left',
                 class: [
-                  'panneau scene__left w-full lg:flex lg:h-[calc(100dvh_-_3rem_-_var(--timeline))] lg:w-80 lg:shrink-0 lg:flex-col lg:justify-center lg:self-start lg:-translate-y-12 lg:pl-14',
-                  left.value ? 'panneau--ouvert max-lg:order-2' : 'max-lg:hidden'
+                  'panel scene__left w-full lg:flex lg:h-[calc(100dvh_-_3rem_-_var(--timeline))] lg:w-80 lg:shrink-0 lg:flex-col lg:justify-center lg:self-start lg:-translate-y-12 lg:pl-14',
+                  left.value ? 'panel--open max-lg:order-2' : 'max-lg:hidden'
                 ],
                 // closed, it was only transparent (its column folds): without `inert` its fields stayed in
                 // the tab order and were read by screen readers
@@ -622,7 +622,7 @@ export const App: Component<Record<string, never>> = () => {
               'aside',
               {
                 key: 'right',
-                class: ['panneau scene__droite w-full lg:w-80 lg:shrink-0', right.value ? 'panneau--ouvert max-lg:order-2' : 'max-lg:hidden'],
+                class: ['panel scene__right w-full lg:w-80 lg:shrink-0', right.value ? 'panel--open max-lg:order-2' : 'max-lg:hidden'],
                 // same reason as the left panel: transparent is not hidden for the keyboard
                 inert: !right.value,
                 'aria-hidden': right.value ? undefined : 'true'

@@ -152,8 +152,8 @@ describe('reading the storage back', () => {
   })
 
   it('only keeps the model\'s fields, not what is slipped in', () => {
-    const raw = '[{"id":"defaut","name":"Mon montage","locked":true,"secret":1,' +
-      '"blocks":[{"state":"idle","duration":2,"vitesse":3}]}]'
+    const raw = '[{"id":"initial","name":"Mon montage","locked":true,"secret":1,' +
+      '"blocks":[{"state":"idle","duration":2,"speed":3}]}]'
     const cycle = parseCycles(raw)[0]!
     expect(Object.keys(cycle).sort()).toEqual(['blocks', 'id', 'name'])
     expect(Object.keys(cycle.blocks[0]!).sort()).toEqual(['duration', 'state'])

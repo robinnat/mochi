@@ -11,7 +11,7 @@ const pages = readdirSync(folder).filter((f) => /^[A-Z].*\.ts$/.test(f))
 const read = (f: string) => readFileSync(new URL(f, folder), 'utf8')
 
 describe('images pre-rendues (v11)', () => {
-  it('chaque affiche et chaque piece a son image, en clair et en sombre', () => {
+  it('chaque poster et chaque piece a son image, en light et en dark', () => {
     for (const t of ['light', 'dark'] as const) {
       for (const a of POSTERS) expect(exists(urlPoster(a.name, t)), urlPoster(a.name, t)).toBe(true)
       for (const p of PIECES) expect(exists(urlPiece(p.slot, p.id, t)), urlPiece(p.slot, p.id, t)).toBe(true)
@@ -26,7 +26,7 @@ describe('images pre-rendues (v11)', () => {
     expect(new Set(POSTERS.map((a) => a.name)).size).toBe(POSTERS.length)
   })
 
-  it('aucune section du site ne monte <mochi-bot> directement : images ou Vivant (affiche puis 3D en fondu, jamais de 2D)', () => {
+  it('aucune section du site ne monte <mochi-bot> directement : images ou Vivant (poster puis 3D en fondu, jamais de 2D)', () => {
     for (const f of pages) {
       if (f === 'Vivant.ts') continue
       expect(read(f), f).not.toMatch(/'mochi-bot'/)
@@ -51,7 +51,7 @@ describe('images pre-rendues (v11)', () => {
     expect(seen).toBeGreaterThanOrEqual(2)
   })
 
-  it('la carte des accessoires defile sur tout le catalogue (sans les quatre retires), compteur lu dans le catalogue, immobile si mouvement reduit', () => {
+  it('la carte des accessoires scroll sur tout le catalogue (sans les quatre retires), compteur lu dans le catalogue, immobile si mouvement reduit', () => {
     const seen = new Set<string>()
     for (const d of SCROLL) {
       for (const [e, ch] of Object.entries(d.variant.acc)) {

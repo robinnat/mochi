@@ -87,7 +87,7 @@ export const ShapeTurntable: Component<Record<string, never>> = () => {
     h(
       'main',
       { class: 'p-4' },
-      h('h1', { class: 'mb-3 text-lg font-bold' }, 'Tour des formes : face, trois quarts, profil, dos'),
+      h('h1', { class: 'mb-3 text-lg font-bold' }, 'Tour des shapes : face, trois quarts, profil, dos'),
       h(
         'div',
         { class: 'max-w-full overflow-x-auto' },

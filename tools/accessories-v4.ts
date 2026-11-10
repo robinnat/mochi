@@ -183,7 +183,7 @@ function planAngles() {
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
   text(ctx, 'Angles : face, 3/4, profil, dos', 40, 78, 52, INK, true)
-  text(ctx, 'Le corps tourne, la lumière reste en haut à gauche', 40, 122, 26, GREY)
+  text(ctx, 'Le corps tourne, la lumière reste en haut à left', 40, 122, 26, GREY)
   rows.forEach((t, i) => {
     const y0 = 150 + i * row
     text(ctx, t.name, 40, y0 + 30, 32, INK, true)

@@ -20,7 +20,7 @@ describe('extrait de code de la personnalisation', () => {
     for (const absent of ['rendu=', 'outline', 'shading', 'thickness', 'accessories', 'theme', 'laptop']) expect(e).not.toContain(absent)
   })
 
-  it('le contour vaut pour les trois styles, le reflet seulement pour Soft, plus aucun ombrage', () => {
+  it('le contour vaut pour les trois styles, le reflet seulement pour Soft, plus none ombrage', () => {
     for (const renderStyle of ['3d', 'flat3d', 'pixel3d'] as const) expect(extraitCode({ ...base, renderStyle, outline: true })).toContain('contour')
     expect(extraitCode(base)).not.toContain('shading')
     expect(extraitCode({ ...base, highlight: false })).toContain('reflet="false"')
@@ -59,7 +59,7 @@ describe('extrait de code de la personnalisation', () => {
     expect(accessoriesAsCode({ neck: 'bowtie', back: 'cape' })).toBe("{ bas: 'papillon', dos: 'cape' }")
   })
 
-  it('couleur libre : le code ecrit l hex choisi, sans contour ni reflet quand le site ne les passe pas', () => {
+  it('couleur free : le code ecrit l hex choisi, sans contour ni reflet quand le site ne les passe pas', () => {
     const free: OptionsExtrait = { shape: 'heart', color: '#ff8800', renderStyle: 'pixel3d', mood: 'idle', accessories: {}, theme: 'auto', laptop: true }
     const e = extraitCode(free)
     expect(e).toContain('color="#ff8800"')

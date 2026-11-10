@@ -252,7 +252,7 @@ describe('slot list', () => {
 describe('feedback of 05/11/2026', () => {
   it('removed accessories are no longer in the catalog or resolved, but stay listed in REMOVED', () => {
     expect(REMOVED.map((r) => `${r.slot}:${r.id}`).sort()).toEqual(
-      ['bas:bandana', 'bas:clochette', 'bas:medaille', 'bas:cravate', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski', 'visage:chat', 'visage:rousseur', 'visage:grain', 'bas:moustache', 'dos:ailes', 'dos:diable', 'visage:joues'].sort()
+      ['neck:bandana', 'neck:bell', 'neck:medal', 'neck:tie', 'head:beanie', 'head:bob', 'back:tail', 'eyes:sleep', 'head:party', 'head:ears', 'face:tear', 'face:bandage', 'eyes:domino', 'eyes:ski', 'face:whiskers', 'face:freckles', 'face:mole', 'neck:mustache', 'back:wings', 'back:batwings', 'face:cheeks'].sort()
     )
     for (const r of REMOVED) {
       expect(ACCESSORIES.some((a) => a.slot === r.slot && a.id === r.id)).toBe(false)
@@ -697,16 +697,16 @@ describe('customizer shape change (09/11/2026)', () => {
     const sel: AccessorySelection = { head: 'cap' }
     const m = mat()
     const acc = new Accessories3d()
-    acc.update(sel, 'x|forme', m, () => a)
+    acc.update(sel, 'x|shape', m, () => a)
     const placed = top(acc)
     // the shape changes but the key only sees the style and shape names, already taken: nothing is recomputed
-    acc.update(sel, 'x|forme', m, () => b)
+    acc.update(sel, 'x|shape', m, () => b)
     expect(top(acc)).toBeCloseTo(placed, 5)
     // after invalidate(), the pose follows the new body, like a fresh build
     acc.invalidate()
-    acc.update(sel, 'x|forme', m, () => b)
+    acc.update(sel, 'x|shape', m, () => b)
     const fresh = new Accessories3d()
-    fresh.update(sel, 'x|forme', m, () => b)
+    fresh.update(sel, 'x|shape', m, () => b)
     expect(top(acc)).toBeCloseTo(top(fresh), 5)
     expect(Math.abs(top(acc) - placed)).toBeGreaterThan(0.5)
     acc.liberer()

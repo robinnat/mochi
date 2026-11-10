@@ -19,6 +19,6 @@ describe('coloration des exemples', () => {
     expect(h).toContain('<span class="c-str">&quot;etoile&quot;</span>')
     expect(h).toContain('<span class="c-attr">size</span>')
     expect(h).toContain('<span class="c-com">// note</span>')
-    expect(h).toContain('<span class="c-mot">import</span>')
+    expect(h).toContain('<span class="c-word">import</span>')
   })
 })

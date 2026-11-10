@@ -5,7 +5,7 @@ import { useModalDialog } from '@/ui/useModalDialog'
 /**
  * Classes shared by dialogs; the animation comes from `styles.css` (`.dialogue`, with `@starting-style`).
  */
-export const CLASS_DIALOG = 'dialogue m-auto w-80 rounded-2xl bg-white p-5 text-[var(--ink)] shadow-xl'
+export const CLASS_DIALOG = 'dialog m-auto w-80 rounded-2xl bg-white p-5 text-[var(--ink)] shadow-xl'
 export const BUTTON_SECONDARY = 'h-8 cursor-pointer rounded-lg px-3 text-xs text-[var(--muted)] transition hover:bg-black/5 hover:text-[var(--ink)]'
 export const BUTTON_PRIMARY = 'h-8 cursor-pointer rounded-lg bg-[var(--ink)] px-3 text-xs text-[var(--paper)] transition hover:opacity-90 active:scale-95'
 

@@ -6,7 +6,7 @@ import { ref } from '@/ui/dom/reactive'
  * limite de GitHub ou rend autre chose qu'un nombre : `null`, et la barre montre l'icone seule. Jamais de faux nombre.
  */
 export const API_REPO = 'https://api.github.com/repos/robinnat/mochi'
-export const KEY_CACHE = 'mochi:etoiles'
+export const KEY_CACHE = 'mochi:stars'
 export const DURATION_CACHE = 60 * 60 * 1000
 
 /** 1234 -> « 1.2k », 999 -> « 999 », 15400 -> « 15k ». */

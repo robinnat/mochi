@@ -147,7 +147,7 @@ function planCap() {
   const row = cell + 8
   const { c, ctx } = fresh(W2, 150 + shapes.length * row + 20)
   text(ctx, 'Casquette v6', 40, 78, 58, INK, true)
-  text(ctx, 'Calotte ronde et rigide, indépendante du corps · 11 formes · face, 3/4, profil · clair à gauche, sombre à droite', 40, 122, 26, GREY)
+  text(ctx, 'Calotte ronde et rigide, indépendante du corps · 11 shapes · face, 3/4, profil · light à left, dark à droite', 40, 122, 26, GREY)
   const colors = ['turquoise', 'amber', 'pink', 'green', 'violet', 'orange', 'blue', 'turquoise', 'amber', 'pink', 'green']
   shapes.forEach((f, i) => {
     const y0 = 150 + i * row
@@ -179,7 +179,7 @@ function planCapCombos() {
   const cell = 360
   const { c, ctx } = fresh(W, 150 + Math.ceil(defs.length / 3) * (cell + 50) * 2)
   text(ctx, 'Casquette cumulée', 40, 78, 54, INK, true)
-  text(ctx, 'Avec lunettes, visage, bas et dos · clair puis sombre', 40, 122, 26, GREY)
+  text(ctx, 'Avec lunettes, visage, bas et dos · light puis dark', 40, 122, 26, GREY)
   defs.forEach((d, i) => {
     const x = (i % 3) * cell
     const y = 150 + Math.floor(i / 3) * (cell + 50) * 2
@@ -204,7 +204,7 @@ function planGlasses() {
   const cell = 150
   const { c, ctx } = fresh(cell * models.length * 2, 150 + shapes.length * cell + 20)
   text(ctx, 'Lunettes v7 : branches ancrées dans le corps', 40, 78, 52, INK, true)
-  text(ctx, '6 modèles × 11 formes · 3/4 puis profil pour chaque modèle', 40, 122, 24, GREY)
+  text(ctx, '6 modèles × 11 shapes · 3/4 puis profil pour chaque modèle', 40, 122, 24, GREY)
   const colors = ['turquoise', 'amber', 'pink', 'green', 'violet', 'orange', 'blue', 'turquoise', 'amber', 'pink', 'green']
   shapes.forEach((f, i) => {
     models.forEach((m, mi) =>
@@ -277,7 +277,7 @@ function planShading() {
   const cell = 240
   const { c, ctx } = fresh(cell * 6, 140 + styles.length * (cell + 40))
   text(ctx, 'Body shading : avec et sans, dans les trois styles', 40, 66, 44, INK, true)
-  text(ctx, 'Pour chaque forme : avec ombrage à gauche, sans à droite (corps en aplat, yeux inchangés)', 40, 104, 22, GREY)
+  text(ctx, 'Pour chaque shape : avec ombrage à left, sans à droite (corps en aplat, yeux inchangés)', 40, 104, 22, GREY)
   styles.forEach((s, i) => {
     const y = 130 + i * (cell + 40)
     text(ctx, s.name, 12, y + 24, 26, INK, true)
@@ -310,7 +310,7 @@ function planAngles() {
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
   text(ctx, 'Angles : face, 3/4, profil, dos', 40, 78, 52, INK, true)
-  text(ctx, 'Le corps tourne, la lumière reste en haut à gauche', 40, 122, 26, GREY)
+  text(ctx, 'Le corps tourne, la lumière reste en haut à left', 40, 122, 26, GREY)
   rows.forEach((t, i) => {
     const y0 = 150 + i * row
     text(ctx, t.name, 40, y0 + 30, 32, INK, true)

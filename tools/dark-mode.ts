@@ -105,7 +105,7 @@ function sheetShapes(style: keyof typeof STYLES, offset: number) {
   const rows = Math.ceil(SHAPE_LIST.length / 2)
   const { c, ctx } = fresh(W, 170 + rows * row + 20)
   text(ctx, `${s.name} : light et dark`, 40, 78, 56, INK, true)
-  text(ctx, 'Les 11 formes. À gauche clair, à droite sombre (yeux noirs).', 40, 122, 26, GREY)
+  text(ctx, 'Les 11 shapes. À left light, à droite dark (yeux noirs).', 40, 122, 26, GREY)
   SHAPE_LIST.forEach((f, i) => {
     const x0 = (i % 2) * 540
     const y0 = 150 + Math.floor(i / 2) * row
@@ -125,7 +125,7 @@ function planchefonds() {
   const block = 90 + rows * cell + 20
   const { c, ctx } = fresh(W, 2 * block)
   const backgrounds: Array<[string, string, string]> = [
-    ['Sur fond sombre (#121212)', BACKGROUND_DARK, '#f2f0f5'],
+    ['Sur fond dark (#121212)', BACKGROUND_DARK, '#f2f0f5'],
     ['Sur fond light', '#ffffff', INK]
   ]
   backgrounds.forEach(([title, background, ink], b) => {
@@ -182,7 +182,7 @@ function planchecontraste() {
   const cell = 340
   const row = cell + 74
   const { c, ctx } = fresh(W, 200 + scenario.length * row + 20)
-  text(ctx, 'Corps éclairci en sombre', 40, 78, 52, INK, true)
+  text(ctx, 'Corps éclairci en dark', 40, 78, 52, INK, true)
   text(ctx, 'Seulement les couleurs sous 3:1, juste assez pour atteindre 3:1.', 40, 122, 26, GREY)
   const x1 = 120
   const x2 = 120 + cell + 20
@@ -212,7 +212,7 @@ function planchehumeurs() {
   const row = cell + 56
   const { c, ctx } = fresh(W, 160 + 2 * row + 10)
   text(ctx, 'Humeurs du visage en dark', 40, 78, 50, INK, true)
-  text(ctx, 'Paupières et formes d’yeux inchangées, seule la couleur change.', 40, 122, 26, GREY)
+  text(ctx, 'Paupières et shapes d’yeux inchangées, seule la couleur change.', 40, 122, 26, GREY)
   defs.forEach((d, i) => {
     const x = (i % 3) * cell
     const y = 140 + Math.floor(i / 3) * row
@@ -235,7 +235,7 @@ function sheetcombos() {
   const row = cell + 90
   const { c, ctx } = fresh(W, 150 + defs.length * row)
   text(ctx, 'Accessoires en dark', 40, 78, 52, INK, true)
-  text(ctx, 'À gauche clair, à droite sombre : les accessoires ne changent pas.', 40, 122, 26, GREY)
+  text(ctx, 'À left light, à droite dark : les accessoires ne changent pas.', 40, 122, 26, GREY)
   defs.forEach((d, i) => {
     const y = 140 + i * row
     drawCell(ctx, 20, y, cell, { shape: d.shape, color: d.color, theme: 'light', sel: d.sel, frame: 205 })
@@ -260,7 +260,7 @@ function planchecconflits() {
   const { c, ctx } = fresh(W, 210 + rows.length * row)
   text(ctx, 'Yeux noirs et lunettes', 40, 78, 52, INK, true)
   text(ctx, 'Seul vrai conflit : le verre noir des lunettes de soleil.', 40, 122, 26, GREY)
-  ;['light', 'sombre, sans solution', 'sombre, verre ardoise'].forEach((t, k) => text(ctx, t, 20 + k * 357 + 170, 190, 22, INK, true, 'center'))
+  ;['light', 'dark, sans solution', 'dark, verre ardoise'].forEach((t, k) => text(ctx, t, 20 + k * 357 + 170, 190, 22, INK, true, 'center'))
   rows.forEach((l, i) => {
     const y = 210 + i * row
     drawCell(ctx, 0, y, 357, { shape: l.shape, color: l.color, theme: 'light', sel: l.light, frame: 150 })

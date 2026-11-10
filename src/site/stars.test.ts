@@ -19,7 +19,7 @@ describe('etoiles GitHub', () => {
     expect(readResponse(null)).toBeNull()
   })
 
-  it('cache d une heure, valeur invalide ignoree', () => {
+  it('cache d une heure, value invalide ignoree', () => {
     const t = 1_000_000_000
     expect(readCache(JSON.stringify({ n: 7, t }), t + 1000)).toBe(7)
     expect(readCache(JSON.stringify({ n: 7, t }), t + DURATION_CACHE + 1)).toBeNull()

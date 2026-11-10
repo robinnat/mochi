@@ -22,8 +22,8 @@ const ALL: Variant[] = [
   { letter: '', name: '3D aplat (ancien)', renderStyle: '3d', material: 'flat', outline: false },
   { letter: '', name: '3D aplat + contour cartoon', renderStyle: '3d', material: 'flat', outline: true },
   { letter: '', name: '3D doux (leger)', renderStyle: '3d', material: 'soft', softness: 'light', outline: false },
-  { letter: '', name: '3D doux marque + reflet (defaut)', renderStyle: '3d', material: 'soft', softness: 'strong', outline: false },
-  { letter: '', name: '3D doux marque sans reflet', renderStyle: '3d', material: 'soft', softness: 'strong', outline: false, highlight: false }
+  { letter: '', name: '3D doux strong + reflet (defaut)', renderStyle: '3d', material: 'soft', softness: 'strong', outline: false },
+  { letter: '', name: '3D doux strong sans reflet', renderStyle: '3d', material: 'soft', softness: 'strong', outline: false, highlight: false }
 ]
 // cinq formes, chacune dans une couleur du flat (les memes que le personnalisateur)
 const ALL_SHAPES = [
@@ -71,7 +71,7 @@ export const FlatSheet3d: Component<Record<string, never>> = () => {
     h(
       'main',
       { class: 'p-4' },
-      h('h1', { class: 'mb-3 text-lg font-bold' }, '3D : aplat, doux leger, doux marque'),
+      h('h1', { class: 'mb-3 text-lg font-bold' }, '3D : aplat, doux leger, doux strong'),
       h(
         'div',
         { class: 'max-w-full overflow-x-auto' },

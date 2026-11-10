@@ -64,7 +64,7 @@ describe('completude des dictionnaires', () => {
     )
   }
 
-  it('n a aucune valeur vide, dans aucune langue', () => {
+  it('n a aucune value vide, dans aucune langue', () => {
     for (const [language, dict] of Object.entries(DICTIONARIES)) {
       for (const [key, value] of leaves(dict)) {
         expect(value.trim(), `${language}.${key}`).not.toBe('')
@@ -96,28 +96,28 @@ describe('completude des dictionnaires', () => {
 
 describe('substitution', () => {
   it('remplace toutes les occurrences d un parametre', () => {
-    expect(interpolate('{a} et {a}', { a: 'x' })).toBe('x et x')
+    expect(interpolate('{a} and {a}', { a: 'x' })).toBe('x and x')
   })
 
   it('accepte les nombres et plusieurs parametres', () => {
-    expect(interpolate('{etat}, {duree}', { state: 'Idle', duration: 2 })).toBe('Repos, 2')
+    expect(interpolate('{state}, {duration}', { state: 'Idle', duration: 2 })).toBe('Idle, 2')
   })
 
-  it('laisse visible un parametre sans valeur, plutot que de le vider', () => {
+  it('laisse visible un parametre sans value, plutot que de le vider', () => {
     // un « {name} » a l'ecran se remarque ; une chaine vide passe inapercue
-    expect(interpolate('Supprimer {name} ?', {})).toBe('Supprimer {name} ?')
+    expect(interpolate('Delete {name}?', {})).toBe('Delete {name}?')
   })
 })
 
 describe('plural', () => {
   it('range zero avec le singulier en francais, avec le pluriel en anglais', () => {
-    const template = 'un | plusieurs'
+    const template = 'one | several'
     expect(pluralForm(template, 0, 'fr')).toBe('one')
     expect(pluralForm(template, 0, 'en')).toBe('several')
   })
 
   it('distingue un de deux dans les deux langues', () => {
-    const template = 'un | plusieurs'
+    const template = 'one | several'
     for (const tag of ['fr', 'en']) {
       expect(pluralForm(template, 1, tag)).toBe('one')
       expect(pluralForm(template, 2, tag)).toBe('several')
@@ -131,7 +131,7 @@ describe('plural', () => {
     }
   })
 
-  it('donne au chinois une seule forme, au francais et a l anglais deux', () => {
+  it('donne au chinois une seule shape, au francais et a l anglais deux', () => {
     expect(zh.dialog.removeDetail.includes(' | ')).toBe(false)
     expect(fr.dialog.removeDetail.split(' | ')).toHaveLength(2)
     expect(en.dialog.removeDetail.split(' | ')).toHaveLength(2)

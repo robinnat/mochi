@@ -201,8 +201,8 @@ describe('markup cleanup', () => {
 
 describe('file name', () => {
   it('is built from the ids and not the labels', () => {
-    expect(nameFile('drop', 'neutral', 'ink', 'png')).toBe('mochi-goutte-neutre-encre.png')
-    expect(nameFile('circle', 'laughing', 'violet', 'svg')).toBe('mochi-cercle-hilare-violet.svg')
+    expect(nameFile('drop', 'neutral', 'ink', 'png')).toBe('mochi-drop-neutral-ink.png')
+    expect(nameFile('circle', 'laughing', 'violet', 'svg')).toBe('mochi-circle-laughing-violet.svg')
   })
 
   /*

@@ -15,7 +15,7 @@ describe('performance de la 3D (v12)', () => {
   })
 
   it('les accessoires ne sont pas reconstruits a chaque respiration : leur cle ne contient pas le contour du corps', () => {
-    expect(scene).toContain('const cleCorps = `${this.rendu}|${this.forme}`')
+    expect(scene).toContain('const cleCorps = `${this.rendu}|${this.shape}`')
     expect(scene).toContain('this.suivreCorps(bb)')
     expect(acc).toContain('pieces(): Object3D[]')
     expect(acc).toContain('this.version++')
@@ -33,7 +33,7 @@ describe('performance de la 3D (v12)', () => {
     expect(read('./Alive.ts')).toContain('prechaufferStyles()')
   })
 
-  it('un Mochi vivant se tourne au doigt, et le defilement vertical reste a la page', () => {
+  it('un Mochi alive se tourne au doigt, et le defilement vertical reste a la page', () => {
     const v = read('./Alive.ts')
     expect(v).toContain('yaw: (props.yaw ?? 0) + spin.value')
     expect(v).toContain('setPointerCapture')
@@ -45,6 +45,6 @@ describe('performance de la 3D (v12)', () => {
     const p = read('./BodyCustomizer.ts')
     expect(p).toContain('const bot = shallowRef(etatBot())')
     expect(p).toContain('rendu: b.rendu')
-    expect(p).toContain('shape: b.forme')
+    expect(p).toContain('shape: b.shape')
   })
 })

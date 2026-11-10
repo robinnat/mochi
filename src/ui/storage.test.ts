@@ -86,7 +86,7 @@ describe('storage guard', () => {
 describe('migration of settings saved with the old French ids', () => {
   it('moves the old keys to the new names and translates their values', () => {
     const heap = memory({
-      'mochi:forme': 'etoile',
+      'mochi:shape': 'etoile',
       'mochi:couleur': 'ambre',
       'mochi:langue': 'fr',
       'mochi:contour': '1',
@@ -107,9 +107,9 @@ describe('migration of settings saved with the old French ids', () => {
   })
 
   it('never overwrites a value already saved under the new name', () => {
-    const heap = memory({ 'mochi:forme': 'etoile', 'mochi:shape': 'cloud' })
+    const heap = memory({ 'mochi:shape': 'etoile', 'mochi:shape': 'cloud' })
     expect(read('shape')).toBe('cloud')
-    expect(heap.has('mochi:forme')).toBe(false)
+    expect(heap.has('mochi:shape')).toBe(false)
   })
 
   it('also translates old ids saved under keys that kept their name', () => {
