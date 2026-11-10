@@ -25,7 +25,7 @@ function renderOne(props: Record<string, unknown>, size: number): Promise<string
         requestAnimationFrame(() =>
           requestAnimationFrame(() => {
             clearTimeout(timer)
-            const cv = host.querySelector('canvas[data-vraie3d]') as HTMLCanvasElement
+            const cv = host.querySelector('canvas[data-real3d]') as HTMLCanvasElement
             // Pixel : le canvas est la petite grille ; on l'agrandit sans lissage, comme l'affiche le composant
             const side = size * 2
             let source = cv

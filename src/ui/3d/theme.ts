@@ -1,10 +1,9 @@
 /**
- * Theme de la 3D : « clair » (defaut, le rendu d'avant, yeux blancs) ou « sombre » (les yeux
- * deviennent NOIRS). Module pur (pas de Three.js, pas de DOM) : testable sous `node`.
+ * 3D theme: "light" (default, white eyes) or "dark" (the eyes turn BLACK). Pure module (no Three.js, no DOM):
+ * testable under Node.
  *
- * Seuls les yeux, le blanc de leur masque d'emission et, si besoin, la couleur du corps
- * changent. Les lumieres, les liseres, le reflet et l'ombre au sol du shader restent ceux du
- * mode clair.
+ * Only the eyes, the white of their emission mask and, if needed, the body color change. The shader's lights, rims,
+ * highlight and ground shadow stay those of the light mode.
  */
 
 import type { AccessorySelection } from '@/bot/slots'
@@ -15,13 +14,13 @@ export const THEMES: Theme[] = ['light', 'dark']
 export const DEFAULT_THEME: Theme = 'light'
 export const isTheme = (v: string): v is Theme => (THEMES as string[]).includes(v)
 
-/** Le noir des yeux en mode sombre : l'encre du moteur (`ink` dans `skins.ts`). */
+/** The black of the eyes in dark mode: the engine's ink (`ink` in `skins.ts`). */
 export const DARK_EYE = '#0a0a0c'
 
-/** Le meme noir en RVB (palette du pixel art). */
+/** The same black in RGB (pixel art palette). */
 export const EYE_RGB: [number, number, number] = [10, 10, 12]
 
-/** Couleur d'un oeil peint selon le theme : le papier (blanc) en clair, l'encre en sombre. */
+/** Color of a painted eye by theme: the paper (white) in light, the ink in dark. */
 export const eyeColor = (theme: Theme, paper: string): string => (theme === 'dark' ? DARK_EYE : paper)
 
 const lin = (c: number) => {
@@ -40,14 +39,14 @@ export function luminanceWcag(hex: string): number {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
 }
 
-/** Rapport de contraste WCAG entre deux couleurs (1 a 21). */
+/** WCAG contrast ratio between two colors (1 to 21). */
 export function contrast(a: string, b: string): number {
   const la = luminanceWcag(a)
   const lb = luminanceWcag(b)
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
 }
 
-/** Contraste minimal oeil noir / corps (seuil WCAG 1.4.11 des composants graphiques). */
+/** Minimum contrast black eye / body (WCAG 1.4.11 threshold for graphical objects). */
 export const MIN_EYE_CONTRAST = 3
 
 const to = (c: [number, number, number], k: number): string => {
@@ -56,9 +55,9 @@ const to = (c: [number, number, number], k: number): string => {
 }
 
 /**
- * Corps pour un theme. En clair : tel quel. En sombre : si l'oeil noir contraste moins de
- * `min` (3 par defaut ; 0 = ne jamais eclaircir) avec le corps, le corps est eclairci vers le blanc, juste ce qu'il
- * faut (dichotomie) pour atteindre le seuil ; les autres couleurs ne bougent pas.
+ * Body for a theme. In light: as is. In dark: if the black eye contrasts less than `min` (3 by default; 0 = never
+ * lighten) with the body, the body is lightened towards white, just enough (bisection) to reach the threshold; the
+ * other colors do not move.
  */
 export function bodyForTheme(hex: string, theme: Theme, min = MIN_EYE_CONTRAST): string {
   if (theme !== 'dark' || min <= 1 || contrast(hex, DARK_EYE) >= min) return hex
@@ -73,13 +72,16 @@ export function bodyForTheme(hex: string, theme: Theme, min = MIN_EYE_CONTRAST):
   return to(c, hi)
 }
 
-/** Verre des lunettes de soleil en mode sombre : ardoise, pour se lire devant des yeux noirs (noir sur noir, plus rien ne se voit). */
+/**
+ * Lens of the sunglasses in dark mode: slate, to read in front of black eyes (black on black, nothing shows any
+ * more).
+ */
 export const LENS_SUN_DARK = '#4e4a63'
 
 /**
- * Selection d'accessoires pour le theme sombre. Seul conflit avec des yeux noirs : les lunettes de
- * soleil au verre noir, qui ne se distinguent plus des yeux. Leur verre passe a l'ardoise ; les
- * couleurs choisies a la main (c2) sont respectees, les autres accessoires ne changent pas.
+ * Accessory selection for the dark theme. The only conflict with black eyes: sunglasses with a black lens, which can
+ * no longer be told from the eyes. Their lens turns slate; colors chosen by hand (c2) are respected, other
+ * accessories do not change.
  */
 export function accessoriesDark(sel: AccessorySelection): AccessorySelection {
   const y = sel.eyes

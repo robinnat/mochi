@@ -42,7 +42,7 @@ describe('timeline with a finger', () => {
       onAdd: () => {}
     })
     await nextTick()
-    const cards = [...document.querySelectorAll<HTMLElement>('[data-carte]')]
+    const cards = [...document.querySelectorAll<HTMLElement>('[data-card]')]
     expect(cards.length).toBe(blocks.length)
     for (const card of cards) expect(card.classList.contains('touch-none')).toBe(true)
     const poignees = [...document.querySelectorAll<HTMLElement>('.cursor-ew-resize[aria-label]')]
@@ -71,11 +71,11 @@ describe('timeline: the card drops where the finger lifts', () => {
       onAdd: () => {}
     })
     await nextTick()
-    const card = document.querySelector<HTMLElement>('[data-carte]')!
+    const card = document.querySelector<HTMLElement>('[data-card]')!
     // happy-dom has no pointer capture
     card.setPointerCapture = () => {}
     // abscissa of the middle of the 3rd card, from the width set in style (the track starts at 0)
-    const widths = [...document.querySelectorAll<HTMLElement>('[data-carte]')].map((c) => parseFloat(c.parentElement!.style.width))
+    const widths = [...document.querySelectorAll<HTMLElement>('[data-card]')].map((c) => parseFloat(c.parentElement!.style.width))
     const x = widths[0]! + widths[1]! + widths[2]! / 2
     const pe = (type: string, clientX: number) => new PointerEvent(type, { bubbles: true, clientX, pointerId: 1, pointerType: 'touch' })
     card.dispatchEvent(pe('pointerdown', 10))
@@ -94,10 +94,10 @@ describe('panneaux fermes hors du clavier', () => {
     const root = host()
     const unmount = mountApp(App, root)
     await nextTick()
-    const panels = [...root.querySelectorAll<HTMLElement>('aside.panneau')]
+    const panels = [...root.querySelectorAll<HTMLElement>('aside.panel')]
     expect(panels.length).toBe(2)
     // at startup, the settings (left) are closed
-    const left = root.querySelector<HTMLElement>('.scene__gauche')!
+    const left = root.querySelector<HTMLElement>('.scene__left')!
     expect(left.classList.contains('panel--open')).toBe(false)
     expect(left.hasAttribute('inert')).toBe(true)
     expect(left.getAttribute('aria-hidden')).toBe('true')

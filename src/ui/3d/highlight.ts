@@ -1,37 +1,34 @@
 /**
- * Petit reflet doux de la matiere 3D `soft`, en haut a gauche du corps.
+ * Small soft highlight of the `soft` 3D material, at the top left of the body.
  *
- * Meme esprit que le reflet des Mochi en pate (argile) : une tache blanche semi-transparente,
- * allongee dans le sens de la lumiere, au bord fondu. Ce n'est PAS un reflet speculaire
- * brillant : rien de net, rien de reel, juste une tache claire mate. Il est peint dans la
- * texture du corps (avant les yeux, qui restent donc intacts et blancs), il suit donc la
- * forme et le morphing.
+ * A semi-transparent white spot, stretched along the light, with a faded edge. It is NOT a shiny specular highlight:
+ * nothing sharp, nothing realistic, just a light matte spot. It is painted in the body texture (before the eyes,
+ * which stay intact and white), so it follows the shape and the morph.
  *
- * Ce module est PUR (aucune dependance a Three.js) : il choisit OU poser la tache.
- * La regle est la meme pour toutes les formes : le point du corps le plus « en haut a
- * gauche » qui reste assez a l'interieur pour que la tache tienne dans la forme (etoile,
- * fleur, goutte...) et loin des yeux.
+ * This module is PURE (no Three.js dependency): it chooses WHERE to put the spot. The rule is the same for every
+ * shape: the body point most "top left" that stays far enough inside for the spot to fit in the shape (star, flower,
+ * drop...) and away from the eyes.
  */
 
 import type { Point } from '@/bot/shape'
 
 export interface Highlight {
-  /** centre de la tache, repere du moteur (y vers le bas) */
+  /** spot center, engine space (y down) */
   x: number
   y: number
-  /** demi-axes : rx le long de la lumiere, ry en travers */
+  /** half axes: rx along the light, ry across */
   rx: number
   ry: number
-  /** inclinaison (radians) : la tache suit la diagonale de la lumiere */
+  /** tilt (radians): the spot follows the light's diagonal */
   angle: number
-  /** opacity au centre (la tache s'estompe jusqu'a 0 au bord) */
+  /** opacity at the center (the spot fades to 0 at the edge) */
   opacity: number
 }
 
-/** Le reflet est actif par defaut ; `highlight: false` le coupe (option de MochiBot et de la 3D). */
+/** The highlight is on by default; `highlight: false` turns it off (option of MochiBot and of the 3D). */
 export const DEFAULT_HIGHLIGHT = true
 
-/** Direction de la lumiere : en haut (y negatif) a gauche, devant. */
+/** Light direction: at the top (negative y) left, in front. */
 const LIGHT = { x: -0.59, y: -0.81 }
 const ANGLE = (-32 * Math.PI) / 180
 const OPACITE = 0.3
@@ -60,7 +57,7 @@ const distEdge = (p: Point, poly: Point[]) => {
   return m
 }
 
-/** Garde au plus `n` points du contour, regulierement espaces. */
+/** Keeps at most `n` points of the outline, evenly spaced. */
 const alleger = (pts: Point[], n: number) => {
   if (pts.length <= n) return pts
   const step = pts.length / n
@@ -68,8 +65,8 @@ const alleger = (pts: Point[], n: number) => {
 }
 
 /**
- * Position du reflet pour un contour `pts` (repere du moteur) et les centres des yeux
- * `eyes` a eviter. `null` si le contour est trop petit pour porter une tache.
+ * Highlight position for an outline `pts` (engine space) and the eye centers `eyes` to avoid. `null` if the outline
+ * is too small to carry a spot.
  */
 export function positionHighlight(pts: Point[], eyes: Point[] = []): Highlight | null {
   if (pts.length < 3) return null
@@ -84,7 +81,7 @@ export function positionHighlight(pts: Point[], eyes: Point[] = []): Highlight |
     y0 = Math.min(y0, p.y)
     y1 = Math.max(y1, p.y)
   }
-  // grille grossiere (lisible par le morphing), puis un affinage local
+  // coarse grid (stable under morphing), then a local refinement
   const step = Math.max(2, Math.min(x1 - x0, y1 - y0) / 24)
   const interieurs: Array<{ p: Point; r: number }> = []
   let rin = 0
@@ -114,7 +111,7 @@ export function positionHighlight(pts: Point[], eyes: Point[] = []): Highlight |
   }
   let c = best(interieurs, true) ?? best(interieurs, false)
   if (!c) return null
-  // affinage : on cherche dans un voisinage fin autour du meilleur point de la grille
+  // refinement: search a fine neighborhood around the best grid point
   const end: Array<{ p: Point; r: number }> = []
   for (let dy = -step; dy <= step; dy += step / 4) {
     for (let dx = -step; dx <= step; dx += step / 4) {
@@ -126,15 +123,15 @@ export function positionHighlight(pts: Point[], eyes: Point[] = []): Highlight |
   return { x: c.x, y: c.y, rx, ry, angle: ANGLE, opacity: OPACITE }
 }
 
-/** Le reflet d'une image, ou `null` s'il est coupe (`active` = false) ou s'il n'y a pas de place. */
+/** The highlight of a frame, or `null` if it is off (`active` = false) or there is no room. */
 export function bodyHighlight(pts: Point[], eyes: Point[], active: boolean): Highlight | null {
   return active ? positionHighlight(pts, eyes) : null
 }
 
 /**
- * Peint le reflet dans `c` (contexte 2D de la texture du corps) : degrade radial blanc
- * semi-transparent, etire en ellipse. `k` = pixels par unite du moteur, `vb` = demi-viewBox.
- * Pas de `filter` canvas (Safari ne l'a pas) : le fondu est dans le degrade.
+ * Paints the highlight in `c` (2D context of the body texture): a semi-transparent white radial gradient, stretched
+ * into an ellipse. `k` = pixels per engine unit, `vb` = half viewBox. No canvas `filter` (Safari lacks it): the fade
+ * is in the gradient.
  */
 export function paintHighlight(c: CanvasRenderingContext2D, r: Highlight, k: number, vb: number) {
   c.save()

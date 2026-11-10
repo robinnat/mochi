@@ -20,46 +20,46 @@ import {
 } from './theme'
 
 describe('theme : valeurs pures', () => {
-  it('clair par defaut, deux themes, un garde de type', () => {
+  it('light by default, two themes, a type guard', () => {
     expect(DEFAULT_THEME).toBe('light')
     expect(THEMES).toEqual(['light', 'dark'])
     expect(isTheme('dark')).toBe(true)
     expect(isTheme('black')).toBe(false)
   })
 
-  it('clair : rien ne change (oeil = papier, corps tel quel, accessoires tels quels)', () => {
+  it('light: nothing changes (eye = paper, body as is, accessories as is)', () => {
     expect(eyeColor('light', '#f9f9f9')).toBe('#f9f9f9')
     for (const c of COLORS) expect(bodyForTheme(c.hex, 'light')).toBe(c.hex)
     const sel = { eyes: 'sunglasses', head: 'cap' }
     expect(accessoriesDark(sel) === sel).toBe(false)
   })
 
-  it('sombre : l oeil est l encre', () => {
+  it('dark: the eye is the ink', () => {
     expect(eyeColor('dark', '#f9f9f9')).toBe(DARK_EYE)
     expect(DARK_EYE).toBe(COLORS.find((c) => c.id === 'ink')!.hex)
     expect(EYE_RGB).toEqual([10, 10, 12])
   })
 
-  it('sombre : seules les couleurs qui ne contrastent pas assez avec l oeil sont eclaircies, et juste assez', () => {
+  it('dark: only colors that do not contrast enough with the eye are lightened, and just enough', () => {
     for (const c of COLORS) {
       const l = bodyForTheme(c.hex, 'dark')
       expect(contrast(l, DARK_EYE)).toBeGreaterThanOrEqual(MIN_EYE_CONTRAST - 0.01)
       if (contrast(c.hex, DARK_EYE) >= MIN_EYE_CONTRAST) expect(l).toBe(c.hex)
       else expect(l).not.toBe(c.hex)
     }
-    // l encre et le bleu marine du dashboard sont eclaircis, le violet et le bleu vif non
+    // the ink and the dashboard's navy are lightened, violet and bright blue are not
     expect(bodyForTheme('#0a0a0c', 'dark')).not.toBe('#0a0a0c')
     expect(bodyForTheme('#1f2126', 'dark')).not.toBe('#1f2126')
     expect(bodyForTheme('#8b3dff', 'dark')).toBe('#8b3dff')
     expect(bodyForTheme('#3b93f0', 'dark')).toBe('#3b93f0')
-    // idempotent : le rendre deux fois ne l eclaircit pas davantage
+    // idempotent: rendering it twice does not lighten it more
     const other = bodyForTheme('#0a0a0c', 'dark')
     expect(bodyForTheme(other, 'dark')).toBe(other)
   })
 
-  it('sombre : le seul conflit d accessoire est le verre noir des lunettes de soleil, qui passe a l ardoise', () => {
+  it('dark: the only accessory conflict is the black lens of the sunglasses, which turns slate', () => {
     expect(accessoriesDark({ eyes: 'sunglasses' })).toEqual({ eyes: { id: 'sunglasses', c2: LENS_SUN_DARK } })
-    // une couleur choisie a la main est respectee
+    // a color chosen by hand is respected
     expect(accessoriesDark({ eyes: { id: 'sunglasses', c2: '#ff0000' } })).toEqual({ eyes: { id: 'sunglasses', c2: '#ff0000' } })
     const other = { eyes: 'round', head: 'cap', neck: 'bowtie' }
     expect(accessoriesDark(other)).toBe(other)
@@ -68,14 +68,14 @@ describe('theme : valeurs pures', () => {
 })
 
 describe('theme : pixel', () => {
-  it('sombre : les pixels presque noirs deviennent l oeil noir, le corps garde ses tons', () => {
+  it('dark: almost black pixels become the black eye, the body keeps its tones', () => {
     const w = 6
     const h = 5
     const data = new Uint8ClampedArray(w * h * 4)
     const body = '#3b93f0'
     const base = palettePixel(body)[1]!
     for (let i = 0; i < w * h; i++) data.set([base[0]!, base[1]!, base[2]!, 255], i * 4)
-    // un oeil 2x2 un peu au-dessus du noir pur (eclairage)
+    // a 2x2 eye a little above pure black (lighting)
     for (const [x, y] of [[2, 2], [3, 2], [2, 1], [3, 1]] as const) data.set([18, 18, 22, 255], (y * w + x) * 4)
     quantifier(data, w, h, palettePixel(body, [], EYE_RGB), false, EYE_RGB)
     const px = (x: number, y: number) => [data[(y * w + x) * 4], data[(y * w + x) * 4 + 1], data[(y * w + x) * 4 + 2]]
@@ -83,15 +83,15 @@ describe('theme : pixel', () => {
     expect(px(3, 1)).toEqual([...EYE_RGB])
   })
 
-  it('clair : le comportement d avant (le blanc des yeux) est inchange', () => {
+  it('light: the previous behavior (white eyes) is unchanged', () => {
     const p = palettePixel('#7b6cd9')
     expect(p[p.length - 1]!.slice(0, 3)).toEqual([255, 255, 255])
   })
 })
 
-/* ------------------------------------------------------------------ corps 3D, sans WebGL */
+/* ------------------------------------------------------------------ 3D body, without WebGL */
 
-/** Faux canvas 2D qui note la couleur de chaque remplissage, et sur quel canvas. */
+/** Fake 2D canvas that records the color of each fill, and on which canvas. */
 function fakeDom() {
   const journal: Array<{ canvas: number; fill: string }> = []
   let n = 0
@@ -125,14 +125,14 @@ function fakeDom() {
 
 const image = (shape: string) => new BotEngine(RADIUS, 'idle', SHAPES.find((s) => s.id === shape)!.radii, null).sample(1.2)
 
-describe('theme : peinture du visage (Mochi3d)', () => {
+describe('theme: painting the face (Mochi3d)', () => {
   let journal: ReturnType<typeof fakeDom>
   beforeEach(() => {
     journal = fakeDom()
   })
   afterEach(() => vi.unstubAllGlobals())
 
-  /** Couleurs de remplissage : [corps (canvas 0), masque d emission des yeux (canvas 1)] */
+  /** Fill colors: [body (canvas 0), eye emission mask (canvas 1)] */
   const paint = (renderStyle: 'soft' | 'toon' | 'realistic', theme: 'light' | 'dark' | undefined, shape = 'circle') => {
     journal.reset()
     const m = new Mochi3d(32)
@@ -144,7 +144,7 @@ describe('theme : peinture du visage (Mochi3d)', () => {
     return { body: read(0), masque: read(1) }
   }
 
-  it.each(['soft', 'toon', 'realistic'] as const)('%s : sans theme = clair = le rendu d avant (yeux papier, masque blanc)', (renderStyle) => {
+  it.each(['soft', 'toon', 'realistic'] as const)('%s: no theme = light = the previous rendering (paper eyes, white mask)', (renderStyle) => {
     const initial = paint(renderStyle, undefined)
     const light = paint(renderStyle, 'light')
     expect(light).toEqual(initial)
@@ -153,14 +153,14 @@ describe('theme : peinture du visage (Mochi3d)', () => {
     expect(light.body).not.toContain(DARK_EYE)
   })
 
-  it.each(['soft', 'toon', 'realistic'] as const)('%s : en sombre les yeux sont noirs et ne s allument plus', (renderStyle) => {
+  it.each(['soft', 'toon', 'realistic'] as const)('%s: in dark the eyes are black and no longer glow', (renderStyle) => {
     const s = paint(renderStyle, 'dark')
     expect(s.body).toContain(DARK_EYE)
     expect(s.body).not.toContain('#f9f9f9')
     expect(s.masque).toContain('#fff')
   })
 
-  it.each(['soft', 'toon', 'pixel'] as const)('%s : sans ombrage, le corps est un aplat (matiere sans lumiere) ; avec, la matiere d avant', (renderStyle) => {
+  it.each(['soft', 'toon', 'pixel'] as const)('%s: without shading, the body is flat (material without light); with it, the previous material', (renderStyle) => {
     const m = new Mochi3d(32)
     m.setShading(false)
     m.setRenderStyle(renderStyle)
@@ -170,7 +170,7 @@ describe('theme : peinture du visage (Mochi3d)', () => {
     expect(m.mesh.material.type).not.toBe('MeshBasicMaterial')
   })
 
-  it.each(['soft', 'toon', 'realistic'] as const)('%s : l oeil sombre ne s allume pas (emission nulle), l oeil clair oui', (renderStyle) => {
+  it.each(['soft', 'toon', 'realistic'] as const)('%s: the dark eye does not glow (zero emission), the light eye does', (renderStyle) => {
     const m = new Mochi3d(32)
     m.setRenderStyle(renderStyle)
     expect((m.mesh.material as { emissiveIntensity: number }).emissiveIntensity).toBeGreaterThan(0)
@@ -181,12 +181,12 @@ describe('theme : peinture du visage (Mochi3d)', () => {
     expect((m.mesh.material as { emissiveIntensity: number }).emissiveIntensity).toBeGreaterThan(0)
   })
 
-  it.each(SHAPES.map((x) => x.id))('forme %s : yeux noirs en sombre', (shape) => {
+  it.each(SHAPES.map((x) => x.id))('shape %s: black eyes in dark', (shape) => {
     const s = paint('soft', 'dark', shape)
     expect(s.body).toContain(DARK_EYE)
   })
 
-  it.each(EXPRESSIONS.map((e) => e.id))('humeur %s : des yeux noirs (paupieres comprises, elles font partie de la forme de l oeil)', (id) => {
+  it.each(EXPRESSIONS.map((e) => e.id))('mood %s: black eyes (lids included, they are part of the eye shape)', (id) => {
     journal.reset()
     const m = new Mochi3d(32)
     m.setRenderStyle('soft')
@@ -198,7 +198,7 @@ describe('theme : peinture du visage (Mochi3d)', () => {
   })
 })
 
-describe('epaisseur du contour (Mochi3d)', () => {
+describe('outline thickness (Mochi3d)', () => {
   beforeEach(() => {
     fakeDom()
   })
@@ -206,7 +206,7 @@ describe('epaisseur du contour (Mochi3d)', () => {
 
   const halfThickness = (m: Mochi3d) => (m as unknown as { thickness: { value: number } }).thickness.value
 
-  it.each(['soft', 'toon', 'pixel'] as const)('%s : le contour est disponible, et son epaisseur suit le facteur (1 = valeur de base)', (renderStyle) => {
+  it.each(['soft', 'toon', 'pixel'] as const)('%s: the outline is available, and its thickness follows the factor (1 = base value)', (renderStyle) => {
     const m = new Mochi3d(32)
     m.setRenderStyle(renderStyle, true)
     expect((m as unknown as { shell: { visible: boolean } }).shell.visible).toBe(true)
@@ -223,7 +223,7 @@ describe('epaisseur du contour (Mochi3d)', () => {
     expect(halfThickness(m)).toBeCloseTo(base, 6)
   })
 
-  it('le facteur est borne et une value absurde revient au defaut', () => {
+  it('the factor is bounded and an absurd value falls back to the default', () => {
     const m = new Mochi3d(32)
     m.fitOutline(1)
     const base = halfThickness(m)
@@ -235,19 +235,19 @@ describe('epaisseur du contour (Mochi3d)', () => {
     expect(halfThickness(m)).toBeCloseTo(base, 6)
   })
 
-  it('sans contour demande, Soft n a pas de coque', () => {
+  it('with no outline asked, Soft has no shell', () => {
     const m = new Mochi3d(32)
     m.setRenderStyle('soft', false)
     expect((m as unknown as { shell: { visible: boolean } }).shell.visible).toBe(false)
   })
 })
 
-describe('theme : en clair, yeux blancs pour toutes les couleurs, sans contour (Robin, 10/11/2026)', () => {
-  it('le theme clair peint les yeux avec le papier (blanc), jaune et citron vert compris ; le sombre en noir', () => {
+describe('theme: in light, white eyes for every color, no outline (10/11/2026)', () => {
+  it('the light theme paints the eyes with the paper (white), yellow and lime included; the dark one in black', () => {
     for (const c of COLORS) expect(eyeColor('light', '#ffffff'), c.id).toBe('#ffffff')
     expect(eyeColor('dark', '#ffffff')).toBe(DARK_EYE)
   })
-  it('plus aucune exception de contour ni de theme force pour les corps clairs', async () => {
+  it('no more outline exception or forced theme for light bodies', async () => {
     const theme = await import('./theme')
     expect('eyeOutline' in theme).toBe(false)
     expect('eyeTheme' in theme).toBe(false)

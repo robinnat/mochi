@@ -21,11 +21,11 @@ import { measureLandmarks, type Landmarks } from './anchors'
 import { fieldOfIdle, bodyOutline, inflate, readMatrix, profileOf } from './volume'
 
 /**
- * Accessoires par emplacements : le catalogue est complet, chaque accessoire se construit sur les
- * 12 formes (ancrage calcule sur le volume, pas en dur), et tous les emplacements se cumulent.
+ * Accessories by slot: the catalog is complete, each accessory builds on the 12 shapes (anchoring computed on the
+ * volume, not hard-coded), and all slots stack.
  */
 
-/** Le volume 3D d'une forme, comme `Mochi3d` le remplit (y vers le haut), et ses reperes. */
+/** The 3D volume of a shape, as `Mochi3d` fills it (y up), and its landmarks. */
 function body(shape: string): { geo: BufferGeometry; R: Landmarks } {
   const frame = new BotEngine(RADIUS, 'idle', SHAPES.find((s) => s.id === shape)!.radii, null).sample(0.5)
   const profile = profileOf(shape)
@@ -43,7 +43,7 @@ function body(shape: string): { geo: BufferGeometry; R: Landmarks } {
   geo.computeVertexNormals()
   geo.computeBoundingSphere()
   const ye = eyesOf(frame)
-  // yeux de la 3D : de face, un peu au-dessus du centre (les memes tailles que celles du moteur)
+  // 3D eyes: facing front, a little above the center (the same sizes as the engine's)
   const R = measureLandmarks(
     geo,
     ye.map((o, i) => ({ x: (i - 0.5) * 50, y: 12, r: o.r })),
@@ -64,7 +64,7 @@ const meshes = (o: Object3D): Mesh[] => {
   return out
 }
 
-/** Tous les sommets d'un groupe, dans le repere du corps, finis. */
+/** All vertices of a group, in body space, finite. */
 function verticesFinite(o: Object3D): boolean {
   o.updateMatrixWorld(true)
   for (const m of meshes(o)) {
@@ -83,16 +83,16 @@ const bodyOf = (f: string) => {
 }
 
 describe('catalogue', () => {
-  it('22 accessoires, repartis sur les quatre emplacements proposes (sans joues roses ni taches de rousseur, grain de beaute, moustache, moustaches de chat)', () => {
+  it('22 accessories, spread over the four offered slots (no pink cheeks, freckles, beauty mark, mustache or cat whiskers)', () => {
     expect(ACCESSORIES.length).toBe(22)
     for (const e of SLOTS) expect(accessoriesInSlot(e).length).toBeGreaterThanOrEqual(1)
     expect(ACCESSORIES.some((a) => ['whiskers', 'freckles', 'mole', 'mustache', 'cheeks'].includes(a.id))).toBe(false)
-    // lunettes et monocle restent, dans « yeux » (Robin, 10/11/2026)
+    // glasses and monocle stay, in "eyes" (10/11/2026)
     expect(accessoriesInSlot('eyes').map((a) => a.id)).toEqual(['round', 'square', 'sunglasses', 'heart', 'star', 'monocle'])
     expect(accessoriesInSlot('face')).toEqual([])
   })
 
-  it('chaque accessoire a un generateur, des identifiants uniques par emplacement, des couleurs hex et un nom sans tiret cadratin', () => {
+  it('each accessory has a builder, unique ids per slot, hex colors and a name with no em dash', () => {
     for (const e of SLOTS) {
       const ids = accessoriesInSlot(e).map((a) => a.id)
       expect(new Set(ids).size).toBe(ids.length)
@@ -106,7 +106,7 @@ describe('catalogue', () => {
     expect(Object.values(ACCESSORY_PALETTE).every((c) => /^#[0-9a-f]{6}$/i.test(c))).toBe(true)
   })
 
-  it('resoudre accepte un id ou un id avec couleurs, et refuse un inconnu', () => {
+  it('resolveAccessories accepts an id or an id with colors, and refuses an unknown one', () => {
     expect(resolveAccessories('head', 'cap')?.name).toBe('Cap')
     expect(resolveAccessories('head', { id: 'cap', c1: '#112233' })?.c1).toBe('#112233')
     expect(resolveAccessories('head', 'unknown')).toBeNull()
@@ -115,29 +115,29 @@ describe('catalogue', () => {
   })
 })
 
-describe('ancrage sur les 12 formes', () => {
-  it('il y a bien 12 formes', () => {
+describe('anchoring on the 12 shapes', () => {
+  it('there are indeed 12 shapes', () => {
     expect(SHAPE_LIST).toHaveLength(12)
   })
 
-  it.each(SHAPE_LIST)('%s : assise de coiffe dans le corps, cou sous les yeux', (shape) => {
+  it.each(SHAPE_LIST)('%s: headwear seat in the body, neck under the eyes', (shape) => {
     const { R } = bodyOf(shape)
     expect(R.head.R).toBeGreaterThan(5)
     expect(R.head.rz).toBeGreaterThan(3)
-    // sommet creuse (coeur) : la coiffe repose sur les bosses, a 5 % de son rayon au-dessus du haut
+    // hollow top (heart): the headwear rests on the bumps, 5 % of its radius above the top
     expect(R.head.y).toBeLessThanOrEqual(R.top + 0.05 * R.head.R + 1e-6)
     expect(R.head.y).toBeGreaterThan(R.neck + 0.3 * R.H)
     expect(R.yBottom).toBeLessThan(R.yEyes)
     expect(R.yBottom).toBeGreaterThan(R.neck)
-    // l'axe de la coiffe est a peu pres l'axe du corps
+    // the headwear axis is roughly the body axis
     expect(Math.abs(R.head.cx)).toBeLessThan(0.2 * R.hw)
-    // la surface avant se trouve au milieu du corps
+    // the front surface is in the middle of the body
     const f = R.A.before(0, R.yEyes)
     expect(f).not.toBeNull()
     expect(f!.n.z).toBeGreaterThan(0.3)
   })
 
-  it.each(SHAPE_LIST)('%s : chaque accessoire de chaque emplacement se construit, sans valeur invalide', (shape) => {
+  it.each(SHAPE_LIST)('%s: every accessory of every slot builds, with no invalid value', (shape) => {
     const { R } = bodyOf(shape)
     for (const a of ACCESSORIES) {
       const acc = new Accessories3d()
@@ -151,15 +151,15 @@ describe('ancrage sur les 12 formes', () => {
     }
   })
 
-  it.each(SHAPE_LIST)('%s : une coiffe monte au-dessus de son assise, et l assise reste dans le haut du corps', (shape) => {
+  it.each(SHAPE_LIST)('%s: a headwear rises above its seat, and the seat stays in the top of the body', (shape) => {
     const { R } = bodyOf(shape)
-    // l'assise : jamais plus bas que 28 % de la hauteur sous le sommet (pas devant les yeux)
+    // the seat: never lower than 28 % of the height below the top (not in front of the eyes)
     expect(R.head.y).toBeGreaterThanOrEqual(R.top - 0.28 * R.H - 1)
     for (const a of accessoriesInSlot('head')) {
       const acc = new Accessories3d()
       acc.update({ head: a.id }, 'x', mat(), () => R)
       const b = new Box3().setFromObject(acc.group)
-      // la piece depasse le sommet de l'assise : elle se voit ; ses volumes plongent dans le corps (pas de vide)
+      // the piece goes above the top of the seat: it shows; its volumes sink into the body (no gap)
       expect(b.max.y, `${shape} ${a.id}`).toBeGreaterThan(R.head.y)
       expect(b.min.y, `${shape} ${a.id}`).toBeLessThan(R.top)
       acc.liberer()
@@ -167,10 +167,10 @@ describe('ancrage sur les 12 formes', () => {
   })
 })
 
-describe('combinaison des emplacements', () => {
+describe('combining slots', () => {
   const everything: AccessorySelection = { head: 'top-hat', eyes: 'sunglasses', neck: 'bowtie', back: 'backpack' }
 
-  it.each(SHAPE_LIST)('%s : les quatre emplacements ensemble, sans erreur', (shape) => {
+  it.each(SHAPE_LIST)('%s: the four slots together, without error', (shape) => {
     const { R } = bodyOf(shape)
     const acc = new Accessories3d()
     acc.update(everything, shape, mat(), () => R)
@@ -180,12 +180,12 @@ describe('combinaison des emplacements', () => {
       expect(verticesFinite(g)).toBe(true)
     }
     expect(acc.colors.length).toBeGreaterThanOrEqual(3)
-    // chaque emplacement ne produit qu'un groupe : un seul accessoire par emplacement
+    // each slot only produces one group: one accessory per slot
     expect(new Set(acc.group.children.map((c) => c.name)).size).toBe(4)
     acc.liberer()
   })
 
-  it('toutes les paires (tete, yeux, bas, dos) du catalogue se construisent sur une forme sans erreur', () => {
+  it('every pair (head, eyes, neck, back) of the catalog builds on a shape without error', () => {
     const { R } = bodyOf('circle')
     const sels: AccessorySelection[] = []
     const t = accessoriesInSlot('head')
@@ -205,7 +205,7 @@ describe('combinaison des emplacements', () => {
     }
   }, 30000)
 
-  it('la zone de la tete reste au-dessus de celle du cou : pas de collision entre emplacements du haut et du bas', () => {
+  it('the head area stays above the neck area: no collision between top and bottom slots', () => {
     for (const shape of ['circle', 'squircle', 'cloud', 'egg']) {
       const { R } = bodyOf(shape)
       const acc = new Accessories3d()
@@ -218,7 +218,7 @@ describe('combinaison des emplacements', () => {
     }
   })
 
-  it("un emplacement vide ou un accessoire inconnu ne produit rien ; le groupe se masque s'il n'y a rien", () => {
+  it("an empty slot or an unknown accessory produces nothing; the group hides when there is nothing", () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({}, 'a', mat(), () => R)
@@ -228,7 +228,7 @@ describe('combinaison des emplacements', () => {
     acc.liberer()
   })
 
-  it('le calcul des reperes (couteux) ne se refait pas tant que le corps et la selection sont les memes', () => {
+  it('the (costly) landmark computation is not redone as long as the body and the selection stay the same', () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     let n = 0
@@ -243,14 +243,14 @@ describe('combinaison des emplacements', () => {
   })
 })
 
-describe('liste des emplacements', () => {
-  it('quatre emplacements proposes dans un ordre stable (visage vide depuis le 10/11/2026)', () => {
+describe('slot list', () => {
+  it('four offered slots in a stable order (face empty since 10/11/2026)', () => {
     expect(SLOTS).toEqual(['head', 'eyes', 'neck', 'back'] as Slot[])
   })
 })
 
-describe('retours de Robin du 05/11/2026', () => {
-  it('les accessoires retires ne sont plus au catalogue ni resolus, mais restent listes dans RETIRES', () => {
+describe('feedback of 05/11/2026', () => {
+  it('removed accessories are no longer in the catalog or resolved, but stay listed in REMOVED', () => {
     expect(REMOVED.map((r) => `${r.slot}:${r.id}`).sort()).toEqual(
       ['bas:bandana', 'bas:clochette', 'bas:medaille', 'bas:cravate', 'tete:bonnet', 'tete:bob', 'dos:queue', 'yeux:sommeil', 'tete:fete', 'tete:oreilles', 'visage:larme', 'visage:pansement', 'yeux:domino', 'yeux:ski', 'visage:chat', 'visage:rousseur', 'visage:grain', 'bas:moustache', 'dos:ailes', 'dos:diable', 'visage:joues'].sort()
     )
@@ -260,7 +260,7 @@ describe('retours de Robin du 05/11/2026', () => {
     }
   })
 
-  it('le collier de perles ne porte plus de pendentif : que des spheres identiques', () => {
+  it('the pearl necklace no longer has a pendant: only identical spheres', () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({ neck: 'pearls' }, 'p', mat(), () => R)
@@ -269,27 +269,27 @@ describe('retours de Robin du 05/11/2026', () => {
     acc.liberer()
   })
 
-  it.each(SHAPE_LIST)('%s : le casque de musique a un arceau au-dessus de la tete et deux coques sur les flancs, enfoncees dans le corps', (shape) => {
+  it.each(SHAPE_LIST)('%s: the headphones have a band over the head and two cups on the sides, sunk into the body', (shape) => {
     const { R } = bodyOf(shape)
     const acc = new Accessories3d()
     acc.update({ head: 'headphones' }, shape, mat(), () => R)
     const b = new Box3().setFromObject(acc.group)
     expect(verticesFinite(acc.group)).toBe(true)
-    // l'arceau passe au-dessus de l'oeil, jusqu'au haut du corps
+    // the band goes above the eye, up to the top of the body
     expect(b.max.y).toBeGreaterThan(R.yEyes + 0.3 * R.H)
-    // les coques depassent a gauche et a droite de la largeur du corps a hauteur des yeux
+    // the cups stick out left and right of the body width at eye height
     const g = R.A.side(R.yEyes, R.zc, -1)!
     const d = R.A.side(R.yEyes, R.zc, 1)!
     expect(b.min.x).toBeLessThan(g.p.x)
     expect(b.max.x).toBeGreaterThan(d.p.x)
-    // symetrique : autant a gauche qu'a droite, a peu pres
+    // symmetric: about as much on the left as on the right
     expect(Math.abs(b.min.x + b.max.x)).toBeLessThan(0.25 * R.hw)
-    // une coque rentre dans le corps (comme les lunettes) : son extremite interieure est en dedans du bord
+    // a cup goes into the body (like the glasses): its inner end is inside the edge
     expect(b.min.x).toBeLessThan(g.p.x - 1)
     acc.liberer()
   })
 
-  it('le casque occupe l emplacement tete : il ne se cumule pas avec un chapeau (documente), mais avec tous les autres', () => {
+  it('the headphones take the head slot: they do not stack with a hat (documented), but with all the others', () => {
     const { R } = bodyOf('squircle')
     const acc = new Accessories3d()
     acc.update({ head: 'headphones', eyes: 'sunglasses', neck: 'scarf', back: 'backpack' }, 'x', mat(), () => R)
@@ -298,7 +298,7 @@ describe('retours de Robin du 05/11/2026', () => {
     acc.liberer()
   })
 
-  it('les bretelles du sac suivent le corps : tous leurs sommets sont a la surface ou juste au-dessus (pas de vol libre)', () => {
+  it('the backpack straps follow the body: all their vertices are on the surface or just above (no free flight)', () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({ back: 'backpack' }, 's', mat(), () => R)
@@ -317,8 +317,8 @@ describe('retours de Robin du 05/11/2026', () => {
   })
 })
 
-describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
-  it.each(SHAPE_LIST)('%s : le noeud papillon est symetrique, pose devant le cou, deux ailes et un noeud', (shape) => {
+describe('accessories v3 (feedback of 05/11/2026)', () => {
+  it.each(SHAPE_LIST)('%s: the bow tie is symmetric, set in front of the neck, two wings and a knot', (shape) => {
     const { R } = bodyOf(shape)
     const acc = new Accessories3d()
     acc.update({ neck: 'bowtie' }, shape, mat(), () => R)
@@ -328,12 +328,12 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     expect(verticesFinite(acc.group)).toBe(true)
     expect(Math.abs(b.min.x + b.max.x)).toBeLessThan(0.15 * R.hw)
     expect(b.max.x - b.min.x).toBeGreaterThan(0.6 * R.hw)
-    // devant le corps a la hauteur du noeud (tout en bas depuis la v4)
+    // in front of the body at the knot's height (at the very bottom since v4)
     expect(b.max.z).toBeGreaterThan(R.A.before(0, (b.min.y + b.max.y) / 2)!.p.z)
     acc.liberer()
   })
 
-  it('la cape est rouge unie : une seule couleur, aucune piece jaune', () => {
+  it('the cape is plain red: a single color, no yellow piece', () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({ back: 'cape' }, 'c', mat(), () => R)
@@ -343,14 +343,14 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it('la queue et le masque de sommeil sont retires du catalogue (code garde)', () => {
+  it('the tail and the sleep mask are removed from the catalog (code kept)', () => {
     expect(resolveAccessories('back', 'tail')).toBeNull()
     expect(resolveAccessories('eyes', 'sleep')).toBeNull()
     expect(REMOVED.some((r) => r.id === 'tail')).toBe(true)
     expect(REMOVED.some((r) => r.id === 'sleep')).toBe(true)
   })
 
-  it('la moustache, les taches de rousseur, le grain de beaute et les moustaches de chat sont retires (09/11/2026, code garde)', () => {
+  it('the mustache, freckles, beauty mark and cat whiskers are removed (09/11/2026, code kept)', () => {
     expect(resolveAccessories('neck', 'mustache')).toBeNull()
     expect(resolveAccessories('face', 'whiskers')).toBeNull()
     expect(resolveAccessories('back', 'wings')).toBeNull()
@@ -358,7 +358,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     expect(REMOVED.some((r) => r.id === 'mustache')).toBe(true)
   })
 
-  it.each(SHAPE_LIST)('%s : le noeud papillon est petit (au plus 45 pour cent du corps) et ne depasse que peu sous la silhouette', (shape) => {
+  it.each(SHAPE_LIST)('%s: the bow tie is small (at most 45 percent of the body) and only sticks out a little below the silhouette', (shape) => {
     const { R } = bodyOf(shape)
     const acc = new Accessories3d()
     acc.update({ neck: 'bowtie' }, shape, mat(), () => R)
@@ -368,7 +368,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it.each(SHAPE_LIST)('%s : la casquette a une visiere qui depasse nettement vers l avant', (shape) => {
+  it.each(SHAPE_LIST)('%s: the cap has a visor that clearly sticks out forward', (shape) => {
     const { R } = bodyOf(shape)
     const acc = new Accessories3d()
     acc.update({ head: 'cap' }, shape, mat(), () => R)
@@ -378,7 +378,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it.each(SHAPE_LIST)('%s : la calotte de la casquette est un dome rond qui depasse de l assise', (shape) => {
+  it.each(SHAPE_LIST)('%s: the cap\'s crown is a round dome above the seat', (shape) => {
     const { R } = bodyOf(shape)
     const acc = new Accessories3d()
     acc.update({ head: 'cap' }, shape, mat(), () => R)
@@ -389,7 +389,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it.each(SHAPE_LIST)('%s : l ordinateur du mood travaille est devant le corps, en bas a droite, sous les yeux, et pousse avec son echelle', (shape) => {
+  it.each(SHAPE_LIST)('%s: the laptop of the working mood is in front of the body, bottom right, under the eyes, and grows with its scale', (shape) => {
     const { R } = bodyOf(shape)
     const acc = new Accessories3d()
     const laptop = (k: number) => ({ k, ground: R.neck, key: shape })
@@ -398,15 +398,15 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     expect(og, shape).toBeDefined()
     expect(og!.visible).toBe(true)
     const b = new Box3().setFromObject(og!)
-    // devant le corps, centre, sous les yeux, pose au sol
+    // in front of the body, centered, under the eyes, on the ground
     expect(b.max.z, shape).toBeGreaterThan((R.A.before(0, R.neck + 0.1 * R.H)?.p.z ?? R.A.box.max.z) + 0.1 * R.hw)
-    // en bas a droite de l'image (x positif), sans sortir du cadre
+    // at the bottom right of the image (positive x), without leaving the frame
     expect((b.max.x + b.min.x) / 2, shape).toBeGreaterThan(0.25 * R.hw)
     expect(b.max.x, shape).toBeLessThan(1.6 * R.hw)
     expect(b.max.y, shape).toBeLessThan(R.yEyes)
     expect(b.min.y, shape).toBeGreaterThan(R.neck - 0.03 * R.H)
     expect(verticesFinite(acc.group)).toBe(true)
-    // a mi-pousse il est plus petit, a zero il disparait
+    // halfway through growing it is smaller, at zero it disappears
     acc.update({}, shape, mat(), () => R, laptop(0.5))
     expect(og!.scale.x).toBeCloseTo(0.5, 6)
     acc.update({ head: 'cap' }, shape, mat(), () => R, laptop(0))
@@ -414,7 +414,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it('l ordinateur se cumule avec les accessoires et ne s poster pas sans le mood', () => {
+  it('the laptop stacks with accessories and does not show without the mood', () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     const m = mat()
@@ -427,7 +427,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it.each(SHAPE_LIST)('%s : la calotte couvre le haut du corps (aucune pointe ne depasse)', (shape) => {
+  it.each(SHAPE_LIST)('%s: the crown covers the top of the body (no tip sticks out)', (shape) => {
     const { R } = bodyOf(shape)
     const acc = new Accessories3d()
     acc.update({ head: 'cap' }, shape, mat(), () => R)
@@ -436,7 +436,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it('la casquette et le casque de musique sont au meme emplacement : le second remplace le premier', () => {
+  it('the cap and the headphones share a slot: the second replaces the first', () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({ head: 'headphones' }, 'x', mat(), () => R)
@@ -448,7 +448,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     acc.liberer()
   })
 
-  it.each(SHAPE_LIST)('%s : les branches des lunettes restent dans la boite du corps', (shape) => {
+  it.each(SHAPE_LIST)('%s: the glasses arms stay inside the body\'s box', (shape) => {
     const { R } = bodyOf(shape)
     for (const id of ['round', 'square', 'sunglasses', 'heart', 'star']) {
       const acc = new Accessories3d()
@@ -463,7 +463,7 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
     }
   })
 
-  it('les bretelles du sac ne passent pas par le devant du corps', () => {
+  it('the backpack straps do not go across the front of the body', () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({ back: 'backpack' }, 's', mat(), () => R)
@@ -476,13 +476,13 @@ describe('accessoires v3 (retours de Robin du 05/11/2026)', () => {
 })
 
 
-describe('accessoires v4 : simples, une ou deux couleurs, personnalisables (Robin, 05/11/2026)', () => {
+describe('accessories v4: simple, one or two colors, customizable (05/11/2026)', () => {
   const hexMat = (m: Mesh) => (m.material as unknown as { color: { getHexString(): string } }).color.getHexString()
-  /** couleurs des pieces opaques (le verre translucide d'une lunette n'est pas une couleur de l'accessoire) */
+  /** colors of the opaque pieces (the translucent lens of glasses is not an accessory color) */
   const colorsOpaque = (o: Object3D) =>
     new Set(meshes(o).filter((m) => (m.material as unknown as { opacity: number }).opacity >= 1).map(hexMat))
 
-  it.each(ACCESSORIES.map((a) => [a.slot, a.id] as const))('%s:%s a au plus deux couleurs, sur une forme ronde et sur une etoile', (e, id) => {
+  it.each(ACCESSORIES.map((a) => [a.slot, a.id] as const))('%s:%s has at most two colors, on a round shape and on a star', (e, id) => {
     for (const shape of ['circle', 'star']) {
       const { R } = bodyOf(shape)
       const acc = new Accessories3d()
@@ -492,20 +492,20 @@ describe('accessoires v4 : simples, une ou deux couleurs, personnalisables (Robi
     }
   })
 
-  it.each(ACCESSORIES.map((a) => [a.slot, a.id, a.c1, a.c2] as const))('%s:%s se personnalise : c1 et c2 imposes se retrouvent sur les pieces', (e, id, d1, d2) => {
+  it.each(ACCESSORIES.map((a) => [a.slot, a.id, a.c1, a.c2] as const))('%s:%s can be customized: forced c1 and c2 show up on the pieces', (e, id, d1, d2) => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({ [e]: { id, c1: '#123456', c2: '#654321' } } as AccessorySelection, 'p', mat(), () => R)
     const cs = [...colorsOpaque(acc.group)]
     expect(cs).toContain('123456')
-    // aucune couleur du catalogue ne reste quand c1 est impose (sauf c2 impose)
+    // no catalog color remains when c1 is forced (except a forced c2)
     for (const c of cs) expect(['123456', '654321']).toContain(c)
     expect(d1).toMatch(/^#/)
     expect(d2).toMatch(/^#/)
     acc.liberer()
   })
 
-  it('une couleur par defaut sobre : papillon noir, cape rouge, c2 = c1 quand une seule couleur', () => {
+  it('a sober default color: black bow tie, red cape, c2 = c1 when there is a single color', () => {
     expect(resolveAccessories('neck', 'bowtie')!.c1).toBe(ACCESSORY_PALETTE.black)
     expect(resolveAccessories('back', 'cape')!.c1).toBe(ACCESSORY_PALETTE.red)
     for (const id of ['bowtie', 'scarf']) {
@@ -514,18 +514,18 @@ describe('accessoires v4 : simples, une ou deux couleurs, personnalisables (Robi
     }
   })
 
-  it.each(SHAPE_LIST)('%s : le noeud papillon est tout en bas du corps, noir, une couleur', (shape) => {
+  it.each(SHAPE_LIST)('%s: the bow tie is at the very bottom of the body, black, one color', (shape) => {
     const { R } = bodyOf(shape)
     const acc = new Accessories3d()
     acc.update({ neck: 'bowtie' }, shape, mat(), () => R)
     expect(colorsOpaque(acc.group).size).toBe(1)
     const b = new Box3().setFromObject(acc.group)
-    // centre dans le tiers bas du corps, nettement sous la hauteur du cou d'avant
+    // centered in the bottom third of the body, clearly under the former neck height
     expect((b.min.y + b.max.y) / 2).toBeLessThan(R.neck + 0.4 * R.H)
     acc.liberer()
   })
 
-  it('la cape est un seul morceau : un seul maillage, sans col (aucun tube)', () => {
+  it('the cape is a single piece: a single mesh, no collar (no tube)', () => {
     for (const shape of ['circle', 'egg']) {
       const { R } = bodyOf(shape)
       const acc = new Accessories3d()
@@ -535,7 +535,7 @@ describe('accessoires v4 : simples, une ou deux couleurs, personnalisables (Robi
     }
   })
 
-  it("l'echarpe n'a plus de rayures et le collier de fleurs n'a que deux couleurs", () => {
+  it("the scarf has no stripes any more and the flower necklace only has two colors", () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({ neck: 'scarf' }, 'e', mat(), () => R)
@@ -547,11 +547,11 @@ describe('accessoires v4 : simples, une ou deux couleurs, personnalisables (Robi
   })
 })
 
-describe('contour des accessoires', () => {
+describe('accessory outline', () => {
   const shells = (o: Object3D) => meshes(o).filter((m) => (m.userData as { shell?: boolean }).shell)
   const pieces = (o: Object3D) => meshes(o).filter((m) => !(m.userData as { shell?: boolean }).shell)
 
-  it('une coque par piece opaque, cachee tant que le contour est coupe', () => {
+  it('one shell per opaque piece, hidden as long as the outline is off', () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({ head: 'top-hat' }, 'c0', mat(), () => R)
@@ -565,7 +565,7 @@ describe('contour des accessoires', () => {
     acc.liberer()
   })
 
-  it('les coques sont des maillages inverses, plus sombres que la piece, aux sommets finis', () => {
+  it('shells are inverted meshes, darker than the piece, with finite vertices', () => {
     const { R } = bodyOf('star')
     const acc = new Accessories3d()
     acc.update({ head: 'cap', eyes: 'round', neck: 'bowtie' }, 'c1', mat(), () => R)
@@ -585,7 +585,7 @@ describe('contour des accessoires', () => {
     acc.liberer()
   })
 
-  it("l'epaisseur est celle du corps et suit sa valeur a chaque image", () => {
+  it("the thickness is the body's and follows its value every frame", () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     acc.update({ head: 'top-hat' }, 'c2', mat(), () => R)
@@ -599,7 +599,7 @@ describe('contour des accessoires', () => {
     acc.liberer()
   })
 
-  it("le trait ne depend pas de l'echelle de la piece : l'ordinateur qui se replie garde le meme trait", () => {
+  it("the stroke does not depend on the piece's scale: the folding laptop keeps the same stroke", () => {
     const { R } = bodyOf('circle')
     const acc = new Accessories3d()
     const laptop = (k: number) => ({ k, ground: R.neck, key: 'laptop-circle' })
@@ -610,14 +610,14 @@ describe('contour des accessoires', () => {
     acc.update({}, 'c3', mat(), () => R, laptop(0.5))
     acc.outline(true, 4)
     const half = shells(acc.group).map((c) => (c.userData as { th: { value: number } }).th.value)
-    // la piece est a moitie taille : la valeur locale double, le trait a l'ecran reste le meme
+    // the piece is half size: the local value doubles, the stroke on screen stays the same
     half.forEach((v, i) => expect(v / full[i]!).toBeCloseTo(2, 5))
     acc.liberer()
   })
 })
 
-describe('coeur : les chapeaux reposent SUR les deux bosses, sans s enfoncer dans le creux (Robin, 06/11/2026)', () => {
-  /** Hauteur du plus haut point du corps sous l'emprise de la coiffe (le dessus des deux bosses). */
+describe('heart: hats rest ON the two bumps, without sinking into the hollow (06/11/2026)', () => {
+  /** Height of the body's highest point under the headwear's footprint (the top of the two bumps). */
   const topOfBumps = (R: Landmarks) => {
     let y = -Infinity
     for (let k = -8; k <= 8; k++) {
@@ -628,7 +628,7 @@ describe('coeur : les chapeaux reposent SUR les deux bosses, sans s enfoncer dan
   }
   const HEADWEAR = ['top-hat', 'crown', 'straw', 'beret', 'toque']
 
-  it('le coeur a bien un creux en haut (le milieu est nettement plus bas que les bosses), pas le cercle', () => {
+  it('the heart does have a hollow at the top (the middle is clearly lower than the bumps), not the circle', () => {
     const c = bodyOf('heart').R
     const m = c.A.top(0, c.zc)!
     expect(c.top - m.p.y).toBeGreaterThan(0.05 * c.H)
@@ -636,7 +636,7 @@ describe('coeur : les chapeaux reposent SUR les deux bosses, sans s enfoncer dan
     expect(r.top - r.A.top(0, r.zc)!.p.y).toBeLessThan(0.05 * r.H)
   })
 
-  it('l assise est sur le haut des bosses : ni dans le creux, ni en l air', () => {
+  it('the seat is on top of the bumps: neither in the hollow nor in the air', () => {
     const { R } = bodyOf('heart')
     const h = topOfBumps(R)
     expect(R.head.y).toBeGreaterThanOrEqual(h - 0.01 * R.H)
@@ -646,12 +646,12 @@ describe('coeur : les chapeaux reposent SUR les deux bosses, sans s enfoncer dan
     expect(R.head.rz).toBeGreaterThan(R.head.R * 0.7 - 1e-6)
   })
 
-  it.each(HEADWEAR)('%s : la coiffe est posee a la hauteur des bosses, pas dans le creux', (id) => {
+  it.each(HEADWEAR)('%s: the headwear sits at the bumps\' height, not in the hollow', (id) => {
     const { R } = bodyOf('heart')
     const acc = new Accessories3d()
     acc.update({ head: id } as AccessorySelection, 'heart', mat(), () => R)
     acc.group.updateMatrixWorld(true)
-    // le repere de la coiffe : le groupe mis a l'echelle du rayon d'assise
+    // the headwear frame: the group scaled to the seat radius
     let origin: Object3D | null = null
     acc.group.traverse((o) => {
       if (!origin && Math.abs(o.scale.x - R.head.R * 1.18) < 1e-3) origin = o
@@ -659,15 +659,15 @@ describe('coeur : les chapeaux reposent SUR les deux bosses, sans s enfoncer dan
     expect(origin, id).not.toBeNull()
     const h = topOfBumps(R)
     const y = (origin as unknown as Object3D).position.y
-    // sa base (un peu sous l'origine) touche le haut des bosses : avant la correction elle etait ~0,17 H plus bas, dans le creux
+    // its base (a little under the origin) touches the top of the bumps: before the fix it was about 0.17 H lower, in the hollow
     expect(y, id).toBeGreaterThanOrEqual(h - 0.08 * R.head.R)
     expect(y, id).toBeLessThanOrEqual(h + 0.05 * R.head.R)
-    // et l'ensemble depasse bien du haut du corps
+    // and the whole thing does stick out of the top of the body
     expect(new Box3().setFromObject(acc.group).max.y, id).toBeGreaterThan(R.top)
     acc.liberer()
   })
 
-  it('casquette, casque, ruban, fleur, antenne : se construisent sur le coeur, sommets finis, au-dessus du creux', () => {
+  it('cap, headphones, ribbon, flower, antenna: build on the heart, finite vertices, above the hollow', () => {
     const { R } = bodyOf('heart')
     for (const id of ['cap', 'headphones', 'ribbon', 'flower', 'antenna']) {
       const acc = new Accessories3d()
@@ -679,7 +679,7 @@ describe('coeur : les chapeaux reposent SUR les deux bosses, sans s enfoncer dan
     }
   })
 
-  it('les autres formes gardent leur assise (le creux ne change rien au cercle, a l etoile, au nuage)', () => {
+  it('the other shapes keep their seat (the hollow changes nothing for the circle, the star, the cloud)', () => {
     for (const f of ['circle', 'star', 'cloud', 'egg']) {
       const { R } = bodyOf(f)
       expect(R.head.y, f).toBeLessThanOrEqual(R.top)
@@ -687,22 +687,22 @@ describe('coeur : les chapeaux reposent SUR les deux bosses, sans s enfoncer dan
   })
 })
 
-describe('changement de forme du personnalisateur (09/11/2026)', () => {
+describe('customizer shape change (09/11/2026)', () => {
   const top = (acc: Accessories3d) => new Box3().setFromObject(acc.group).min.y
 
-  it('bug reproduit : meme cle, autre corps -> les pieces restent la ou elles etaient ; invalider() les recale', () => {
+  it('bug reproduced: same key, another body -> the pieces stay where they were; invalidate() puts them back', () => {
     const a = bodyOf('circle').R
     const b = bodyOf('triangle').R
-    expect(Math.abs(a.top - b.top)).toBeGreaterThan(1) // les deux corps n'ont pas le meme sommet
+    expect(Math.abs(a.top - b.top)).toBeGreaterThan(1) // the two bodies do not have the same top
     const sel: AccessorySelection = { head: 'cap' }
     const m = mat()
     const acc = new Accessories3d()
     acc.update(sel, 'x|forme', m, () => a)
     const placed = top(acc)
-    // la forme change mais la cle ne voit que le nom du style et de la forme, deja pris : rien n'est recalcule
+    // the shape changes but the key only sees the style and shape names, already taken: nothing is recomputed
     acc.update(sel, 'x|forme', m, () => b)
     expect(top(acc)).toBeCloseTo(placed, 5)
-    // apres invalider(), la pose suit le nouveau corps, comme une construction neuve
+    // after invalidate(), the pose follows the new body, like a fresh build
     acc.invalidate()
     acc.update(sel, 'x|forme', m, () => b)
     const fresh = new Accessories3d()
@@ -713,7 +713,7 @@ describe('changement de forme du personnalisateur (09/11/2026)', () => {
     fresh.liberer()
   })
 
-  it('<mochi-bot> invalide la pose des accessoires apres le morph quand la forme change', () => {
+  it('<mochi-bot> invalidates the accessory pose after the morph when the shape changes', () => {
     const src = readFileSync(new URL('../../components/mochi-bot.ts', import.meta.url), 'utf8')
     expect(src).toContain('invaliderAccessoires3d()')
     expect(src).toMatch(/watch\(\s*\(\) => props\.shape/)

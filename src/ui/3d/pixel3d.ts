@@ -1,11 +1,10 @@
 /**
- * Style PIXEL de la 3D : le meme volume que les autres styles, rendu a basse resolution (une case
- * de la grille = un pixel du canvas, agrandi sans lissage par `image-rendering: pixelated`), a
- * l'ombrage en trois tons, puis ramene a une PALETTE COURTE derivee de la couleur du corps
- * (3 tons) et de celles des accessoires, plus le blanc des yeux. Un contour de 1 px, d'un ton
- * plus sombre que le pixel qu'il borde, ferme la silhouette.
+ * PIXEL style of the 3D: the same volume as the other styles, rendered at low resolution (a grid cell = a canvas
+ * pixel, scaled up without smoothing by `image-rendering: pixelated`), shaded in three tones, then reduced to a SHORT
+ * PALETTE derived from the body color (3 tones) and the accessories' colors, plus the white of the eyes. A 1 px
+ * outline, one tone darker than the pixel it borders, closes the silhouette.
  *
- * Module pur (pas de Three.js, pas de DOM) : testable sous `node`.
+ * Pure module (no Three.js, no DOM): testable under Node.
  */
 
 export type Rgb = [number, number, number] | [number, number, number, number]
@@ -24,16 +23,16 @@ const toSrgb = (l: number) => {
   return Math.round(Math.min(1, Math.max(0, v)) * 255)
 }
 
-/** Luminance relative approchee (0 = noir, 1 = blanc), sur les valeurs sRGB. */
+/** Approximate relative luminance (0 = black, 1 = white), on sRGB values. */
 export function luminance(hex: string): number {
   const [r, g, b] = hexToRgb(hex)
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
 }
 
 /**
- * Les styles a tons nets (Flat, Pixel) n'ont plus de relief sur une couleur quasi noire (l'encre
- * par defaut de l'application) : trois tons de noir sont trois noirs. On eclaircit donc les
- * couleurs sombres vers un gris-bleu lisible avant de poser les tons ; les autres ne bougent pas.
+ * Styles with clean tones (Flat, Pixel) lose all relief on an almost black color (the app's default ink): three tones
+ * of black are three blacks. So dark colors are lightened towards a readable blue grey before setting the tones; the
+ * others do not move.
  */
 export function leverDark(hex: string): string {
   const l = luminance(hex)
@@ -44,7 +43,9 @@ export function leverDark(hex: string): string {
   return '#' + [m(r), m(g), m(b)].map((c) => c.toString(16).padStart(2, '0')).join('')
 }
 
-/** Les trois tons de l'ombrage (ombre, base, clair) : le meme multiple de la couleur, en lineaire, que le shader toon. */
+/**
+ * The three shading tones (shadow, base, light): the same multiple of the color, in linear light, as the toon shader.
+ */
 export const TONES_PIXEL = [0.7, 1, 1.12]
 
 export function tonesOf(hex: string, weight = 1): Rgb[] {
@@ -52,21 +53,21 @@ export function tonesOf(hex: string, weight = 1): Rgb[] {
   return TONES_PIXEL.map((t) => [toSrgb(r * t), toSrgb(g * t), toSrgb(b * t), weight] as Rgb)
 }
 
-/** Palette d'une image : tons du corps, tons de chaque accessoire, blanc des yeux. */
+/** Palette of a frame: body tones, tones of each accessory, white of the eyes. */
 export function palettePixel(body: string, accessories: string[] = [], eye: [number, number, number] = [255, 255, 255]): Rgb[] {
-  // les couleurs des accessoires pesent plus lourd : un pixel de bord (corps + blanc des yeux fondus) ne doit pas se changer en une teinte d'accessoire
+  // accessory colors weigh more: an edge pixel (body + eye white blended) must not turn into an accessory tint
   return [...tonesOf(body), ...accessories.flatMap((a) => tonesOf(a, 1.9)), [...eye, 1]]
 }
 
-/** Au plus ce canal : un pixel est « noir » (oeil du theme sombre). */
+/** At most this channel: a pixel is "black" (eye of the dark theme). */
 const THRESHOLD_BLACK = 44
 
 const dist = (a: Rgb, r: number, g: number, b: number) => ((a[0] - r) ** 2 + (a[1] - g) ** 2 + (a[2] - b) ** 2) * (a[3] ?? 1)
 
 /**
- * Les yeux sont de petits blocs blancs : apres reduction, leurs bouts restent en escalier (un coin
- * manquant, un pixel isole). Chaque amas de pixels blancs devient son rectangle englobant (si l'amas
- * en remplit au moins la moitie) ; un pixel blanc isole est efface, il reprend le ton de base du corps.
+ * The eyes are small white blocks: after reduction, their ends stay staircased (a missing corner, an isolated pixel).
+ * Each cluster of white pixels becomes its bounding rectangle (if the cluster fills at least half of it); an isolated
+ * white pixel is erased, it takes the body's base tone back.
  */
 function cleanEyes(data: Uint8ClampedArray, w: number, h: number, full: Uint8Array, palette: Rgb[], eye: [number, number, number] = [255, 255, 255]) {
   const white = (i: number) => full[i] === 1 && data[i * 4] === eye[0] && data[i * 4 + 1] === eye[1] && data[i * 4 + 2] === eye[2]
@@ -126,8 +127,8 @@ function cleanEyes(data: Uint8ClampedArray, w: number, h: number, full: Uint8Arr
 }
 
 /**
- * Ramene chaque pixel a la couleur la plus proche de la palette, durcit le canal alpha (une case
- * est pleine ou vide), puis trace un contour de 1 px autour de la forme. Modifie `data` en place.
+ * Brings each pixel to the nearest palette color, hardens the alpha channel (a cell is full or empty), then draws a 1
+ * px outline around the shape. Changes `data` in place.
  */
 export function quantifier(
   data: Uint8ClampedArray,
@@ -135,7 +136,7 @@ export function quantifier(
   h: number,
   palette: Rgb[],
   whitePriority = true,
-  /** theme sombre : couleur (noire) des yeux ; un pixel presque noir lui est rendu, a la place du blanc */
+  /** dark theme: (black) eye color; an almost black pixel gets it back, instead of white */
   eye?: [number, number, number]
 ) {
   const full = new Uint8Array(w * h)
@@ -145,8 +146,8 @@ export function quantifier(
       continue
     }
     full[i] = 1
-    // le blanc des yeux est prioritaire : un bord d'oeil a moitie fondu dans le corps reste blanc, les yeux
-    // gardent des blocs nets au lieu de pixels de la teinte du corps
+    // the white of the eyes wins: an eye edge half blended into the body stays white, the eyes
+    // keep clean blocks instead of pixels of the body tint
     if (whitePriority && Math.min(data[i * 4]!, data[i * 4 + 1]!, data[i * 4 + 2]!) >= 180) {
       data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = 255
       data[i * 4 + 3] = 255
@@ -174,7 +175,7 @@ export function quantifier(
     data[i * 4 + 3] = 255
   }
   cleanEyes(data, w, h, full, palette, eye)
-  // contour : une case pleine qui touche le vide (ou le bord) prend un ton plus sombre d'elle-meme
+  // outline: a full cell touching the empty (or the edge) takes a darker tone of itself
   const edge: number[] = []
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {

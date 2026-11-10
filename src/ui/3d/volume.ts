@@ -1,18 +1,16 @@
 /**
- * Volume 3D d'une image du moteur : la silhouette 2D « gonflee » en un corps ferme.
+ * 3D volume of an engine frame: the 2D silhouette "inflated" into a closed body.
  *
- * Aucune dependance a Three.js ici, et aucun etat : ce sont des fonctions pures de la
- * sortie de `engine.sample(t)`, testees sous `node`. Le module Three (`scene3d.ts`) ne
- * fait que copier ces tableaux dans ses tampons. Le moteur ne sait rien de la 3D : elle
- * n'est qu'un rendu de plus, comme le pixel art.
+ * No Three.js dependency here, and no state: pure functions of the output of `engine.sample(t)`, tested under Node.
+ * The Three module (`scene3d.ts`) only copies these arrays into its buffers. The engine knows nothing about 3D: it is
+ * just one more renderer.
  *
- * Pourquoi gonfler le contour plutot que modeler chaque forme : le moteur ne rend qu'un
- * contour par image (`bodyPath`), qui morphe d'un etat a l'autre. Le gonfler marche donc
- * pour TOUTES les formes, celles du personnalisateur comme les silhouettes relevees sur la
- * video, et suit le morphing sans rien de plus.
+ * Why inflate the outline rather than model each shape: the engine renders one outline per frame (`bodyPath`), which
+ * morphs from one state to another. Inflating it works for ALL shapes, the customizer's as well as the silhouettes
+ * measured on the video, and follows the morph with nothing more.
  *
- * Repere : celui du moteur (unites de viewBox, y vers le BAS, z vers le spectateur). Le
- * passage au repere Three (y vers le haut) se fait au remplissage des tampons.
+ * Frame: the engine's (viewBox units, y DOWN, z towards the viewer). The switch to Three space (y up) happens when
+ * the buffers are filled.
  */
 
 import { BotEngine } from '@/bot/engine'
@@ -20,17 +18,16 @@ import { RADIUS } from '@/bot/frame'
 import type { Point } from '@/bot/shape'
 import { SHAPE_BY_ID } from '@/bot/skins'
 
-/** Points intermediaires evalues sur chaque cubique du contour. */
+/** In-between points evaluated on each cubic of the outline. */
 export const SUB_STEP = 3
-/** Anneaux du centre au bord, sur chaque face. */
+/** Rings from the center to the edge, on each face. */
 export const RINGS = 12
-/** Demi-fenetre (en points du contour) du lissage des rayons qui fixent l'epaisseur. */
+/** Half window (in outline points) of the smoothing of the radii that set the thickness. */
 export const SMOOTHING = 6
 
 /**
- * Contour du corps relu sur le `bodyPath` : `closedPath` emet `M x y` puis une cubique
- * `C` par point. On evalue chaque cubique en `SUB_STEP` points, ce qui suit la courbe
- * dessinee en 2D et pas seulement ses 64 sommets.
+ * Body outline read off the `bodyPath`: `closedPath` emits `M x y` then one cubic `C` per point. Each cubic is
+ * evaluated at `SUB_STEP` points, which follows the curve drawn in 2D and not only its 64 vertices.
  */
 export function bodyOutline(d: string, step = SUB_STEP): Point[] {
   const m = /^M(-?[\d.]+) (-?[\d.]+)/.exec(d)
@@ -56,7 +53,7 @@ export function bodyOutline(d: string, step = SUB_STEP): Point[] {
   return out
 }
 
-/** Aire signee (repere du moteur, y vers le bas) : positive pour un contour horaire a l'ecran. */
+/** Signed area (engine space, y down): positive for a clockwise outline on screen. */
 export function aireSignee(pts: Point[]): number {
   let a = 0
   for (let i = 0; i < pts.length; i++) {
@@ -67,7 +64,7 @@ export function aireSignee(pts: Point[]): number {
   return a / 2
 }
 
-/** Centre de gravite de la surface du polygone (pas la moyenne des sommets). */
+/** Centroid of the polygon's area (not the average of the vertices). */
 export function centerOf(pts: Point[]): Point {
   let a = 0
   let cx = 0
@@ -87,14 +84,14 @@ export function centerOf(pts: Point[]): Point {
   return { x: cx / (3 * a), y: cy / (3 * a) }
 }
 
-/** Fraction du rayon de chaque anneau : plus serres pres du bord, ou la pente change vite. */
+/** Radius fraction of each ring: tighter near the edge, where the slope changes fast. */
 export const fractions = (rings: number) =>
   Array.from({ length: rings }, (_, i) => Math.sin(((i + 1) / rings) * (Math.PI / 2)))
 export const FRACTIONS = fractions(RINGS)
 
 /**
- * Finesse d'un volume. Le defaut est celui du rendu realiste ; la variante « low poly »
- * (`material.ts`) en prend une grossiere, pour que chaque facette se voie.
+ * Finesse of a volume. The default is the realistic renderer's; the "low poly" variant (`material.ts`) takes a coarse
+ * one, so each facet shows.
  */
 export interface Finesse {
   rings: number
@@ -102,7 +99,7 @@ export interface Finesse {
 }
 export const DEFAULT_FINESSE: Finesse = { rings: RINGS, smoothing: SMOOTHING }
 
-/** Garde un point du contour sur `k` (au moins 3 points restent) : un contour plus grossier. */
+/** Keeps one outline point out of `k` (at least 3 points remain): a coarser outline. */
 export function reduce(pts: Point[], k: number): Point[] {
   if (k <= 1) return pts
   const out = pts.filter((_, i) => i % k === 0)
@@ -110,67 +107,65 @@ export function reduce(pts: Point[], k: number): Point[] {
 }
 
 /**
- * Profil de volume d'une forme : de quoi la gonfler, sans la renseigner point par point.
+ * Volume profile of a shape: what is needed to inflate it, without describing it point by point.
  *
- * - `depth` : profondeur totale, en fraction de la plus petite dimension (largeur ou
- *   hauteur) de la silhouette. 1 = aussi profond que large (cube, sphere).
- * - `rounded` : rayon de l'arete arrondie, en fraction de la demi-profondeur. 1 = tout est
- *   arrondi (sphere, oeuf, galet) ; 0,4 = un cube aux aretes adoucies, face avant PLANE et
- *   cotes droits ; entre les deux, un coussin a plateau (fleur, nuage).
- * - `back` : la face arriere est un peu moins profonde (le corps se pose, il ne flotte
- *   pas) ; 1 = symetrique.
+ * - `depth`: total depth, as a fraction of the smallest dimension (width or height) of the silhouette. 1 = as deep as
+ *   wide (cube, sphere).
+ * - `rounded`: radius of the rounded edge, as a fraction of the half depth. 1 = everything is round (sphere, egg,
+ *   pebble); 0.4 = a cube with softened edges, FLAT front face and straight sides; in between, a cushion with a
+ *   plateau
+ *   (flower, cloud).
+ * - `back`: the back face is a little less deep (the body rests, it does not float); 1 = symmetric.
  *
- * Le profil ne depend que de la forme, pas de l'image : le volume suit le morphing du
- * contour, mais un cube reste un cube quand il s'ecrase ou saute.
+ * The profile only depends on the shape, not on the frame: the volume follows the outline's morph, but a cube stays a
+ * cube when it squashes or jumps.
  */
 export interface ProfileVolume {
   depth: number
   rounded: number
   back: number
   /**
-   * Pyramide : la profondeur est celle de la base (la largeur) et decroit lineairement jusqu'a
-   * la pointe (en haut) ; face avant inclinee, base plate dessous, aretes adoucies.
+   * Pyramid: the depth is the base's (the width) and decreases linearly to the tip (at the top); tilted front face,
+   * flat base underneath, softened edges.
    */
   pyramid?: boolean
-  /** Sphere geometrique : anneaux a angle polaire regulier, rayon z = rayon moyen du contour. */
+  /** Geometric sphere: rings at regular polar angle, z radius = mean radius of the outline. */
   sphere?: boolean
   /**
-   * Solide de revolution : le corps est un volume de section circulaire autour de l'axe vertical
-   * (`v` : cone, goutte, oeuf) ou horizontal (`h` : capsule couchee). La profondeur en chaque point
-   * vaut la demi-largeur du contour a cette hauteur (ou a cette abscisse) : le corps est donc
-   * credible sous tous les angles, sans mur ni extrusion plate.
+   * Solid of revolution: the body is a volume of circular section around the vertical axis (`v`: cone, drop, egg) or
+   * the horizontal one (`h`: lying capsule). The depth at each point is the half width of the outline at that height
+   * (or abscissa): so the body is believable from every angle, with no wall or flat extrusion.
    */
   revolution?: 'v' | 'h'
   /**
-   * Gonflage « coussin » : la hauteur vient de la solution d'une equation de Poisson sur l'interieur
-   * du contour (u = 0 au bord), puis z = H * (u / umax) ^ 0,45. Surface lisse PARTOUT : pas d'arete
-   * le long de l'axe median (etoile, hexagone), lobes qui fondent l'un dans l'autre (nuage, fleur),
-   * bord arrondi a tangente verticale, sans gorge sur la tranche.
+   * "Cushion" inflation: the height comes from solving a Poisson equation inside the outline (u = 0 on the edge),
+   * then z = H * (u / umax) ^ 0.45. Smooth EVERYWHERE: no edge along the median axis (star, hexagon), lobes melting
+   * into each other (cloud, flower), a rounded edge with a vertical tangent, no groove on the side.
    */
   cushion?: boolean
 }
 
-/** Un coussin a plateau : sert aux formes sans profil connu (silhouettes relevees, etc.). */
+/** A cushion with a plateau: used for shapes with no known profile (measured silhouettes, etc.). */
 export const DEFAULT_PROFILE: ProfileVolume = { depth: 0.8, rounded: 0.75, back: 0.9 }
 
 export const PROFILES: Record<string, ProfileVolume> = {
-  // boules : tout est arrondi, le cercle est une VRAIE sphere (le corps de la video)
+  // balls: everything is round, the circle is a REAL sphere (the video's body)
   circle: { depth: 1, rounded: 1, back: 1, sphere: true },
   egg: { depth: 1, rounded: 1, back: 1, revolution: 'v' },
   pebble: { depth: 0.9, rounded: 1, back: 0.9 },
   drop: { depth: 1, rounded: 1, back: 1, revolution: 'v' },
-  // la capsule est un tube couche : aussi profond que haut
+  // the capsule is a lying tube: as deep as high
   capsule: { depth: 1, rounded: 1, back: 1, revolution: 'h' },
-  // le carre est un CUBE : aussi profond que large, face plane, cotes droits, aretes rondes
+  // the square is a CUBE: as deep as wide, flat face, straight sides, round edges
   squircle: { depth: 1, rounded: 0.78, back: 1 },
-  // pyramide a base carree regardee par une face : la profondeur croit de la pointe a la base
+  // square-based pyramid seen from one face: the depth grows from the tip to the base
   triangle: { depth: 1, rounded: 1, back: 1, revolution: 'v' },
   // hexagone : ecrou doux, meme extrusion biseautee
   hexagon: { depth: 0.8, rounded: 0.82, back: 1, cushion: true },
-  // extrusion a gros biseau (reference : icones 3D epaisses et douces) : faces plates, bords
-  // ENTIEREMENT arrondis comme un bonbon, epaisseur ~0,45 x la largeur
+  // extrusion with a big bevel (reference: thick, soft 3D icons): flat faces, edges
+  // FULLY rounded like a candy, thickness about 0.45 x the width
   star: { depth: 0.85, rounded: 0.98, back: 1, cushion: true },
-  // fleur : cinq petales ronds extrudes, meme biseau
+  // flower: five round extruded petals, same bevel
   flower: { depth: 0.85, rounded: 0.98, back: 1, cushion: true },
   // coeur : coussin bombe, creux en haut et pointe douce en bas
   heart: { depth: 0.85, rounded: 0.98, back: 1, cushion: true },
@@ -181,12 +176,12 @@ export const PROFILES: Record<string, ProfileVolume> = {
 export const profileOf = (shape?: string | null): ProfileVolume =>
   (shape ? PROFILES[shape] : undefined) ?? DEFAULT_PROFILE
 
-/** Un arrondi de 1 garderait un mur de hauteur nulle : on laisse 2 % de la demi-profondeur. */
+/** A rounding of 1 would keep a zero-height wall: we leave 2 % of the half depth. */
 const ROUNDED_MAX = 0.98
 
 /**
- * Mesures d'un volume : demi-profondeur `H`, rayon d'arete `b` et hauteur du mur `zw`
- * (le bord du corps est a `+zw` devant et `-zw * back` derriere).
+ * Measurements of a volume: half depth `H`, edge radius `b` and wall height `zw` (the body edge is at `+zw` in front
+ * and `-zw * back` behind).
  */
 export function measuresOf(pts: Point[], profile: ProfileVolume) {
   let x0 = Infinity
@@ -205,7 +200,9 @@ export function measuresOf(pts: Point[], profile: ProfileVolume) {
   return { H, b, zw: H - b, y0, y1 }
 }
 
-/** Part de la demi-profondeur a la hauteur `y` : 1 partout, sauf la pyramide (0,08 a la pointe, 1 a la base). */
+/**
+ * Share of the half depth at height `y`: 1 everywhere, except the pyramid (0.08 at the tip, 1 at the base).
+ */
 export function partDepth(y: number, m: { y0: number; y1: number }, profile: ProfileVolume): number {
   if (!profile.pyramid) return 1
   const t = (y - m.y0) / Math.max(1e-6, m.y1 - m.y0)
@@ -213,9 +210,8 @@ export function partDepth(y: number, m: { y0: number; y1: number }, profile: Pro
 }
 
 /**
- * Hauteur de la surface avant a la distance `d` du bord : un quart de cercle de rayon `b`
- * qui se raccorde au mur (tangente verticale en d = 0) puis au plateau plat (d >= b). Sur
- * un cercle avec b = H c'est EXACTEMENT la sphere.
+ * Height of the front surface at distance `d` from the edge: a quarter circle of radius `b` joining the wall
+ * (vertical tangent at d = 0) then the flat plateau (d >= b). On a circle with b = H it is EXACTLY the sphere.
  */
 export function height(d: number, H: number, b: number): number {
   if (d >= b) return H
@@ -223,7 +219,9 @@ export function height(d: number, H: number, b: number): number {
   return H - b + Math.sqrt(Math.max(0, b * b - x * x))
 }
 
-/** Distance d'un point au bord (segments `startPos - width` a `startPos + width`, contour ferme). */
+/**
+ * Distance of a point to the edge (segments `startPos - width` to `startPos + width`, closed outline).
+ */
 function distanceEdge(pts: Point[], x: number, y: number, startPos: number, width: number): number {
   const n = pts.length
   let m = Infinity
@@ -243,36 +241,36 @@ function distanceEdge(pts: Point[], x: number, y: number, startPos: number, widt
   return Math.sqrt(m)
 }
 
-/** Distance d'un point (x, y) au bord, sur tout le contour. */
+/** Distance of a point (x, y) to the edge, over the whole outline. */
 export const distanceAtEdge = (pts: Point[], x: number, y: number) =>
   distanceEdge(pts, x, y, 0, Math.floor(pts.length / 2))
 
 export interface Volume {
-  /** x, y, z par sommet, repere du moteur */
+  /** x, y, z per vertex, engine space */
   positions: Float32Array
-  /** u, v par sommet, projection de face sur le viewBox (texture des yeux) */
+  /** u, v per vertex, front projection on the viewBox (eye texture) */
   uvs: Float32Array
-  /** triangles ; ne depend que du nombre de points du contour */
+  /** triangles; only depend on the number of outline points */
   index: Uint32Array
-  /** point le plus bas du corps (y max, repere du moteur) : la ou il touche le sol */
+  /** lowest point of the body (max y, engine space): where it touches the ground */
   neck: number
   center: Point
-  /** demi-profondeur, rayon d'arete et hauteur du mur (unites du moteur) */
+  /** half depth, edge radius and wall height (engine units) */
   measures: { H: number; b: number; zw: number; y0: number; y1: number }
 }
 
-/** Nombre de sommets d'un volume pour un contour de `n` points. */
+/** Number of vertices of a volume for an outline of `n` points. */
 export const vertices = (n: number, rings = RINGS) => 2 + (2 * rings + 1) * n
 
 /**
- * Disposition des sommets, pour `n` points de contour et `A` anneaux :
- *   0                       centre avant
- *   1 + (a-1) n + k         anneau avant a (1..A) ; A = le bord, avec la texture du visage
- *   1 + A n + k             anneau « mur haut » : meme position que le bord avant, sans visage
- *   1 + (A+1) n             centre arriere
- *   2 + (A+1) n + (a-1) n + k   anneau arriere a (1..A) ; A = le pied du mur
- * Le mur est une bande entre le bord avant dedouble et le bord arriere : le visage (yeux,
- * reflet) s'arrete donc au bord de la face avant, et les cotes sont de la couleur du corps.
+ * Vertex layout, for `n` outline points and `A` rings:
+ *   0                       front center
+ *   1 + (a-1) n + k         front ring a (1..A); A = the edge, with the face texture
+ *   1 + A n + k             "top wall" ring: same position as the front edge, without the face
+ *   1 + (A+1) n             back center
+ *   2 + (A+1) n + (a-1) n + k   back ring a (1..A); A = the foot of the wall
+ * The wall is a band between the duplicated front edge and the back edge: the face (eyes, highlight) stops at the
+ * edge of the front face, and the sides are the body color.
  */
 export const indicesVolume = (n: number, rings = RINGS) => ({
   before: (a: number, k: number) => 1 + (a - 1) * n + (k % n),
@@ -283,7 +281,7 @@ export const indicesVolume = (n: number, rings = RINGS) => ({
 
 const indexCache = new Map<string, Uint32Array>()
 
-/** Triangles d'un volume a `n` points de contour (partages entre tous les volumes de meme n). */
+/** Triangles of a volume with `n` outline points (shared by all volumes with the same n). */
 export function indexOfVolume(n: number, rings = RINGS): Uint32Array {
   const key = `${n}|${rings}`
   const already = indexCache.get(key)
@@ -291,17 +289,17 @@ export function indexOfVolume(n: number, rings = RINGS): Uint32Array {
   const tri: number[] = []
   const { before, wall, centerBack, back } = indicesVolume(n, rings)
   for (let k = 0; k < n; k++) {
-    // face avant : anti-horaire vu de +z une fois y retourne (repere Three)
+    // front face: counterclockwise seen from +z once y is flipped (Three space)
     tri.push(0, before(1, k + 1), before(1, k))
     tri.push(centerBack, back(1, k), back(1, k + 1))
     for (let a = 1; a < rings; a++) {
       tri.push(before(a, k), before(a, k + 1), before(a + 1, k))
       tri.push(before(a, k + 1), before(a + 1, k + 1), before(a + 1, k))
-      // arriere : le chemin va du bord (a + 1) vers le centre (a)
+      // back: the path goes from the edge (a + 1) to the center (a)
       tri.push(back(a + 1, k), back(a + 1, k + 1), back(a, k + 1))
       tri.push(back(a + 1, k), back(a, k + 1), back(a, k))
     }
-    // le mur : du bord avant dedouble au pied arriere
+    // the wall: from the duplicated front edge to the back foot
     tri.push(wall(k), wall(k + 1), back(rings, k + 1))
     tri.push(wall(k), back(rings, k + 1), back(rings, k))
   }
@@ -315,13 +313,13 @@ export function indexOfVolume(n: number, rings = RINGS): Uint32Array {
 const GRID = 112
 
 export interface FieldCushion {
-  /** solution normalisee (0 au bord, 1 au maximum), GRILLE x GRILLE, lignes de haut en bas */
+  /** normalized solution (0 on the edge, 1 at the maximum), GRID x GRID, rows from top to bottom */
   u: Float32Array
-  /** coin de la grille et taille d'une case, dans le repere du contour d'ou le champ a ete resolu */
+  /** grid corner and cell size, in the space of the outline the field was solved on */
   x0: number
   y0: number
   step: number
-  /** boite de ce contour : sert a normaliser n'importe quel contour de la meme forme (ecrase, decale) */
+  /** box of that outline: used to normalize any outline of the same shape (squashed, shifted) */
   bx0: number
   by0: number
   bw: number
@@ -330,7 +328,7 @@ export interface FieldCushion {
 
 const fields = new Map<string, FieldCushion>()
 
-/** Point dans le polygone (lancer de rayon). */
+/** Point in polygon (ray casting). */
 function dedans(pts: Point[], x: number, y: number): boolean {
   let c = false
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
@@ -342,10 +340,9 @@ function dedans(pts: Point[], x: number, y: number): boolean {
 }
 
 /**
- * Resout \u2207\u00b2u = -1 dans le contour (u = 0 dehors) sur une grille, par surrelaxation, et garde le
- * resultat sous `key`. Le champ est calcule UNE fois, sur le contour de REPOS de la forme (voir
- * `fieldOfIdle`) ; ensuite tout contour de la meme forme, ecrase ou decale par un geste, le reutilise
- * en normalisant ses coordonnees par sa propre boite (`heightNorm`).
+ * Solves ∇²u = -1 inside the outline (u = 0 outside) on a grid, by over-relaxation, and keeps the result under `key`.
+ * The field is computed ONCE, on the shape's RESTING outline (see `fieldOfIdle`); then any outline of the same shape,
+ * squashed or shifted by a gesture, reuses it by normalizing its coordinates with its own box (`heightNorm`).
  */
 export function fieldCushion(pts: Point[], key: string): FieldCushion {
   const already = fields.get(key)
@@ -391,7 +388,7 @@ export function fieldCushion(pts: Point[], key: string): FieldCushion {
   return field
 }
 
-/** Champ du contour de REPOS d'une forme du catalogue (id), resolu une seule fois. */
+/** Field of the RESTING outline of a catalog shape (id), solved only once. */
 export function fieldOfIdle(shape: string): FieldCushion | null {
   const key = `shape:${shape}`
   const already = fields.get(key)
@@ -402,7 +399,7 @@ export function fieldOfIdle(shape: string): FieldCushion | null {
   return idle.length > 8 ? fieldCushion(idle, key) : null
 }
 
-/** Id de forme d'un profil du catalogue (le profil est un objet partage), ou null s'il est personnalise. */
+/** Shape id of a catalog profile (the profile is a shared object), or null if it is custom. */
 export function shapeOfProfile(profile: ProfileVolume): string | null {
   for (const [id, p] of Object.entries(PROFILES)) if (p === profile) return id
   return null
@@ -426,19 +423,18 @@ function sample(c: FieldCushion, x: number, y: number): number {
   return Math.pow(Math.max(0, u), EXPONENT)
 }
 
-/** Hauteur normalisee (0..1) du coussin au point (x, y) du repere dans lequel le champ a ete resolu. */
+/** Normalized height (0..1) of the cushion at point (x, y) of the space the field was solved in. */
 export const heightCushion = sample
 
 /**
- * Hauteur normalisee en coordonnees NORMALISEES (a, b) de la boite d'un contour de la meme forme :
- * un geste qui ecrase ou etire le corps ne fait que mettre cette boite a l'echelle, le champ ne
- * change pas et n'est jamais recalcule.
+ * Normalized height at NORMALIZED coordinates (a, b) of the box of an outline of the same shape: a gesture that
+ * squashes or stretches the body only scales that box, the field does not change and is never recomputed.
  */
 export function heightNorm(c: FieldCushion, a: number, b: number): number {
   return sample(c, c.bx0 + a * c.bw, c.by0 + b * c.bh)
 }
 
-/** Etendue du contour sur la droite `y = v` (axe `v`) ou `x = v` (axe `h`) : [min, max] ou null. */
+/** Extent of the outline on the line `y = v` (axis `v`) or `x = v` (axis `h`): [min, max] or null. */
 function chord(pts: Point[], v: number, axis: 'v' | 'h'): [number, number] | null {
   let a = Infinity
   let b = -Infinity
@@ -457,19 +453,19 @@ function chord(pts: Point[], v: number, axis: 'v' | 'h'): [number, number] | nul
   return a === Infinity ? null : [a, b]
 }
 
-/** Coordonnee de texture d'un point du viewBox : (0,0) en bas a gauche, comme Three. */
+/** Texture coordinate of a viewBox point: (0,0) at the bottom left, like Three. */
 const uvOf = (x: number, y: number, vb: number) => [(x + vb) / (2 * vb), 1 - (y + vb) / (2 * vb)]
 
 /**
- * Gonfle le contour `pts` en un volume ferme. `target` est reutilisee si elle a la bonne
- * taille (une image par frame : pas d'allocation dans la boucle).
+ * Inflates the outline `pts` into a closed volume. `target` is reused if it has the right size (one frame per frame:
+ * no allocation in the loop).
  *
- * La hauteur de chaque sommet est une fonction de sa DISTANCE au bord (`height`), pas de
- * son rang dans l'anneau : face avant plane, arete en quart de cercle de rayon constant,
- * mur droit. C'est ce qui fait un cube d'un carre, et reste une sphere sur un cercle.
+ * The height of each vertex is a function of its DISTANCE to the edge (`height`), not of its rank in the ring: flat
+ * front face, quarter circle edge of constant radius, straight wall. That makes a cube from a square, and stays a
+ * sphere on a circle.
  *
- * La face arriere et le mur prennent la coordonnee de texture d'un coin du viewBox, qui n'a
- * que la couleur du corps : les yeux ne sont peints que devant.
+ * The back face and the wall take the texture coordinate of a viewBox corner, which only has the body color: the eyes
+ * are only painted in front.
  */
 export function inflate(
   outline: Point[],
@@ -480,8 +476,8 @@ export function inflate(
 ): Volume {
   const RINGS_N = finesse.rings
   const FRAC = RINGS_N === RINGS ? FRACTIONS : fractions(RINGS_N)
-  // sens du contour : celui des profils radiaux (horaire a l'ecran). Un contour donne
-  // dans l'autre sens retournerait toutes les faces.
+  // outline direction: that of the radial profiles (clockwise on screen). An outline given
+  // the other way would flip every face.
   const pts = aireSignee(outline) < 0 ? [...outline].reverse() : outline
   const n = pts.length
   const total = vertices(n, RINGS_N)
@@ -507,8 +503,8 @@ export function inflate(
   const measures = measuresOf(pts, profile)
   const { H } = measures
   const ARR = Math.min(ROUNDED_MAX, Math.max(0, profile.rounded))
-  // la distance au bord se mesure sur un contour plus grossier (un point par cubique) et sur
-  // les segments voisins du rayon seulement : assez juste, et ~50 fois moins cher
+  // the distance to the edge is measured on a coarser outline (one point per cubic) and only on
+  // the segments near the ray: accurate enough, and about 50 times cheaper
   const step = Math.max(1, Math.round(n / 64))
   const grossier = pts.filter((_, i) => i % step === 0)
   const m = grossier.length
@@ -526,8 +522,8 @@ export function inflate(
   const back = profile.back
   const idx = indicesVolume(n, RINGS_N)
   if (profile.sphere) {
-    // vraie sphere : anneaux a angle polaire regulier, z = rayon moyen. Sur un cercle c'est
-    // exactement la sphere ; si le contour s'ecrase, la silhouette suit toujours le contour.
+    // real sphere: rings at regular polar angle, z = mean radius. On a circle it is
+    // exactly the sphere; if the outline squashes, the silhouette still follows the outline.
     pose(0, c.x, c.y, rc, true)
     pose(idx.centerBack, c.x, c.y, -rc, false)
     for (let k = 0; k < n; k++) {
@@ -549,8 +545,8 @@ export function inflate(
     return v
   }
   if (profile.cushion) {
-    // gonflage « coussin » : memes anneaux que la sphere, hauteur = champ de Poisson du contour de repos,
-    // normalise par la boite du contour courant (aucun recalcul pendant une animation)
+    // "cushion" inflation: same rings as the sphere, height = Poisson field of the resting outline,
+    // normalized by the current outline's box (no recomputation during an animation)
     const name = shapeOfProfile(profile)
     let bx0 = Infinity
     let bx1 = -Infinity
@@ -573,7 +569,7 @@ export function inflate(
     for (let k = 0; k < n; k++) {
       const p = pts[k]!
       for (let a = 1; a <= RINGS_N; a++) {
-        // anneaux serres pres du bord (la surface y est la plus courbee), espaces au centre
+        // rings tight near the edge (the surface curves most there), spaced in the center
         const f = a === RINGS_N ? 1 : 1 - (1 - a / RINGS_N) ** 2
         const x = c.x + (p.x - c.x) * f
         const y = c.y + (p.y - c.y) * f
@@ -589,8 +585,8 @@ export function inflate(
     return v
   }
   if (profile.revolution) {
-    // solide de revolution : memes anneaux que la sphere, mais la profondeur de chaque point est la
-    // demi-largeur du contour a sa hauteur (axe vertical) ou a son abscisse (axe horizontal)
+    // solid of revolution: same rings as the sphere, but the depth of each point is the
+    // half width of the outline at its height (vertical axis) or its abscissa (horizontal axis)
     const axis = profile.revolution
     const zOf = (x: number, y: number) => {
       const ch = chord(pts, axis === 'v' ? y : x, axis)
@@ -621,7 +617,7 @@ export function inflate(
     v.measures = { ...measures, H: rc, b: rc, zw: 0 }
     return v
   }
-  // distances au bord de chaque sommet (une passe d'avance : le corps gonfle a besoin du maximum)
+  // distances to the edge of each vertex (one pass ahead: the inflated body needs the maximum)
   const dist = new Float32Array(RINGS_N * n)
   const place = new Float32Array(RINGS_N * n * 2)
   let dMax = 1e-6
@@ -633,9 +629,9 @@ export function inflate(
     const startPos = Math.min(m - 1, Math.round(k / step))
     for (let a = 1; a <= RINGS_N; a++) {
       const u = FRAC[a - 1]!
-      // les anneaux internes sont ARRONDIS : copie du contour a l'echelle `u`, ses angles
-      // (hexagone, carre) se retrouveraient en plis le long de chaque rayon d'angle. Le
-      // contour exact n'est retrouve qu'au bord (w = 1).
+      // the inner rings are ROUNDED: a copy of the outline at scale `u` would turn its corners
+      // (hexagon, square) into folds along each corner ray. The
+      // exact outline is only found at the edge (w = 1).
       const w = u * u * Math.sqrt(u)
       const k2 = a === RINGS_N ? 1 : (u * (rc * (1 - w) + length * w)) / Math.max(length, 1e-6)
       const i = (a - 1) * n + k
@@ -671,10 +667,10 @@ export function inflate(
 }
 
 /**
- * Rend les normales du bord continues : sur l'anneau du bord avant, le mur haut et le pied
- * du mur, la normale est horizontale (la tangente de l'arete y est verticale). Les sommets
- * du bord avant et du mur sont dedoubles pour la texture, donc `computeVertexNormals` ne les
- * relie pas : on les soude ici. `normals` est le tampon x, y, z du maillage Three.
+ * Makes the edge normals continuous: on the front edge ring, the top wall and the wall foot, the normal is horizontal
+ * (the edge's tangent is vertical there). Front edge and wall vertices are duplicated for the texture, so
+ * `computeVertexNormals` does not connect them: they are welded here. `normals` is the x, y, z buffer of the Three
+ * mesh.
  */
 export function weldNormals(normals: Float32Array, n: number, rings = RINGS) {
   const { before, wall, back } = indicesVolume(n, rings)
@@ -696,8 +692,8 @@ export function weldNormals(normals: Float32Array, n: number, rings = RINGS) {
 }
 
 /**
- * Demi-etendue d'un oeil a l'ecran : la boite de son chemin (extremites des segments et des
- * arcs, points de controle des courbes), passee dans la matrice du moteur.
+ * Half extent of an eye on screen: the box of its path (ends of segments and arcs, control points of curves), passed
+ * through the engine matrix.
  */
 export function halfExtentEye(d: string, matrix: string): number {
   let mx = 0
@@ -715,15 +711,13 @@ export function halfExtentEye(d: string, matrix: string): number {
 }
 
 /**
- * Les yeux d'un mochi 3D : PILE EN FACE (choix de design, 03/11/2026). Centres sur la face
- * avant, symetriques, de meme taille, droits (ni regard qui decale, ni inclinaison), un peu
- * au-dessus du centre. Ils restent sur la face quand le corps tourne : ils sont peints sur
- * le corps, la camera ne les « corrige » pas. Le 2D ne change pas.
+ * The eyes of a 3D Mochi: STRAIGHT FRONT (design choice, 03/11/2026). Centered on the front face, symmetric, same
+ * size, upright (no shifting gaze, no tilt), a little above the center. They stay on the face when the body turns:
+ * they are painted on the body, the camera does not "correct" them.
  *
- * `half` : demi-etendue de chaque oeil a l'echelle 1, dans l'ordre de gauche a droite. Si la
- * face est trop petite (centre d'une etoile), les yeux se reduisent ensemble puis se
- * rapprochent jusqu'a tenir, a l'abri de l'arete arrondie. Une forme ronde n'a pas d'arete :
- * seul le contour compte.
+ * `half`: half extent of each eye at scale 1, in order from left to right. If the face is too small (center of a
+ * star), the eyes shrink together then move closer until they fit, clear of the rounded edge. A round shape has no
+ * edge: only the outline counts.
  */
 export function frontEyes(pts: Point[], half: number[], profile: ProfileVolume): Array<{ x: number; y: number; s: number }> {
   const n = half.length
@@ -741,7 +735,7 @@ export function frontEyes(pts: Point[], half: number[], profile: ProfileVolume):
   }
   const small = Math.min(x1 - x0, y1 - y0)
   const y = c.y - (profile.pyramid ? 0.05 : 0.09) * small
-  // axe de la face : milieu de la largeur du corps a cette hauteur (les formes sont symetriques)
+  // face axis: middle of the body width at that height (shapes are symmetric)
   const xs: number[] = []
   for (let i = 0; i < pts.length; i++) {
     const a = pts[i]!
@@ -767,7 +761,7 @@ export function frontEyes(pts: Point[], half: number[], profile: ProfileVolume):
   return place(last, gap * 0.7)
 }
 
-/** `matrix(a b c d e f)` du moteur, en six nombres. */
+/** `matrix(a b c d e f)` of the engine, as six numbers. */
 export function readMatrix(m: string): [number, number, number, number, number, number] {
   const n = m.match(/-?\d+\.?\d*(e-?\d+)?/g)?.map(Number) ?? []
   return n.length >= 6

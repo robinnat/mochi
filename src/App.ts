@@ -529,7 +529,7 @@ export const App: Component<Record<string, never>> = () => {
               {
                 key: 'left',
                 class: [
-                  'panneau scene__gauche w-full lg:flex lg:h-[calc(100dvh_-_3rem_-_var(--timeline))] lg:w-80 lg:shrink-0 lg:flex-col lg:justify-center lg:self-start lg:-translate-y-12 lg:pl-14',
+                  'panneau scene__left w-full lg:flex lg:h-[calc(100dvh_-_3rem_-_var(--timeline))] lg:w-80 lg:shrink-0 lg:flex-col lg:justify-center lg:self-start lg:-translate-y-12 lg:pl-14',
                   left.value ? 'panneau--ouvert max-lg:order-2' : 'max-lg:hidden'
                 ],
                 // closed, it was only transparent (its column folds): without `inert` its fields stayed in

@@ -15,12 +15,12 @@ const eyesOf = (f: ReturnType<typeof image>) =>
 
 const SHAPE_LIST = ['circle', 'star', 'cloud', 'flower', 'drop', 'heart']
 
-describe('reflet doux', () => {
-  it('est actif par defaut', () => {
+describe('soft highlight', () => {
+  it('is on by default', () => {
     expect(DEFAULT_HIGHLIGHT).toBe(true)
   })
 
-  it.each(SHAPE_LIST)('%s : present, dans le corps, en haut a gauche, loin des yeux', (id) => {
+  it.each(SHAPE_LIST)('%s: present, inside the body, at the top left, away from the eyes', (id) => {
     const f = image(id)
     const pts = bodyOutline(f.bodyPath, 3)
     const eyes = eyesOf(f)
@@ -30,17 +30,17 @@ describe('reflet doux', () => {
     const ys = pts.map((p) => p.y)
     const cx = (Math.min(...xs) + Math.max(...xs)) / 2
     const cy = (Math.min(...ys) + Math.max(...ys)) / 2
-    // du cote gauche et haut du centre de la forme
+    // on the left and above the shape's center
     expect(r!.x).toBeLessThan(cx + 5)
     expect(r!.y).toBeLessThan(cy)
-    // la tache est petite, douce et semi-transparente
+    // the spot is small, soft and semi-transparent
     expect(r!.opacity).toBeGreaterThan(0.1)
     expect(r!.opacity).toBeLessThan(0.6)
-    // ne touche pas les yeux
+    // does not touch the eyes
     for (const e of eyes) expect(Math.hypot(e.x - r!.x, e.y - r!.y)).toBeGreaterThan(0.2 * r!.rx)
   })
 
-  it('reste en haut a left quand la shape se deforme', () => {
+  it('stays at the top left when the shape deforms', () => {
     const e = new BotEngine(RADIUS, 'idle', SHAPES.find((s) => s.id === 'star')!.radii, null)
     for (const t of [0.2, 0.7, 1.3, 2.1]) {
       const f = e.sample(t)
@@ -50,12 +50,12 @@ describe('reflet doux', () => {
     }
   })
 
-  it('desactivable : null avec reflet = false', () => {
+  it('can be turned off: null with highlight = false', () => {
     const f = image('circle')
     expect(bodyHighlight(bodyOutline(f.bodyPath, 3), eyesOf(f), false)).toBeNull()
   })
 
-  it('peint un degrade blanc semi-transparent, et rien sans reflet', () => {
+  it('paints a semi-transparent white gradient, and nothing without highlight', () => {
     const calls: string[] = []
     const stops: string[] = []
     const ctx = {

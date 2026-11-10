@@ -1,11 +1,10 @@
 /**
- * Accessoires portes en vraie 3D : les `Part`s de `bot/portes.ts` deviennent des volumes
- * (cylindres, calottes, tores) enfants du maillage du corps. Ils tournent donc avec lui, et
- * suivent chaque image du moteur (saut, ecrasement, forme) parce qu'ils sont replaces depuis
- * le contour de CETTE image. Les lunettes ne passent pas par ici : elles sont peintes sur le
- * visage (voir `scene3d.ts`), la ou sont les yeux 3D.
+ * Worn accessories in real 3D: the `Part`s of `bot/worn.ts` become volumes (cylinders, domes, tori), children of the
+ * body mesh. So they turn with it, and follow every engine frame (jump, squash, shape) because they are placed again
+ * from the outline of THIS frame. Glasses do not go through here: they are painted on the face (see `scene3d.ts`),
+ * where the 3D eyes are.
  *
- * Importe `three` : ne se charge que par `scene3d.ts`, lui-meme dynamique.
+ * Imports `three`: only loaded through `scene3d.ts`, itself dynamic.
  */
 import {
   BufferGeometry,
@@ -29,14 +28,14 @@ type MatDef = MeshStandardMaterial | MeshToonMaterial
 
 export class Worn3d {
   readonly group = new Group()
-  /** pieces, penchees d'un rien vers la camera pour que dessus et bords se lisent en volume */
+  /** pieces, tilted a hair towards the camera so the top and edges read as volume */
   private readonly inner = new Group()
   private key = ''
   private geos: BufferGeometry[] = []
-  /** matiere du corps, clonee par teinte : les pieces se lisent comme le corps (meme eclairage) */
+  /** body material, cloned per tint: the pieces read like the body (same lighting) */
   private readonly materials = new Map<string, MatDef>()
   private source: MatDef | null = null
-  /** memes jeux de lumiere que le corps (liseres, ombrage doux, reflet) : poses par `Mochi3d` */
+  /** same lighting as the body (rims, soft shading, highlight): set by `Mochi3d` */
   settings: { force: number; top: number; ao: number; highlight?: { value: number } } | null = null
 
   constructor() {
@@ -59,7 +58,7 @@ export class Worn3d {
       m.color.set(background)
       m.transparent = false
       m.opacity = 1
-      // le clone ne garde pas les effets de matiere du corps : on les repose, les memes
+      // the clone does not keep the body's material effects: set them again, the same ones
       const g = this.settings
       if (g) rim(m, g.force, g.top, { ao: g.ao, highlight: g.highlight })
       this.materials.set(background, m)
@@ -73,7 +72,7 @@ export class Worn3d {
     this.inner.clear()
   }
 
-  /** Replace les pieces de `id` sur le corps de `frame` ; `zc` = milieu de l'epaisseur du corps. */
+  /** Places the pieces of `id` again on the body of `frame`; `zc` = middle of the body thickness. */
   update(id: WornId | null, frame: BotFrame, base: MatDef, zc: number, eyes?: BotFrame, zFace?: (x: number, y: number) => number, edgeX?: (y: number, sg: number) => number) {
     if (id === 'glasses' || id === 'sunglasses') {
       this.glasses(id, base, eyes ?? frame, zFace, edgeX)
@@ -92,7 +91,7 @@ export class Worn3d {
     this.key = key
     this.empty()
     for (const p of parts) this.add(p, base, zc)
-    // le pivot est le point d'appui du chapeau ; le casque et le noeud restent droits
+    // the pivot is the hat's resting point; headphones and bow stay upright
     const tilt = id !== 'headphones' && id !== 'bow'
     const px = g.cx
     const py = -g.by
@@ -102,8 +101,8 @@ export class Worn3d {
   }
 
   /**
-   * Vraie monture en tube rond epais, noir doux, posee DEVANT les yeux 3D (de face) : plus
-   * grande que l'oeil, elle deborde, et ses branches partent en arriere de chaque cote.
+   * A real frame of thick round tube, soft black, set IN FRONT of the 3D eyes (facing front): bigger than the eye, it
+   * overflows, and its arms go back on each side.
    */
   private glasses(id: 'glasses' | 'sunglasses', base: MatDef, frame: BotFrame, zFace?: (x: number, y: number) => number, edgeX?: (y: number, sg: number) => number) {
     const ye = eyesOf(frame)
@@ -113,15 +112,15 @@ export class Worn3d {
       return
     }
     const [a, b] = ye as [(typeof ye)[0], (typeof ye)[0]]
-    // verres tangents l'un a l'autre (comme sur la reference) : monture comprise, pas de chevauchement
+    // lenses touching each other (as on the reference): frame included, no overlap
     const r = Math.min(radiusLens(a, b) * 1.05, (b.x - a.x) / 2 / 1.17)
-    // la face avant peut etre penchee (pyramide) : on se pose devant le point le plus avance du pourtour
+    // the front face can be tilted (pyramid): set in front of the most forward point of the rim
     let z = -Infinity
     for (const o of [a, b]) {
       for (let k = 0; k < 8; k++) z = Math.max(z, zFace(o.x + Math.cos((k / 8) * Math.PI * 2) * r, o.y + Math.sin((k / 8) * Math.PI * 2) * r * 1.1))
       z = Math.max(z, zFace(o.x, o.y))
     }
-    // posees contre le corps, avec un tout petit ecart : la monture ressort a peine devant les yeux
+    // set against the body, with a tiny gap: the frame barely stands out in front of the eyes
     z += 0.14 * r
     const key = `${id}|${base.uuid}|${[a.x, a.y, b.x, b.y, r, z].map((v) => Math.round(v * 2)).join(',')}`
     this.group.visible = true
@@ -134,7 +133,7 @@ export class Worn3d {
     const tube = 0.17 * r
     for (const o of [a, b]) {
       const t = this.mesh(new TorusGeometry(r, tube, 22, 64), black, base)
-      // verre un peu plus haut que large : il entoure l'oeil en pastille
+      // lens a little taller than wide: it surrounds the eye like a pill
       t.scale.set(1, Math.min(1.55, Math.max(1.12, (Math.max(a.r, b.r) * 1.2) / r)), 1)
       t.position.set(o.x, -o.y, z)
       if (id === 'sunglasses') {
@@ -144,9 +143,9 @@ export class Worn3d {
         v.position.set(o.x, -o.y, z - tube * 0.4)
       }
     }
-    // branches : elles partent de la charniere (bord exterieur de la monture) et RENTRENT dans la
-    // tete par l'arriere ; de face elles sont cachees par le corps, seule la charniere se voit.
-    // Elles ressortent sur le cote de la tete (a la hauteur des yeux) : on les voit en tournant.
+    // arms: they start from the hinge (outer edge of the frame) and GO INTO the
+    // head from behind; from the front they are hidden by the body, only the hinge shows.
+    // They come out on the side of the head (at eye height): you see them when turning.
     for (const [o, sg] of [[a, -1], [b, 1]] as const) {
       const xo = o.x + sg * (r + tube * 0.5)
       const xe = edgeX ? edgeX(o.y, sg) : xo + sg * 0.8 * r
@@ -156,7 +155,7 @@ export class Worn3d {
         new Vector3(xo, y, z),
         new Vector3(xo + (xe - xo) * 0.06, y, dedans(xo, 1.2)),
         new Vector3(xo + (xe - xo) * 0.5, y, dedans(xo + (xe - xo) * 0.5, 2.5) * 0.6),
-        // sort au bord de la silhouette, un rien en arriere du plan median
+        // comes out at the edge of the silhouette, a hair behind the median plane
         new Vector3(xe - sg * tube * 0.3, y, -0.05 * r)
       ])
       this.mesh(new TubeGeometry(curve, 24, tube * 0.7, 10), black, base)
@@ -206,7 +205,7 @@ export class Worn3d {
       case 'bow': {
         for (const sg of [-1, 1]) {
           const m = this.mesh(new ConeGeometry(0.8 * p.s, 1.5 * p.s, 20), p.background, base)
-          // pointe vers le centre : le cone se couche le long de x
+          // pointing to the center: the cone lies along x
           m.rotation.z = (sg * Math.PI) / 2
           m.position.set(p.x + sg * 0.75 * p.s, -p.y, zc)
           m.scale.z = 0.55

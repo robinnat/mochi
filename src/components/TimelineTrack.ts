@@ -228,7 +228,7 @@ export const TimelineTrack: Component<TimelineTrackProps> = (props) => {
     props.onBlocks(moveBlock(props.blocks, index, target))
     block.value = target
     await nextTick()
-    track?.querySelectorAll<HTMLButtonElement>('[data-carte]')[target]?.focus()
+    track?.querySelectorAll<HTMLButtonElement>('[data-card]')[target]?.focus()
   }
 
   /* ----------------------------------------------------------------- scrub */

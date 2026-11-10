@@ -1,50 +1,49 @@
 /**
- * Ancrage des accessoires : tout est CALCULE sur le maillage du corps de CETTE image, jamais
- * en dur pour une forme. On lance des rayons (Raycaster) sur le volume gonfle : la surface
- * avant en (x, y), le dessus en (x, z), le bord lateral a une hauteur, la coupe horizontale du
- * corps a une hauteur (pour les echarpes, colliers, bandeaux). Chaque tir rend un point et une
- * normale lissee, si bien qu'un accessoire se pose sur une etoile, un cube ou un nuage avec
- * la meme logique : il part de la surface et rentre un peu dans le corps.
+ * Accessory anchoring: everything is COMPUTED on the body mesh of THIS frame, never hard-coded for a shape. Rays
+ * (Raycaster) are cast on the inflated volume: the front surface at (x, y), the top at (x, z), the side edge at a
+ * given height, the horizontal body section at a given height (for scarves, necklaces, headbands). Each ray returns a
+ * point and a smoothed normal, so an accessory sits on a star, a cube or a cloud with the same logic: it starts from
+ * the surface and goes a little into the body.
  *
- * Repere : celui du maillage (`Mochi3d.mesh`), y vers le HAUT, face avant vers +z, rayon ~100.
+ * Frame: the mesh's (`Mochi3d.mesh`), y UP, front face towards +z, radius about 100.
  *
- * Importe `three` : ne se charge que par `scene3d.ts`, lui-meme dynamique.
+ * Imports `three`: only loaded through `scene3d.ts`, itself dynamic.
  */
 import { Box3, BufferGeometry, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Triangle, Vector3 } from 'three'
 
 export interface Impact {
   p: Vector3
-  /** normale lissee, unitaire, tournee vers l'exterieur */
+  /** smoothed, unit normal, pointing outwards */
   n: Vector3
 }
 
 export interface EyeScene {
   x: number
-  /** y vers le haut (repere du maillage) */
+  /** y up (mesh frame) */
   y: number
   r: number
 }
 
-/** Tout ce qu'un accessoire a besoin de savoir du corps. */
+/** Everything an accessory needs to know about the body. */
 export interface Landmarks {
   A: Anchors
-  /** sommet et bas du corps, demi-largeur et demi-profondeur maximales, centre en z */
+  /** top and bottom of the body, maximum half width and half depth, center in z */
   top: number
   neck: number
   hw: number
   zc: number
   /** hauteur totale */
   H: number
-  /** assise des chapeaux : la ou la coupe du corps est assez large pour porter la coiffe */
+  /** hat seat: where the body section is wide enough to carry the headwear */
   head: { cx: number; y: number; zc: number; R: number; rz: number }
-  /** les deux yeux (vides si le visage est absent) et le rayon de verre commun */
+  /** both eyes (empty if there is no face) and the shared lens radius */
   eyes: EyeScene[]
-  /** hauteur du « cou » : zone du bas, sous le visage */
+  /** height of the "neck": the bottom area, under the face */
   yBottom: number
-  /** hauteur moyenne des yeux et ecart entre eux */
+  /** average eye height and the gap between them */
   yEyes: number
   gap: number
-  /** rayon de verre : celui des anciennes lunettes (tangent, un peu plus grand que l'oeil) */
+  /** lens radius: that of the older glasses (touching, a little bigger than the eye) */
   rLens: number
 }
 
@@ -65,7 +64,7 @@ export class Anchors {
     this.nor = geo.attributes.normal
   }
 
-  /** Premier impact d'un rayon (origine `o`, direction `d`), avec la normale lissee. */
+  /** First hit of a ray (origin `o`, direction `d`), with the smoothed normal. */
   shot(o: Vector3, d: Vector3): Impact | null {
     this.radius.set(o, d.clone().normalize())
     const h = this.radius.intersectObject(this.proxy, false)[0]
@@ -89,12 +88,12 @@ export class Anchors {
     }
     if (n.lengthSq() < 1e-6) n.copy(h.face.normal)
     n.normalize()
-    // tourne vers l'exterieur (le rayon vient de dehors)
+    // pointing outwards (the ray comes from outside)
     if (n.dot(d) > 0) n.negate()
     return { p: h.point.clone(), n }
   }
 
-  /** Surface avant en (x, y) : tir vers -z depuis devant. */
+  /** Front surface at (x, y): ray towards -z from the front. */
   before(x: number, y: number): Impact | null {
     return this.shot(new Vector3(x, y, this.box.max.z + 60), new Vector3(0, 0, -1))
   }
@@ -104,22 +103,21 @@ export class Anchors {
     return this.shot(new Vector3(x, y, this.box.min.z - 60), new Vector3(0, 0, 1))
   }
 
-  /** Dessus du corps en (x, z) : tir vers le bas depuis le ciel. */
+  /** Top of the body at (x, z): ray down from the sky. */
   top(x: number, z: number): Impact | null {
     return this.shot(new Vector3(x, this.box.max.y + 60, z), new Vector3(0, -1, 0))
   }
 
-  /** Bord lateral a la hauteur y et la profondeur z (sg = -1 gauche, 1 droite). */
+  /** Side edge at height y and depth z (sg = -1 left, 1 right). */
   side(y: number, z: number, sg: number): Impact | null {
     const L = Math.max(Math.abs(this.box.min.x), Math.abs(this.box.max.x)) + 60
     return this.shot(new Vector3(sg * L, y, z), new Vector3(-sg, 0, 0))
   }
 
   /**
-   * Coupe horizontale du corps a la hauteur y : `n` points de la surface, regulierement repartis
-   * en angle autour de l'axe (cx, zc), du premier a la droite en tournant vers l'avant (+z).
-   * `incl` incline le plan (l'avant plus bas), pour qu'un anneau se lise comme un anneau et pas comme une barre.
-   * Rend [] si la coupe est vide (hors du corps).
+   * Horizontal body section at height y: `n` surface points, evenly spread in angle around the axis (cx, zc), from
+   * the first on the right turning towards the front (+z). `incl` tilts the plane (front lower), so a ring reads as a
+   * ring and not as a bar. Returns [] if the section is empty (outside the body).
    */
   coupe(y: number, n = 40, cx = 0, zc = (this.box.min.z + this.box.max.z) / 2, incl = 0): Impact[] {
     const L = Math.max(this.box.max.x - this.box.min.x, this.box.max.z - this.box.min.z) + 80
@@ -128,7 +126,7 @@ export class Anchors {
       const a = (i / n) * Math.PI * 2
       const dx = Math.cos(a)
       const dz = Math.sin(a)
-      // plan incline : l'avant (dz = 1) est plus bas de `incl`, comme un col vu d'un peu au-dessus
+      // tilted plane: the front (dz = 1) is lower by `incl`, like a collar seen from slightly above
       const h = this.shot(new Vector3(cx + dx * L, y - incl * dz, zc + dz * L), new Vector3(-dx, 0, -dz))
       if (!h) return []
       out.push(h)
@@ -136,7 +134,9 @@ export class Anchors {
     return out
   }
 
-  /** Demi-largeur en x et demi-profondeur en z du corps a la hauteur y ; null si la hauteur est hors corps. */
+  /**
+ * Half width in x and half depth in z of the body at height y; null if the height is outside the body.
+ */
   section(y: number, z0 = (this.box.min.z + this.box.max.z) / 2): { x0: number; x1: number; zf: number; zb: number } | null {
     const g = this.side(y, z0, -1)
     const d = this.side(y, z0, 1)
@@ -149,16 +149,16 @@ export class Anchors {
 }
 
 /**
- * Assise des chapeaux : on descend du sommet jusqu'a la premiere hauteur ou le corps est assez large
- * pour porter la coiffe (rayon `R` = 0,58 de la demi-largeur maximale). Sur une sphere la coiffe
- * s'assoit sous le sommet, sur un cube ou un galet elle se pose a plat sur le dessus.
+ * Hat seat: go down from the top to the first height where the body is wide enough to carry the headwear (radius `R`
+ * = 0.58 of the maximum half width). On a sphere the headwear sits under the top, on a cube or a pebble it rests flat
+ * on top.
  */
 function assise(A: Anchors, hw: number, top: number, H: number, zc: number) {
   const R = 0.58 * hw
   let best: { y: number; x0: number; x1: number; zf: number; zb: number } | null = null
   const step = H / 80
-  // jamais plus bas que 28 % de la hauteur : sur une pyramide ou une goutte, la coiffe se pose sur la pointe
-  // (plus petite) au lieu de descendre devant les yeux
+  // never lower than 28 % of the height: on a pyramid or a drop, the headwear sits on the tip
+  // (smaller) instead of going down in front of the eyes
   for (let y = top - step * 0.5; y > top - 0.28 * H; y -= step) {
     const s = A.section(y)
     if (!s) continue
@@ -168,13 +168,13 @@ function assise(A: Anchors, hw: number, top: number, H: number, zc: number) {
     }
   }
   if (!best) {
-    // sommet tres pointu (triangle, etoile) : on prend la section a 28 % de la hauteur
+    // very pointed top (triangle, star): take the section at 28 % of the height
     const y = top - 0.28 * H
     const s = A.section(y) ?? { x0: -R, x1: R, zf: zc + R, zb: zc - R }
     best = { y, ...s }
   }
-  // Sommet creuse (le coeur : deux bosses et un creux) : la section du milieu est vide ou plus basse que les bosses, la
-  // coiffe se serait assise DANS le creux, enfoncee dans les bosses. Elle repose sur le haut des deux bosses.
+  // Hollow top (the heart: two bumps and a dip): the middle section is empty or lower than the bumps, the
+  // headwear would have sat IN the dip, sunk into the bumps. It rests on top of the two bumps.
   const middle = A.top(0, zc)
   if (middle && top - middle.p.y > 0.05 * H) {
     let ymax = -Infinity
@@ -198,13 +198,13 @@ function assise(A: Anchors, hw: number, top: number, H: number, zc: number) {
   }
   const xr = Math.max(1, (best.x1 - best.x0) / 2)
   const zr = Math.max(1, (best.zf - best.zb) / 2)
-  // rayon de coiffe : jamais plus large que le corps a cette hauteur
+  // headwear radius: never wider than the body at that height
   const Rr = Math.min(R, xr * 0.98)
   const rz = Math.min(Math.max(Rr * (zr / xr), Rr * 0.7), Rr * 1.3)
   return { cx: (best.x0 + best.x1) / 2, y: best.y, zc: (best.zf + best.zb) / 2, R: Rr, rz }
 }
 
-/** Mesure tout ce qu'il faut du corps (maillage `geo`) et des yeux (positions de scene, y vers le haut). */
+/** Measures everything needed from the body (mesh `geo`) and the eyes (scene positions, y up). */
 export function measureLandmarks(geo: BufferGeometry, eyesScene: EyeScene[], rLens: number): Landmarks {
   const A = new Anchors(geo)
   const b = A.box
@@ -217,8 +217,8 @@ export function measureLandmarks(geo: BufferGeometry, eyesScene: EyeScene[], rLe
   const ye = [...eyesScene].sort((p, q) => p.x - q.x)
   const yEyes = ye.length ? ye.reduce((s, o) => s + o.y, 0) / ye.length : top - 0.45 * H
   const gap = ye.length === 2 ? ye[1]!.x - ye[0]!.x : 0.26 * hw * 2
-  // « cou » : vers 76 % de la hauteur ; si le bas du corps est creux a cet endroit (notch d'une etoile,
-  // d'un nuage), on remonte jusqu'a retrouver du corps sur l'axe
+  // "neck": around 76 % of the height; if the bottom of the body is hollow there (notch of a star,
+  // of a cloud), go up until there is body on the axis again
   let yBottom = top - 0.76 * H
   for (let k = 0; k < 14 && !A.before(0, yBottom); k++) yBottom += 0.025 * H
   return { A, top, neck, hw, zc, H, head, eyes: ye, yBottom, yEyes, gap, rLens }

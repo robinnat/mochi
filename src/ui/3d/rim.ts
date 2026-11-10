@@ -1,25 +1,24 @@
 /**
- * Ombrage de matiere en repere de la CAMERA : tout est calcule a partir de la normale exprimee depuis la
- * camera, sur TOUT le volume (face, flancs, dos) et pas dans la texture de visage. Le corps
- * est donc ombre de facon continue sur 360 degres, et la lumiere reste « en haut a gauche »
- * pour le spectateur quand le modele tourne.
+ * Material shading in CAMERA space: everything is computed from the normal as seen from the camera, on the WHOLE
+ * volume (face, sides, back) and not in the face texture. So the body is shaded continuously over 360 degrees, and
+ * the light stays "top left" for the viewer when the model turns.
  *
- * - ombrage doux (AO de studio) : le bas et les bords s'assombrissent legerement ;
- * - lueur bas-droite (contre-jour / rebond) : fresnel limite a un secteur vers 4 h ;
- * - lueur legere haut-gauche : meme principe vers 10 h, nettement plus discrete ;
- * - reflet doux : large tache lumineuse vers le haut a gauche, teintee de la matiere.
- * Aucune lumiere de scene : ce sont des effets de matiere (quelques lignes de shader).
+ * - soft shading (studio AO): the bottom and the edges darken slightly;
+ * - bottom-right glow (backlight / bounce): fresnel limited to a sector towards 4 o'clock;
+ * - light top-left glow: same principle towards 10 o'clock, much more discreet;
+ * - soft highlight: a wide light spot towards the top left, tinted by the material. No scene light: these are
+ *   material effects (a few lines of shader).
  */
 import type { Material, WebGLProgramParametersWithUniforms } from 'three'
 
 export interface OptionsRim {
-  /** uniform du reflet doux (0 = sans) ; absent = pas de reflet */
+  /** soft highlight uniform (0 = none); absent = no highlight */
   highlight?: { value: number }
-  /** part de l'ombrage doux (0..1) ; 0 = aucun */
+  /** share of the soft shading (0..1); 0 = none */
   ao?: number
   /**
-   * uniform « yeux noirs » (theme sombre) : 1 = les lueurs et le reflet ne s'ajoutent pas sur les yeux
-   * (lus dans le masque d'emission du materiau), qui restent d'un noir franc ; 0 = rendu d'avant
+   * "black eyes" uniform (dark theme): 1 = glows and highlight are not added on the eyes (read from the material's
+   * emission mask), which stay plain black; 0 = previous rendering
    */
   eye?: { value: number }
 }
@@ -32,7 +31,7 @@ export function rim(m: Material, force = 0.55, top = 0, opts: OptionsRim = {}) {
     if (opts.highlight) sh.uniforms.uHighlight = opts.highlight
     if (opts.eye) sh.uniforms.uEye = opts.eye
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', `${opts.highlight ? 'uniform float uReflet;\n' : ''}${opts.eye ? 'uniform float uOeil;\n' : ''}#include <common>`)
+      .replace('#include <common>', `${opts.highlight ? 'uniform float uHighlight;\n' : ''}${opts.eye ? 'uniform float uEye;\n' : ''}#include <common>`)
       .replace(
         '#include <opaque_fragment>',
         `{
@@ -40,24 +39,24 @@ export function rim(m: Material, force = 0.55, top = 0, opts: OptionsRim = {}) {
   float edge = 1.0 - clamp(nL.z, 0.0, 1.0);
   vec2 dir = normalize(nL.xy + vec2(1e-4));
   vec3 tint = mix(diffuseColor.rgb, vec3(1.0), 0.42) * 1.15;
-  // shading soft : le bas et les bords s'assombrissent, within la tint du body
-  float bas = smoothstep(0.05, 0.95, -nL.y);
-  ${opts.eye ? 'float noirOeil = 1.0 - uOeil * texture2D( emissiveMap, vEmissiveMapUv ).r;' : 'float noirOeil = 1.0;'}
-  outgoingLight *= 1.0 - ${ao.toFixed(2)} * (0.26 * bas + 0.16 * pow(edge, 1.4));
-  // lueur bas-droite (to 4 h), qui s'estompe to le top et to la left
+  // soft shading: the bottom and the edges darken, in the body's tint
+  float bottom = smoothstep(0.05, 0.95, -nL.y);
+  ${opts.eye ? 'float eyeBlack = 1.0 - uEye * texture2D( emissiveMap, vEmissiveMapUv ).r;' : 'float eyeBlack = 1.0;'}
+  outgoingLight *= 1.0 - ${ao.toFixed(2)} * (0.26 * bottom + 0.16 * pow(edge, 1.4));
+  // bottom-right glow (towards 4 o'clock), fading towards the top and the left
   float sect = smoothstep(-0.1, 0.85, dot(dir, normalize(vec2(0.72, -0.69))));
   float width = mix(3.4, 1.7, sect);
-  float lueur = pow(edge, width) * sect;
-  outgoingLight += tint * lueur * ${force.toFixed(2)} * noirOeil;
-  // lueur legere haut-gauche (to 10 h), nettement most discrete et most fine
+  float glow = pow(edge, width) * sect;
+  outgoingLight += tint * glow * ${force.toFixed(2)} * eyeBlack;
+  // light top-left glow (towards 10 o'clock), much more discreet and thinner
   float sectH = smoothstep(0.05, 0.9, dot(dir, normalize(vec2(-0.71, 0.70))));
-  float lueurH = pow(edge, 2.6) * sectH;
-  outgoingLight += tint * lueurH * ${top.toFixed(2)} * noirOeil;
+  float glowTop = pow(edge, 2.6) * sectH;
+  outgoingLight += tint * glowTop * ${top.toFixed(2)} * eyeBlack;
   ${
     opts.highlight
-      ? `// highlight soft : large tache to le top a left
+      ? `// soft highlight: a wide spot towards the top left
   float hl = smoothstep(0.72, 0.99, dot(nL, normalize(vec3(-0.5, 0.62, 0.6))));
-  outgoingLight += tint * hl * 0.22 * uHighlight * noirOeil;`
+  outgoingLight += tint * hl * 0.22 * uHighlight * eyeBlack;`
       : ''
   }
 }

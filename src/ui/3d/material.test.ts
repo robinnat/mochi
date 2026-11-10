@@ -24,12 +24,12 @@ import { bodyOutline, inflate, reduce, vertices } from './volume'
 const VB_TEST = HALF_VIEWBOX
 
 /**
- * Les variantes « 3D flat » : reglages purs (tons, seuils, finesse). Le rendu WebGL se
- * regarde dans `lab.html#shapes3d` ; ici on verrouille ce qui est calculable sous `node`.
+ * The "flat 3D" variants: pure settings (tones, thresholds, finesse). The WebGL rendering is viewed in
+ * `lab.html#shapes3d`; here we lock what can be computed under Node.
  */
 
-describe('liste des matieres', () => {
-  it('le defaut est doux marque (choix de design, 03/11), aplat reste dans le code, le realiste reste disponible', () => {
+describe('material list', () => {
+  it('the default is soft strong (design choice, 03/11), flat stays in the code, realistic stays available', () => {
     expect(DEFAULT_MATERIAL).toBe('soft')
     expect(DEFAULT_SOFTNESS).toBe('strong')
     expect(MATERIALS).toEqual(['realistic', 'toon', 'toon-outline', 'lowpoly', 'flat', 'soft', 'pixel'])
@@ -40,23 +40,23 @@ describe('liste des matieres', () => {
     expect(settingFlat('realistic')).toBeNull()
   })
 
-  it('seul le contour est propre a toon-contour, seul lowpoly a des facettes', () => {
+  it('only toon-outline has its own outline, only lowpoly has facets', () => {
     expect(MATERIALS.filter((r) => settingFlat(r)?.outline)).toEqual(['toon-outline'])
     expect(MATERIALS.filter((r) => settingFlat(r)?.facets)).toEqual(['lowpoly'])
     expect(MATERIALS.filter((r) => meshOf(r) === 'grossier')).toEqual(['lowpoly'])
   })
 })
 
-describe('paliers et eclairage', () => {
-  it.each(MATERIALS.filter((x) => isFlat(x) && x !== 'soft'))('%s : un ton de plus que de seuils, seuils croissants', (r) => {
+describe('steps and lighting', () => {
+  it.each(MATERIALS.filter((x) => isFlat(x) && x !== 'soft'))('%s: one tone more than thresholds, increasing thresholds', (r) => {
     const p = settingFlat(r)!
     expect(p.tones).toHaveLength(p.thresholds.length + 1)
     expect(p.thresholds).toEqual([...p.thresholds].sort((a, b) => a - b))
-    // le ton qui occupe le gros de la surface est la couleur du flat, telle quelle
+    // the tone covering most of the surface is the flat color, as is
     expect(p.tones).toContain(1)
   })
 
-  it.each(MATERIALS.filter(isFlat))('%s : ambiante + directe * rampe redonne chaque ton', (r) => {
+  it.each(MATERIALS.filter(isFlat))('%s: ambient + direct * ramp gives back each tone', (r) => {
     const p = settingFlat(r)!
     const e = lightingFlat(p)
     p.tones.forEach((ton, i) => {
@@ -64,25 +64,25 @@ describe('paliers et eclairage', () => {
     })
   })
 
-  it('la rampe echantillonnee monte par marches, de 0 au ton le plus clair (255)', () => {
+  it('the sampled ramp rises in steps, from 0 to the lightest tone (255)', () => {
     for (const r of MATERIALS.filter((x) => isFlat(x) && x !== 'soft')) {
       const g = gradientMap(settingFlat(r)!)
       expect(g).toHaveLength(32)
       expect(g[0]).toBe(0)
       expect(g[31]).toBe(255)
       for (let i = 1; i < g.length; i++) expect(g[i]!).toBeGreaterThanOrEqual(g[i - 1]!)
-      // des marches, pas un degrade : au plus un niveau par ton
+      // steps, not a gradient: at most one level per tone
       expect(new Set(g).size).toBeLessThanOrEqual(settingFlat(r)!.tones.length)
     }
   })
 
-  it("aplat n'a que deux tons ; toon en a trois", () => {
+  it("flat has only two tones; toon has three", () => {
     expect(new Set(gradientMap(settingFlat('flat')!)).size).toBe(2)
     expect(new Set(gradientMap(settingFlat('toon')!)).size).toBe(3)
   })
 })
 
-describe('contour cartoon', () => {
+describe('cartoon outline', () => {
   const lum = (c: string) => {
     const v = parseInt(c.slice(1), 16)
     return Math.max((v >> 16) & 255, (v >> 8) & 255, v & 255)
@@ -96,18 +96,18 @@ describe('contour cartoon', () => {
     const h = max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4
     return h * 60
   }
-  it.each(['#f0b429', '#8b5cf6', '#e152b0', '#2fbfa0', '#3b93f0'])('%s : plus fonce, meme teinte, pas noir', (hex) => {
+  it.each(['#f0b429', '#8b5cf6', '#e152b0', '#2fbfa0', '#3b93f0'])('%s: darker, same hue, not black', (hex) => {
     const c = colorOutline(hex)
     expect(lum(c)).toBeLessThan(lum(hex) * 0.6)
     expect(lum(c)).toBeGreaterThan(20)
     expect(Math.abs(tint(c) - tint(hex))).toBeLessThan(8)
   })
-  it("l'epaisseur s'allege en petite taille, avec un plancher et un plafond", () => {
+  it("the thickness gets lighter at small sizes, with a floor and a ceiling", () => {
     expect(outlineWidthPx(40)).toBe(1.3)
     expect(outlineWidthPx(100)).toBeLessThan(outlineWidthPx(150))
     expect(outlineWidthPx(5000)).toBe(3.4)
   })
-  it("seul aplat a une limite d'ombre organique", () => {
+  it("only flat has an organic shadow boundary", () => {
     expect(MATERIALS.filter((r) => settingFlat(r)?.organic)).toEqual(['flat'])
   })
 })
@@ -119,18 +119,18 @@ describe('maillage grossier (lowpoly)', () => {
       1
     )
 
-  it.each(['circle', 'star', 'cloud', 'flower', 'drop', 'heart'])('%s : volume ferme, bien moins de sommets', (id) => {
+  it.each(['circle', 'star', 'cloud', 'flower', 'drop', 'heart'])('%s: closed volume, far fewer vertices', (id) => {
     const p = reduce(pts(id), settingFlat('lowpoly')!.reduction)
     const end = inflate(pts(id), VB_TEST)
     const large = inflate(p, VB_TEST, undefined, finesseOf('lowpoly'))
     expect(large.positions.length / 3).toBe(vertices(p.length, finesseOf('lowpoly').rings))
     expect(large.positions.length).toBeLessThan(end.positions.length / 3)
-    // chaque triangle pointe sur un sommet existant
+    // each triangle points to an existing vertex
     expect(Math.max(...large.index)).toBeLessThan(large.positions.length / 3)
     expect(large.index.length % 3).toBe(0)
   })
 
-  it('reduire garde au moins trois points et ne change rien pour k = 1', () => {
+  it('reduce keeps at least three points and changes nothing for k = 1', () => {
     const p = pts('circle')
     expect(reduce(p, 1)).toBe(p)
     expect(reduce(p, 2)).toHaveLength(p.length / 2)
@@ -141,7 +141,7 @@ describe('maillage grossier (lowpoly)', () => {
 describe('doux : ombrage lisse et mat', () => {
   const ramp = (d: 'light' | 'strong') => Array.from(gradientMap(settingFlat('soft', d)!))
 
-  it('aucun palier : la rampe est continue, croissante, sans saut', () => {
+  it('no step: the ramp is continuous, increasing, with no jump', () => {
     for (const d of SOFTNESSES) {
       const g = ramp(d)
       expect(g.length).toBeGreaterThanOrEqual(128)
@@ -154,14 +154,14 @@ describe('doux : ombrage lisse et mat', () => {
     }
   })
 
-  it('la couleur de base domine : ton plein du centre jusqu\'au haut gauche', () => {
+  it('the base color dominates: full tone from the center to the top left', () => {
     const g = ramp('light')
     const dot = (d: number) => g[Math.floor(((d + 1) / 2) * g.length)]!
     expect(dot(0.65)).toBeGreaterThan(240) // face a la camera : lumiere en haut a gauche, devant
     expect(dot(0.9)).toBe(255)
   })
 
-  it('contraste faible, et marque plus sombre que leger ; aucun ton plus clair que la base', () => {
+  it('low contrast, and strong darker than light; no tone lighter than the base', () => {
     const l = settingFlat('soft', 'light')!
     const m = settingFlat('soft', 'strong')!
     expect(Math.max(...l.tones)).toBe(1)
@@ -171,7 +171,7 @@ describe('doux : ombrage lisse et mat', () => {
     expect(lightingFlat(l).ramp[0]).toBe(0)
   })
 
-  it('une seule matiere : ni facettes, ni contour propre, ni bruit de limite', () => {
+  it('a single material: no facets, no own outline, no boundary noise', () => {
     for (const d of SOFTNESSES) {
       const p = settingFlat('soft', d)!
       expect(p.facets || p.outline || p.organic).toBe(false)

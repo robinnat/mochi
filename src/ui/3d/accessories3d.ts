@@ -1,18 +1,16 @@
 /**
- * Accessoires 3D par emplacements (voir `bot/emplacements.ts`) : chaque piece est un vrai volume
- * (spheres, tubes, tores, revolutions, extrusions a biseau) enfant du maillage du corps. Elles
- * tournent donc avec lui et portent le MEME ombrage de matiere que le corps (`rim.ts` : AO,
- * lueur bas-droite, lueur haut-gauche, repere de la camera). Matieres mates, aucune lumiere propre.
+ * 3D accessories by slot (see `bot/slots.ts`): each piece is a real volume (spheres, tubes, tori, revolutions,
+ * beveled extrusions), a child of the body mesh. So they turn with it and carry the SAME material shading as the body
+ * (`rim.ts`: AO, bottom-right glow, top-left glow, camera space). Matte materials, no light of their own.
  *
- * Ancrage : `ancres.ts` tire des rayons sur le volume du corps de cette image. Une coiffe s'assoit
- * ou la coupe du corps est assez large, une monture se pose contre la face avant aux yeux,
- * une echarpe suit la coupe horizontale du corps, une moustache suit la surface : rien n'est
- * donne en dur pour une forme. Une piece rentre toujours un peu dans le corps (pas de vide).
+ * Anchoring: `anchors.ts` casts rays on the body volume of the current frame. Headwear sits where the body section is
+ * wide enough, a frame rests against the front face at the eyes, a scarf follows the body's horizontal section:
+ * nothing is hard-coded for a shape. A piece always sinks a little into the body (no gap).
  *
- * Collisions : chaque emplacement a sa zone (tete = au-dessus de l'assise, yeux = ligne des
- * yeux, visage = sous les yeux, bas = « cou » vers 79 % de la hauteur, dos = cotes et arriere).
+ * Collisions: each slot has its area (head = above the seat, eyes = eye line, face = under the eyes, neck = "neck"
+ * around 79 % of the height, back = sides and back).
  *
- * Importe `three` : ne se charge que par `scene3d.ts`, lui-meme dynamique.
+ * Imports `three`: only loaded through `scene3d.ts`, itself dynamic.
  */
 import {
   BufferAttribute,
@@ -51,7 +49,7 @@ import type { EyeScene, Landmarks } from './anchors'
 
 type MatDef = MeshStandardMaterial | MeshToonMaterial
 
-/** Distance entre deux couleurs hex (RGB). */
+/** Distance between two hex colors (RGB). */
 const distanceHex = (a: string, b: string) => {
   const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
   const x = p(a)
@@ -63,20 +61,20 @@ const V = (x = 0, y = 0, z = 0) => new Vector3(x, y, z)
 const Z = V(0, 0, 1)
 const Y = V(0, 1, 0)
 
-/** Ce qu'un generateur recoit : le groupe a remplir, les reperes du corps, les couleurs et les outils. */
+/** What a builder gets: the group to fill, the body landmarks, the colors and the tools. */
 interface Ctx {
   g: Group
   R: Landmarks
   c1: string
   c2: string
-  /** matiere (clonee du corps, meme eclairage) ; `o` = opacity, `d` = double face */
+  /** material (cloned from the body, same lighting); `o` = opacity, `d` = double sided */
   mat: (hex: string, o?: number, d?: boolean) => MatDef
   geos: BufferGeometry[]
-  /** yeux (toujours deux) et rayon de verre */
+  /** eyes (always two) and lens radius */
   a: EyeScene
   b: EyeScene
   rv: number
-  /** couleur du corps (hex), pour choisir une couleur par defaut qui contraste */
+  /** body color (hex), to pick a default color that contrasts */
   body?: string
 }
 
@@ -96,7 +94,7 @@ function sph(c: Ctx, hex: string, r: number, s: [number, number, number], p: Vec
   return m
 }
 
-/** Tube qui suit une courbe, rayon de `r0` a `r1` ; bouts arrondis par defaut. */
+/** Tube following a curve, radius from `r0` to `r1`; rounded ends by default. */
 function tube(c: Ctx, pts: Vector3[], r0: number, r1: number, hex: string, parent: Object3D = c.g, closed = false, bouts = true, o = 1) {
   const curve = new CatmullRomCurve3(pts, closed, 'centripetal')
   const seg = Math.max(12, pts.length * 8)
@@ -122,7 +120,7 @@ function tube(c: Ctx, pts: Vector3[], r0: number, r1: number, hex: string, paren
   return m
 }
 
-/** Revolution autour de y : points [rayon, hauteur] du bas vers le haut, coins arrondis de `rc`. */
+/** Revolution around y: [radius, height] points from bottom to top, corners rounded by `rc`. */
 function revolution(pts: Array<[number, number]>, rc: number, seg = 48): LatheGeometry {
   const out: Vector2[] = []
   for (let i = 0; i < pts.length; i++) {
@@ -149,14 +147,14 @@ function revolution(pts: Array<[number, number]>, rc: number, seg = 48): LatheGe
   return new LatheGeometry(out, seg)
 }
 
-/** Oriente `o` pour que son +z local pointe vers `dir`, puis le fait tourner de `roll` autour de cet axe. */
+/** Orients `o` so its local +z points to `dir`, then turns it by `roll` around that axis. */
 function orient(o: Object3D, dir: Vector3, roll = 0) {
   const q = new Quaternion().setFromUnitVectors(Z, dir.clone().normalize())
   if (roll) q.multiply(new Quaternion().setFromAxisAngle(Z, roll))
   o.quaternion.copy(q)
 }
 
-/** Courbe fermee d'une forme de monture : points unitaires (x dans [-1, 1]). */
+/** Closed curve of a frame shape: unit points (x in [-1, 1]). */
 type ShapeKind = (t: number) => [number, number]
 const SHAPE_LIST: Record<string, ShapeKind> = {
   round: (t) => [Math.cos(t), Math.sin(t) * 1.1],
@@ -187,7 +185,7 @@ function curveShape(f: ShapeKind, r: number, n = 56): Vector3[] {
   return pts
 }
 
-/** Fonction (x, y) -> z de la surface avant ou arriere, interpolee sur une grille de tirs. */
+/** Function (x, y) -> z of the front or back surface, interpolated on a grid of rays. */
 function grid(c: Ctx, x0: number, x1: number, y0: number, y1: number, nx = 9, ny = 7, back = false) {
   const zs: number[][] = []
   const fb = back ? c.R.A.box.min.z : c.R.A.box.max.z
@@ -214,7 +212,7 @@ function grid(c: Ctx, x0: number, x1: number, y0: number, y1: number, nx = 9, ny
   }
 }
 
-/** Epouse la surface : chaque sommet recoit le z de la surface a son (x, y), plus son epaisseur propre. */
+/** Hugs the surface: each vertex gets the surface z at its (x, y), plus its own thickness. */
 function epouser(geo: BufferGeometry, zs: (x: number, y: number) => number, decal: number, back = false) {
   const P = geo.attributes.position!
   for (let i = 0; i < P.count; i++) {
@@ -225,7 +223,7 @@ function epouser(geo: BufferGeometry, zs: (x: number, y: number) => number, deca
   geo.computeVertexNormals()
 }
 
-/** Extrusion douce (biseau rond) d'une forme 2D centree en z. */
+/** Soft extrusion (round bevel) of a 2D shape centered in z. */
 function extrusion(shape: Shape, thickness: number, bevel: number, segBevel = 4, smooth = false): BufferGeometry {
   let g: BufferGeometry = new ExtrudeGeometry(shape, {
     depth: thickness,
@@ -237,7 +235,7 @@ function extrusion(shape: Shape, thickness: number, bevel: number, segBevel = 4,
   })
   g.translate(0, 0, -thickness / 2)
   if (smooth) {
-    // soude les sommets et recalcule les normales : plus de facettes, le bord se fond dans le biseau
+    // welds the vertices and recomputes normals: no more facets, the edge blends into the bevel
     g.deleteAttribute('normal')
     g.deleteAttribute('uv')
     g = mergeVertices(g, 1e-4)
@@ -247,8 +245,8 @@ function extrusion(shape: Shape, thickness: number, bevel: number, segBevel = 4,
 }
 
 /**
- * Polygone aux coins arrondis : chaque sommet est remplace par un arc (courbe de Bezier quadratique dont le
- * point de controle est le sommet) a `rc` du coin, `n` segments par arc. Rend des triangles qui restent des triangles.
+ * Polygon with rounded corners: each vertex is replaced by an arc (a quadratic Bezier curve whose control point is
+ * the vertex) at `rc` from the corner, `n` segments per arc. Returns triangles that stay triangles.
  */
 function polygonRounded(pts: Array<[number, number]>, rc: number, n = 12): Array<[number, number]> {
   const out: Array<[number, number]> = []
@@ -277,7 +275,7 @@ function shapeOfPoints(pts: Array<[number, number]>): Shape {
   return s
 }
 
-/** Ellipse rognee en forme de goutte, de triangle, etc. : polygone arrondi par moyennes mobiles. */
+/** Ellipse cut into a drop, a triangle, etc.: a polygon rounded by moving averages. */
 function round(pts: Array<[number, number]>, passes = 3): Array<[number, number]> {
   let cur = pts
   for (let p = 0; p < passes; p++) {
@@ -292,7 +290,7 @@ function round(pts: Array<[number, number]>, passes = 3): Array<[number, number]
   return cur
 }
 
-/** Fleur : petales sur un plan face a +z, coeur au centre. */
+/** Flower: petals on a plane facing +z, center in the middle. */
 function flower(c: Ctx, parent: Object3D, s: number, petal: string, heart: string, n = 6) {
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2
@@ -302,7 +300,7 @@ function flower(c: Ctx, parent: Object3D, s: number, petal: string, heart: strin
   sph(c, heart, 1, [0.26 * s, 0.26 * s, 0.2 * s], V(0, 0, 0.06 * s), parent)
 }
 
-/** Pose un groupe sur la surface : sur le point `p`, face a la normale `n` (un peu enfonce). */
+/** Places a group on the surface: on point `p`, facing normal `n` (sunk a little). */
 function assign(c: Ctx, p: Vector3, n: Vector3, sunk: number, mix = 0, roll = 0): Group {
   const g = new Group()
   const dir = n.clone().lerp(Z, mix).normalize()
@@ -312,7 +310,9 @@ function assign(c: Ctx, p: Vector3, n: Vector3, sunk: number, mix = 0, roll = 0)
   return g
 }
 
-/** Anneau epais qui suit la coupe du corps a la hauteur y (echarpe, collier, bandeau) ; null si la coupe est vide. */
+/**
+ * Thick ring following the body section at height y (scarf, necklace, headband); null if the section is empty.
+ */
 function band(c: Ctx, y: number, r: number, hex: string, exit = 0.35, n = 44, o = 1, incl = 0): { pts: Vector3[]; m: Mesh } | null {
   const cp = c.R.A.coupe(y + incl, n, 0, c.R.zc, incl)
   if (cp.length < n) return null
@@ -321,7 +321,7 @@ function band(c: Ctx, y: number, r: number, hex: string, exit = 0.35, n = 44, o 
   return { pts, m }
 }
 
-/** Coiffe : groupe pose sur l'assise de la tete ; repere local = rayon de la coiffe 1, y vers le haut, +z devant. */
+/** Headwear: group placed on the head seat; local frame = headwear radius 1, y up, +z front. */
 function headwear(c: Ctx, k = 1.18): Group {
   const t = c.R.head
   const g = new Group()
@@ -331,26 +331,26 @@ function headwear(c: Ctx, k = 1.18): Group {
   return g
 }
 
-/* ------------------------------------------------------------------ tete */
+/* ------------------------------------------------------------------ head */
 
 /**
- * Visiere de casquette (repere de la coiffe, +z devant) : un demi-disque allonge, epais et bombe sur le dessus,
- * qui part de l'interieur de la calotte, depasse nettement vers l'avant et un peu sur les cotes, avec une courbure
- * (les bords tombent) et une legere pente vers le bas. Maillage maison : surface fermee, normales lissees.
+ * Cap visor (headwear frame, +z front): a long half disc, thick and domed on top, starting inside the crown, sticking
+ * out clearly forward and a little on the sides, with a curve (the edges drop) and a slight downward slope. Custom
+ * mesh: closed surface, smoothed normals.
  */
 function visor(): BufferGeometry {
   const NR = 16
   const NT = 56
   const WX = 0.9 // demi-largeur
-  const Z0 = -0.1 // pied de la visiere (cache dans la calotte)
-  const LZ = 1.35 // longueur vers l'avant
+  const Z0 = -0.1 // foot of the visor (hidden in the crown)
+  const LZ = 1.35 // length forward
   const Y0 = 0.02
   const pos: number[] = []
   const idx: number[] = []
   const rang = (top: boolean) => {
     const base = pos.length / 3
     for (let i = 0; i <= NR; i++) {
-      // r dense pres du bord : le profil s'arrondit
+      // r denser near the edge: the profile rounds off
       const r = 1 - (1 - i / NR) ** 1.6
       const th = 0.13 * Math.sqrt(Math.max(0, 1 - r ** 6))
       for (let j = 0; j <= NT; j++) {
@@ -385,16 +385,16 @@ type Gen = (c: Ctx) => void
 
 const HEAD: Record<string, Gen> = {
   cap(c) {
-    // calotte RIGIDE et RONDE (demi-sphere un peu aplatie), independante de la forme du corps : l'assise de la tete
-    // ne donne que la position et l'echelle. Elle est un peu inclinee vers l'arriere, son bord rentre dans le corps,
-    // et la visiere (demi-disque allonge, une 2e couleur possible) part du bord avant.
+    // RIGID, ROUND crown (a slightly flattened half sphere), independent of the body shape: the head seat
+    // only gives position and scale. It leans a little backwards, its edge goes into the body,
+    // and the visor (a long half disc, a possible 2nd color) starts from the front edge.
     const { hw, head: t } = c.R
     const Rx = t.R * 1.28
     const Rz = Math.min(t.rz * 1.28, Rx * 1.2)
     const yBase = Math.max(t.y - 0.12 * Rx, Math.max(c.a.y, c.b.y) + c.rv * 1.3 + 0.3 * Rx)
-    // hauteur du dome : au moins celle de ce qui depasse de l'assise (pointe de goutte, de pyramide), sans devenir un cone
+    // dome height: at least what sticks out of the seat (drop or pyramid tip), without becoming a cone
     const top = Math.min(1.45 * Rx, Math.max(0.78 * Rx, c.R.top - yBase + 0.3 * Rx))
-    const jupe = 0.16 * Rx // bord qui descend (cache dans le corps)
+    const jupe = 0.16 * Rx // edge going down (hidden in the body)
     const prof: Vector2[] = [new Vector2(1, -jupe), new Vector2(1, 0)]
     const N = 20
     for (let i = 1; i <= N; i++) {
@@ -402,17 +402,17 @@ const HEAD: Record<string, Gen> = {
       prof.push(new Vector2(Math.max(0, Math.cos(ph)), Math.sin(ph) * top))
     }
     const g = new Group()
-    // jamais sur les yeux : le bord avant reste au-dessus du haut des yeux
+    // never over the eyes: the front edge stays above the top of the eyes
     g.position.set(t.cx, yBase, t.zc)
     g.rotation.x = -0.14
     c.g.add(g)
     const dome = add(c, new LatheGeometry(prof, 56), c.c1, g, 1, true)
     dome.scale.set(Rx, 1, Rz)
-    // petit bouton au sommet (meme couleur)
+    // small button at the top (same color)
     sph(c, c.c1, 0.075 * Rx, [1, 0.8, 1], V(0, top * 0.99, 0), g)
     const v = add(c, visor(), c.c2, g, 1, true)
     v.position.set(0, 0.02 * Rx, Rz * 0.82)
-    v.rotation.x = 0.3 // la visiere penche vers le bas : visible de face
+    v.rotation.x = 0.3 // the visor tilts down: visible from the front
     v.scale.setScalar(Rx * 0.92)
     void hw
   },
@@ -463,8 +463,8 @@ const HEAD: Record<string, Gen> = {
     r.position.y = 0.3
   },
   headphones(c) {
-    // Casque de musique : un arceau par-dessus la tete (tir de rayons dans le plan de face, du cote gauche au cote droit)
-    // et deux coques sur les flancs, a hauteur des yeux ; chaque coque rentre un peu dans le corps comme les lunettes.
+    // Headphones: a band over the head (rays cast in the front plane, from the left side to the right side)
+    // and two cups on the sides, at eye height; each cup sinks a little into the body like the glasses.
     const { A, hw, yEyes, zc, H } = c.R
     const yE = yEyes + 0.02 * H
     const L = 2 * hw + 80
@@ -563,9 +563,9 @@ const HEAD: Record<string, Gen> = {
   }
 }
 
-/* ------------------------------------------------------------------ yeux */
+/* ------------------------------------------------------------------ eyes */
 
-/** z de la face avant au droit d'un verre : le point le plus avance du pourtour. */
+/** z of the front face in line with a lens: the most forward point of the rim. */
 function zLens(c: Ctx, o: EyeScene, r: number): number {
   let z = -Infinity
   const A = c.R.A
@@ -579,12 +579,14 @@ function zLens(c: Ctx, o: EyeScene, r: number): number {
   return z === -Infinity ? A.box.max.z : z
 }
 
-/** Rayon commun des verres : tangents, comme les anciennes lunettes. */
+/** Shared lens radius: touching, like the older glasses. */
 function radiusFrame(c: Ctx, k = 1.05): number {
   return Math.min(c.rv * k, (c.b.x - c.a.x) / 2 / 1.17)
 }
 
-/** Monture double (deux verres) : tube sur la forme, verre translucide, pont et branches rentrant dans la tete. */
+/**
+ * Double frame (two lenses): a tube on the shape, translucent lens, bridge and arms going into the head.
+ */
 function glasses(c: Ctx, shape: ShapeKind, o: { lens: string; opacity: number; tube?: number; k?: number; full?: boolean }) {
   const r = radiusFrame(c, o.k ?? 1.25)
   const tu = (o.tube ?? 0.2) * r
@@ -599,28 +601,28 @@ function glasses(c: Ctx, shape: ShapeKind, o: { lens: string; opacity: number; t
   // pont
   const y0 = (c.a.y + c.b.y) / 2 + 0.08 * r
   tube(c, [V(c.a.x + r * 0.9, y0, z), V((c.a.x + c.b.x) / 2, y0 + 0.2 * r, z + tu * 0.2), V(c.b.x - r * 0.9, y0, z)], tu * 0.7, tu * 0.7, c.c1)
-  // branches : de la charniere vers l'interieur de la tete, elles ressortent sur le cote
+  // arms: from the hinge into the head, they come out on the side
   for (const [e, sg] of [[c.a, -1], [c.b, 1]] as const) {
     const xo = e.x + sg * (r + tu * 0.4)
     const edge = c.R.A.side(e.y, c.R.zc, sg)
     const yb = e.y + 0.1 * r
-    // la branche suit la surface du corps, un peu SOUS elle (rayon du tube + marge), de la monture jusqu'au flanc :
-    // jamais a l'air libre ; si le corps est plus etroit que la monture, elle est simplement plus courte
+    // the arm follows the body surface, a little UNDER it (tube radius + margin), from the frame to the side:
+    // never in the open air; if the body is narrower than the frame, it is simply shorter
     const xe = edge ? edge.p.x - sg * tu * 0.5 : xo
-    const prof = Math.max(tu * 1.6, 0.34 * r) // profondeur sous la surface, mesuree le long de la normale
+    const prof = Math.max(tu * 1.6, 0.34 * r) // depth under the surface, measured along the normal
     const pts: Vector3[] = [V(xo, yb, z)]
     const N = 7
     for (let k = 1; k <= N; k++) {
       const u = k / N
       const x = xo + (xe - xo) * u
       const h = c.R.A.before(x - sg * 1, yb)
-      // surface a cet endroit (au-dela de la silhouette : le flanc, au milieu du corps)
+      // surface there (beyond the silhouette: the side, in the middle of the body)
       const p = h ? h.p.clone().addScaledVector(h.n, -prof) : V(x, yb, c.R.zc)
       p.y = yb
       if (k === N) p.z = Math.min(p.z, c.R.zc)
       pts.push(p)
     }
-    // premier point juste derriere la monture, dans le corps
+    // first point just behind the frame, in the body
     pts[0] = V(xo, yb, z)
     tube(c, pts, tu * 0.7, tu * 0.7, c.c1, c.g, false, false)
   }
@@ -629,7 +631,7 @@ function glasses(c: Ctx, shape: ShapeKind, o: { lens: string; opacity: number; t
 const EYES: Record<string, Gen> = {
   round: (c) => glasses(c, SHAPE_LIST.round!, { lens: '#ffffff', opacity: 0.16 }),
   square: (c) => glasses(c, SHAPE_LIST.square!, { lens: '#ffffff', opacity: 0.16, tube: 0.19 }),
-  // verre noir par defaut ; une couleur d'appoint differente du catalogue le remplace (theme sombre : ardoise)
+  // black lens by default; a second color different from the catalog's replaces it (dark theme: slate)
   sunglasses: (c) => glasses(c, SHAPE_LIST.round!, { lens: c.c2, opacity: 0.9, tube: 0.2 }),
   heart: (c) => glasses(c, SHAPE_LIST.heart!, { lens: c.c1, opacity: 0.3, tube: 0.16, k: 1.15 }),
   star: (c) => glasses(c, SHAPE_LIST.star!, { lens: c.c1, opacity: 0.3, tube: 0.16, k: 1.15 }),
@@ -653,7 +655,7 @@ const EYES: Record<string, Gen> = {
     pad.rotation.z = Math.PI / 2
     pad.scale.z = 0.4
     pad.position.set((c.a.x + c.b.x) / 2, y, z)
-    // yeux fermes : deux arcs doux, sans cils
+    // closed eyes: two soft arcs, no lashes
     for (const e of [c.a, c.b]) {
       const pts: Vector3[] = []
       for (let k = 0; k <= 8; k++) {
@@ -683,7 +685,7 @@ const EYES: Record<string, Gen> = {
     const y = (c.a.y + c.b.y) / 2
     const half = (c.b.x - c.a.x) / 2 + 2.1 * r
     const s = new Shape()
-    // masque de heros : deux ailes pointues vers le haut a l'exterieur, creux au nez
+    // hero mask: two wings pointing up on the outside, dip at the nose
     s.moveTo(-half, y + 0.9 * r)
     s.bezierCurveTo(-half * 0.8, y + 1.9 * r, -half * 0.35, y + 2.0 * r, 0, y + 1.0 * r)
     s.bezierCurveTo(half * 0.35, y + 2.0 * r, half * 0.8, y + 1.9 * r, half, y + 0.9 * r)
@@ -703,22 +705,22 @@ const EYES: Record<string, Gen> = {
     const zs = grid(c, -half - 2, half + 2, y - 1.4 * r, y + 1.6 * r, 13, 7)
     epouser(geo, zs, 0.08 * r)
     add(c, geo, c.c1)
-    // bandeau de maintien derriere la tete, cache de face
+    // holding band behind the head, hidden from the front
     band(c, y, 0.1 * r, c.c1, 0.0)
   }
 }
 
 /* ------------------------------------------------------------------ visage */
 
-/** Metriques du visage : ligne des joues et de la bouche, relatives a la taille des yeux. */
+/** Face metrics: cheek and mouth line, relative to the eye size. */
 function face(c: Ctx) {
   const y = (c.a.y + c.b.y) / 2
   const rv = c.rv
-  // `rv` = taille des pieces (un peu plus grosses que l'oeil), les hauteurs viennent du rayon de verre
+  // `rv` = size of the pieces (a little bigger than the eye), heights come from the lens radius
   return { y, rv: 1.5 * rv, cx: (c.a.x + c.b.x) / 2, yCheek: y - 1.5 * rv, yMouth: y - 2.1 * rv, half: (c.b.x - c.a.x) / 2 }
 }
 
-/** Point de la surface avant a (x, y) ; null si le corps n'y est pas. */
+/** Point of the front surface at (x, y); null if the body is not there. */
 function surf(c: Ctx, x: number, y: number) {
   return c.R.A.before(x, y)
 }
@@ -806,25 +808,25 @@ const FACE: Record<string, Gen> = {
     const k = add(c, new ConeGeometry(0.29 * s, 0.6 * s, 22), c.c1, g)
     k.scale.z = 0.7
     k.position.set(0, 0.45 * s, 0.06 * s)
-    // petit reflet
+    // small highlight
     sph(c, mixHex(c.c1, '#ffffff', 0.7), 1, [0.08 * s, 0.12 * s, 0.07 * s], V(-0.12 * s, 0.0, 0.26 * s), g)
   }
 }
 
 /* ------------------------------------------------------------------ bas */
 
-/** Inclinaison des anneaux du cou : l'avant est plus bas que l'arriere. */
+/** Tilt of the neck rings: the front is lower than the back. */
 const dip = (c: Ctx) => 0.19 * c.R.hw
 
-/** Point d'attache d'un objet au « cou » : devant, au milieu, a la hauteur du bas. */
+/** Attachment point of an object at the "neck": front, middle, at the neck's height. */
 function front(c: Ctx, dy = 0, x = 0) {
   return surf(c, x, c.R.yBottom + dy)
 }
 
-/** Anneau du cou (tube) incline : l'avant est a la hauteur du cou, l'arriere plus haut. */
+/** Tilted neck ring (tube): the front at neck height, the back higher. */
 const ring = (c: Ctx, r: number, hex: string, exit = 0.35, n = 48) => band(c, c.R.yBottom, r, hex, exit, n, 1, dip(c))
 
-/** Pan a plat qui epouse le devant du corps : contour 2D (origine en haut au centre), extrusion douce. */
+/** Flat panel hugging the front of the body: 2D outline (origin at top center), soft extrusion. */
 function pan(c: Ctx, outline: Array<[number, number]>, hex: string, y0: number, th: number, heightMax: number, decal: number) {
   const hw = c.R.hw
   const geo = extrusion(shapeOfPoints(outline), th, th * 0.9)
@@ -833,13 +835,13 @@ function pan(c: Ctx, outline: Array<[number, number]>, hex: string, y0: number, 
   return add(c, geo, hex)
 }
 
-/** Espace libre sous le cou, pour qu'un pan ne depasse pas le bas du corps. */
+/** Free space under the neck, so a panel does not go past the bottom of the body. */
 const free = (c: Ctx) => Math.max(8, c.R.yBottom - c.R.neck - 0.04 * c.R.H)
 
 /**
- * Pan qui TOMBE, en coussin doux : demi-largeur `W(t)` (t = 0 en haut, 1 en bas), deux peaux (face bombee et
- * dos plat) refermees sur les bords. Le haut est colle au corps, puis le pan se decolle (`gap`, courbe en
- * t^1.5) et se balance de `swing` : rien n'est plaque. `t0..t1` limite la piece (rayures).
+ * Panel that HANGS, as a soft cushion: half width `W(t)` (t = 0 at the top, 1 at the bottom), two skins (domed front
+ * and flat back) closed on the edges. The top is glued to the body, then the panel comes off (`gap`, a t^1.5 curve)
+ * and swings by `swing`: nothing is pressed flat. `t0..t1` bounds the piece (stripes).
  */
 function during(c: Ctx, W: (t: number) => number, hex: string, o: { x0: number; yTop: number; L: number; th: number; gap: number; swing: number; decal: number; t0?: number; t1?: number; most?: number; wmax: number; falls?: boolean }) {
   const { x0, yTop, L, th, gap, swing, decal, wmax } = o
@@ -847,7 +849,7 @@ function during(c: Ctx, W: (t: number) => number, hex: string, o: { x0: number; 
   const t1 = o.t1 ?? 1
   const most = o.most ?? 0
   const zs = grid(c, x0 - wmax - 6, x0 + wmax + 6 + Math.abs(swing), yTop - L - 6, yTop + 8, 15, 13)
-  // « tombe » : le pan pend droit sous son noeud, il ne suit pas la courbure du corps (le bas se decolle)
+  // "hangs": the panel drops straight under its knot, it does not follow the body curve (the bottom comes off)
   const z0 = o.falls ? zs(x0, yTop) : -Infinity
   const nt = Math.max(3, Math.round(14 * (t1 - t0)))
   const bare = 10
@@ -856,7 +858,7 @@ function during(c: Ctx, W: (t: number) => number, hex: string, o: { x0: number; 
     for (let i = 0; i <= nt; i++) {
       const t = t0 + ((t1 - t0) * i) / nt
       const w = W(t)
-      // fondu du volume aux deux bouts (le haut se glisse sous le corps, le bas se referme)
+      // volume fade at both ends (the top slides under the body, the bottom closes)
       const end = Math.min(1, t * 7, Math.max(0, (1 - t) * 9)) ** 0.5
       for (let j = 0; j <= bare; j++) {
         const u = (j / bare) * 2 - 1
@@ -886,9 +888,9 @@ function during(c: Ctx, W: (t: number) => number, hex: string, o: { x0: number; 
 }
 
 /**
- * Bande large qui epouse le contour du corps (col, echarpe) : plusieurs coupes horizontales du corps, une
- * peau douce qui sort de `e0` a `e0 + eb` au milieu et rentre dans le corps sur ses bords. Rend le fait
- * qu'elle existe (coupe vide : false).
+ * Wide band hugging the body outline (collar, scarf): several horizontal body sections, a soft skin coming out from
+ * `e0` to `e0 + eb` in the middle and going into the body on its edges. Returns whether it exists (empty section:
+ * false).
  */
 function strip(c: Ctx, y: number, width: number, hex: string, o: { e0: number; eb: number; n?: number; rows?: number; incl?: number; round?: boolean }): boolean {
   const n = o.n ?? 56
@@ -919,19 +921,19 @@ function strip(c: Ctx, y: number, width: number, hex: string, o: { e0: number; e
   geo.computeVertexNormals()
   add(c, geo, hex, c.g, 1, true)
   if (o.round) {
-    // bourrelets arrondis sur les deux bords : la bande n'a plus l'air d'un papier
+    // rounded rolls on both edges: the band no longer looks like paper
     for (const j of [0, rows - 1]) tube(c, rangs[j]!, width * 0.11, width * 0.11, hex, c.g, true, false)
   }
   return true
 }
 
 /**
- * Aile de noeud papillon : VRAI triangle (pointe vers le centre, bord exterieur un peu arrondi), coins arrondis,
- * extrude en volume doux aux normales lissees. `sg` = cote. La pointe passe un peu le centre : les deux ailes se
- * recouvrent, aucun jour entre elles et le noeud.
+ * Bow tie wing: a REAL triangle (tip towards the center, outer edge slightly rounded), rounded corners, extruded into
+ * a soft volume with smoothed normals. `sg` = side. The tip goes a little past the center: the two wings overlap, no
+ * gap between them and the knot.
  */
 function bowWing(c: Ctx, parent: Object3D, s: number, hex: string, sg: number) {
-  // miroir par les points (pas par un `scale` negatif, qui retournerait les normales)
+  // mirrored through the points (not a negative `scale`, which would flip the normals)
   const base: Array<[number, number]> = [[-0.1, 0], [1.0, 0.64], [1.07, 0], [1.0, -0.64]]
   const pts = base.map(([x, y]) => [sg * x * s, (sg > 0 ? y : -y) * s] as [number, number])
   const geo = extrusion(shapeOfPoints(polygonRounded(pts, 0.17 * s, 12)), 0.2 * s, 0.07 * s, 12, true)
@@ -940,8 +942,8 @@ function bowWing(c: Ctx, parent: Object3D, s: number, hex: string, sg: number) {
 }
 
 /**
- * Noeud papillon d'Alfred : deux triangles aux coins arrondis, un peu bombes, serres sur un tout petit noeud
- * presque invisible, rien qui pende. Une seule couleur (`bowHex` = `hex` par defaut). Largeur totale : ~2,1 `s`.
+ * Alfred's bow tie: two triangles with rounded corners, slightly domed, tight on a tiny, almost invisible knot,
+ * nothing hanging. A single color (`bowHex` = `hex` by default). Total width: about 2.1 `s`.
  */
 function bowtie3d(c: Ctx, parent: Object3D, s: number, hex: string, bowHex: string) {
   bowWing(c, parent, s, hex, -1)
@@ -968,9 +970,9 @@ const BOTTOM: Record<string, Gen> = {
     if (h) sph(c, c.c1, 0.4 * s, [1.3, 0.9, 0.8], h.p.clone().addScaledVector(h.n, 0.0))
   },
   bowtie(c) {
-    // pose TOUT EN BAS du corps (comme sur Alfred), dans le tiers du corps, et il depasse un peu sous la silhouette.
-    // Taille : ~38 % de la largeur du corps a la hauteur ou il est pose (largeur totale du noeud = 2,1 s). Sur une
-    // forme arrondie, on remonte jusqu'a une coupe assez large (75 % du max) pour qu'il tienne sur le corps.
+    // set at the VERY BOTTOM of the body (as on Alfred), in the body's third, and it sticks out a little below the silhouette.
+    // Size: about 38 % of the body width at the height where it sits (total bow width = 2.1 s). On a
+    // rounded shape, we go up to a wide enough section (75 % of the max) so it fits on the body.
     const { A, hw, neck, H } = c.R
     let wMax = 0
     for (let k = 0; k <= 20; k++) {
@@ -985,7 +987,7 @@ const BOTTOM: Record<string, Gen> = {
       if (!sec) continue
       const w = sec.x1 - sec.x0
       s = (part * w)
-      // le centre du noeud est a 0,28 de sa hauteur au-dessus du bas : la moitie basse depasse sous la silhouette
+      // the bow center is 0.28 of its height above the bottom: the lower half sticks out below the silhouette
       if (w >= 0.75 * wMax && y - neck >= 0.28 * 1.28 * s) break
     }
     const h = surf(c, 0, y) ?? front(c)
@@ -994,27 +996,27 @@ const BOTTOM: Record<string, Gen> = {
     bowtie3d(c, g, s, c.c1, c.c1)
   },
   tie(c) {
-    // Cravate dans l'esprit du noeud papillon d'Alfred : meme technique (triangles aux coins arrondis, extrusion
-    // gonflee aux normales lissees, donc BOMBEES), deux volumes rigides dans un plan vertical, droits et symetriques :
-    // 1. le NOEUD : un triangle pointe en bas ; 2. la LAME : un losange etire vers le haut (rapport ~2,7), dont la
-    // pointe haute part de la pointe du noeud. Rien ne suit la courbure du ventre : le haut est enfonce dans le
-    // corps, la piece prend UN seul angle (le plus petit qui evite de traverser le corps), le bas peut se decoller.
+    // Tie in the spirit of Alfred's bow tie: same technique (triangles with rounded corners, inflated extrusion
+    // with smoothed normals, so DOMED), two rigid volumes in a vertical plane, straight and symmetric:
+    // 1. the KNOT: a triangle pointing down; 2. the BLADE: a diamond stretched upwards (ratio about 2.7), whose
+    // top tip starts from the knot's tip. Nothing follows the belly curve: the top is sunk into the
+    // body, the piece takes ONE angle (the smallest that avoids crossing the body), the bottom can come off.
     const { hw, A, H } = c.R
     const f = face(c)
     const yTop = Math.min(c.R.yBottom + 0.3 * hw, f.yMouth + 0.25 * f.rv, c.R.yEyes - 1.8 * c.R.rLens)
     const place = yTop - c.R.neck - 0.05 * H
     const L = Math.min(0.5 * H, place) // longueur totale (noeud + lame)
     if (L < 0.2 * hw) return
-    const hk = 0.27 * L // hauteur du noeud
-    const lame = L - hk // la pointe haute de la lame touche la pointe du noeud
-    const wl = Math.min(lame / 2.4 / 2, 0.3 * hw) // demi-largeur de la lame
-    const kw = Math.max(0.26 * hw, 1.2 * wl) // demi-largeur du noeud
+    const hk = 0.27 * L // knot height
+    const lame = L - hk // the blade's top tip touches the knot's tip
+    const wl = Math.min(lame / 2.4 / 2, 0.3 * hw) // half width of the blade
+    const kw = Math.max(0.26 * hw, 1.2 * wl) // half width of the knot
     const rc = 0.09 * hw
     const bomb = 0.045 * hw
     const th = 0.07 * hw
     const bow = polygonRounded([[-kw, 0], [kw, 0], [0, -hk]], rc, 12)
     const blade = polygonRounded([[0, -hk * 0.92], [wl, -hk - 0.5 * lame], [0, -hk - lame], [-wl, -hk - 0.5 * lame]], rc, 12)
-    // contact avec le ventre : plus petite pente (z par unite de descente) pour que la piece ne traverse jamais le corps
+    // contact with the belly: smallest slope (z per unit going down) so the piece never crosses the body
     const sunk = 0.05 * hw
     const z0 = (A.before(0, yTop)?.p.z ?? c.R.zc + hw) - sunk
     let slope = -0.5
@@ -1030,7 +1032,7 @@ const BOTTOM: Record<string, Gen> = {
     g.position.set(0, yTop, z0)
     g.rotation.x = -Math.atan(slope)
     c.g.add(g)
-    // couleur par defaut : rouge, ou bleu si le corps est proche du rouge (elle ne disparait pas sur le corps)
+    // default color: red, or blue if the body is close to red (it does not vanish on the body)
     const RED = ACCESSORY_PALETTE.red
     const BLUE = '#2f6fe0'
     let c1 = c.c1
@@ -1047,9 +1049,9 @@ const BOTTOM: Record<string, Gen> = {
   scarf(c) {
     const hw = c.R.hw
     const width = hw * 0.36
-    // col epais, bombe, qui epouse le contour du corps (aucun anneau libre)
+    // thick, domed collar hugging the body outline (no free ring)
     if (!strip(c, c.R.yBottom + 0.2 * hw, width, c.c1, { e0: -0.03 * hw, eb: 0.15 * hw, incl: dip(c), round: true, rows: 7 })) return
-    // deux pans qui tombent du nœud, decolles du corps, sans rayures
+    // two panels hanging from the knot, off the body, no stripes
     const yTop = c.R.yBottom + 0.2 * hw - 0.12 * width
     const mk = (x0: number, L: number, w: number, gap: number, decal: number, swing: number) => {
       const W = (t: number) => w * (t > 0.9 ? Math.sqrt(Math.max(0, 1 - ((t - 0.9) / 0.1) ** 2)) * 0.4 + 0.6 : 1)
@@ -1131,7 +1133,7 @@ const BOTTOM: Record<string, Gen> = {
     const N = 84
     const cp = c.R.A.coupe(c.R.yBottom + dip(c), N, 0, c.R.zc, dip(c))
     if (cp.length < N) return
-    // fleurs serrees (aucune tige) : petales c1, coeur c2, alternance de deux tailles
+    // tight flowers (no stem): petals c1, center c2, alternating two sizes
     const nf = 26
     for (let i = 0; i < nf; i++) {
       const q = cp[Math.round((i / nf) * N) % N]!
@@ -1146,7 +1148,7 @@ const BOTTOM: Record<string, Gen> = {
 
 /* ------------------------------------------------------------------ dos */
 
-/** Une aile : contour 2D (unite = envergure 1) extrude en biseau, pose sur le cote du corps. */
+/** A wing: 2D outline (unit = span 1) extruded with a bevel, set on the side of the body. */
 function wing(c: Ctx, outline: (s: Shape) => void, hex: string, rim1?: string) {
   const { A, hw, H, top, zc } = c.R
   const L = hw * 1.2
@@ -1169,7 +1171,7 @@ function wing(c: Ctx, outline: (s: Shape) => void, hex: string, rim1?: string) {
     m.position.copy(h.p).addScaledVector(h.n, -0.05 * hw)
     c.g.add(m)
     if (rim1) {
-      // ossature : un tube sur le bord d'attaque
+      // frame: a tube on the leading edge
       const o = new Group()
       o.quaternion.copy(m.quaternion)
       o.position.copy(m.position)
@@ -1223,8 +1225,8 @@ const BACK: Record<string, Gen> = {
     g.position.copy(h.p).addScaledVector(V(0, 0, -1), d * 0.36)
     c.g.add(g)
     add(c, backpack, c.c1, g)
-    // bretelles : chaque point est TIRE sur la surface du corps (rayon horizontal), du haut du sac, autour du flanc
-    // (l'epaule). Elles s'arretent sur le cote et ne traversent jamais le devant : pas de trait qui barre le corps
+    // straps: each point is CAST onto the body surface (horizontal ray), from the top of the bag, around the side
+    // (the shoulder). They stop on the side and never cross the front: no line across the body
     const zc = c.R.zc
     const L = 2 * hw + 120
     const yB = y + 0.32 * hw
@@ -1248,9 +1250,9 @@ const BACK: Record<string, Gen> = {
     }
   },
   cape(c) {
-    // cape de petit super-heros : UN tissu uni, trapeze accroche haut sur le dos (sous les epaules), qui tombe
-    // derriere avec un leger evasement et une ondulation douce en bas. De face : deux petits pans arrondis qui
-    // depassent derriere les flancs, rien devant le corps. Coins arrondis, bords epais et lisses.
+    // little superhero cape: ONE plain fabric, a trapezoid hooked high on the back (under the shoulders), hanging
+    // behind with a slight flare and a soft wave at the bottom. From the front: two small rounded panels that
+    // stick out behind the sides, nothing in front of the body. Rounded corners, thick smooth edges.
     const { A, hw, H, neck, top, zc } = c.R
     const yTop = top - 0.27 * H
     const yHem = Math.max(neck + 0.16 * H, yTop - 0.52 * H)
@@ -1264,7 +1266,7 @@ const BACK: Record<string, Gen> = {
       for (let i = 0; i < nA; i++) {
         const u = (i / (nA - 1)) * 2 - 1
         const at = Math.abs(u)
-        // trapeze : plus etroit en haut, plus large en bas ; coins arrondis par un bord haut/bas qui s'incurve
+        // trapezoid: narrower at the top, wider at the bottom; corners rounded by a curving top/bottom edge
         const half = 0.78 + 0.5 * v
         const top0 = 0.1 * at ** 5
         const bottom0 = 1 - 0.14 * at ** 4
@@ -1293,7 +1295,7 @@ const BACK: Record<string, Gen> = {
         idx.push(N + k, N + k + nA, N + k + 1, N + k + 1, N + k + nA, N + k + nA + 1)
       }
     }
-    // chant : on relie le bord de la face interieure a celui de la face exterieure
+    // rim: join the edge of the inner face to that of the outer face
     const edge: number[] = []
     for (let i = 0; i < nA; i++) edge.push(i)
     for (let j = 1; j < nR; j++) edge.push(j * nA + nA - 1)
@@ -1313,8 +1315,8 @@ const BACK: Record<string, Gen> = {
   tail(c) {
     const { A, hw, H, top, zc } = c.R
     const y = top - 0.76 * H
-    // queue COURTE, cote gauche du Mochi vu de face (x negatif) : elle part du bas du dos, sort sur le cote et
-    // remonte un peu ; visible de face et de 3/4. Une couleur (le bout peut en prendre une seconde).
+    // SHORT tail, on the Mochi's left seen from the front (negative x): it starts from the bottom of the back, comes out on
+    // the side and rises a little; visible from the front and 3/4. One color (the tip can take a second one).
     const side = A.side(y, zc - 0.25 * hw, -1)
     const xs = side ? side.p.x : -hw
     const h = A.back(0.4 * xs, y)
@@ -1336,38 +1338,38 @@ const BACK: Record<string, Gen> = {
 /** Table des generateurs par emplacement. */
 const GENERATEURS: Record<Slot, Record<string, Gen>> = { head: HEAD, eyes: EYES, face: FACE, neck: BOTTOM, back: BACK }
 
-/** Ids du catalogue (les generateurs des accessoires RETIRES restent dans le fichier mais ne comptent plus). */
+/** Catalog ids (the builders of REMOVED accessories stay in the file but no longer count). */
 export const IDS_IMPLEMENTED = (e: Slot) => Object.keys(GENERATEURS[e]).filter((id) => !REMOVED.some((r) => r.slot === e && r.id === id))
 
 /* ------------------------------------------------------------------ classe */
 
 /* ------------------------------------------------------------------ ordinateur portable (mood « travaille ») */
 
-/** Couleurs de l'ordinateur : coque gris clair argent, petit logo rond un peu plus clair. */
+/** Laptop colors: light silver shell, small round logo a little lighter. */
 export const LAPTOP_COLORS = { shell: '#c7cad4', logo: '#eceef3' } as const
 
-/** Mesures de l'ordinateur (unites du moteur), figees par forme pour qu'il ne bouge pas avec les rebonds du corps. */
+/** Laptop measurements (engine units), frozen per shape so it does not move with the body's bounces. */
 interface MeasuresLaptop {
   l: number
   hs: number
   prof: number
   zH: number
   ground: number
-  /** abscisse du centre du clavier */
+  /** abscissa of the keyboard center */
   x: number
 }
 
 function measureLaptop(R: Landmarks, ground: number): MeasuresLaptop {
   const { A, hw, H } = R
-  // pose en bas a DROITE du corps (a droite de l'image vu de face), tourne vers le Mochi : le visage reste libre
+  // set at the bottom RIGHT of the body (right of the image seen from the front), turned towards the Mochi: the face stays free
   const x = 0.5 * hw
-  // un peu plus grand que le premier essai ; l'ecran reste sous le haut des yeux
+  // a little bigger than the first try; the screen stays under the top of the eyes
   const top = R.yEyes - 1.6 * R.rLens
   const hs0 = Math.min(0.5 * H, Math.max(0.12 * H, R.yEyes - 2.3 * R.rLens - ground))
   const hs = Math.max(hs0, Math.min(1.25 * hs0, top - ground))
   const l = Math.min(1.6 * hs, 1.4 * hw)
   const prof = 0.8 * hs
-  // face avant du corps vers le bas, autour de x : le bord arriere du clavier y entre un peu
+  // front face of the body going down, around x: the back edge of the keyboard goes into it a little
   let zb = -Infinity
   for (const dx of [-0.3 * hw, -0.15 * hw, 0, 0.15 * hw, 0.3 * hw]) {
     const h = A.before(x + dx, ground + 0.1 * H)
@@ -1378,10 +1380,10 @@ function measureLaptop(R: Landmarks, ground: number): MeasuresLaptop {
 }
 
 /**
- * Portable tres simplifie, vu DE DOS : le dos de l'ecran regarde la camera, l'ecran regarde le Mochi, le clavier part de la
- * charniere vers le corps. Memes formes que le noeud papillon d'Alfred : rectangles aux coins arrondis, extrusion bombee a
- * normales lisses. L'ordinateur est pose au sol (l'origine du groupe est le sol, sous le milieu du clavier) : on le met a
- * l'echelle autour de ce point pour le faire pousser.
+ * Very simple laptop, seen FROM BEHIND: the back of the screen faces the camera, the screen faces the Mochi, the
+ * keyboard goes from the hinge towards the body. Same shapes as Alfred's bow tie: rectangles with rounded corners,
+ * domed extrusion with smooth normals. The laptop sits on the ground (the group origin is the ground, under the
+ * middle of the keyboard): it is scaled around that point to make it grow.
  */
 function buildLaptop(c: Ctx, m: MeasuresLaptop): Group {
   const og = new Group()
@@ -1389,16 +1391,16 @@ function buildLaptop(c: Ctx, m: MeasuresLaptop): Group {
   const { l, hs, prof, zH, ground, x } = m
   const zc = zH - prof / 2
   og.position.set(x, ground, zc)
-  // l'ecran regarde le Mochi (en haut a gauche de l'ordinateur) : on voit son dos de 3/4
+  // the screen faces the Mochi (top left of the laptop): we see its back at 3/4
   og.rotation.y = 0.42
   const rc = 0.07 * hs
   const bis = 0.018 * hs
-  // clavier : plaque plate posee au sol, bord avant (cote camera) a la charniere
+  // keyboard: flat plate on the ground, front edge (camera side) at the hinge
   const tb = 0.06 * hs
   const kbd = add(c, extrusion(shapeOfPoints(polygonRounded([[-l / 2, 0], [l / 2, 0], [l / 2, prof], [-l / 2, prof]], rc, 8)), tb, bis, 8, true), LAPTOP_COLORS.shell, og, 1, true)
   kbd.rotation.x = -Math.PI / 2
   kbd.position.set(0, tb / 2 + bis, prof / 2)
-  // ecran : ouvert a ~105 degres, il se penche de 15 degres vers la camera ; son dos regarde la camera
+  // screen: open at about 105 degrees, tilted 15 degrees towards the camera; its back faces the camera
   const slope = (15 * Math.PI) / 180
   const lh = hs / Math.cos(slope)
   const tl = 0.045 * hs
@@ -1407,21 +1409,21 @@ function buildLaptop(c: Ctx, m: MeasuresLaptop): Group {
   lid.rotation.x = slope
   og.add(lid)
   add(c, extrusion(shapeOfPoints(polygonRounded([[-l / 2, 0], [l / 2, 0], [l / 2, lh], [-l / 2, lh]], rc, 8)), tl, bis, 8, true), LAPTOP_COLORS.shell, lid, 1, true)
-  // petit logo rond, discret, au dos de l'ecran
+  // small, discreet round logo on the back of the screen
   const r = 0.085 * lh
   const logo = add(c, extrusion(shapeOfPoints(polygonRounded(Array.from({ length: 16 }, (_, i) => [Math.cos((i / 16) * Math.PI * 2) * r, Math.sin((i / 16) * Math.PI * 2) * r] as [number, number]), 0.3 * r, 6)), 0.006 * hs, 0.014 * hs, 6, true), c.c2, lid, 1, true)
   logo.position.set(0, 0.56 * lh, tl / 2 + bis * 0.6)
   return og
 }
 
-/** Coque de contour d'une piece : maillage inverse, gonfle le long de normales LISSEES (aucune fente aux aretes vives). */
+/** Outline shell of a piece: inverted mesh, inflated along SMOOTHED normals (no crack at sharp edges). */
 interface DataShell {
   shell: true
-  /** materiau propre a la coque : son epaisseur depend de l'echelle de la piece */
+  /** material of its own for the shell: its thickness depends on the piece's scale */
   th: { value: number }
 }
 
-/** Geometrie d'une coque : sommets soudes et normales recalculees, pour que le gonflage ne fende pas les aretes. */
+/** Geometry of a shell: welded vertices and recomputed normals, so inflating does not crack the edges. */
 function geometryShell(geo: BufferGeometry): BufferGeometry {
   const g = geo.clone()
   g.deleteAttribute('normal')
@@ -1436,31 +1438,33 @@ function materialShell(hex: string, th: { value: number }): MeshBasicMaterial {
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uTh = th
     sh.vertexShader = sh.vertexShader
-      .replace('void main() {', 'uniform float uEp;\nvoid main() {')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(normal) * uEp;')
+      .replace('void main() {', 'uniform float uTh;\nvoid main() {')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(normal) * uTh;')
   }
-  // programme partage par toutes les coques (le code est identique, seul l'uniform change)
+  // program shared by every shell (the code is identical, only the uniform changes)
   m.customProgramCacheKey = () => 'mochi-shell-accessory'
   return m
 }
 
 export class Accessories3d {
   readonly group = new Group()
-  /** augmente a chaque reconstruction des pieces : le corps de reference de `pieces()` change */
+  /** incremented on each rebuild of the pieces: the reference body of `pieces()` changes */
   version = 0
   private key = ''
   private geos: BufferGeometry[] = []
   private readonly materials = new Map<string, MatDef>()
   private source: MatDef | null = null
-  /** memes jeux de lumiere que le corps (liseres, ombrage doux, reflet) : poses par `Mochi3d` */
+  /** same lighting as the body (rims, soft shading, highlight): set by `Mochi3d` */
   settings: { force: number; top: number; ao: number; highlight?: { value: number } } | null = null
-  /** ombres douces posees sur le corps (repere du moteur, y vers le bas), valables apres `update` */
+  /** soft shadows on the body (engine space, y down), valid after `update` */
   shadows: Shadow[] = []
-  /** couleurs utilisees (palette du pixel art) */
+  /** colors in use (pixel art palette) */
   colors: string[] = []
-  /** couleur du corps (hex), posee par `Mochi3d` : sert aux couleurs par defaut qui doivent contraster */
+  /** body color (hex), set by `Mochi3d`: used for default colors that must contrast */
   body?: string
-  /** ordinateur du mood `working` : groupe garde d'une reconstruction a l'autre, et ses mesures par forme */
+  /**
+ * laptop of the `working` mood: group kept from one rebuild to the next, and its measurements per shape
+ */
   private laptopG: Group | null = null
   private laptopGeos: BufferGeometry[] = []
   private laptopKey = ''
@@ -1471,9 +1475,9 @@ export class Accessories3d {
   }
 
   /**
-   * Les pieces portees (un groupe par emplacement ; pas l'ordinateur, pose au sol) : construites une fois pour un corps,
-   * elles suivent ensuite le corps d'une image a l'autre par une simple transformation (voir `Mochi3d.followBody`) au
-   * lieu d'etre reconstruites (v12).
+   * The worn pieces (one group per slot; not the laptop, which sits on the ground): built once for a body, then they
+   * follow the body from frame to frame with a simple transform (see `Mochi3d.followBody`) instead of being rebuilt
+   * (v12).
    */
   pieces(): Object3D[] {
     return this.group.children.filter((c) => c !== this.laptopG)
@@ -1489,7 +1493,7 @@ export class Accessories3d {
     let m = this.materials.get(key)
     if (!m) {
       m = base.clone() as MatDef
-      // le corps peut etre invisible (accessoires seuls) : ses copies, elles, se dessinent toujours
+      // the body can be invisible (accessories alone): its copies are always drawn
       m.visible = true
       m.map = null
       m.emissiveMap = null
@@ -1509,14 +1513,14 @@ export class Accessories3d {
   private empty() {
     for (const g of this.geos) g.dispose()
     this.geos = []
-    // les coques de l'ordinateur restent avec lui (il est garde d'une reconstruction a l'autre)
+    // the laptop's shells stay with it (it is kept from one rebuild to the next)
     for (const ch of [...this.group.children]) {
       if (ch !== this.laptopG) this.liberer3(ch)
       this.group.remove(ch)
     }
   }
 
-  /** Libere les geometries et materiaux des coques sous `o`. */
+  /** Frees the geometries and materials of the shells under `o`. */
   private liberer3(o: Object3D) {
     o.traverse((x) => {
       if ((x.userData as Partial<DataShell>).shell) {
@@ -1528,9 +1532,9 @@ export class Accessories3d {
   }
 
   /**
-   * Contour des accessoires : une coque inversee par piece opaque, de la couleur de la piece tres assombrie,
-   * meme epaisseur que celle du corps (`th`, en unites du moteur) ramenee a l'echelle locale de la piece.
-   * `visible` faux : coques cachees (elles ne sont creees qu'au premier besoin). Appele a chaque image.
+   * Accessory outline: an inverted shell per opaque piece, in the piece's color darkened a lot, with the same
+   * thickness as the body's (`th`, in engine units) brought to the piece's local scale. `visible` false: shells
+   * hidden (only created when first needed). Called every frame.
    */
   outline(visible: boolean, th: number) {
     if (!this.group.visible) return
@@ -1545,7 +1549,7 @@ export class Accessories3d {
     for (const m of todo) {
       m.userData.withShell = true
       const mat = m.material as MatDef
-      // les pieces translucides (verres) n'ont pas de contour
+      // translucent pieces (lenses) have no outline
       if (mat.transparent) continue
       const th0 = { value: th }
       const c = new Mesh(geometryShell(m.geometry), materialShell(`#${mat.color.getHexString()}`, th0))
@@ -1558,7 +1562,7 @@ export class Accessories3d {
       if (!d.shell) return
       o.visible = visible
       if (!visible) return
-      // echelle locale cumulee de la piece (l'ordinateur gonfle et se replie : le trait ne bouge pas)
+      // cumulated local scale of the piece (the laptop grows and folds: the stroke does not move)
       let k = 1
       for (let p = o.parent; p && p !== root; p = p.parent) k *= Math.cbrt(Math.abs(p.scale.x * p.scale.y * p.scale.z)) || 1
       d.th!.value = th / Math.max(1e-4, k)
@@ -1566,8 +1570,8 @@ export class Accessories3d {
   }
 
   /**
-   * Pose la selection sur le corps. `landmarks` est appele seulement quand quelque chose change
-   * (les tirs de rayons coutent) ; `keyBody` identifie le corps (contour, forme, yeux).
+   * Places the selection on the body. `landmarks` is only called when something changes (ray casting is costly);
+   * `keyBody` identifies the body (outline, shape, eyes).
    */
   update(sel: AccessorySelection, keyBody: string, base: MatDef, landmarks: () => Landmarks | null, laptop?: { k: number; ground: number; key: string }) {
     const active = SLOTS.filter((e) => resolveAccessories(e, sel[e]))
@@ -1581,7 +1585,7 @@ export class Accessories3d {
     }
     const key = `${keyBody}|${base.uuid}|${this.body ?? ''}|${JSON.stringify(sel)}|${this.settings ? 'l' : 'p'}|${aff ? 'o' : ''}`
     this.group.visible = true
-    // l'echelle de l'ordinateur change a chaque image sans rien reconstruire
+    // the laptop's scale changes every frame without rebuilding anything
     if (this.laptopG) {
       this.laptopG.visible = aff
       if (laptop) this.laptopG.scale.setScalar(Math.max(laptop.k, 0.001))
@@ -1598,7 +1602,7 @@ export class Accessories3d {
       this.group.visible = false
       return
     }
-    // deux yeux : ceux du corps, sinon deux yeux de remplacement a la hauteur du centre
+    // two eyes: the body's, else two replacement eyes at the center's height
     const ye: [EyeScene, EyeScene] =
       R.eyes.length === 2
         ? [R.eyes[0]!, R.eyes[1]!]
@@ -1631,7 +1635,7 @@ export class Accessories3d {
     if (aff && laptop) this.placeLaptop(base, R, ye, laptop)
   }
 
-  /** Ordinateur du mood `working` : construit une fois par forme et par matiere, puis remis dans le groupe. */
+  /** Laptop of the `working` mood: built once per shape and material, then put back in the group. */
   private placeLaptop(base: MatDef, R: Landmarks, ye: [EyeScene, EyeScene], laptop: { k: number; ground: number; key: string }) {
     const keyO = `${laptop.key}|${base.uuid}|${this.body ?? ''}`
     if (!this.laptopG || this.laptopKey !== keyO) {
@@ -1664,9 +1668,9 @@ export class Accessories3d {
   }
 
   /**
-   * Oublie la pose en cache : le prochain `update` reconstruit les pieces et refait les tirs de rayons sur le corps tel qu'il
-   * est a ce moment. Sert quand la forme change : la cle (style|forme) change tout de suite, mais le corps est encore en
-   * train de se transformer (morph), donc les reperes calcules a cet instant sont ceux d'une forme a mi-chemin.
+   * Forgets the cached pose: the next `update` rebuilds the pieces and casts rays again on the body as it is then.
+   * Used when the shape changes: the key (style|shape) changes at once, but the body is still morphing, so landmarks
+   * computed at that instant are those of a halfway shape.
    */
   invalidate() {
     this.key = ''
@@ -1683,7 +1687,7 @@ export class Accessories3d {
   }
 }
 
-/** Ombre douce d'un emplacement sur la face avant (repere du moteur : y vers le bas). */
+/** Soft shadow of a slot on the front face (engine space: y down). */
 function shadowsOf(e: Slot, g: Group, R: Landmarks): Shadow[] {
   const b = new Box3Lite(g)
   if (!b.ok) return []
@@ -1704,7 +1708,7 @@ function shadowsOf(e: Slot, g: Group, R: Landmarks): Shadow[] {
   }
 }
 
-/** Boite englobante (x, y) d'un groupe dans SON repere (les parents ne comptent pas : le corps peut tourner). */
+/** Bounding box (x, y) of a group in ITS frame (parents do not count: the body can turn). */
 class Box3Lite {
   x0 = Infinity
   x1 = -Infinity

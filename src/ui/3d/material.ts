@@ -1,23 +1,21 @@
 /**
- * Matiere de la vraie 3D : « realiste » (l'existant : matiere mate pastel, degrades de
- * lumiere, ombres douces) ou une des quatre variantes « 3D flat » : un VRAI volume (meme
- * moteur : `volume.ts`, `scene3d.ts`, `iso.ts`), mais rendu a aplats, sans degrade.
+ * Material of the real 3D: "realistic" (matte material, light gradients, soft shadows) or one of the "flat 3D"
+ * variants: a REAL volume (same engine: `volume.ts`, `scene3d.ts`), but rendered with flat tones.
  *
- *   toon          2 a 3 tons nets (cel shading), sans reflet, ombre au sol en aplat
- *   toon-contour  comme toon, avec un contour fin et fonce (coque inversee)
- *   lowpoly       geometrie grossiere, facettes (flatShading), chaque facette en aplat
- *   aplat         deux tons seulement : la couleur du flat 2D et UNE teinte d'ombre
+ *   toon          2 to 3 clean tones (cel shading), no highlight, flat ground shadow
+ *   toon-outline  like toon, with a thin dark outline (inverted shell)
+ *   lowpoly       coarse geometry, facets (flatShading), each facet flat
+ *   flat          only two tones: the flat color and ONE shadow tint
  *
- * Ce module est PUR (aucune dependance a Three.js) : il fixe les tons, les seuils et la
- * finesse, que `scene3d.ts` traduit en materiaux. Il peut donc etre importe statiquement
- * (types du composant, tests sous `node`) sans apporter Three.js.
+ * This module is PURE (no Three.js dependency): it sets tones, thresholds and finesse, which `scene3d.ts` turns into
+ * materials. So it can be imported statically (component types, tests under Node) without pulling in Three.js.
  *
- * Le defaut est `soft` en douceur `strong` (choix du 03/11/2026, apres l'aplat jugé a gros bloc d'ombre) ; `flat` reste dans le code, hors interface ; `realistic` reste disponible en
- * interne seulement. Le contour cartoon est une OPTION (`outline`), applicable a `flat`
- * comme a `toon` : `toon-outline` n'est que `toon` avec contour.
+ * The default is `soft` with `strong` softness (choice of 03/11/2026, after flat was judged a big block of shadow);
+ * `flat` stays in the code, out of the interface; `realistic` stays available internally only. The cartoon outline is
+ * an OPTION (`outline`), usable with `flat` as with `toon`: `toon-outline` is only `toon` with an outline.
  *
- * `toon` et `lowpoly` restent dans le code (ils ne gênent pas : une ligne de table chacun)
- * mais ne sont plus proposes dans l'interface ni dans le labo.
+ * `toon` and `lowpoly` stay in the code (they cost nothing: one table row each) but are no longer offered in the
+ * interface or the lab.
  */
 
 import { DEFAULT_FINESSE, type Finesse } from './volume'
@@ -27,8 +25,8 @@ export type Material = 'realistic' | 'toon' | 'toon-outline' | 'lowpoly' | 'flat
 export const MATERIALS: Material[] = ['realistic', 'toon', 'toon-outline', 'lowpoly', 'flat', 'soft', 'pixel']
 
 /**
- * Reglage de la matiere `soft` (ombrage lisse et mat) : `light` ou `strong`. Ne concerne
- * que `soft` ; ignore par les autres matieres.
+ * Setting of the `soft` material (smooth, matte shading): `light` or `strong`. Only concerns `soft`; ignored by the
+ * other materials.
  */
 export type Softness = 'light' | 'strong'
 export const SOFTNESSES: Softness[] = ['light', 'strong']
@@ -39,45 +37,45 @@ export const DEFAULT_MATERIAL: Material = 'soft'
 
 export const isMaterial = (v: string): v is Material => (MATERIALS as string[]).includes(v)
 
-/** Les variantes plates : toutes sauf le realiste. */
+/** The flat variants: all but realistic. */
 export const isFlat = (r: Material) => r !== 'realistic'
 
 export interface SettingFlat {
   /**
-   * Seuils sur dot(normale, lumiere), croissants : sous le premier, le ton 0 (ombre) ;
-   * entre deux seuils, le ton suivant ; au-dessus du dernier, le plus clair.
+   * Thresholds on dot(normal, light), increasing: below the first, tone 0 (shadow); between two thresholds, the next
+   * tone; above the last, the lightest.
    */
   thresholds: number[]
   /**
-   * Un ton par palier (seuils.length + 1), en multiple de la couleur du flat 2D : 1 = la
-   * couleur du flat telle quelle (le ton qui occupe le gros de la surface), moins = ombre.
+   * One tone per step (thresholds.length + 1), as a multiple of the flat color: 1 = the flat color as is (the tone
+   * covering most of the surface), less = shadow.
    */
   tones: number[]
-  /** facettes : chaque triangle porte sa propre normale (flatShading) */
+  /** facets: each triangle carries its own normal (flatShading) */
   facets: boolean
-  /** contour fonce autour de la silhouette (coque inversee) */
+  /** dark outline around the silhouette (inverted shell) */
   outline: boolean
   /**
-   * la limite d'ombre ondule au lieu d'etre une ligne droite : la normale est legerement
-   * perturbee par un bruit de basse frequence ancre sur le corps (`scene3d.ts`)
+   * the shadow boundary waves instead of being a straight line: the normal is slightly disturbed by a low frequency
+   * noise anchored on the body (`scene3d.ts`)
    */
   organic: boolean
-  /** finesse du maillage ; `null` = celle du realiste */
+  /** mesh finesse; `null` = the realistic one */
   finesse: Finesse | null
-  /** garde 1 point du contour sur `reduction` (lowpoly : un contour plus grossier) */
+  /** keeps 1 outline point out of `reduction` (lowpoly: a coarser outline) */
   reduction: number
   /**
-   * Ombrage LISSE (matiere `soft`) : pas de palier, la rampe est une courbe continue de
-   * dot(normale, lumiere) entre `smooth.from` (ton d'ombre) et `smooth.a` (couleur de base),
-   * lue en filtrage lineaire. `tones` = [ombre, 1]. Absent : paliers (les autres matieres).
+   * SMOOTH shading (`soft` material): no steps, the ramp is a continuous curve of dot(normal, light) between
+   * `smooth.from` (shadow tone) and `smooth.a` (base color), read with linear filtering. `tones` = [shadow, 1].
+   * Absent: steps (the other materials).
    */
   smooth?: { from: number; a: number }
 }
 
 /**
- * `soft` : la couleur du flat domine (ton 1 sur tout le haut gauche et le centre), l'ombre
- * n'est qu'un voile qui s'installe lentement vers le bas droite. Tons en lineaire (lumiere
- * Three) : 0,70 lineaire = environ 16 % plus sombre a l'ecran (sRGB), 0,56 = environ 24 %.
+ * `soft`: the flat color dominates (tone 1 over the whole top left and the center), the shadow is only a veil that
+ * slowly settles towards the bottom right. Tones in linear light (Three): 0.70 linear = about 16 % darker on screen
+ * (sRGB), 0.56 = about 24 %.
  */
 const SOFT: Record<Softness, SettingFlat> = {
   light: {
@@ -102,7 +100,7 @@ const SOFT: Record<Softness, SettingFlat> = {
   }
 }
 
-/** Les reglages : une seule table, a regler a l'oeil dans `#shapes3d`. */
+/** The settings: a single table, tuned by eye in `#shapes3d`. */
 const FLAT: Record<Exclude<Material, 'realistic' | 'soft'>, SettingFlat> = {
   toon: {
     thresholds: [0.2, 0.86],
@@ -122,7 +120,7 @@ const FLAT: Record<Exclude<Material, 'realistic' | 'soft'>, SettingFlat> = {
     finesse: null,
     reduction: 1
   },
-  // pixel : trois tons nets comme `toon`, puis ramene a une palette courte (`pixel3d.ts`)
+  // pixel: three clean tones like `toon`, then reduced to a short palette (`pixel3d.ts`)
   pixel: {
     thresholds: [0.2, 0.86],
     tones: [0.7, 1, 1.12],
@@ -152,24 +150,23 @@ const FLAT: Record<Exclude<Material, 'realistic' | 'soft'>, SettingFlat> = {
   }
 }
 
-/** Reglage d'une variante plate, `null` pour le realiste. `softness` ne sert qu'a `soft`. */
+/** Setting of a flat variant, `null` for realistic. `softness` only applies to `soft`. */
 export function settingFlat(r: Material, softness: Softness = DEFAULT_SOFTNESS): SettingFlat | null {
   if (r === 'realistic') return null
   return r === 'soft' ? SOFT[softness] : FLAT[r]
 }
 
-/** Maillage utilise : `full` (finesse du realiste) ou `grossier` (lowpoly). */
+/** Mesh in use: `full` (realistic finesse) or `coarse` (lowpoly). */
 export const meshOf = (r: Material): 'full' | 'grossier' =>
   settingFlat(r)?.finesse ? 'grossier' : 'full'
 
 export const finesseOf = (r: Material): Finesse => settingFlat(r)?.finesse ?? DEFAULT_FINESSE
 
 /**
- * Eclairage d'une variante plate. Une lumiere ambiante `A` et une directionnelle `D`
- * donnent a chaque palier `i` le ton `A + D * g[i]` : on prend A = ton le plus sombre et
- * D = l'ecart au plus clair, `g` est la rampe du gradientMap (0 a 1). L'ombre portee d'un
- * corps sur le sol retombe sur A : c'est le ton d'ombre, le meme que celui du corps.
- * Les intensites sont en multiples de pi (convention des lumieres physiques de Three).
+ * Lighting of a flat variant. An ambient light `A` and a directional `D` give each step `i` the tone `A + D * g[i]`:
+ * A = the darkest tone and D = the gap to the lightest, `g` is the gradientMap ramp (0 to 1). A body's shadow on the
+ * ground falls back on A: it is the shadow tone, the same as the body's. Intensities are multiples of pi (Three's
+ * physical light convention).
  */
 export function lightingFlat(p: SettingFlat) {
   const neck = Math.min(...p.tones)
@@ -183,8 +180,7 @@ export function lightingFlat(p: SettingFlat) {
 }
 
 /**
- * Rampe echantillonnee (valeurs 0..255) pour un gradientMap de `n` texels : le texel `i`
- * correspond a dot = 2 * (i + 0,5) / n - 1.
+ * Sampled ramp (values 0..255) for a gradientMap of `n` texels: texel `i` matches dot = 2 * (i + 0.5) / n - 1.
  */
 export function gradientMap(p: SettingFlat, n = p.smooth ? 128 : 32): Uint8Array {
   const { ramp } = lightingFlat(p)
@@ -204,9 +200,8 @@ export function gradientMap(p: SettingFlat, n = p.smooth ? 128 : 32): Uint8Array
 }
 
 /**
- * Couleur du contour : la teinte du corps, tres assombrie et un peu plus saturee, calculee en
- * HSL. Un melange avec un noir ou un violet virait au brun sur l'ambre ; ici la teinte
- * reste celle du corps (ambre -> ambre fonce, violet -> violet fonce).
+ * Outline color: the body hue, much darker and a little more saturated, computed in HSL. A mix with black or violet
+ * turned brown on amber; here the hue stays the body's (amber -> dark amber, violet -> dark violet).
  */
 export function colorOutline(hex: string): string {
   const v = parseInt(hex.slice(1), 16)
@@ -238,13 +233,12 @@ export function colorOutline(hex: string): string {
 }
 
 /**
- * Epaisseur du contour, en PIXELS, pour un mochi dont le diametre fait `diameterPx` pixels.
- * Elle s'allege en petite taille (2 % du diametre) mais reste visible (plancher), et ne
- * s'epaissit pas sans fin en gros plan (plafond).
+ * Outline thickness, in PIXELS, for a Mochi `diameterPx` pixels wide. It gets lighter at small sizes (2 % of the
+ * diameter) but stays visible (floor), and does not grow forever in close-up (ceiling).
  */
 export const outlineWidthPx = (diameterPx: number) => Math.min(3.4, Math.max(1.3, diameterPx * 0.02))
 
-/** Facteur d'epaisseur du contour : 1 = l'epaisseur de base (`outlineWidthPx`), borne pour rester propre. */
+/** Outline thickness factor: 1 = the base thickness (`outlineWidthPx`), bounded to stay clean. */
 export const DEFAULT_OUTLINE_WIDTH = 1
 export const MIN_OUTLINE_WIDTH = 0.4
 export const MAX_OUTLINE_WIDTH = 4

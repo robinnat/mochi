@@ -280,7 +280,7 @@ export async function cycleToGif(
  */
 export function wait3d(bot: MochiBotElement, delay = 15000): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (bot.querySelector('canvas[data-vraie3d]') && bot.dataset.ready === '1') return resolve()
+    if (bot.querySelector('canvas[data-real3d]') && bot.dataset.ready === '1') return resolve()
     const end = (ok: boolean) => {
       clearTimeout(timer)
       bot.removeEventListener('ready', good)

@@ -81,7 +81,7 @@ describe('<mochi-bot>: drawing', () => {
     host().appendChild(el)
     await no3d
     await nextTick()
-    expect(el.svg!.querySelector('[data-sans3d]')).not.toBeNull()
+    expect(el.svg!.querySelector('[data-no3d]')).not.toBeNull()
     expect(el.svg!.querySelector('mask, radialGradient, filter, [data-pixels]')).toBeNull()
   })
 
