@@ -65,7 +65,7 @@ import {
   RENDU_3D_DEFAUT
 } from './rendu3d'
 import { peindreReflet, REFLET_DEFAUT, type Reflet } from './reflet'
-import { accessoiresSombres, CONTRASTE_OEIL_MIN, corpsPourTheme, themeDesYeux, couleurOeil, OEIL_RGB, THEME_DEFAUT, type Theme } from './theme'
+import { accessoiresSombres, CONTRASTE_OEIL_MIN, corpsPourTheme, couleurOeil, OEIL_RGB, THEME_DEFAUT, type Theme } from './theme'
 import {
   centreDe,
   champDeRepos,
@@ -896,8 +896,6 @@ export function rendreAvatar(
   /** centre du cadre en unites du moteur (y vers le haut) ; par defaut l'origine. Sert a cadrer serre sur des accessoires seuls. */
   centre: { x: number; y: number } = { x: 0, y: 0 }
 ) {
-  // corps tres clair (jaune, citron vert) en theme clair : yeux noirs pleins, comme en sombre (pas de contour)
-  theme = themeDesYeux(couleur, theme, papier)
   couleur = corpsPourTheme(couleur, theme, contrasteOeil)
   const ctx3 = contexte()
   const { renderer, scene, camera, mochi } = ctx3

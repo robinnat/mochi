@@ -15,10 +15,10 @@ issus en partie de bloub) sont RETIRÉS du code : plus de repli 2D, plus d'expor
 remplace le Mochi (événement `sans3d`). Les exports (PNG, SVG, GIF, MP4) sont produits depuis la 3D :
 image fixe du canvas, ou rendu image par image hors écran (`docs/export.md`). Le SVG animé est retiré.
 
-**Yeux sur corps très clair (10/11/2026).** Jaune `#ffd60a` et citron vert `#b6e800` n'ont plus de
-contour autour des yeux : en thème clair, ils prennent les yeux noirs pleins du thème sombre
-(`themeDesYeux`, `theme.ts`), même rendu que ces Mochi en mode sombre. Les autres couleurs gardent
-leurs yeux blancs.
+**Yeux (Robin, 10/11/2026).** En thème clair, les yeux sont TOUJOURS blancs, pour toutes les couleurs
+(jaune `#ffd60a` et citron vert `#b6e800` compris), sans contour ni liseré ; seul l'ombrage 3D normal
+de l'œil reste. En thème sombre, ils sont noirs. Le contour du 09/11 et l'essai « yeux noirs en clair »
+du 10/11 sont retirés.
 
 ## Ombrage continu sur 360 degrés (`src/ui/trois/lisere.ts`)
 

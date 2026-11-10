@@ -73,26 +73,6 @@ export function corpsPourTheme(hex: string, theme: Theme, min = CONTRASTE_OEIL_M
   return vers(c, hi)
 }
 
-/**
- * Yeux d'un Mochi a corps tres clair (jaune, citron vert). En clair, un oeil blanc sur un corps dont le contraste
- * avec le blanc est inferieur a `CONTRASTE_CORPS_CLAIR` se perd. Plutot que de le cerner (contour retire le
- * 10/11/2026, Robin), ce Mochi prend les yeux NOIRS pleins du theme sombre, qui contrastent fortement avec un
- * corps clair. Une couleur claire mais presque neutre (creme, gris pale) garde ses yeux blancs.
- */
-export const CONTRASTE_CORPS_CLAIR = 1.6
-export function corpsTresClair(corps: string, papier = '#ffffff'): boolean {
-  if (contraste(corps, papier) >= CONTRASTE_CORPS_CLAIR) return false
-  const a = rgb(corps)
-  return Math.max(...a) - Math.min(...a) >= 128
-}
-
-/**
- * Theme reellement applique aux YEUX : le theme demande, sauf un corps tres clair en theme clair, qui prend les
- * yeux noirs du theme sombre (meme rendu que ce Mochi en mode sombre).
- */
-export const themeDesYeux = (corps: string, theme: Theme, papier = '#ffffff'): Theme =>
-  theme === 'light' && corpsTresClair(corps, papier) ? 'dark' : theme
-
 /** Verre des lunettes de soleil en mode sombre : ardoise, pour se lire devant des yeux noirs (noir sur noir, plus rien ne se voit). */
 export const VERRE_SOLEIL_SOMBRE = '#4e4a63'
 

@@ -159,8 +159,8 @@ stackable, each a simple shape in one or two colours you choose.
 | `dos` (back, 2) | `sac`, `cape` |
 
 `el.accessoires = { tete: { id: 'casquette', c1: '#e8505b' }, yeux: 'rondes' }`, or the same in JSON as an attribute.
-**Theme**: `theme="dark"` turns the eyes black (without it, the site's current theme). On a very light
-body (yellow `#ffd60a`, lime `#b6e800`), the eyes are solid black in the light theme too: no outline.
+**Theme**: `theme="dark"` turns the eyes black (without it, the site's current theme). In the light theme the eyes are always
+white, for every colour, with no outline.
 
 **Exports**, all from the 3D scene: PNG and SVG (a still of the 3D canvas, embedded as an image in the SVG),
 an animated GIF, and a whole montage as GIF or MP4, rendered frame by frame (the video encoder only loads on

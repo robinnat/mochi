@@ -19,8 +19,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Exports come from the 3D: PNG and SVG are a still of the 3D canvas (an image inside the SVG); the animated GIF
   and the montage (GIF, MP4) are rendered frame by frame from an off-screen 3D Mochi, in the screen's style.
-- No outline around the eyes any more: on a very light body (yellow `#ffd60a`, lime `#b6e800`) the eyes are solid
-  black in the light theme too, as in the dark theme.
+- No outline around the eyes any more: in the light theme the eyes are always white, for every colour (yellow
+  and lime included); in the dark theme they stay black.
 - The site, the docs and the lab use Mochi only through its public entry points, `mochi-world` and the new
   `mochi-world/catalogue` (catalogues and shared settings without the tag; `dist-lib/catalogue.js`). A test fails
   if they import an internal file. The docs show each example's result live, from the example's own tags.

@@ -165,8 +165,8 @@ emplacement, tous cumulables, chacun une forme simple en une ou deux couleurs au
 | `dos` (dos, 2) | `sac`, `cape` |
 
 `el.accessoires = { tete: { id: 'casquette', c1: '#e8505b' }, yeux: 'rondes' }`, ou la même chose en JSON dans l'attribut.
-**Thème** : `theme="dark"` rend les yeux noirs (sans lui, c'est le thème courant du site). Sur un corps
-très clair (jaune `#ffd60a`, citron vert `#b6e800`), les yeux sont noirs pleins en clair aussi : pas de contour.
+**Thème** : `theme="dark"` rend les yeux noirs (sans lui, c'est le thème courant du site). En thème clair, les yeux
+sont toujours blancs, pour toutes les couleurs, sans contour.
 
 **Exports**, tous depuis la scène 3D : PNG et SVG (une image fixe du canvas 3D, intégrée comme image dans
 le SVG), un GIF animé, et un montage entier en GIF ou en MP4, rendus image par image (l'encodeur vidéo ne se
