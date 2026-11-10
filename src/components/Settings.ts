@@ -2,25 +2,25 @@ import { h, type Component } from '@/ui/dom/h'
 import { language, LANGUAGES, t } from '@/i18n'
 
 /**
- * Clavier du groupe de radios : les fleches deplacent le choix, et le groupe entier ne compte que pour UN arret
- * de tabulation (`tabindex` mobile), comme un groupe de radios natif.
+ * Keyboard of the radio group: arrows move the choice, and the whole group counts as ONE tab stop (roving
+ * `tabindex`), like a native radio group.
  */
 function atKeyboard(event: KeyboardEvent, index: number) {
   const step = ({ ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 } as Record<string, number>)[event.key]
   if (!step) return
   event.preventDefault()
-  // on tourne en rond, comme un groupe de radios natif
+  // we wrap around, like a native radio group
   const target = LANGUAGES[(index + step + LANGUAGES.length) % LANGUAGES.length]!
   language.value = target.id
-  // le focus suit le choix, sinon les fleches suivantes repartent de l'ancien
+  // focus follows the choice, otherwise the next arrows start from the old one
   const buttons = (event.currentTarget as HTMLElement).parentElement?.children
   const next = buttons?.[LANGUAGES.indexOf(target)]
   if (next instanceof HTMLElement) next.focus()
 }
 
 /**
- * Un groupe de boutons radio et non un `<select>` : trois choix se montrent entierement. Chaque bouton porte son
- * `aria-label` en clair, et `lang` est sur le bouton : la synthese vocale prononce « 简体中文 » en chinois.
+ * A group of radio buttons and not a `<select>`: three choices show in full. Each button carries its `aria-label` in
+ * plain text, and `lang` is on the button: speech synthesis says "简体中文" in Chinese.
  */
 export const Settings: Component<Record<string, never>> = () => () =>
   h(
@@ -50,7 +50,7 @@ export const Settings: Component<Record<string, never>> = () => () =>
             ],
             onClick: () => (language.value = l.id)
           },
-          // le drapeau est decoratif : le nom de la langue dit deja tout
+          // the flag is decorative: the language name already says it all
           h('span', { class: 'text-base leading-none', 'aria-hidden': 'true' }, l.emoji),
           h('span', { class: 'flex-1' }, l.name),
           l.id === language.value

@@ -6,10 +6,11 @@ import { defaultCycle, type Block } from '@/bot/cycles'
 import { TimelineTrack } from './TimelineTrack'
 
 /**
- * Deux correctifs releves en QA (10/11/2026) :
- * - au doigt, une carte de la timeline ne se deplacait pas : sans `touch-action: none`, le navigateur prend le
- *   glisser pour un defilement de la piste et annule le pointeur (pointercancel) apres quelques pixels ;
- * - le panneau ferme n'etait que transparent (opacity 0) : ses champs restaient atteignables au clavier.
+ * Two fixes found in QA (10/11/2026):
+ * - with a finger, a timeline card did not move: without `touch-action: none`, the browser takes the drag for a
+ *   scroll of
+ *   the track and cancels the pointer (pointercancel) after a few pixels;
+ * - the closed panel was only transparent (opacity 0): its fields could still be reached with the keyboard.
  */
 
 afterEach(() => {
@@ -23,8 +24,8 @@ const host = () => {
   return d
 }
 
-describe('timeline au doigt', () => {
-  it('chaque carte et chaque poignee de duree refusent le defilement tactile (touch-none)', async () => {
+describe('timeline with a finger', () => {
+  it('every card and every duration handle refuses touch scrolling (touch-none)', async () => {
     const blocks = defaultCycle().blocks
     const unmount = mountApp(TimelineTrack, host(), {
       blocks,
@@ -51,8 +52,8 @@ describe('timeline au doigt', () => {
   })
 })
 
-describe('timeline : la carte tombe la ou le doigt se leve', () => {
-  it('meme si le dernier pointermove est perime, le pointerup decide de la place', async () => {
+describe('timeline: the card drops where the finger lifts', () => {
+  it('even if the last pointermove is stale, the pointerup decides the place', async () => {
     const blocks = defaultCycle().blocks
     let received: Block[] | null = null
     const unmount = mountApp(TimelineTrack, host(), {
@@ -71,14 +72,14 @@ describe('timeline : la carte tombe la ou le doigt se leve', () => {
     })
     await nextTick()
     const card = document.querySelector<HTMLElement>('[data-carte]')!
-    // happy-dom n'a pas de capture de pointeur
+    // happy-dom has no pointer capture
     card.setPointerCapture = () => {}
-    // abscisse du milieu de la 3e carte, d'apres la largeur posee en style (la piste commence a 0)
+    // abscissa of the middle of the 3rd card, from the width set in style (the track starts at 0)
     const widths = [...document.querySelectorAll<HTMLElement>('[data-carte]')].map((c) => parseFloat(c.parentElement!.style.width))
     const x = widths[0]! + widths[1]! + widths[2]! / 2
     const pe = (type: string, clientX: number) => new PointerEvent(type, { bubbles: true, clientX, pointerId: 1, pointerType: 'touch' })
     card.dispatchEvent(pe('pointerdown', 10))
-    // un seul mouvement, perime : il ne quitte presque pas la premiere carte
+    // a single, stale move: it barely leaves the first card
     card.dispatchEvent(pe('pointermove', 30))
     card.dispatchEvent(pe('pointerup', x))
     expect(received).not.toBeNull()
@@ -88,14 +89,14 @@ describe('timeline : la carte tombe la ou le doigt se leve', () => {
 })
 
 describe('panneaux fermes hors du clavier', () => {
-  it('un panneau ferme est inert et aria-hidden, un panneau ouvert ne l est pas', async () => {
+  it('a closed panel is inert and aria-hidden, an open panel is not', async () => {
     const { App } = await import('@/App')
     const root = host()
     const unmount = mountApp(App, root)
     await nextTick()
     const panels = [...root.querySelectorAll<HTMLElement>('aside.panneau')]
     expect(panels.length).toBe(2)
-    // au demarrage, les reglages (gauche) sont fermes
+    // at startup, the settings (left) are closed
     const left = root.querySelector<HTMLElement>('.scene__gauche')!
     expect(left.classList.contains('panel--open')).toBe(false)
     expect(left.hasAttribute('inert')).toBe(true)

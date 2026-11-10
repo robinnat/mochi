@@ -3,7 +3,7 @@ import { h, type Component } from '@/ui/dom/h'
 import { t } from '@/i18n'
 import { boxModal, BUTTON_PRIMARY, BUTTON_SECONDARY } from './dialog'
 
-/** Boite de dialogue de nommage. */
+/** Naming dialog. */
 export interface NameDialogProps {
   title: string
   label: string
@@ -20,7 +20,7 @@ export const NameDialog: Component<NameDialogProps> = (props) => {
   let field: HTMLInputElement | null = null
   const draft = ref('')
 
-  // le nom propose arrive avec l'ouverture, et le champ s'offre deja selectionne
+  // the suggested name comes with opening, and the field is already selected
   watch(open, async (on) => {
     if (!on) return
     draft.value = props.value
@@ -30,7 +30,7 @@ export const NameDialog: Component<NameDialogProps> = (props) => {
 
   function submit() {
     const clean = draft.value.trim()
-    // un nom vide ne veut rien dire : on garde la main plutot que de valider
+    // an empty name means nothing: we keep control rather than validate
     if (!clean) {
       field?.focus()
       return

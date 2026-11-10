@@ -1,14 +1,14 @@
 /**
- * Encodage du GIF anime exporte, image par image depuis la scene 3D.
+ * Encoding of the exported animated GIF, frame by frame from the 3D scene.
  *
- * Tout est pur (des pixels vers des octets), donc testable en `node`. La capture des
- * images, elle, a besoin du DOM et du canvas 3D : elle vit dans `capture.ts`.
+ * Everything is pure (pixels to bytes), so testable under Node. Capturing frames needs the DOM and the 3D canvas: it
+ * lives in `capture.ts`.
  *
- * Il n'y a plus de SVG anime : il animait les yeux du dessin 2D en CSS, et la 3D n'a
- * pas de dessin vectoriel a animer.
+ * There is no animated SVG any more: it animated the eyes of the 2D drawing in CSS, and the 3D has no vector drawing
+ * to animate.
  */
 
-/** Ecrit un entier non signe sur `n` octets, petit-boutiste. */
+/** Writes an unsigned integer on `n` bytes, little-endian. */
 function le(value: number, n: number): number[] {
   const out: number[] = []
   for (let i = 0; i < n; i++) out.push((value / 2 ** (8 * i)) & 0xff)
@@ -20,9 +20,8 @@ const ascii = (s: string) => Array.from(s, (c) => c.charCodeAt(0))
 /* ------------------------------------------------------------------- gif */
 
 /**
- * Compression LZW du GIF : codes de longueur VARIABLE, ecrits bit a bit en
- * commencant par le bit de poids faible, et regroupes en sous-blocs de 255 octets
- * au plus.
+ * GIF LZW compression: VARIABLE length codes, written bit by bit starting from the least significant bit, and grouped
+ * in sub-blocks of at most 255 bytes.
  */
 function lzw(indices: Uint8Array, bitsByPixel: number): number[] {
   const clear = 1 << bitsByPixel
@@ -57,17 +56,17 @@ function lzw(indices: Uint8Array, bitsByPixel: number): number[] {
     write(Number(prefix))
     if (next < 4096) {
       dict.set(key, next++)
-      // La largeur du code grandit un cran APRES que le dictionnaire ait
-      // depasse ce qu'elle adresse, et ce decalage est le piege du format :
-      // l'encodeur inscrit son entree juste apres avoir emis un code, alors que
-      // le decodeur n'inscrit la sienne qu'en lisant le code SUIVANT. Il est donc
-      // toujours en retard d'une entree, et l'encodeur doit elargir en retard
-      // aussi. Ecrire `=== (1 << size)` desynchronise les deux et le flux
-      // devient illisible — verifie par un test d'aller-retour.
+      // The code width grows one notch AFTER the dictionary has
+      // gone past what it addresses, and that lag is the format's trap:
+      // the encoder adds its entry right after emitting a code, while
+      // the decoder only adds its own when reading the NEXT code. So it is
+      // always one entry behind, and the encoder must widen late
+      // too. Writing `=== (1 << size)` desynchronizes both and the stream
+      // becomes unreadable (checked by a round trip test).
       if (next > 1 << size && size < 12) size++
     } else {
-      // Dictionnaire plein : on le repart a zero, le decodeur fait pareil en
-      // voyant le code de remise a zero.
+      // Full dictionary: start it over, the decoder does the same when
+      // it sees the clear code.
       write(clear)
       dict = new Map()
       size = bitsByPixel + 1
@@ -79,8 +78,8 @@ function lzw(indices: Uint8Array, bitsByPixel: number): number[] {
   write(end)
   if (bits > 0) bytes.push(reserve & 0xff)
 
-  // Decoupage en sous-blocs : chacun est precede de sa longueur, et un octet nul
-  // termine la serie.
+  // Split into sub-blocks: each is preceded by its length, and a zero byte
+  // ends the series.
   const exit: number[] = [bitsByPixel]
   for (let i = 0; i < bytes.length; i += 255) {
     const block = bytes.slice(i, i + 255)
@@ -91,22 +90,20 @@ function lzw(indices: Uint8Array, bitsByPixel: number): number[] {
 }
 
 /**
- * Palette commune a toutes les images, index 0 reserve au transparent.
+ * Palette shared by all frames, index 0 reserved for transparent.
  *
- * Elle se construit en DEUX temps — recenser les couleurs, puis indexer les
- * images — parce qu'un GIF exige une palette commune : il faut avoir vu toutes
- * les images avant d'en encoder une seule. Sur un cycle de trente secondes, les
- * garder en pixels bruts couterait 255 Mo ; recensees puis indexees, elles ne
- * pesent plus qu'un octet par pixel.
+ * Built in TWO steps (count the colors, then index the frames) because a GIF needs a shared palette: every frame must
+ * be seen before encoding a single one. On a thirty-second cycle, keeping raw pixels would cost 255 MB; counted then
+ * indexed, they weigh only one byte per pixel.
  */
 export interface PaletteGif {
-  /** Combien de pixels par teinte, pendant le recensement. */
+  /** How many pixels per tint, while counting. */
   counts: Map<number, number>
-  /** RGB compacte sur 24 bits -> index, une fois la palette arretee. */
+  /** RGB packed on 24 bits -> index, once the palette is set. */
   index: Map<number, number>
-  /** Resolution des teintes absentes vers la plus proche retenue. */
+  /** Resolution of missing tints to the nearest kept one. */
   near: Map<number, number>
-  /** Au moins un pixel transparent a ete vu. */
+  /** At least one transparent pixel was seen. */
   transparence: boolean
 }
 
@@ -118,13 +115,11 @@ export const newPalette = (): PaletteGif => ({
 })
 
 /**
- * Recense les couleurs d'une image, en COMPTANT les pixels.
+ * Counts the colors of a frame, COUNTING the pixels.
  *
- * Le comptage n'est pas un detail : une palette remplie au premier arrive se
- * serait gorgee des nuances d'anticrenelage des premieres images, et les teintes
- * des anneaux — qui n'apparaissent qu'au milieu du cycle — seraient toutes tombees
- * sur la meme case. Mesure : un cycle depasse les 255 couleurs, donc il FAUT
- * choisir lesquelles garder.
+ * Counting is not a detail: a first-come palette would fill up with the antialiasing shades of the first frames, and
+ * the ring tints (which only show in the middle of the cycle) would all land on the same slot. Measured: a cycle goes
+ * past 255 colors, so we MUST choose which ones to keep.
  */
 export function listed(palette: PaletteGif, px: Uint8ClampedArray) {
   for (let p = 0; p < px.length; p += 4) {
@@ -137,14 +132,14 @@ export function listed(palette: PaletteGif, px: Uint8ClampedArray) {
   }
 }
 
-/** Arrete la palette sur les 255 teintes les plus presentes. */
+/** Sets the palette to the 255 most used tints. */
 function stops(palette: PaletteGif) {
   if (palette.index.size) return
   const sorted = [...palette.counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 255)
   for (const [key] of sorted) palette.index.set(key, palette.index.size + 1)
 }
 
-/** Index de la teinte la plus proche parmi celles retenues, mis en cache. */
+/** Index of the nearest kept tint, cached. */
 function nearest(palette: PaletteGif, key: number) {
   const known = palette.near.get(key)
   if (known !== undefined) return known
@@ -163,18 +158,18 @@ function nearest(palette: PaletteGif, key: number) {
       best = i
     }
   }
-  // Le cache borne le cout : chaque teinte absente n'est resolue qu'une fois,
-  // meme si elle revient sur des centaines d'images.
+  // The cache bounds the cost: each missing tint is resolved only once,
+  // even if it comes back on hundreds of frames.
   palette.near.set(key, best)
   return best
 }
 
-/** Traduit une image en index de palette, un octet par pixel. */
+/** Turns a frame into palette indices, one byte per pixel. */
 export function indexed(palette: PaletteGif, px: Uint8ClampedArray): Uint8Array {
   stops(palette)
   const out = new Uint8Array(px.length / 4)
   for (let i = 0, p = 0; i < out.length; i++, p += 4) {
-    // 0 = transparent, et c'est deja la valeur par defaut du tableau
+    // 0 = transparent, already the array's default value
     if (px[p + 3]! < 128) continue
     const key = (px[p]! << 16) | (px[p + 1]! << 8) | px[p + 2]!
     out[i] = palette.index.get(key) ?? nearest(palette, key)
@@ -183,19 +178,18 @@ export function indexed(palette: PaletteGif, px: Uint8ClampedArray): Uint8Array 
 }
 
 /**
- * Assemble des images en GIF anime.
+ * Assembles frames into an animated GIF.
  *
- * La transparence du GIF est sur UN bit : un pixel est opaque ou invisible, rien
- * entre les deux. Sur un fond transparent, le bord antialiase de la boule est donc
- * tranche a 50 % d'opacity et ressort en marches d'escalier. Ce n'est pas un defaut
- * a corriger, c'est le format — d'ou le choix laisse a l'utilisateur entre ce bord
- * dur et un fond plein, ou le bord reste lisse parce qu'il a de quoi se fondre.
+ * GIF transparency is ONE bit: a pixel is opaque or invisible, nothing in between. On a transparent background, the
+ * antialiased edge of the ball is cut at 50 % opacity and shows as stair steps. That is not a bug to fix, it is the
+ * format: hence the user's choice between this hard edge and a full background, where the edge stays smooth because
+ * it has something to blend into.
  *
- * La transparence est DEDUITE des images, pas demandee : des images deja aplaties
- * sur un fond n'ont pas a declarer d'index transparent, et surtout pas a etre
- * eliminees « retour au fond » entre deux — ce qui ferait clignoter le fond.
+ * Transparency is INFERRED from the frames, not requested: frames already flattened on a background do not declare a
+ * transparent index, and above all are not disposed "restore to background" in between, which would make the
+ * background flicker.
  *
- * Le GIF sert aux avatars animes (Discord, Slack) ; le montage entier sort aussi en MP4.
+ * The GIF serves animated avatars (Discord, Slack); the whole montage also comes out as MP4.
  */
 export function gifAnimate(
   images: Uint8ClampedArray[],
@@ -203,7 +197,7 @@ export function gifAnimate(
   height: number,
   delayMs: number
 ): Uint8Array<ArrayBuffer> {
-  if (!images.length) throw new Error('aucune image a emballer')
+  if (!images.length) throw new Error('no frame to pack')
   const palette = newPalette()
   for (const px of images) listed(palette, px)
   return gifIndexed(
@@ -216,8 +210,7 @@ export function gifAnimate(
 }
 
 /**
- * Meme chose, mais sur des images DEJA indexees — la voie a memoire bornee, pour
- * les longues sequences. Cf. `PaletteGif`.
+ * Same, but on frames ALREADY indexed: the bounded memory path, for long sequences. See `PaletteGif`.
  */
 export function gifIndexed(
   palette: PaletteGif,
@@ -226,17 +219,17 @@ export function gifIndexed(
   height: number,
   delayMs: number
 ): Uint8Array<ArrayBuffer> {
-  if (!images.length) throw new Error('aucune image a emballer')
+  if (!images.length) throw new Error('no frame to pack')
 
   stops(palette)
   const transparence = palette.transparence
   const colors = palette.index
-  // Une palette GIF a une taille en puissance de deux, et il faut au moins deux
-  // bits par pixel pour que le code de remise a zero tienne.
+  // A GIF palette has a power of two size, and at least two
+  // bits per pixel are needed for the clear code to fit.
   const bits = Math.max(2, Math.ceil(Math.log2(colors.size + 1)))
   const sizeTable = 1 << bits
 
-  const table: number[] = [0, 0, 0] // index 0 : le transparent, couleur sans importance
+  const table: number[] = [0, 0, 0] // index 0: transparent, the color does not matter
   for (const key of colors.keys()) table.push((key >> 16) & 0xff, (key >> 8) & 0xff, key & 0xff)
   while (table.length < sizeTable * 3) table.push(0)
 
@@ -244,11 +237,11 @@ export function gifIndexed(
     ...ascii('GIF89a'),
     ...le(width, 2),
     ...le(height, 2),
-    0x80 | (bits - 1), // table globale presente, et sa taille
-    0, // index de fond : le transparent
-    0, // pas de rapport d'aspect
+    0x80 | (bits - 1), // global table present, and its size
+    0, // background index: transparent
+    0, // no aspect ratio
     ...table,
-    // Boucle sans fin, par l'extension Netscape — rien d'autre ne sait le dire.
+    // Endless loop, through the Netscape extension: nothing else can say it.
     0x21,
     0xff,
     0x0b,
@@ -259,8 +252,8 @@ export function gifIndexed(
     0x00
   ]
 
-  // Le delai du GIF se compte en CENTIEMES de seconde : c'est ce qui limite sa
-  // cadence, un delai de 0 ou 1 etant traite differemment selon les lecteurs.
+  // The GIF delay counts in HUNDREDTHS of a second: that limits its
+  // frame rate, a delay of 0 or 1 being handled differently by players.
   const delay = Math.max(2, Math.round(delayMs / 10))
 
   for (const indices of images) {
@@ -268,13 +261,13 @@ export function gifIndexed(
       0x21,
       0xf9,
       0x04,
-      // Sur fond transparent : elimination « retour au fond » (2) et index
-      // transparent declare, sinon les zones vides laissent voir l'image
-      // precedente et la boule traine derriere elle.
+      // On a transparent background: "restore to background" disposal (2) and
+      // a declared transparent index, otherwise empty areas show the
+      // previous frame and the ball trails behind itself.
       //
-      // Sur fond plein : « laisser en place » (1), et surtout PAS de retour au
-      // fond — chaque image couvre toute la toile, donc effacer entre deux ne
-      // sert qu'a faire clignoter le fond.
+      // On a full background: "leave in place" (1), and above all NO restore
+      // to background: each frame covers the whole canvas, so clearing in between
+      // only makes the background flicker.
       transparence ? (2 << 2) | 0x01 : 1 << 2,
       ...le(delay, 2),
       0, // index transparent
@@ -284,7 +277,7 @@ export function gifIndexed(
       ...le(0, 2),
       ...le(width, 2),
       ...le(height, 2),
-      0, // pas de table locale, pas d'entrelacement
+      0, // no local table, no interlacing
       ...lzw(indices, bits)
     )
   }

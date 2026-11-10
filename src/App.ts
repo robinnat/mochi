@@ -50,27 +50,27 @@ import { COLOR_BY_ID, DEFAULT_COLOR, DEFAULT_SHAPE, SHAPE_BY_ID } from '@/bot/sk
 import { POSES, SEQUENCE, STATES, type StateId } from '@/bot/states'
 
 /**
- * L'URL pilote l'affichage : `#state=wink&stop` ouvre un etat precis sequence a l'arret, `#sheet` affiche la
- * planche. On relit a chaque `hashchange` pour que precedent et suivant du navigateur fonctionnent vraiment.
+ * The URL drives the display: `#state=wink&stop` opens a given state with the sequence stopped, `#sheet` shows the
+ * sheet. We read it again on every `hashchange` so the browser's back and forward really work.
  */
 function readHash() {
   const params = new URLSearchParams(location.hash.slice(1))
   const asked = params.get('state') as StateId | null
-  // on ne fait jamais confiance a l'URL : l'etat doit exister
+  // never trust the URL: the state must exist
   const known = STATES.some((s) => s.id === asked)
   return {
     state: known ? asked! : 'idle',
     named: known,
     playing: !params.has('stop'),
     gallery: params.has('sheet'),
-    // `#arrival` : rejouer l'arrivee sans avoir a revenir sur le site
+    // `#arrival`: replay the arrival without going back to the site
     arrival: params.has('arrival')
   }
 }
 
 /**
- * Forme, couleur, expression et cycle survivent au rechargement : c'est l'avatar de l'utilisateur. On valide au
- * chargement, un id inconnu retombe sur le defaut.
+ * Shape, color, expression and cycle survive a reload: it is the user's avatar. Validated on load, an unknown id
+ * falls back to the default.
  */
 function stored(name: NameStored, fallback: string, exists: (v: string) => boolean) {
   const v = read(name)
@@ -78,21 +78,23 @@ function stored(name: NameStored, fallback: string, exists: (v: string) => boole
 }
 
 /**
- * Nom du produit, en capitales pour le grand mot du pied de page. PAS traduit : c'est une marque.
+ * Product name, in capitals for the big word of the footer. NOT translated: it is a brand.
  */
 const NAME = 'MOCHI'
-/** Duree d'une humeur des reglages. Assez longue pour qu'on la remarque sans qu'elle agite. */
+/** Duration of a mood in the settings. Long enough to be noticed without being restless. */
 const MOOD_MS = 4200
-/** Retard avant que la barre d'export se revele apres l'arrivee : le temps que l'avatar rejoigne sa place. */
+/** Delay before the export bar shows after the arrival: the time for the avatar to reach its place. */
 const ARRIVAL_DELAY = 400
-/** Duree d'affichage de la confirmation d'export. */
+/** How long the export confirmation shows. */
 const CONFIRMATION_MS = 1800
 
-/** Hors du lecteur, le montage joue est un unique bloc au repos (c'est la que la forme choisie se voit). */
+/**
+ * Outside the player, the montage played is a single idle block (that is where the chosen shape shows).
+ */
 const REST = [makeBlock('idle')]
-/** Entree dans les reglages : le tourbillon, puis le repos (meme pose, la reprise ne se voit pas). */
+/** Entry into the settings: the swirl, then idle (same pose, the resume does not show). */
 const ENTRY = [makeBlock('swirl'), makeBlock('idle')]
-/** Sous « mouvement reduit », l'entree va droit au repos : le tourbillon est de la decoration. */
+/** With "reduced motion", the entry goes straight to idle: the swirl is decoration. */
 const ENTRY_CALM = [makeBlock('idle')]
 
 export const App: Component<Record<string, never>> = () => {
@@ -100,14 +102,14 @@ export const App: Component<Record<string, never>> = () => {
   const gallery = ref(initial.gallery)
 
   /*
-   * « Mouvement reduit » demande par le systeme, SUIVI et pas lu une seule fois. Ce qu'il coupe est de la
-   * DECORATION (transitions, tourbillon d'entree) ; pas la respiration, le regard ni les clignements.
+   * "Reduced motion" asked by the system, TRACKED and not read once. What it cuts is DECORATION (transitions, entry
+   * swirl); not the breathing, the gaze or the blinks.
    */
   const calmQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
   const calm = ref(calmQuery.matches)
   calmQuery.addEventListener('change', (e) => (calm.value = e.matches))
 
-  // « venir » sur le site, c'est le navigateur qui le sait : `navigate` (et non `reload` ou `back_forward`)
+  // "coming" to the site is known by the browser: `navigate` (and not `reload` or `back_forward`)
   const [nav] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[]
   const navigation = nav?.type ?? 'navigate'
 
@@ -117,7 +119,7 @@ export const App: Component<Record<string, never>> = () => {
 
   /* ------------------------------------------------------------------ cycles */
 
-  /** Le montage releve n'est qu'une amorce : ensuite les montages de l'utilisateur font foi. */
+  /** The measured montage is only a seed: after that, the user's montages are the reference. */
   const restored = parseCycles(read('cycles'))
   const cycles = ref<Cycle[]>(restored.length ? restored : [defaultCycle()])
 
@@ -126,7 +128,9 @@ export const App: Component<Record<string, never>> = () => {
   const elapsed = ref(0)
   const cycle = computed(() => cycles.value.find((x) => x.id === activeId.value) ?? cycles.value[0]!)
 
-  /** Ou trouver un etat pour les liens `#state=` : dans le montage courant s'il y est, sinon dans un autre. */
+  /**
+ * Where to find a state for `#state=` links: in the current montage if it is there, else in another one.
+ */
   function locate(id: StateId) {
     const order = [cycle.value, ...cycles.value.filter((x) => x.id !== activeId.value)]
     for (const x of order) {
@@ -136,7 +140,7 @@ export const App: Component<Record<string, never>> = () => {
     return null
   }
 
-  // un lien vers un etat precis ouvre le montage qui le contient
+  // a link to a given state opens the montage that holds it
   if (initial.named) {
     const found = locate(initial.state)
     if (found) {
@@ -145,10 +149,12 @@ export const App: Component<Record<string, never>> = () => {
     }
   }
 
-  // l'etat est une sortie du lecteur ; a l'arrivee, il part du REPOS quel que soit le montage
+  // the state is a player output; on arrival it starts from IDLE whatever the montage
   const state = ref<StateId>(intro.value ? 'idle' : (cycle.value.blocks[block.value]?.state ?? 'idle'))
 
-  /** Ecriture differee : etirer une carte remplace le cycle a chaque mouvement, et `localStorage` est synchrone. */
+  /**
+ * Delayed write: stretching a card replaces the cycle on every move, and `localStorage` is synchronous.
+ */
   let pending: ReturnType<typeof setTimeout>
   function savedCycles() {
     clearTimeout(pending)
@@ -159,35 +165,35 @@ export const App: Component<Record<string, never>> = () => {
     pending = setTimeout(savedCycles, 250)
   })
   watch(activeId, (v) => write('cycle', v))
-  // le differe se vide a la fermeture (`pagehide` : aussi au passage en cache de navigation sur mobile)
+  // the delayed write is flushed on close (`pagehide`: also when entering the back-forward cache on mobile)
   window.addEventListener('pagehide', savedCycles)
 
   /* -------------------------------------------------------------------- affichages */
 
-  // la personnalisation est l'accueil, sauf si l'URL designe un etat precis
+  // customization is the home view, unless the URL names a given state
   const view = ref<ViewId>(initial.named ? 'animations' : 'customize')
 
-  /** Apercu : la scene seule. On en sort par Echap ou par le bouton. */
+  /** Preview: the scene alone. Leave it with Escape or the button. */
   const preview = ref(false)
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') preview.value = false
   })
 
-  // on ne joue pas la sequence en personnalisation, sinon la forme est illisible
+  // the sequence does not play during customization, otherwise the shape cannot be read
   const playing = ref(intro.value || (initial.playing && view.value === 'animations'))
-  /** L'apercu commande la lecture dans les deux sens : on y entre en lecture, on en sort en pause. */
+  /** The preview drives playback both ways: entering it plays, leaving it pauses. */
   watch(preview, (on) => {
     playing.value = on
   })
 
   /**
-   * Le dernier fragment que NOUS avons ecrit, en attente de son `hashchange` : sans lui, un etat en double dans le
-   * montage ramenait la tete de lecture a sa premiere occurrence. Consomme a la premiere lecture.
+   * The last fragment WE wrote, waiting for its `hashchange`: without it, a state present twice in the montage
+   * brought the playhead back to its first occurrence. Consumed on the first read.
    */
   let writtenByUs = ''
-  // l'URL est partageable, donc elle suit l'etat ET la lecture ; replace et pas push
+  // the URL can be shared, so it follows the state AND playback; replace, not push
   watch([state, playing], ([id, on]) => {
-    // l'URL decrit le LECTEUR : hors de lui, l'etat affiche n'est qu'un decor
+    // the URL describes the PLAYER: outside it, the displayed state is only decor
     if (view.value !== 'animations') return
     writtenByUs = `#state=${id}${on ? '' : '&stop'}`
     location.replace(writtenByUs)
@@ -199,14 +205,14 @@ export const App: Component<Record<string, never>> = () => {
       return
     }
     const next = readHash()
-    // l'arrivee met en scene l'OUVERTURE de la page : on recharge pour la rejouer
+    // the arrival stages the page OPENING: reload to replay it
     if (next.arrival && !initial.arrival) {
       location.reload()
       return
     }
     gallery.value = next.gallery
     if (next.gallery) return
-    // seul un lien qui NOMME un etat deplace la lecture
+    // only a link that NAMES a state moves playback
     if (!next.named) return
     const found = locate(next.state)
     if (!found) return
@@ -216,7 +222,7 @@ export const App: Component<Record<string, never>> = () => {
   })
 
   /*
-   * Le lecteur s'ouvre A L'ARRET, sauf un lien qui NOMME un etat (`#state=`), qui decrit deja sa lecture.
+   * The player opens STOPPED, except for a link that NAMES a state (`#state=`), which already describes its playback.
    */
   let resume = initial.named && initial.playing
   let resumeBlock = block.value
@@ -229,9 +235,9 @@ export const App: Component<Record<string, never>> = () => {
   })
 
   watch(view, (now, before) => {
-    // changer d'affichage interrompt l'arrivee
+    // changing the view interrupts the arrival
     intro.value = false
-    // on ne memorise la position qu'en QUITTANT le lecteur
+    // the position is only remembered when LEAVING the player
     if (before === 'animations') {
       resume = playing.value
       resumeBlock = block.value
@@ -242,11 +248,11 @@ export const App: Component<Record<string, never>> = () => {
       return
     }
     block.value = 0
-    // seuls les reglages jouent quelque chose hors du lecteur : leur tourbillon d'entree
+    // only the settings play something outside the player: their entry swirl
     playing.value = now === 'settings'
   })
 
-  /** Une entree ne se joue qu'une fois : des que le lecteur atteint son bloc de repos, on coupe l'enchainement. */
+  /** An entry only plays once: as soon as the player reaches its idle block, chaining stops. */
   watch(block, (i) => {
     if (intro.value) {
       if (i >= INTRO.length - 1) {
@@ -258,7 +264,7 @@ export const App: Component<Record<string, never>> = () => {
     if (view.value === 'settings' && i > 0) playing.value = false
   })
 
-  /** La boule est-elle encore seule en scene ? C'est la POSITION DU LECTEUR qui le dit. */
+  /** Is the ball still alone on stage? The PLAYER POSITION says so. */
   const bare = computed(() => intro.value && block.value < POSE_AT)
   const left = computed(() => !bare.value && view.value === 'settings')
   const right = computed(() => !bare.value && view.value !== 'settings')
@@ -272,9 +278,9 @@ export const App: Component<Record<string, never>> = () => {
   watch(color, (v) => write('color', v))
   watch(expression, (v) => write('expression', v))
 
-  /** Style de rendu et taille des pixels, persistes ; poses aussi sur `currentRenderStyle` / `currentPixel`. */
+  /** Render style and pixel size, saved; also set on `currentRenderStyle` / `currentPixel`. */
   const renderStyle = ref<RenderStyleId>(stored('style', DEFAULT_RENDER_STYLE, isRenderStyle) as RenderStyleId)
-  // densite des pixels : la plus fine, sans choix dans l'interface
+  // pixel density: the finest, with no choice in the interface
   const pixel = ref<PixelSizeId>(DEFAULT_PIXEL)
   const outline = ref(stored('outline', '0', (v) => v === '0' || v === '1') === '1')
   currentRenderStyle.value = renderStyle.value
@@ -289,25 +295,25 @@ export const App: Component<Record<string, never>> = () => {
     write('style', v)
   })
 
-  /** Ce que porte un bot exporte : la meme chose qu'a l'ecran, style compris. */
+  /** What an exported bot carries: the same as on screen, style included. */
   const settingsBot = () => ({
     shape: shape.value,
     color: color.value,
     expression: expression.value,
-    // les animations sont rendues en 3D, image par image, dans le style de l'ecran
+    // animations are rendered in 3D, frame by frame, in the screen's style
     renderStyle: renderStyle.value,
     pixel: pixel.value
   })
 
-  /* ----------------------------------------------------------------- humeurs */
+  /* ----------------------------------------------------------------- moods */
 
   /**
-   * La boule redevient RONDE le temps d'un tour (reglages, arrivee) : sur une autre forme, les yeux recolles au
-   * contour sautilleraient. Le choix de l'utilisateur n'est pas touche, il revient en morphant.
+   * The ball becomes ROUND again during a turn (settings, arrival): on another shape, eyes stuck to the outline would
+   * jitter. The user's choice is not touched, it comes back with a morph.
    */
   const displayShape = computed(() => (view.value === 'settings' || bare.value ? DEFAULT_SHAPE : shape.value))
 
-  /** Dans les reglages, le bot change d'humeur de temps a autre : un vernis de page, pas un reglage. */
+  /** In the settings, the bot changes mood now and then: a page touch, not a setting. */
   const mood = ref<string | null>(null)
   let moodTimer: ReturnType<typeof setInterval> | undefined
   watch(view, (v) => {
@@ -325,12 +331,12 @@ export const App: Component<Record<string, never>> = () => {
 
   const order = SEQUENCE.map((id) => STATES.find((s) => s.id === id)!)
 
-  /** Ajoute une animation a la fin du montage courant. */
+  /** Adds an animation at the end of the current montage. */
   function addBlock(id: StateId) {
     cycles.value = cycles.value.map((x) => (x.id === cycle.value.id ? { ...x, blocks: blocksWith(x.blocks, id) } : x))
   }
 
-  /** Le lecteur est le seul a pouvoir recaler le moteur (il tient l'horloge), d'ou l'appel direct. */
+  /** Only the player can set the engine again (it holds the clock), hence the direct call. */
   let bot: MochiBotElement | null = null
   function onSeek(s: number) {
     const { index, elapsed: offset } = blockAt(cycle.value.blocks, s)
@@ -339,7 +345,7 @@ export const App: Component<Record<string, never>> = () => {
 
   /* ------------------------------------------------------------------ export */
 
-  /** Barre masquee le temps que la scene se cale, seulement apres l'arrivee. */
+  /** Bar hidden while the scene settles, only after the arrival. */
   const barHidden = ref(false)
   let timerBar: ReturnType<typeof setTimeout> | undefined
   watch(bare, (again, before) => {
@@ -352,13 +358,13 @@ export const App: Component<Record<string, never>> = () => {
   const dialogCycle = ref(false)
   const formatCycle = ref<FormatCycle>(DEFAULT_CYCLE_FORMAT)
   const backgroundCycle = ref<BackgroundGif>(DEFAULT_GIF_BACKGROUND)
-  /** `null` tant qu'on n'encode pas ; sinon la fraction faite. */
+  /** `null` while not encoding; else the fraction done. */
   const progressCycle = ref<number | null>(null)
-  /** Le dernier export de montage a-t-il echoue ? (la barre d'export n'est pas a l'ecran dans les Animations) */
+  /** Did the last montage export fail? (the export bar is not on screen in Animations) */
   const errorCycle = ref(false)
   let abandonCycle: AbortController | null = null
 
-  /** Exporte le MONTAGE : le cycle courant est rejoue hors ecran, du debut a la fin. */
+  /** Exports the MONTAGE: the current cycle is replayed off screen, from start to end. */
   async function exportCycle() {
     if (progressCycle.value !== null) return
     errorCycle.value = false
@@ -374,14 +380,14 @@ export const App: Component<Record<string, never>> = () => {
     progressCycle.value = 0
     try {
       const mp4 = format === 'mp4'
-      // la video n'a pas d'alpha : elle impose le blanc ; le GIF garde le choix
+      // video has no alpha: it forces white; the GIF keeps the choice
       const file = mp4
         ? await cycleToMp4(settings, blocks, size, images, step, WHITE, suit, check.signal)
         : await cycleToGif(settings, blocks, size, images, step, backgroundColor(backgroundCycle.value), suit, check.signal)
       download(file, nameFile(nameOfCycle(cycle.value), '', '', mp4 ? 'mp4' : 'gif'))
       dialogCycle.value = false
     } catch (e) {
-      // un abandon n'est pas un echec
+      // giving up is not a failure
       if (!(e instanceof Abandon)) errorCycle.value = true
     } finally {
       progressCycle.value = null
@@ -389,22 +395,22 @@ export const App: Component<Record<string, never>> = () => {
     }
   }
   const cancelsCycle = () => abandonCycle?.abort()
-  // l'echec appartient a la TENTATIVE : rouvrir la boite la rend neuve
+  // the failure belongs to the ATTEMPT: opening the dialog again makes it new
   watch(dialogCycle, (open) => {
     if (open) errorCycle.value = false
   })
 
   const stateExport = ref<StateExport>('ready')
   let confirmation: ReturnType<typeof setTimeout> | undefined
-  /** Fond du GIF, et boite qui le demande (seul format a transparence sur un bit). */
+  /** GIF background, and the dialog that asks for it (the only format with one-bit transparency). */
   const backgroundGif = ref<BackgroundGif>(DEFAULT_GIF_BACKGROUND)
   const dialogGif = ref(false)
 
-  /** Exporte l'avatar tel qu'il est AFFICHE : c'est le noeud vivant qui est serialise. */
+  /** Exports the avatar as it is SHOWN: the live node is serialized. */
   async function runExport(id: ActionId, confirmed = false) {
-    // garde SYNCHRONE : deux clics dans la meme image telechargeaient deux fois
+    // SYNCHRONOUS guard: two clicks in the same frame used to download twice
     if (stateExport.value === 'busy') return
-    // le GIF demande son fond avant de partir ; la boite rappelle avec `confirmed`
+    // the GIF asks for its background before leaving; the dialog calls back with `confirmed`
     if (!confirmed && ACTION_BY_ID.get(id)?.mode === 'gif') {
       dialogGif.value = true
       return
@@ -424,13 +430,13 @@ export const App: Component<Record<string, never>> = () => {
       )
     try {
       if (action.mode === 'gif') {
-        // l'animation est rejouee depuis le debut sur une instance hors ecran, en 3D
+        // the animation is replayed from the start on an off-screen instance, in 3D
         download(await toGifAnimate(settingsBot(), action.size, GIF_IMAGES, GIF_STEP, backgroundColor(backgroundGif.value)), name())
         stateExport.value = 'export'
       } else {
         const markup = svgStandalone(svg, action.size)
         if (action.mode === 'copyImage') {
-          // le blob part en PROMESSE : cf. `copy` dans capture.ts
+          // the blob leaves as a PROMISE: see `copy` in capture.ts
           await copy(toPng(markup, action.size))
           stateExport.value = 'copy'
         } else if (action.mode === 'copyText') {
@@ -443,13 +449,13 @@ export const App: Component<Record<string, never>> = () => {
         }
       }
     } catch {
-      // un refus du presse-papiers ou un encodage impossible ne doit pas laisser la barre sur « occupe »
+      // a clipboard refusal or an impossible encoding must not leave the bar on "busy"
       stateExport.value = 'error'
     }
     confirmation = setTimeout(() => (stateExport.value = 'ready'), CONFIRMATION_MS)
   }
 
-  /** Rejoue l'entree a CHAQUE arrivee dans les reglages (apres que le lecteur a recu le nouveau montage). */
+  /** Replays the entry on EVERY arrival in the settings (after the player got the new montage). */
   watch(
     view,
     (v) => {
@@ -458,7 +464,7 @@ export const App: Component<Record<string, never>> = () => {
     { flush: 'post' }
   )
 
-  /* ------------------------------------------------------------------ dessin */
+  /* ------------------------------------------------------------------ drawing */
 
   const sheet = () =>
     h(
@@ -485,12 +491,12 @@ export const App: Component<Record<string, never>> = () => {
     return h(
       'div',
       { key: 'editeur', style: 'display: contents' },
-      // titre de structure : un document sans h1 n'est pas navigable au lecteur d'ecran
+      // structure heading: a document with no h1 cannot be navigated with a screen reader
       h('h1', { class: 'sr-only' }, t('app.name')),
-      // pendant l'arrivee la barre reste montee mais inerte (sinon elle resterait dans l'ordre de tabulation)
+      // during the arrival the bar stays mounted but inert (otherwise it would stay in the tab order)
       !pv
         ? c(SideRail, { key: 'rail', view: v, onView: (x) => (view.value = x), class: 'rail', inert: bare.value || undefined })
-        : // sortie d'apercu : le seul element qui reste a l'ecran avec l'avatar
+        : // preview exit: the only element left on screen with the avatar
           h(
             'button',
             {
@@ -503,7 +509,7 @@ export const App: Component<Record<string, never>> = () => {
             t('preview.exit'),
             h('kbd', { class: 'rounded bg-black/5 px-1 py-0.5 text-[10px]' }, t('preview.key'))
           ),
-      // la place de la barre de montage n'est reservee QUE la ou elle existe
+      // room for the montage bar is ONLY kept where it exists
       h(
         'div',
         {
@@ -511,12 +517,12 @@ export const App: Component<Record<string, never>> = () => {
           class: [
             'scene min-h-full items-stretch justify-center p-8 max-lg:flex max-lg:flex-col max-lg:gap-10 max-lg:px-5',
             !pv && v === 'animations' && 'pb-[calc(var(--timeline)_+_1rem)]',
-            // sous 64rem le rail passe en bande HAUTE : la scene lui reserve sa hauteur (sauf en apercu)
+            // under 64rem the rail becomes a TOP band: the scene keeps its height for it (except in preview)
             !pv && 'max-lg:pt-20',
             bare.value || pv ? 'scene--alone' : v === 'settings' && 'scene--left'
           ]
         },
-        // panneau des reglages, colonne de GAUCHE : c'est sa largeur qui l'escamote, pas un retrait
+        // settings panel, LEFT column: its width hides it, not a removal
         !pv
           ? h(
               'aside',
@@ -526,15 +532,15 @@ export const App: Component<Record<string, never>> = () => {
                   'panneau scene__gauche w-full lg:flex lg:h-[calc(100dvh_-_3rem_-_var(--timeline))] lg:w-80 lg:shrink-0 lg:flex-col lg:justify-center lg:self-start lg:-translate-y-12 lg:pl-14',
                   left.value ? 'panneau--ouvert max-lg:order-2' : 'max-lg:hidden'
                 ],
-                // ferme, il n'est que transparent (sa colonne se referme) : sans `inert` ses champs restaient dans
-                // l'ordre de tabulation et lus par les lecteurs d'ecran
+                // closed, it was only transparent (its column folds): without `inert` its fields stayed in
+                // the tab order and were read by screen readers
                 inert: !left.value,
                 'aria-hidden': left.value ? undefined : 'true'
               },
               c(Settings, {})
             )
           : null,
-        // scene : sa hauteur ne depend pas du panneau de droite
+        // scene: its height does not depend on the right panel
         h(
           'main',
           {
@@ -544,7 +550,7 @@ export const App: Component<Record<string, never>> = () => {
               pv ? 'lg:min-h-[calc(100dvh_-_4rem)]' : 'lg:min-h-[calc(100dvh_-_3rem_-_var(--timeline))]'
             ]
           },
-          // l'avatar se met a la hauteur disponible
+          // the avatar takes the available height
           h(
             'div',
             {
@@ -575,7 +581,7 @@ export const App: Component<Record<string, never>> = () => {
               gaze: intro.value ? INTRO_GAZE : null
             })
           ),
-          // barre d'export : hors du flux, calee sur la colonne de l'avatar ; masquee et inerte pendant l'arrivee
+          // export bar: out of the flow, fitted on the avatar column; hidden and inert during the arrival
           v === 'customize' && !pv
             ? h(
                 'div',
@@ -583,7 +589,7 @@ export const App: Component<Record<string, never>> = () => {
                 c(ExportBar, { state: stateExport.value, onExporter: (id) => runExport(id) })
               )
             : null,
-          // les deux boites sont HORS de la barre d'export : `inert` neutraliserait aussi la couche superieure
+          // both dialogs are OUTSIDE the export bar: `inert` would also neutralize the top layer
           v === 'animations' && !pv
             ? c(CycleDialog, {
                 key: 'dcycle',
@@ -610,14 +616,14 @@ export const App: Component<Record<string, never>> = () => {
               })
             : null
         ),
-        // largeur fixe, identique dans les deux affichages : sinon la scene se decale au changement d'onglet
+        // fixed width, the same in both views: otherwise the scene shifts when the tab changes
         !pv
           ? h(
               'aside',
               {
                 key: 'right',
                 class: ['panneau scene__droite w-full lg:w-80 lg:shrink-0', right.value ? 'panneau--ouvert max-lg:order-2' : 'max-lg:hidden'],
-                // meme raison que le panneau de gauche : transparent n'est pas cache pour le clavier
+                // same reason as the left panel: transparent is not hidden for the keyboard
                 inert: !right.value,
                 'aria-hidden': right.value ? undefined : 'true'
               },
@@ -658,7 +664,7 @@ export const App: Component<Record<string, never>> = () => {
             )
           : null
       ),
-      // le nom du projet, en grand, au niveau de la PAGE ; purement graphique
+      // the project name, big, at the PAGE level; purely graphic
       v === 'settings' && !pv ? h('p', { key: 'word', class: 'wordmark', 'aria-hidden': 'true' }, NAME) : null,
       v === 'animations' && !pv
         ? c(Timeline, {

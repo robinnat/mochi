@@ -3,7 +3,7 @@ import { h, type Component } from '@/ui/dom/h'
 import { t } from '@/i18n'
 import { boxModal, BUTTON_SECONDARY } from './dialog'
 
-/** Confirmation d'une action destructrice. Le focus s'ouvre sur « Annuler » : Entree ne doit pas detruire. */
+/** Confirmation of a destructive action. Focus opens on "Cancel": Enter must not destroy. */
 export interface ConfirmDialogProps {
   title: string
   detail: string

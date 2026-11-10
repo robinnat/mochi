@@ -3,12 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { freezeCanvases, svgStandalone } from './capture'
 
 /**
- * Export d'une image fixe en vraie 3D (le style par defaut).
+ * Export of a still image in real 3D (the default style).
  *
- * La 3D dessine le corps dans un canvas WebGL pose dans un `<foreignObject>`. Serialise tel quel, ce noeud
- * souillait le canvas de rasterisation : `toBlob` echouait en `SecurityError` et l'export PNG affichait
- * « Export failed ». Et le fichier SVG, lui, livrait un canvas vide (`cloneNode` ne copie pas les pixels).
- * happy-dom ne rasterise rien : on verrouille donc ce qui rend la rasterisation sure, le SVG lui-meme.
+ * The 3D draws the body in a WebGL canvas placed in a `<foreignObject>`. Serialized as is, that node tainted the
+ * rasterization canvas: `toBlob` failed with `SecurityError` and the PNG export showed "Export failed". And the SVG
+ * file shipped an empty canvas (`cloneNode` does not copy pixels). happy-dom rasterizes nothing: so we lock what
+ * makes rasterization safe, the SVG itself.
  */
 
 const NS = 'http://www.w3.org/2000/svg'
@@ -39,7 +39,7 @@ afterEach(() => {
 })
 
 describe('export fixe en vraie 3D', () => {
-  it('le SVG exporte ne contient plus de foreignObject ni de canvas, mais une image data: du corps rendu', () => {
+  it('the exported SVG no longer holds a foreignObject or a canvas, but a data: image of the rendered body', () => {
     const { svg, canvas } = svg3d()
     const lu = vi.spyOn(canvas, 'toDataURL').mockReturnValue(PIXELS)
     const markup = svgStandalone(svg, 1024)
@@ -50,18 +50,18 @@ describe('export fixe en vraie 3D', () => {
     const img = doc.querySelector('image')!
     expect(img).not.toBeNull()
     expect(img.getAttribute('href')).toBe(PIXELS)
-    // cale exactement la ou etait le canvas
+    // placed exactly where the canvas was
     expect([img.getAttribute('x'), img.getAttribute('y'), img.getAttribute('width'), img.getAttribute('height')]).toEqual([
       '-158',
       '-158',
       '316',
       '316'
     ])
-    // le reste du dessin (anneaux) est intact
+    // the rest of the drawing (rings) is intact
     expect(doc.querySelector('path')).not.toBeNull()
   })
 
-  it('le noeud affiche n est pas touche : seul le clone est fige', () => {
+  it('the displayed node is not touched: only the clone is frozen', () => {
     const { svg, canvas } = svg3d()
     vi.spyOn(canvas, 'toDataURL').mockReturnValue(PIXELS)
     svgStandalone(svg, 512)
@@ -69,7 +69,7 @@ describe('export fixe en vraie 3D', () => {
     expect(svg.querySelector('image')).toBeNull()
   })
 
-  it('pixel art : l image garde des cases nettes', () => {
+  it('pixel art: the image keeps sharp cells', () => {
     const { svg, canvas } = svg3d(true)
     vi.spyOn(canvas, 'toDataURL').mockReturnValue(PIXELS)
     const clone = svg.cloneNode(true) as SVGSVGElement
@@ -77,7 +77,7 @@ describe('export fixe en vraie 3D', () => {
     expect(clone.querySelector('image')!.getAttribute('style')).toContain('pixelated')
   })
 
-  it('un canvas illisible ou vide retire le foreignObject plutot que de souiller l export', () => {
+  it('an unreadable or empty canvas removes the foreignObject rather than tainting the export', () => {
     const { svg, canvas } = svg3d()
     vi.spyOn(canvas, 'toDataURL').mockImplementation(() => {
       throw new Error('SecurityError')
@@ -87,7 +87,7 @@ describe('export fixe en vraie 3D', () => {
     expect(markup).not.toContain('<image')
   })
 
-  it('un SVG sans 3D sort inchange (aucune image ajoutee)', () => {
+  it('an SVG without 3D comes out unchanged (no image added)', () => {
     const svg = document.createElementNS(NS, 'svg') as SVGSVGElement
     svg.appendChild(document.createElementNS(NS, 'circle'))
     const markup = svgStandalone(svg, 256)

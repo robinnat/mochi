@@ -12,10 +12,9 @@ export interface SideRailProps {
 }
 
 /*
- * Les trois icones viennent de bibliotheques (Iconify), recopiees telles quelles : ne pas les redessiner.
- * Animations : le clap de Solar (`solar:clapperboard-play-bold`) ; Reglages : la roue dentee de Solar
- * (`solar:settings-bold`, centree sur x = 12,5, c'est le trace d'origine) ; Personnaliser : la palette de Remix
- * (`ri:palette-fill`).
+ * The three icons come from libraries (Iconify), copied as is: do not redraw them. Animations: Solar's clapperboard
+ * (`solar:clapperboard-play-bold`); Settings: Solar's gear (`solar:settings-bold`, centered on x = 12.5, the original
+ * path); Customize: Remix's palette (`ri:palette-fill`).
  */
 const CLAP = ['M12 2C13.8452 2 15.3293 2 16.5401 2.08783L13.0986 7.25002H8.40139L11.9014 2H12Z',
   'M3.46447 3.46447C4.71683 2.2121 6.62194 2.03072 10.0957 2.00445L6.59861 7.25002H2.10418C2.25143 5.48593 2.6068 4.32213 3.46447 3.46447Z',
@@ -41,13 +40,13 @@ function icon(id: ViewId) {
 }
 
 /**
- * Deux dispositions, imposees par la mise en page : a partir de 64rem le rail flotte dans la marge de gauche ; en
- * dessous il passe en BANDE HAUTE, horizontale et centree, et la scene lui reserve sa hauteur (`max-lg:pt-20`).
+ * Two layouts, forced by the page: from 64rem the rail floats in the left margin; below, it becomes a TOP BAND,
+ * horizontal and centered, and the scene keeps room for it (`max-lg:pt-20`).
  */
 export const SideRail: Component<SideRailProps> = (props) => {
   /**
-   * Infobulle masquee jusqu'a ce que le pointeur reparte : une fois le clic fait, elle n'a plus rien a annoncer.
-   * `pointerdown` et pas `click` : au clavier, rien n'est masque.
+   * Tooltip hidden until the pointer leaves: once clicked, it has nothing left to say. `pointerdown` and not `click`:
+   * with the keyboard, nothing is hidden.
    */
   const muted = ref<ViewId | null>(null)
   return () => {
@@ -88,7 +87,7 @@ export const SideRail: Component<SideRailProps> = (props) => {
               },
               icon(item.id)
             ),
-            // infobulle au survol ET au focus clavier (`peer-focus-visible`)
+            // tooltip on hover AND on keyboard focus (`peer-focus-visible`)
             h(
               'span',
               {

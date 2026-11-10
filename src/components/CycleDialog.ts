@@ -5,12 +5,12 @@ import { BACKGROUNDS_GIF, FORMATS_CYCLE, cycleAccepteTransparence, videoPossible
 import { boxModal, BUTTON_PRIMARY, BUTTON_SECONDARY } from './dialog'
 
 /**
- * Choix du format avant d'exporter le montage. Le groupe « fond » n'apparait QUE pour le GIF : la video n'a pas de
- * canal alpha du tout.
+ * Format choice before exporting the montage. The "background" group shows ONLY for GIF: video has no alpha channel
+ * at all.
  */
 export interface CycleDialogProps {
   progress: number | null
-  /** true = le dernier essai a echoue. La boite le dit et propose de reessayer. */
+  /** true = the last try failed. The dialog says so and offers to retry. */
   error: boolean
   open: boolean
   format: FormatCycle
@@ -27,21 +27,21 @@ export const CycleDialog: Component<CycleDialogProps> = (props) => {
   const box = boxModal(open)
 
   /**
-   * La video n'est proposee que la ou le navigateur sait encoder. Le garde vient de `export.ts` et SURTOUT PAS de
-   * `video.ts` : l'importer d'ici ramenerait mediabunny dans le morceau d'entree.
+   * Video is only offered where the browser can encode. The guard comes from `export.ts` and ABOVE ALL not from
+   * `video.ts`: importing it from here would pull mediabunny into the entry chunk.
    */
   const formats = FORMATS_CYCLE.filter((f) => f !== 'mp4' || videoPossible())
-  // le modele est corrige, pas seulement la liste : une valeur cachee ne doit pas gagner
+  // the model is fixed, not only the list: a hidden value must not win
   if (!formats.includes(props.format)) props.onFormat(formats[0]!)
 
   const busy = computed(() => props.progress !== null)
   const percent = computed(() => Math.round((props.progress ?? 0) * 100))
 
   function confirm() {
-    // la boite reste ouverte pendant l'encodage : c'est elle qui porte la progression
+    // the dialog stays open while encoding: it carries the progress
     if (!busy.value) props.onConfirm()
   }
-  /** Fermer, c'est ABANDONNER quand l'encodage tourne. */
+  /** Closing means GIVING UP while encoding runs. */
   function closed() {
     if (busy.value) props.onCancel()
     open.value = false
@@ -77,7 +77,7 @@ export const CycleDialog: Component<CycleDialogProps> = (props) => {
             )
           )
         ),
-        // seul le GIF a un alpha a offrir
+        // only GIF has an alpha to offer
         cycleAccepteTransparence(props.format)
           ? h(
               'fieldset',
@@ -93,13 +93,13 @@ export const CycleDialog: Component<CycleDialogProps> = (props) => {
               )
             )
           : null,
-        // l'echec s'affiche ICI : la barre d'export n'est pas a l'ecran dans les Animations
+        // the failure shows HERE: the export bar is not on screen in Animations
         props.error && !busy.value ? h('p', { key: 'err', class: 'text-xs text-[var(--danger)]', role: 'alert' }, t('export.failed')) : null,
         busy.value
           ? h(
               'div',
               { key: 'prog', class: 'flex flex-col gap-1.5' },
-              // pas de `transition` sur la largeur : elle passerait par le thread principal, sature par l'encodage
+              // no `transition` on the width: it would go through the main thread, saturated by encoding
               h('div', { class: 'h-1.5 overflow-hidden rounded-full bg-black/10' }, h('div', { class: 'h-full rounded-full bg-[var(--ink)]', style: { width: `${percent.value}%` } })),
               h(
                 'div',

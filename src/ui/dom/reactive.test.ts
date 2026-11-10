@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Scope, computed, within, link, nextTick, ref, shallowRef, triggerRef, watch, watchEffect } from './reactive'
 
 describe('reactivite maison', () => {
-  it('computed suit ses sources et ne recalcule que si elles changent', () => {
+  it('computed follows its sources and only recomputes when they change', () => {
     const a = ref(1)
     let n = 0
     const double = computed(() => (n++, a.value * 2))
@@ -14,7 +14,7 @@ describe('reactivite maison', () => {
     expect(n).toBe(2)
   })
 
-  it('watch joue en file, une fois par tache, avec la valeur d avant', async () => {
+  it('watch runs queued, once per task, with the previous value', async () => {
     const a = ref(1)
     const seen: [number, number | undefined][] = []
     watch(a, (v, before) => seen.push([v, before]))
@@ -25,7 +25,7 @@ describe('reactivite maison', () => {
     expect(seen).toEqual([[3, 1]])
   })
 
-  it('watch d une liste de sources, immediate', async () => {
+  it('watch of a list of sources, immediate', async () => {
     const a = ref(1)
     const b = ref('x')
     const seen: unknown[] = []
@@ -39,7 +39,7 @@ describe('reactivite maison', () => {
     ])
   })
 
-  it('shallowRef + triggerRef relance un watch meme si l objet est le meme', async () => {
+  it('shallowRef + triggerRef reruns a watch even if the object is the same', async () => {
     const o = shallowRef({ n: 0 })
     let n = 0
     watch(o, () => n++)
@@ -49,7 +49,7 @@ describe('reactivite maison', () => {
     expect(n).toBe(1)
   })
 
-  it('les observateurs flush post passent apres les autres', async () => {
+  it('flush post watchers run after the others', async () => {
     const a = ref(0)
     const order: string[] = []
     watch(a, () => order.push('post'), { flush: 'post' })
@@ -59,7 +59,7 @@ describe('reactivite maison', () => {
     expect(order).toEqual(['pre', 'post'])
   })
 
-  it('une portee arretee coupe ses observateurs', async () => {
+  it('a stopped scope cuts its watchers', async () => {
     const p = new Scope()
     const a = ref(0)
     let n = 0
@@ -71,7 +71,7 @@ describe('reactivite maison', () => {
     expect(n).toBe(1)
   })
 
-  it('computed ecrivable et lien', () => {
+  it('writable computed and link', () => {
     const a = ref(1)
     const c = computed({ get: () => a.value, set: (v: number) => (a.value = v * 10) })
     c.value = 2

@@ -1,17 +1,19 @@
 /**
- * Rendu de l'interface, sans dependance : une description de l'arbre (`h(...)`) et une mise a jour
- * qui ne touche que ce qui a change dans le DOM.
+ * Interface rendering, with no dependency: a description of the tree (`h(...)`) and an update that only touches what
+ * changed in the DOM.
  *
- * - `h('div', { class, style, onClick, ref }, children)` decrit un element ; `h(Component, props)`
- *   un composant. Un composant est une fonction de mise en place qui recoit ses props (lues en
- *   direct : elles suivent le parent) et rend une fonction de dessin. Sa fonction de dessin est un
- *   effet : elle se relance seule quand ce qu'elle lit change.
- * - Les enfants d'une liste se retrouvent par leur `key` (sinon par leur rang) : un element garde
- *   son noeud DOM, donc son focus, sa selection, son canvas.
- * - `ref` (fonction) recoit l'element une fois en place dans la page, puis `null` a son retrait.
- *   Les crochets `onMount` d'un composant partent au meme moment.
+ * - `h('div', { class, style, onClick, ref }, children)` describes an element; `h(Component, props)` a component. A
+ *   component is a setup function that gets its props (read live: they follow the parent) and returns a draw
+ *   function.
+ *   Its draw function is an effect: it reruns by itself when what it reads changes.
+ * - Children of a list are matched by their `key` (else by their rank): an element keeps its DOM node, so its focus,
+ *   its
+ *   selection, its canvas.
+ * - `ref` (a function) gets the element once it is in the page, then `null` on removal. A component's `onMount` hooks
+ *   run
+ *   at the same time.
  *
- * Utilise par le site, l'application, le labo et le dessin SVG de `<mochi-bot>`.
+ * Used by the site, the app, the lab and the SVG drawing of `<mochi-bot>`.
  */
 
 import { Effect, Scope, within, scheduleRender, setWithoutSignal, ref, untracked, onCleanup, type Ref } from './reactive'
@@ -19,7 +21,7 @@ import { Effect, Scope, within, scheduleRender, setWithoutSignal, ref, untracked
 export type Props = Record<string, unknown>
 export type Child = VNode | string | number | boolean | null | undefined | Child[]
 
-/** Un composant : met en place son etat a partir de ses props, puis rend une fonction de dessin. */
+/** A component: sets up its state from its props, then returns a draw function. */
 export type Component<P = Props> = (props: P) => () => Child
 
 const TEXT = Symbol('text')
@@ -56,7 +58,7 @@ export function h(type: string | Component<never>, props?: Props | null, ...chil
   return { type, props: p, children: normalize(children), key: p.key, el: null, inst: null }
 }
 
-/** `h` d'un composant type : les props sont verifiees a la compilation. */
+/** `h` of a typed component: props are checked at compile time. */
 export function c<P>(comp: Component<P>, props: P & { key?: unknown }): VNode {
   return h(comp as Component<never>, props as unknown as Props)
 }
@@ -71,15 +73,15 @@ function normalize(children: Child[], out: VNode[] = []): VNode[] {
   return out
 }
 
-/* --------------------------------------------------- crochets de composant */
+/* --------------------------------------------------- component hooks */
 
 let toCall: (() => void)[] = []
 
-/** Appelee une fois le composant en place dans la page. */
+/** Called once the component is in the page. */
 export function onMount(fn: () => void) {
   toCall.push(fn)
 }
-/** Appelee juste avant le retrait du composant. */
+/** Called just before the component is removed. */
 export const onUnmount = onCleanup
 
 function clearCalls() {
@@ -90,7 +92,7 @@ function clearCalls() {
   }
 }
 
-/* ------------------------------------------------------------------ montage */
+/* ------------------------------------------------------------------ mounting */
 
 const SVG = 'http://www.w3.org/2000/svg'
 
@@ -115,7 +117,7 @@ function mount(v: VNode, parent: Node, anchor: Node | null, svg: boolean) {
   const asSvg = svg || tag === 'svg'
   const el = asSvg ? document.createElementNS(SVG, tag) : document.createElement(tag)
   v.el = el
-  // un element personnalise doit etre defini pour recevoir ses proprietes
+  // a custom element must be defined to receive its properties
   applyProps(el as HTMLElement, {}, v.props, asSvg)
   const svgChildren = asSvg && tag !== 'foreignObject'
   if (!('innerHTML' in v.props)) for (const e of v.children) mount(e, el, null, svgChildren)
@@ -153,7 +155,7 @@ function mountComponent(v: VNode, parent: Node, anchor: Node | null, svg: boolea
     job: () => {}
   }
   v.inst = inst
-  // les crochets `onMount` de la mise en place partent APRES les `ref` du dessin (les elements sont alors connus)
+  // the setup's `onMount` hooks run AFTER the drawing's `ref`s (the elements are then known)
   const before = toCall.length
   const drawing = within(scope, () => untracked(() => (v.type as Component<Props>)(props)))
   const crochets = toCall.splice(before)
@@ -198,7 +200,7 @@ function updateProps(inst: Instance, next: Props): boolean {
     const before = inst.props[k]
     inst.props[k] = v
     const r = inst.refs.get(k)
-    // un gestionnaire recree a chaque dessin du parent ne redessine pas l'enfant : il est seulement remplace
+    // a handler recreated on each parent drawing does not redraw the child: it is only replaced
     if (typeof v === 'function' && typeof before === 'function') {
       if (r) setWithoutSignal(r, v)
       continue
@@ -287,7 +289,7 @@ function patchChildren(el: Node, old: VNode[], freshOnes: VNode[], svg: boolean)
     return null
   })
   for (const a of old) if (!taken.has(a)) unmount(a)
-  // de la fin vers le debut : chaque noeud se place juste avant le suivant
+  // from the end to the start: each node goes right before the next one
   let next: Node | null = null
   for (let i = freshOnes.length - 1; i >= 0; i--) {
     const n = freshOnes[i]!
@@ -303,7 +305,7 @@ function patchChildren(el: Node, old: VNode[], freshOnes: VNode[], svg: boolean)
 
 /* --------------------------------------------------------------- proprietes */
 
-/** Proprietes posees comme proprietes DOM (et non comme attributs). */
+/** Properties set as DOM properties (not as attributes). */
 const PROP_DOM = new Set(['value', 'checked', 'selected', 'indeterminate', 'muted', 'innerHTML', 'textContent', 'scrollLeft'])
 /** Attributs booleens : presents ou absents. */
 const BOOLEANS = new Set([
@@ -366,7 +368,7 @@ function applyProps(el: HTMLElement, a: Props, b: Props, svg: boolean) {
       const ca = classOf(va)
       let cb = classOf(vb)
       if (ca === cb) continue
-      // classes posees a la main sur l'element (apparition au defilement) : gardees
+      // classes set by hand on the element (reveal on scroll): kept
       const keep = (el as unknown as { __keep?: string[] }).__keep
       if (keep) cb = [cb, ...keep.filter((x) => el.classList.contains(x))].filter(Boolean).join(' ')
       if (cb) el.setAttribute('class', cb)
@@ -403,7 +405,7 @@ function applyProps(el: HTMLElement, a: Props, b: Props, svg: boolean) {
       if ((el as unknown as Props)[k] !== x) (el as unknown as Props)[k] = x
       continue
     }
-    // element personnalise : une propriete qu'il declare se passe telle quelle (objet, fonction...)
+    // custom element: a property it declares is passed as is (object, function...)
     if (!svg && el.localName.includes('-') && k in el) {
       ;(el as unknown as Props)[k] = vb
       continue
@@ -418,14 +420,14 @@ function applyProps(el: HTMLElement, a: Props, b: Props, svg: boolean) {
   }
 }
 
-/** Proprietes relues sur l'element a chaque passage : l'utilisateur peut les avoir changees (champ saisi). */
+/** Properties read again on the element at each pass: the user may have changed them (typed field). */
 const PROP_DOM_CHECK: Record<string, true> = { value: true, checked: true }
 
 /* ------------------------------------------------------------------- racine */
 
 const ROOTS = new WeakMap<Node, VNode>()
 
-/** Dessine `v` dans `container` (son unique enfant gere), en reprenant le dessin precedent s'il y en a un. */
+/** Draws `v` in `container` (its only managed child), reusing the previous drawing if there is one. */
 export function render(v: VNode | null, container: Node, svg = false) {
   const old = ROOTS.get(container)
   if (!v) {
@@ -440,7 +442,7 @@ export function render(v: VNode | null, container: Node, svg = false) {
   clearCalls()
 }
 
-/** Monte un composant dans un element de la page ; renvoie de quoi le retirer. */
+/** Mounts a component in an element of the page; returns what is needed to remove it. */
 export function mountApp<P extends Props>(comp: Component<P>, target: Element | string, props?: P): () => void {
   const el = typeof target === 'string' ? document.querySelector(target) : target
   if (!el) throw new Error(`mochi: target introuvable ${String(target)}`)

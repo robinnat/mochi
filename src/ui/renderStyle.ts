@@ -1,41 +1,43 @@
 /**
- * Style de RENDU du bot : Soft, Flat ou Pixel, tous en vraie 3D (WebGL, `src/ui/trois/`).
+ * RENDER style of the bot: Soft, Flat or Pixel, all in real 3D (WebGL, `src/ui/3d/`).
  *
- * Seul le dessin change. Le moteur (`src/bot/`), ses cinq etats et toutes ses
- * mesures restent identiques : `engine.sample(t)` rend la meme image, c'est `mochi-bot.ts`
- * qui la peint autrement. D'ou ce module dans `src/ui/` et pas dans `src/bot/`.
+ * Only the drawing changes. The engine (`src/bot/`), its five states and all its measurements stay the same:
+ * `engine.sample(t)` gives the same frame, and `mochi-bot.ts` paints it differently. Hence this module in `src/ui/`
+ * and not in `src/bot/`.
  *
- * Le catalogue ne porte que des ids, comme les formes et les couleurs : les libelles sont
- * resolus par `t('styles.<id>')`, et l'union litterale fait verifier a la compilation que
- * chacun a sa traduction dans les trois langues.
+ * The catalog only holds ids, like shapes and colors: labels are resolved by `t('styles.<id>')`, and the literal
+ * union makes the compiler check that each one has its translation in the three languages.
  */
 
 import { ref } from '@/ui/dom/reactive'
 import { HALF_VIEWBOX, RADIUS } from '@/bot/frame'
 
-/** Les trois styles, tous en vraie 3D (WebGL) : `3d` (Soft), `flat3d` (Flat) et `pixel3d` (Pixel). */
+/** The three styles, all in real 3D (WebGL): `3d` (Soft), `flat3d` (Flat) and `pixel3d` (Pixel). */
 export type RenderStyleId = '3d' | 'flat3d' | 'pixel3d'
 
-/** Les styles proposes dans l'interface. */
+/** The styles offered in the interface. */
 export const RENDER_STYLES: RenderStyleId[] = ['3d', 'flat3d', 'pixel3d']
 
-/** Soft par defaut : la 3D douce validee. */
+/** Soft by default: the validated soft 3D. */
 export const DEFAULT_RENDER_STYLE: RenderStyleId = '3d'
 
 export const isRenderStyle = (v: string): v is RenderStyleId => (RENDER_STYLES as string[]).includes(v)
 
-/** Matiere 3D d'un style : Soft = celle choisie (`soft` par defaut), Flat = trois tons, Pixel = basse resolution + palette. */
+/**
+ * 3D material of a style: Soft = the chosen one (`soft` by default), Flat = three tones, Pixel = low resolution +
+ * palette.
+ */
 export const materialFor = <T extends string>(r: RenderStyleId, soft: T): T | 'toon' | 'pixel' =>
   r === 'flat3d' ? 'toon' : r === 'pixel3d' ? 'pixel' : soft
 
 /* ----------------------------------------------------------------- pixel art */
 
-/** Taille des pixels du style Pixel (`pixel3d`) : elle fixe la resolution de sa toile. */
+/** Pixel size of the Pixel style (`pixel3d`): it sets the resolution of its canvas. */
 export type PixelSizeId = 'large' | 'medium' | 'fine'
 
 /**
- * Taille des pixels, exprimee par le DIAMETRE de la boule en pixels : c'est ce qu'on voit,
- * « une boule de 24 pixels », et pas une taille de grille qui inclut la marge des anneaux.
+ * Pixel size, given as the DIAMETER of the ball in pixels: that is what you see, "a 24-pixel ball", not a grid size
+ * that includes the rings' margin.
  */
 export const PIXEL_SIZES: { id: PixelSizeId; diameter: number }[] = [
   { id: 'large', diameter: 16 },
@@ -43,41 +45,42 @@ export const PIXEL_SIZES: { id: PixelSizeId; diameter: number }[] = [
   { id: 'fine', diameter: 32 }
 ]
 
-/** Pixel (3D) : taille de la toile basse resolution. La densite la plus fine (32 pixels de diametre) est le defaut ; les autres restent acceptees par la prop `pixel`, sans choix dans l'interface. */
+/**
+ * Pixel (3D): size of the low resolution canvas. The finest density (32 pixels across) is the default; the others are
+ * still accepted by the `pixel` prop, with no choice in the interface.
+ */
 export const DEFAULT_PIXEL: PixelSizeId = 'fine'
 
 export const isPixelSize = (v: string): v is PixelSizeId =>
   PIXEL_SIZES.some((p) => p.id === v)
 
 /**
- * Cote de la grille, en cases, sur TOUT le viewBox (±DEMI_VIEWBOX) : les anneaux et les
- * particules des etats animes vivent dans la marge et doivent etre pixellises eux aussi.
+ * Side of the grid, in cells, over the WHOLE viewBox (±HALF_VIEWBOX): the rings and particles of animated states live
+ * in the margin and must be pixelated too.
  */
 export function pixelGrid(size: PixelSizeId): number {
   const d = PIXEL_SIZES.find((p) => p.id === size)?.diameter ?? 24
   return Math.round((d * HALF_VIEWBOX) / RADIUS)
 }
 
-/* ----------------------------------------------------------- reglage courant */
+/* ----------------------------------------------------------- current setting */
 
 /**
- * Le style choisi, partage par tous les bots AFFICHES : vignettes, timeline, planche.
- * `MochiBot` le prend quand on ne lui passe pas de style explicite, ce qui evite de
- * descendre la prop a travers chaque composant qui monte une vignette.
+ * The chosen style, shared by every DISPLAYED bot: thumbnails, timeline, sheet. `MochiBot` uses it when given no
+ * explicit style, which avoids passing the prop through every component that mounts a thumbnail.
  *
- * Les exports, eux, passent le style EXPLICITEMENT (`SettingsBot`) : une instance hors
- * ecran doit rendre exactement ce qu'on lui demande, pas ce que l'ecran affiche a cet
- * instant.
+ * Exports pass the style EXPLICITLY (`SettingsBot`): an off-screen instance must render exactly what it is asked, not
+ * what the screen shows at that instant.
  */
 export const currentRenderStyle = ref<RenderStyleId>(DEFAULT_RENDER_STYLE)
-/** Contour cartoon de la vraie 3D (option du style 3D) ; suivi comme `currentRenderStyle`. */
+/** Cartoon outline of the real 3D (option of the 3D style); tracked like `currentRenderStyle`. */
 export const currentOutline = ref(false)
 export const currentPixel = ref<PixelSizeId>(DEFAULT_PIXEL)
 
-/** Le style a rendre : celui donne s'il est connu, sinon le reglage courant. */
+/** The style to render: the given one if known, else the current setting. */
 export const effectiveRenderStyle = (r: string | undefined): RenderStyleId => (r && isRenderStyle(r) ? r : currentRenderStyle.value)
 export const effectivePixel = (p: PixelSizeId | undefined): PixelSizeId =>
   p ?? currentPixel.value
 
-/** Ajoute au nom du fichier exporte : le style reel (`3d`, `flat3d`, `pixel3d`). */
+/** Added to the exported file name: the real style (`3d`, `flat3d`, `pixel3d`). */
 export const renderStyleSuffix = (r: RenderStyleId) => r

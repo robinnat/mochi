@@ -2,15 +2,14 @@ import { watch, type Ref } from '@/ui/dom/reactive'
 import { onUnmount } from '@/ui/dom/h'
 
 /**
- * Pilote un `<dialog>` natif ouvert en modal depuis un booleen.
+ * Drives a native `<dialog>` opened as modal from a boolean.
  *
- * On passe par l'element natif plutot que par une div : le navigateur fournit
- * alors le piege a focus, la fermeture par Echap, le retour du focus au
- * declencheur, l'inertie du reste de la page et le fond assombri.
+ * We use the native element rather than a div: the browser then provides the focus trap, closing with Escape, focus
+ * going back to the trigger, the inertness of the rest of the page and the dimmed backdrop.
  *
- * L'element vient de l'appelant (une `ref` remplie par la fonction `ref` de son
- * dessin). Cote dessin, il reste a renvoyer la fermeture native vers le booleen :
- * `onClose: () => (open = false)`, `onCancel: (e) => { e.preventDefault(); open = false }`.
+ * The element comes from the caller (a `ref` filled by the `ref` function of its drawing). On the drawing side, the
+ * native close must go back to the boolean: `onClose: () => (open = false)`, `onCancel: (e) => { e.preventDefault();
+ * open = false }`.
  */
 export function useModalDialog(open: Ref<boolean>, el: Ref<HTMLDialogElement | null>) {
   watch(open, (on) => {
@@ -20,8 +19,8 @@ export function useModalDialog(open: Ref<boolean>, el: Ref<HTMLDialogElement | n
     else if (dialog.open) dialog.close()
   })
 
-  // le composant peut disparaitre alors que la boite est ouverte (changement
-  // d'onglet) : un `<dialog>` laisse en modal bloquerait la page entiere
+  // the component can disappear while the dialog is open (tab
+  // change): a `<dialog>` left modal would block the whole page
   onUnmount(() => {
     if (el.value?.open) el.value.close()
   })

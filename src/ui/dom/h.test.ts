@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { nextTick, ref, watch } from './reactive'
 import { c, h, mountApp, render, onUnmount, onMount, type Component } from './h'
 
-describe('rendu de l interface', () => {
-  it('cree et met a jour attributs, classes, styles et texte', () => {
+describe('interface rendering', () => {
+  it('creates and updates attributes, classes, styles and text', () => {
     const el = document.createElement('div')
     render(h('p', { class: ['a', { b: true, c: false }], style: { color: 'red', '--x': '1' }, title: 't' }, 'bonjour'), el)
     const p = el.firstElementChild as HTMLElement
@@ -19,7 +19,7 @@ describe('rendu de l interface', () => {
     expect(p.textContent).toBe('hello')
   })
 
-  it('les enfants a cle gardent leur noeud quand l ordre change', () => {
+  it('keyed children keep their node when the order changes', () => {
     const el = document.createElement('ul')
     render(h('div', null, ['a', 'b', 'c'].map((k) => h('li', { key: k }, k))), el)
     const before = [...el.querySelectorAll('li')]
@@ -41,7 +41,7 @@ describe('rendu de l interface', () => {
     expect(el.querySelector('path')!.namespaceURI).toBe('http://www.w3.org/2000/svg')
   })
 
-  it('un composant se redessine seul quand son etat change, et se nettoie au retrait', async () => {
+  it('a component redraws by itself when its state changes, and cleans up on removal', async () => {
     const journal: string[] = []
     const Counter: Component<{ step: number }> = (props) => {
       const n = ref(0)
@@ -61,7 +61,7 @@ describe('rendu de l interface', () => {
     expect(el.innerHTML).toBe('')
   })
 
-  it('les props d un enfant suivent le parent', async () => {
+  it('a child\'s props follow the parent', async () => {
     const Child: Component<{ text: string }> = (props) => () => h('span', null, props.text)
     const text = ref('a')
     const Parent: Component<Record<string, never>> = () => () => h('div', null, c(Child, { text: text.value }))
@@ -74,8 +74,8 @@ describe('rendu de l interface', () => {
   })
 })
 
-describe('ordre du montage', () => {
-  it('surMontage voit deja les elements poses par ref', () => {
+describe('mount order', () => {
+  it('onMount already sees the elements set by ref', () => {
     let seen: Element | null = null
     let atMount: Element | null | undefined
     const C: Component<Record<string, never>> = () => {
@@ -88,8 +88,8 @@ describe('ordre du montage', () => {
   })
 })
 
-describe('observateurs crees pendant la mise en place', () => {
-  it('un watch d un composant suit ses sources', async () => {
+describe('watchers created during setup', () => {
+  it('a component\'s watch follows its sources', async () => {
     const seen: number[] = []
     const n = ref(0)
     const C: Component<Record<string, never>> = () => {

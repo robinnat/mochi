@@ -16,43 +16,42 @@ const arrive = (o: Partial<Arrival> = {}): Arrival => ({
   ...o
 })
 
-describe('declenchement de l arrivee', () => {
-  it('se joue quand on vient sur le site', () => {
+describe('arrival trigger', () => {
+  it('plays when coming to the site', () => {
     expect(introDue(arrive())).toBe(true)
   })
 
-  it('ne se rejoue pas sur une page deja ouverte', () => {
-    // rechargement, precedent, suivant : on ne VIENT pas, on revient
+  it('does not replay on a page already open', () => {
+    // reload, back, forward: we do not COME, we come back
     expect(introDue(arrive({ reload: true }))).toBe(false)
   })
 
-  it('laisse la place aux liens qui visent le lecteur ou la planche', () => {
-    // `#state=` decrit deja une lecture : la mise en scene d'accueil ne doit pas
-    // s'y superposer, sinon le lien n'ouvre pas ce qu'il demande
+  it('gives way to links aimed at the player or the sheet', () => {
+    // `#state=` already describes a playback: the home staging must not
+    // cover it, otherwise the link does not open what it asks for
     expect(introDue(arrive({ named: true }))).toBe(false)
-    // `#sheet` est le chemin de verification visuelle : il ne depend de rien
+    // `#sheet` is the visual check path: it depends on nothing
     expect(introDue(arrive({ gallery: true }))).toBe(false)
   })
 
-  it('se tait quand on demande moins d animation', () => {
+  it('stays quiet when less animation is asked for', () => {
     expect(introDue(arrive({ calm: true }))).toBe(false)
   })
 })
 
-describe('montage de l arrivee', () => {
-  it('laisse chaque animation aboutir', () => {
+describe('arrival montage', () => {
+  it('lets each animation complete', () => {
     for (const b of INTRO) {
       expect(b.duration, b.state).toBeGreaterThanOrEqual(minDurationOf(b.state))
     }
   })
 
   /*
-   * Le moteur ne garde qu'une case d'historique : un bloc plus court que le fondu
-   * d'entree du suivant saute a l'image au lieu de se fondre. Le plancher general
-   * (`MIN_BLOCK`) suffit pour les etats du catalogue, mais l'arrivee ecrit ses
-   * durees a la main.
+   * The engine keeps a single history slot: a block shorter than the entry fade of the next one jumps instead of
+   * fading. The general floor (`MIN_BLOCK`) is enough for catalog states, but the arrival writes its durations by
+   * hand.
    */
-  it('ne coupe none bloc plus court que le fondu du suivant', () => {
+  it('cuts no block shorter than the next one\'s fade', () => {
     for (let i = 0; i < INTRO.length - 1; i++) {
       const next = STATE_BY_ID.get(INTRO[i + 1]!.state)!
       expect(INTRO[i]!.duration, INTRO[i]!.state).toBeGreaterThanOrEqual(next.morph)
@@ -60,21 +59,19 @@ describe('montage de l arrivee', () => {
   })
 
   /*
-   * LA lecon de la comparaison de variantes, et ce qui se casserait en glissant
-   * un etat « qui fait joli » dans le montage : tout etat autre que le repos
-   * apporte sa PROPRE pose de regard, donc un saut des yeux au changement. Le
-   * clignement cense le masquer ne dure que 0,2 s quand le fondu en dure 0,3 : les
-   * yeux se rouvrent en cours de route et ca se lit comme une teleportation.
+   * THE lesson of the variant comparison, and what slipping in a "nice looking" state would break: any state other
+   * than idle brings its OWN gaze pose, so an eye jump at the change. The blink meant to hide it only lasts 0.2 s
+   * while the fade lasts 0.3: the eyes open again mid-way and it reads as a teleport.
    */
-  it('ne joue que le repos, du debut a la fin', () => {
+  it('only plays idle, from start to end', () => {
     for (const b of INTRO) {
-      expect(b.state, 'un autre etat apporte sa pose de regard, donc un saut').toBe('idle')
+      expect(b.state, 'another state brings its gaze pose, so a jump').toBe('idle')
     }
   })
 
-  it('garde la shape ET l expression choisies', () => {
-    // corollaire du precedent, mais c'est ce qu'on VOIT : la boule qui parait est
-    // bien l'avatar de l'utilisateur, sans morph de silhouette ni de visage
+  it('keeps the chosen shape AND expression', () => {
+    // follows from the previous one, but it is what we SEE: the ball that appears is
+    // indeed the user's avatar, with no silhouette or face morph
     for (const b of INTRO) {
       const def = STATE_BY_ID.get(b.state)!
       expect(def.baseBody, b.state).toBe(true)
@@ -82,50 +79,44 @@ describe('montage de l arrivee', () => {
     }
   })
 
-  it('pose l interface sur un bloc qui existe', () => {
+  it('sets the interface on a block that exists', () => {
     expect(POSE_AT).toBeGreaterThan(0)
     expect(POSE_AT).toBeLessThan(INTRO.length)
   })
 
-  it('laisse le tour du regard se terminer avant de poser l interface', () => {
-    // sinon la boule part rejoindre sa place alors que ses yeux sont encore en
-    // train de faire le tour : deux mouvements a la fois, et le tour coupe net
+  it('lets the gaze turn end before setting the interface', () => {
+    // otherwise the ball leaves for its place while its eyes are still
+    // going around: two moves at once, and the turn cut short
     expect(offsetOf(INTRO, POSE_AT)).toBeGreaterThanOrEqual(SPIN_TIME)
   })
 
-  it('rend la main vite', () => {
-    // Ce qui compte n'est pas la duree totale mais la date ou l'interface arrive :
-    // apres, la page est utilisable. C'est donc CETTE date qu'on borne.
+  it('hands back quickly', () => {
+    // What matters is not the total duration but the time the interface arrives:
+    // after it, the page is usable. So THAT time is bounded.
     expect(offsetOf(INTRO, POSE_AT)).toBeLessThanOrEqual(2)
   })
 })
 
 /**
- * Le test qui verrouille la plainte d'origine : « d'un coup, bam, il se
- * teleporte ».
+ * The test that locks the original complaint: "all at once, bam, it teleports".
  *
- * On rejoue l'arrivee image par image comme le fait le lecteur — meme
- * enchainement de blocs, meme script de regard — et on mesure le deplacement des
- * yeux d'une image a l'autre. Un saut, c'est exactement ca : une seule image ou
- * ils parcourent une grande distance.
+ * We replay the arrival frame by frame as the player does (same chain of blocks, same gaze script) and measure how
+ * the eyes move from one frame to the next. A jump is exactly that: a single frame where they travel a long way.
  *
- * La logique de lecture est reproduite ici plutot qu'importee parce qu'elle vit
- * dans le composant `<mochi-bot>`, hors de portee de ces tests sans DOM. Elle tient en
- * quelques lignes et suit `MochiBot.apply`.
+ * The playback logic is reproduced here rather than imported because it lives in the `<mochi-bot>` component, out of
+ * reach of these DOM-less tests. It fits in a few lines and follows `MochiBot.apply`.
  */
-describe('fluidite de l arrivee', () => {
+describe('smoothness of the arrival', () => {
   const circle = SHAPE_BY_ID.get('circle')!.radii
   const neutral = EXPRESSION_BY_ID.get('neutral')!
   const IMAGE = 1 / 60
 
   /**
-   * Plus grand deplacement de l'oeil interieur entre deux images, en px.
+   * Largest move of the inner eye between two frames, in px.
    *
-   * `duringMorph` restreint la mesure aux images qui suivent un changement
-   * d'etat. C'est LA que se produisait la teleportation, et la seule fenetre ou un
-   * grand deplacement est forcement un defaut : ailleurs il peut etre la
-   * trajectoire voulue — le tour du regard fait 20 px par image au passage du
-   * limbe, parce qu'un petit angle y devient un grand deplacement a l'ecran.
+   * `duringMorph` limits the measure to frames that follow a state change. That is WHERE the teleport happened, and
+   * the only window where a big move is necessarily a flaw: elsewhere it can be the wanted path (the gaze turn makes
+   * 20 px per frame when crossing the limb, because a small angle becomes a big move on screen there).
    */
   function worstJump(gaze: GazeScript | null = INTRO_GAZE, duringMorph = false): number {
     const engine = new BotEngine(100, INTRO[0]!.state, circle, neutral)
@@ -133,18 +124,18 @@ describe('fluidite de l arrivee', () => {
     let current = 0
     let before: { x: number; y: number } | null = null
     let worst = 0
-    /** Date de fin du fondu en cours, ou -1 si aucun changement d'etat recent. */
+    /** End time of the running fade, or -1 if no recent state change. */
     let morphUntil = -1
 
-    // amorce datee d'un rattrapage plus tot, comme le composant : sinon la
-    // premiere image sort au repos et la deuxieme sur le script
+    // seed timed for an earlier catch-up, like the component: otherwise the
+    // first frame comes out idle and the second on the script
     if (gaze) engine.setLook(gaze(0), -IMAGE, IMAGE)
 
     for (let t = 0; t < end; t += IMAGE) {
       const { index } = blockAt(INTRO, t)
       if (index !== current) {
         const incoming = INTRO[index]!.state
-        // `setState` ignore un etat inchange : pas de fondu, donc pas de fenetre
+        // `setState` ignores an unchanged state: no fade, so no window
         if (incoming !== engine.state) morphUntil = t + STATE_BY_ID.get(incoming)!.morph
         engine.setState(incoming, t)
         current = index
@@ -153,7 +144,7 @@ describe('fluidite de l arrivee', () => {
 
       const eye = engine.sample(t).eyes[0]
       if (!eye) {
-        // yeux passes derriere la boule : rien a comparer, on repart proprement
+        // eyes gone behind the ball: nothing to compare, start over cleanly
         before = null
         continue
       }
@@ -167,32 +158,29 @@ describe('fluidite de l arrivee', () => {
     return worst
   }
 
-  it('ne fait sauter les yeux a none changement d etat', () => {
+  it('makes the eyes jump at no state change', () => {
     const jump = worstJump(INTRO_GAZE, true)
-    expect(jump, `${jump.toFixed(1)} px during un fondu`).toBeLessThan(4)
+    expect(jump, `${jump.toFixed(1)} px during a fade`).toBeLessThan(4)
   })
 
   /*
-   * Et le contre-test, sans quoi le precedent passerait tout seul : le montage
-   * n'ayant que des blocs de repos, il n'y a AUCUN fondu d'entree a surveiller.
-   * C'est precisement ce qui rend l'arrivee lisse, et ca doit rester vrai.
+   * And the counter-test, without which the previous one would pass on its own: since the montage only has idle
+   * blocks, there is NO entry fade to watch. That is exactly what makes the arrival smooth, and it must stay true.
    */
-  it('et il n y a justement none fondu d etat a subir', () => {
+  it('and there is indeed no state fade to go through', () => {
     expect(new Set(INTRO.map((b) => b.state)).size).toBe(1)
   })
 
   /*
-   * Pourquoi la boule est RONDE le temps du tour, quelle que soit la forme
-   * choisie (voir `shape` dans `App.ts`).
+   * Why the ball is ROUND during the turn, whatever the chosen shape (see `shape` in `App.ts`).
    *
-   * Les yeux sont recolles au contour reel pour ne pas deborder de la silhouette
-   * (`radiusAtAngle`). Sur un cercle ce rayon est constant, donc le tour est
-   * lisse. Sur une forme non circulaire, ils suivent le profil et sautillent —
-   * c'est ce que ce test mesure, et c'est un constat, pas un defaut a corriger :
-   * `radiusAtAngle` fait exactement ce pour quoi il est la.
+   * The eyes are stuck back onto the real outline so they do not overflow the silhouette (`radiusAtAngle`). On a
+   * circle that radius is constant, so the turn is smooth. On a non circular shape, they follow the profile and
+   * jitter: that is what this test measures, and it is a finding, not a flaw to fix: `radiusAtAngle` does exactly
+   * what it is there for.
    */
-  it('un tour sur une shape non circulaire ferait sautiller les yeux', () => {
-    /** Ordonnee de l'oeil interieur image par image, `NaN` quand il est cache. */
+  it('a turn on a non circular shape would make the eyes jitter', () => {
+    /** Ordinate of the inner eye frame by frame, `NaN` when it is hidden. */
     const path = (shape: string) => {
       const m = new BotEngine(100, 'idle', SHAPE_BY_ID.get(shape)!.radii, neutral)
       const ys: number[] = []
@@ -215,16 +203,16 @@ describe('fluidite de l arrivee', () => {
       if (Number.isNaN(round[i]!) || Number.isNaN(drop[i]!)) continue
       gap = Math.max(gap, Math.abs(drop[i]! - round[i]!))
     }
-    // sur une boule de 100 de rayon : des dizaines de px, pas un ou deux
-    expect(gap, `${gap.toFixed(1)} px d gap vertical withIt le circle`).toBeGreaterThan(15)
+    // on a ball of radius 100: dozens of px, not one or two
+    expect(gap, `${gap.toFixed(1)} px of vertical gap with the circle`).toBeGreaterThan(15)
   })
 
-  it('fait bien parcourir un tour aux yeux', () => {
-    // le tour est le seul mouvement de l'arrivee : s'il disparaissait, il ne
-    // resterait qu'un fondu et plus personne ne s'en apercevrait ici
+  it('does make the eyes travel a turn', () => {
+    // the turn is the arrival's only move: if it disappeared, only
+    // a fade would remain and nobody would notice it here any more
     const withIt = worstJump(INTRO_GAZE)
     const without = worstJump(null)
-    expect(without, 'sans script, seule la derive au repos bouge').toBeLessThan(1)
-    expect(withIt, 'le tour passe le limbe, donc il va vite a cet instant').toBeGreaterThan(5)
+    expect(without, 'without a script, only the resting drift moves').toBeLessThan(1)
+    expect(withIt, 'the turn crosses the limb, so it goes fast at that instant').toBeGreaterThan(5)
   })
 })

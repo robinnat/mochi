@@ -5,8 +5,8 @@ import { BACKGROUNDS_GIF, type BackgroundGif } from '@/ui/export'
 import { boxModal, BUTTON_PRIMARY, BUTTON_SECONDARY } from './dialog'
 
 /**
- * Choix du fond avant de telecharger le GIF : sa transparence n'a qu'un bit, donc son bord est dur. De vrais
- * `<input type="radio">` : le navigateur donne le groupe, les fleches et l'annonce « 1 sur 2 ».
+ * Background choice before downloading the GIF: its transparency has a single bit, so its edge is hard. Real `<input
+ * type="radio">`: the browser provides the group, the arrows and the "1 of 2" announcement.
  */
 export interface GifDialogProps {
   open: boolean

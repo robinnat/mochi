@@ -2,14 +2,16 @@ import { ref, type Ref } from '@/ui/dom/reactive'
 import { h, type Child } from '@/ui/dom/h'
 import { useModalDialog } from '@/ui/useModalDialog'
 
-/** Classes communes aux boites ; l'animation vient de `styles.css` (`.dialogue`, avec `@starting-style`). */
+/**
+ * Classes shared by dialogs; the animation comes from `styles.css` (`.dialogue`, with `@starting-style`).
+ */
 export const CLASS_DIALOG = 'dialogue m-auto w-80 rounded-2xl bg-white p-5 text-[var(--ink)] shadow-xl'
 export const BUTTON_SECONDARY = 'h-8 cursor-pointer rounded-lg px-3 text-xs text-[var(--muted)] transition hover:bg-black/5 hover:text-[var(--ink)]'
 export const BUTTON_PRIMARY = 'h-8 cursor-pointer rounded-lg bg-[var(--ink)] px-3 text-xs text-[var(--paper)] transition hover:opacity-90 active:scale-95'
 
 /**
- * Un `<dialog>` modal natif pilote par `open` : renvoie l'element (ref) et la fonction qui le dessine. La fermeture
- * native (Echap, `close`) revient au booleen ; `cancel` decide de ce que fait Echap.
+ * A native modal `<dialog>` driven by `open`: returns the element (ref) and the function that draws it. Native
+ * closing (Escape, `close`) goes back to the boolean; `cancel` decides what Escape does.
  */
 export function boxModal(open: Ref<boolean>) {
   const el = ref<HTMLDialogElement | null>(null)

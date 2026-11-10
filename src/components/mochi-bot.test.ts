@@ -4,9 +4,9 @@ import { nextTick } from '@/ui/dom/reactive'
 import { MochiBotElement, PROPERTIES, attributeOf, readAttribute } from './mochi-bot'
 
 /**
- * Le Web Component natif `<mochi-bot>` : options en attributs et en proprietes, `<svg>` hote dans le DOM ordinaire,
- * evenements, methodes et nettoyage. happy-dom n'a pas de WebGL : comme un navigateur sans 3D, le Mochi y est
- * remplace par un court message (il n'y a plus de dessin 2D).
+ * The native `<mochi-bot>` Web Component: options as attributes and properties, a host `<svg>` in the regular DOM,
+ * events, methods and cleanup. happy-dom has no WebGL: like a browser without 3D, the Mochi is replaced by a short
+ * message (there is no 2D drawing any more).
  */
 const host = () => {
   const d = document.createElement('div')
@@ -24,13 +24,13 @@ afterEach(() => {
 })
 
 describe('<mochi-bot> : declaration', () => {
-  it('la balise est declaree a l import, et chaque option est une propriete', () => {
+  it('the tag is declared on import, and every option is a property', () => {
     expect(customElements.get('mochi-bot')).toBe(MochiBotElement)
     const el = create()
     for (const p of PROPERTIES) expect(p.name in el, p.name).toBe(true)
   })
 
-  it('observe un attribut kebab-case par option (sauf les fonctions)', () => {
+  it('observes one kebab-case attribute per option (except functions)', () => {
     const obs = MochiBotElement.observedAttributes
     expect(obs).toContain('frozen-at')
     expect(obs).toContain('max-pixel-ratio')
@@ -40,7 +40,7 @@ describe('<mochi-bot> : declaration', () => {
     expect(attributeOf('maxPixelRatio')).toBe('max-pixel-ratio')
   })
 
-  it('lit les attributs selon le type : nombre, booleen, JSON, texte', () => {
+  it('reads attributes by type: number, boolean, JSON, text', () => {
     expect(readAttribute('number', '1.5')).toBe(1.5)
     expect(readAttribute('number', 'abc')).toBeUndefined()
     expect(readAttribute('boolean', '')).toBe(true)
@@ -52,8 +52,8 @@ describe('<mochi-bot> : declaration', () => {
   })
 })
 
-describe('<mochi-bot> : dessin', () => {
-  it('dessine un SVG dans le DOM ordinaire, a la taille demandee, avec son texte alternatif', () => {
+describe('<mochi-bot>: drawing', () => {
+  it('draws an SVG in the regular DOM, at the requested size, with its alternative text', () => {
     const el = create({ size: '96', 'frozen-at': '1', label: 'Mon Mochi' })
     host().appendChild(el)
     const svg = el.querySelector('svg')!
@@ -64,7 +64,7 @@ describe('<mochi-bot> : dessin', () => {
     expect(svg.getAttribute('aria-label')).toBe('Mon Mochi')
   })
 
-  it('une option changee (attribut ou propriete) redessine a la tache suivante', async () => {
+  it('a changed option (attribute or property) redraws on the next task', async () => {
     const el = create({ shape: 'circle', 'frozen-at': '1' })
     host().appendChild(el)
     el.setAttribute('shape', 'star')
@@ -75,7 +75,7 @@ describe('<mochi-bot> : dessin', () => {
     expect(el.svg!.getAttribute('width')).toBe('50')
   })
 
-  it("sans WebGL : un message et l'evenement sans3d, aucun dessin 2D de secours", async () => {
+  it("without WebGL: a message and the no3d event, no 2D fallback drawing", async () => {
     const el = create({ 'frozen-at': '1' })
     const no3d = new Promise<void>((ok) => el.addEventListener('no3d', () => ok()))
     host().appendChild(el)
@@ -85,7 +85,7 @@ describe('<mochi-bot> : dessin', () => {
     expect(el.svg!.querySelector('mask, radialGradient, filter, [data-pixels]')).toBeNull()
   })
 
-  it('retirer un attribut remet la value par defaut', async () => {
+  it('removing an attribute restores the default value', async () => {
     const el = create({ size: '80', 'frozen-at': '1' })
     host().appendChild(el)
     el.removeAttribute('size')
@@ -94,7 +94,7 @@ describe('<mochi-bot> : dessin', () => {
     expect(el.svg!.getAttribute('width')).toBe('320')
   })
 
-  it('accepte des objets en propriete et en JSON (accessoires, cycle)', () => {
+  it('accepts objects as properties and as JSON (accessories, cycle)', () => {
     const el = create({ accessories: '{"tete":"casquette"}' })
     expect(el.accessories).toEqual({ head: 'cap' })
     el.accessories = { eyes: 'round' }
@@ -103,7 +103,7 @@ describe('<mochi-bot> : dessin', () => {
     expect(el.cycle).toEqual([{ state: 'wink', duration: 2 }])
   })
 
-  it('la meme image a la meme date figee : le dessin est reproductible', async () => {
+  it('the same image at the same frozen time: drawing is reproducible', async () => {
     const a = create({ shape: 'cloud', 'frozen-at': '1.2' })
     const b = create({ shape: 'cloud', 'frozen-at': '1.2' })
     const h = host()
@@ -113,8 +113,8 @@ describe('<mochi-bot> : dessin', () => {
   })
 })
 
-describe('<mochi-bot> : lecteur, evenements et methodes', () => {
-  it('seek deplace la tete de lecture et previent par blockchange et statechange', () => {
+describe('<mochi-bot>: player, events and methods', () => {
+  it('seek moves the playhead and tells through blockchange and statechange', () => {
     const el = create({ 'frozen-at': '0' })
     el.cycle = [
       { state: 'idle', duration: 2 },
@@ -134,7 +134,7 @@ describe('<mochi-bot> : lecteur, evenements et methodes', () => {
     })
   })
 
-  it('setMood, react, relacher et regarder sont des methodes de l element', () => {
+  it('setMood, react, release and lookAt are methods of the element', () => {
     const el = create({ 'frozen-at': '1' })
     host().appendChild(el)
     expect(() => el.setMood('done')).not.toThrow()
@@ -144,7 +144,7 @@ describe('<mochi-bot> : lecteur, evenements et methodes', () => {
     expect(() => el.lookAt({ nx: 1, ny: -1 })).not.toThrow()
   })
 
-  it('les methodes ne font rien (sans erreur) tant que l element n est pas dans la page', () => {
+  it('methods do nothing (without error) until the element is in the page', () => {
     const el = create()
     expect(() => el.seek(0)).not.toThrow()
     expect(el.react('laugh')).toBe(false)
@@ -152,7 +152,7 @@ describe('<mochi-bot> : lecteur, evenements et methodes', () => {
 })
 
 describe('<mochi-bot> : cycle de vie', () => {
-  it('retire de la page, il arrete sa boucle et vide son dessin', async () => {
+  it('removed from the page, it stops its loop and clears its drawing', async () => {
     const cancels = vi.spyOn(window, 'cancelAnimationFrame')
     const el = create()
     const h = host()
@@ -167,7 +167,7 @@ describe('<mochi-bot> : cycle de vie', () => {
     cancels.mockRestore()
   })
 
-  it('deplace dans la page (meme tache), il garde son dessin et son etat', async () => {
+  it('moved within the page (same task), it keeps its drawing and its state', async () => {
     const el = create({ 'frozen-at': '1' })
     const a = host()
     const b = host()
@@ -179,7 +179,7 @@ describe('<mochi-bot> : cycle de vie', () => {
     expect(el.svg).toBe(svg)
   })
 
-  it('remis dans la page apres un retrait, il se redessine', async () => {
+  it('put back in the page after a removal, it redraws', async () => {
     const el = create({ 'frozen-at': '1' })
     const h = host()
     h.appendChild(el)
@@ -190,7 +190,7 @@ describe('<mochi-bot> : cycle de vie', () => {
     expect(el.querySelector('svg')).not.toBeNull()
   })
 
-  it('n ecrit jamais la langue ni le titre de la page hote', async () => {
+  it('never writes the language or the title of the host page', async () => {
     document.documentElement.lang = 'en'
     document.title = 'Page hote'
     host().appendChild(create({ 'frozen-at': '1' }))

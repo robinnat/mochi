@@ -6,12 +6,10 @@ import type { StateId } from '@/bot/states'
 import type { RenderStyleId, PixelSizeId } from '@/ui/renderStyle'
 
 /**
- * Vignette cliquable de la barre de droite : un bot fige, son nom dessous, une
- * bordure quand elle est retenue. Sert aux formes, aux expressions et aux
- * animations : les trois grilles doivent rester identiques a l'oeil.
+ * Clickable thumbnail of the right bar: a frozen bot, its name below, a border when it is selected. Used for shapes,
+ * expressions and animations: the three grids must look identical.
  *
- * `frozenAt` est obligatoire : une vignette animee ferait tourner autant de
- * boucles rAF qu'il y a de cases.
+ * `frozenAt` is required: an animated thumbnail would run as many rAF loops as there are cells.
  */
 export interface BotTileProps {
   label: string
@@ -22,7 +20,7 @@ export interface BotTileProps {
   color?: string
   expression?: string
   size?: number
-  /** absent : le style courant, comme toutes les vignettes */
+  /** absent: the current style, like every thumbnail */
   renderStyle?: RenderStyleId
   pixel?: PixelSizeId
   onClick?: () => void
@@ -51,6 +49,6 @@ export const BotTile: Component<BotTileProps> = (props) => () =>
       renderStyle: props.renderStyle,
       pixel: props.pixel
     }),
-    // 12 px : en dessous, une legende n'est plus lisible pour tout le monde
+    // 12 px: below that, a caption is no longer readable for everyone
     h('span', { class: 'text-center text-xs leading-tight text-[var(--muted)]' }, props.label)
   )

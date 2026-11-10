@@ -1,31 +1,32 @@
 /**
- * `<mochi-bot>` : le Mochi en Web Component natif, sans dependance ni framework.
+ * `<mochi-bot>`: the Mochi as a native Web Component, with no dependency and no framework.
  *
- * Il marche partout ou il y a un DOM : HTML simple et tous les frameworks (React, Svelte, Angular...). On l'importe une
- * fois (`import './components/mochi-bot'`), ce qui declare la balise, puis on l'ecrit comme
- * n'importe quel element :
+ * It works wherever there is a DOM: plain HTML and every framework (React, Svelte, Angular...). Import it once
+ * (`import './components/mochi-bot'`), which declares the tag, then write it like any element:
  *
- *   <mochi-bot shape="etoile" color="#2d5bff" mood="repos" size="200" coucou></mochi-bot>
+ *   <mochi-bot shape="star" color="#2d5bff" mood="idle" size="200" wave></mochi-bot>
  *
- * - Chaque option existe en ATTRIBUT (kebab-case, texte : `frozen-at="1.2"`, `outline`,
- *   `highlight="false"`, `accessories='{"head":"cap"}'`) et en PROPRIETE JavaScript (camelCase,
- *   n'importe quelle valeur : `el.accessories = { head: 'cap' }`, `el.gesture = (t) => ...`).
- * - Evenements (`CustomEvent`, sans propagation) : `ready` a la premiere image 3D peinte (ou `no3d` si le
- *   navigateur n'a pas WebGL), puis
- *   `statechange`, `blockchange`, `playingchange`, `elapsedchange` quand le lecteur avance
- *   (`event.detail` porte la nouvelle valeur).
- * - Methodes : `seek`, `renderAt`, `setMood`, `react`, `release`, `lookAt`.
- * - Le Mochi est TOUJOURS rendu en vraie 3D (WebGL) : un `<canvas>` pose dans un `<svg>` du DOM ordinaire (pas de
- *   shadow DOM), qui porte aussi les petits effets des etats (points, anneaux, « z »). `el.svg` le donne directement ;
- *   les exports le figent en image (`freezeCanvases`). Sans WebGL, un court message remplace le Mochi : il n'y a plus de
- *   dessin 2D de secours.
- * - Retire de la page, il arrete sa boucle d'animation, ses ecouteurs et ses minuteurs. Deplace
- *   dans la page (meme tache), il garde son etat.
- * - La vraie 3D (Three.js) n'est chargee qu'au premier Mochi en 3D, et tous partagent UN contexte
- *   WebGL (voir `src/ui/trois/scene3d.ts`).
+ * - Every option exists as an ATTRIBUTE (kebab-case, text: `frozen-at="1.2"`, `outline`, `highlight="false"`,
+ *   `accessories='{"head":"cap"}'`) and as a JavaScript PROPERTY (camelCase, any value:
+ *   `el.accessories = { head: 'cap' }`, `el.gesture = (t) => ...`).
+ * - Events (`CustomEvent`, no bubbling): `ready` on the first painted 3D frame (or `no3d` if the browser has no
+ *   WebGL),
+ *   then `statechange`, `blockchange`, `playingchange`, `elapsedchange` as the player moves (`event.detail` holds the
+ *   new
+ *   value).
+ * - Methods: `seek`, `renderAt`, `setMood`, `react`, `release`, `lookAt`.
+ * - The Mochi is ALWAYS rendered in real 3D (WebGL): a `<canvas>` placed in an `<svg>` of the regular DOM (no shadow
+ *   DOM), which also holds the small effects of the states (dots, rings, "z"). `el.svg` gives it directly; exports
+ *   freeze
+ *   it into an image (`freezeCanvases`). Without WebGL, a short message replaces the Mochi: there is no 2D fallback.
+ * - Removed from the page, it stops its animation loop, its listeners and its timers. Moved within the page (same
+ *   task),
+ *   it keeps its state.
+ * - The real 3D (Three.js) only loads with the first 3D Mochi, and they all share ONE WebGL context (see
+ *   `src/ui/3d/scene3d.ts`).
  *
- * Le moteur (`src/bot/`) rend une image pour une date donnee ; ce composant tient l'horloge, le
- * montage, les humeurs, le regard et les reactions, et peint l'image en 3D.
+ * The engine (`src/bot/`) renders a frame for a given time; this component holds the clock, the montage, the moods,
+ * the gaze and the reactions, and paints the frame in 3D.
  */
 
 import { BotEngine, type BotFrame } from '@/bot/engine'
@@ -50,78 +51,91 @@ import { h, render, type Child, type VNode } from '@/ui/dom/h'
 
 /* ------------------------------------------------------------------ options */
 
-/** Les options du composant (proprietes JavaScript). */
+/** The component's options (JavaScript properties). */
 export interface MochiBotProps {
   /** Largeur et hauteur, en pixels. */
   size: number
-  /** identifiant de forme du personnalisateur */
+  /** customizer shape id */
   shape: string
-  /** identifiant de couleur du personnalisateur, ou une couleur libre en hex (`#ff8800`, `#f80`) */
+  /** customizer color id, or any hex color (`#ff8800`, `#f80`) */
   color: string
-  /** identifiant d'expression de repos du personnalisateur */
+  /** customizer resting expression id */
   expression: string
-  /** couleur du fond, utilisee pour la brume de profondeur des particules */
+  /** background color, used for the depth haze of particles */
   paper: string
-  /** theme de la 3D : `light` ou `dark` (les yeux deviennent noirs) ; absent, le theme courant (`currentTheme`, clair par defaut) */
+  /**
+ * 3D theme: `light` or `dark` (the eyes turn black); absent, the current theme (`currentTheme`, light by default)
+ */
   theme: Theme | undefined
-  /** accessoires par emplacements (tete, yeux, visage, bas, dos), 3D seulement ; voir `src/bot/emplacements.ts` */
+  /** accessories by slot (head, eyes, face, neck, back), 3D only; see `src/bot/slots.ts` */
   accessories: AccessorySelection | null
   /**
-   * Fige le rendu a cette date (en secondes depuis le debut de l'etat). Le moteur etant une fonction pure du temps,
-   * on obtient une image reproductible au pixel pres, sans boucle d'animation.
+   * Freezes the rendering at this time (in seconds since the start of the state). Since the engine is a pure function
+   * of time, you get an image reproducible to the pixel, with no animation loop.
    */
   frozenAt: number | undefined
-  /** Montage joue par le lecteur : une suite d'etats, chacun tenu la duree de son bloc. Par defaut, le cycle releve sur la video. */
+  /**
+ * Montage played by the player: a list of states, each held for its block's duration. By default, the cycle measured
+ * on the video.
+ */
   cycle: Block[]
-  /** Le regard suit le pointeur dans toute la fenetre (coupe les reactions). */
+  /** The gaze follows the pointer anywhere in the window (turns the reactions off). */
   follow: boolean
-  /** Regard scripte de l'arrivee : evalue a chaque image avec le temps ecoule depuis qu'il a ete pose. */
+  /** Scripted arrival gaze: evaluated every frame with the time elapsed since it was set. */
   gaze: GazeScript | null
-  /** Style de rendu (`3d` Soft, `flat3d` Flat, `pixel3d` Pixel) ; absent ou inconnu, le reglage courant (`currentRenderStyle`). */
+  /**
+ * Render style (`3d` Soft, `flat3d` Flat, `pixel3d` Pixel); absent or unknown, the current setting
+ * (`currentRenderStyle`).
+ */
   renderStyle: RenderStyleId | undefined
-  /** Taille des pixels du style Pixel (`large`, `medium`, `end`) : resolution de sa toile ; absente, le reglage courant. */
+  /**
+ * Pixel size of the Pixel style (`large`, `medium`, `fine`): resolution of its canvas; absent, the current setting.
+ */
   pixel: PixelSizeId | undefined
-  /** Matiere de la vraie 3D (`renderStyle` = 3d seulement). Absente : le defaut (`soft`). */
+  /** Material of the real 3D (`renderStyle` = 3d only). Absent: the default (`soft`). */
   material: Material
-  /** Reglage de la matiere `soft` : `light` ou `strong`. Ignore par les autres matieres. */
+  /** Setting of the `soft` material: `light` or `strong`. Ignored by the other materials. */
   softness: Softness
-  /** Contour cartoon de la vraie 3D ; absent, le reglage courant (`currentOutline`). */
+  /** Cartoon outline of the real 3D; absent, the current setting (`currentOutline`). */
   outline: boolean | undefined
-  /** Epaisseur du contour (facteur : 1 = l'epaisseur de base, 0,4 a 4). */
+  /** Outline thickness (factor: 1 = the base thickness, 0.4 to 4). */
   outlineWidth: number
-  /** Petit reflet doux en haut a gauche de la matiere 3D `soft` (defaut : oui). */
+  /** Small soft highlight at the top left of the `soft` 3D material (default: yes). */
   highlight: boolean
-  /** Ombre portee au sol sous le corps, en 3D (defaut : oui). */
+  /** Ground shadow under the body, in 3D (default: yes). */
   shadow: boolean
-  /** Ombrage du volume du corps, en 3D (defaut : oui). `false` : corps en aplat de couleur, yeux inchanges. */
+  /** Shading of the body volume, in 3D (default: yes). `false`: flat body color, eyes unchanged. */
   shading: boolean
-  /** Angle du corps autour de l'axe vertical, en radians (vraie 3D seulement). 0 = de face. */
+  /** Angle of the body around the vertical axis, in radians (real 3D only). 0 = facing front. */
   yaw: number
-  /** Geste (`src/bot/gestures.ts`) : petits ecarts ajoutes a la pose, fonction du temps de la scene. */
+  /** Gesture (`src/bot/gestures.ts`): small offsets added to the pose, a function of the scene time. */
   gesture: ((t: number) => Gesture) | null
-  /** Accessoire PORTE en 3D (`src/bot/portes.ts`, ancien jeu) : lunettes, chapeau, noeud, couronne, casque. */
+  /** WORN accessory in 3D (`src/bot/worn.ts`, older set): glasses, hat, bow, crown, headphones. */
   worn: WornId | null
-  /** Humeur de travail jouee en boucle (`idle`, `thinking`, `working`, `waiting`, `done`, `blocked`, `asleep`, ou les alias anglais). */
+  /**
+ * Work mood played on a loop (`idle`, `thinking`, `working`, `waiting`, `done`, `blocked`, `asleep`, or their
+ * aliases).
+ */
   mood: string | null
-  /** Reactions a l'utilisateur (survol, tap, double tap, appui long, secousse). `false` les coupe. */
+  /** Reactions to the user (hover, tap, double tap, long press, shake). `false` turns them off. */
   interactions: boolean
-  /** Salut a l'apparition (`wave`), joue une fois au montage. */
+  /** Hello on appearing (`wave`), played once when mounted. */
   wave: boolean
-  /** Ordinateur portable 3D du mood `working`. `false` le masque. */
+  /** 3D laptop of the `working` mood. `false` hides it. */
   laptop: boolean
-  /** Plafond d'images par seconde de la boucle. Absent : une image par image du navigateur. */
+  /** Cap on the loop's frames per second. Absent: one frame per browser frame. */
   fps: number | undefined
-  /** Texte alternatif ; absent, le libelle traduit. */
+  /** Alternative text; absent, the translated label. */
   label: string | undefined
-  /** Plafond de densite du canvas 3D (pixels physiques par pixel CSS). */
+  /** Cap on the 3D canvas density (device pixels per CSS pixel). */
   maxPixelRatio: number
-  /** Lecteur : index du bloc courant du montage. */
+  /** Player: index of the current block of the montage. */
   block: number
-  /** Lecteur : etat du bloc courant (sortie). */
+  /** Player: state of the current block (output). */
   state: StateId
-  /** Lecteur : le montage avance-t-il. */
+  /** Player: is the montage moving forward. */
   playing: boolean
-  /** Lecteur : temps ecoule dans le bloc courant (sortie). */
+  /** Player: time elapsed in the current block (output). */
   elapsed: number
 }
 
@@ -130,15 +144,15 @@ type Kind = 'number' | 'text' | 'boolean' | 'json' | 'function'
 interface DefProp {
   name: keyof MochiBotProps
   kind: Kind
-  /** valeur par defaut (une fabrique pour un tableau) */
+  /** default value (a factory for an array) */
   initial: () => unknown
-  /** pas d'attribut (fonction) */
+  /** no attribute (function) */
   withoutAttribute?: boolean
 }
 
 const d = <T>(v: T) => () => v
 
-/** Toutes les options, leur type d'attribut et leur valeur par defaut. */
+/** Every option, its attribute type and its default value. */
 export const PROPERTIES: DefProp[] = [
   { name: 'size', kind: 'number', initial: d(320) },
   { name: 'shape', kind: 'text', initial: d(DEFAULT_SHAPE) },
@@ -181,7 +195,9 @@ export const attributeOf = (name: string) => name.replace(/[A-Z]/g, (m) => '-' +
 
 const BY_ATTRIBUTE = new Map(PROPERTIES.filter((p) => !p.withoutAttribute).map((p) => [attributeOf(p.name), p]))
 
-/** Lit un attribut selon le type de l'option. Attribut retire : `undefined`, donc la valeur par defaut. */
+/**
+ * Reads an attribute according to the option's type. Removed attribute: `undefined`, so the default value.
+ */
 export function readAttribute(kind: Kind, v: string | null): unknown {
   if (v === null) return undefined
   switch (kind) {
@@ -202,7 +218,7 @@ export function readAttribute(kind: Kind, v: string | null): unknown {
   }
 }
 
-/** Evenements du lecteur, par option. */
+/** Player events, by option. */
 const EVENT_FOR_PROP: Partial<Record<keyof MochiBotProps, string>> = {
   block: 'blockchange',
   state: 'statechange',
@@ -214,8 +230,8 @@ const EVENT_FOR_PROP: Partial<Record<keyof MochiBotProps, string>> = {
 
 let styleAdds = false
 /**
- * Une seule regle, sans specificite (`:where`) : une classe posee par la page l'emporte toujours. Le Mochi se
- * comporte comme une image : en ligne, sa boite est celle de son dessin, et il se reduit avec son conteneur.
+ * A single rule, with no specificity (`:where`): a class set by the page always wins. The Mochi behaves like an
+ * image: inline, its box is its drawing's, and it shrinks with its container.
  */
 function addStyle() {
   if (styleAdds || typeof document === 'undefined') return
@@ -246,9 +262,9 @@ export class MochiBotElement extends BaseElement {
     return [...BY_ATTRIBUTE.keys()]
   }
 
-  /** une ref par option : le dessin suit chacune */
+  /** one ref per option: the drawing follows each one */
   private _refs = new Map<string, Ref<unknown>>()
-  /** valeur explicitement donnee (propriete ou attribut) ; absente, le defaut */
+  /** value explicitly given (property or attribute); absent, the default */
   private _poses = new Map<string, unknown>()
   private _scope: Scope | null = null
   private _internal: Internal | null = null
@@ -259,12 +275,12 @@ export class MochiBotElement extends BaseElement {
     for (const p of PROPERTIES) this._refs.set(p.name, ref(p.initial()))
   }
 
-  /** Le `<svg>` dessine (pour l'exporter ou le mesurer). */
+  /** The drawn `<svg>` (to export or measure it). */
   get svg(): SVGSVGElement | null {
     return this._svg
   }
 
-  /** Pose une option. `undefined` remet la valeur par defaut. */
+  /** Sets an option. `undefined` restores the default value. */
   _set(name: string, v: unknown) {
     const def = PROPERTIES.find((p) => p.name === name)!
     if (v === undefined) this._poses.delete(name)
@@ -276,7 +292,7 @@ export class MochiBotElement extends BaseElement {
     return this._refs.get(name)!.value
   }
 
-  /** Ecrit une sortie du lecteur et la signale. */
+  /** Writes a player output and signals it. */
   _emit(name: keyof MochiBotProps, v: unknown) {
     const r = this._refs.get(name)!
     if (Object.is(r.value, v)) return
@@ -291,7 +307,7 @@ export class MochiBotElement extends BaseElement {
   }
 
   connectedCallback() {
-    // une propriete posee avant la declaration de la balise est une propriete propre : on la reprend
+    // a property set before the tag was declared is an own property: take it over
     for (const p of PROPERTIES) {
       if (Object.prototype.hasOwnProperty.call(this, p.name)) {
         const v = (this as unknown as Record<string, unknown>)[p.name]
@@ -303,12 +319,12 @@ export class MochiBotElement extends BaseElement {
     addStyle()
     const scope = new Scope()
     this._scope = scope
-    // sans suivi : l'element peut etre insere pendant le dessin d'une page, qui ne doit pas dependre de lui
+    // untracked: the element can be inserted while a page is drawing, and that page must not depend on it
     this._internal = within(scope, () => untracked(() => mountBot(this)))
   }
 
   disconnectedCallback() {
-    // un deplacement dans la page (retire puis remis dans la meme tache) ne doit rien perdre
+    // a move within the page (removed then put back in the same task) must lose nothing
     queueMicrotask(() => {
       if (this.isConnected || !this._scope) return
       this._scope.stop()
@@ -319,32 +335,32 @@ export class MochiBotElement extends BaseElement {
     })
   }
 
-  /** Deplace la tete de lecture : bloc `index`, `offset` secondes dans ce bloc. */
+  /** Moves the playhead: block `index`, `offset` seconds into it. */
   seek(index: number, offset = 0) {
     this._internal?.seek(index, offset)
   }
-  /** Rend le MONTAGE a la date absolue `t`, sans horloge (exports image par image). */
+  /** Renders the MONTAGE at absolute time `t`, without a clock (frame by frame exports). */
   renderAt(t: number) {
     this._internal?.renderAt(t)
   }
-  /** Change d'humeur (`null` coupe la couche). Glisse de l'une a l'autre sans saut. */
+  /** Changes the mood (`null` turns the layer off). Glides from one to the other without a jump. */
   setMood(id: string | null) {
     this._internal?.setMood(id)
   }
-  /** Joue une reaction (`startle`, `laugh`, `blush`, `dizzy`, `wave`) puis rend la main a l'humeur. */
+  /** Plays a reaction (`startle`, `laugh`, `blush`, `dizzy`, `wave`), then hands back to the mood. */
   react(id: ReactionId | string): boolean {
     return this._internal?.react(id) ?? false
   }
-  /** Fin d'une reaction tenue (appui long). */
+  /** End of a held reaction (long press). */
   release() {
     this._internal?.release()
   }
-  /** Regard du survol, hors evenement : `nx`, `ny` de -1 a 1 (droite et bas positifs), `null` pour lacher. */
+  /** Hover gaze, outside events: `nx`, `ny` from -1 to 1 (right and down positive), `null` to let go. */
   lookAt(target: { nx: number; ny: number } | null) {
     this._internal?.lookAt(target)
   }
 
-  /** @internal le dessin vient d'etre pose */
+  /** @internal the drawing has just been set */
   _updateSvg(s: SVGSVGElement | null) {
     this._svg = s
   }
@@ -375,7 +391,7 @@ declare global {
 
 export const TAG_NAME = 'mochi-bot'
 
-/** Declare la balise (sans effet si elle l'est deja). Appele a l'import de ce module. */
+/** Declares the tag (no effect if it already is). Called when this module is imported. */
 export function defineMochiBot() {
   if (typeof customElements !== 'undefined' && !customElements.get(TAG_NAME)) customElements.define(TAG_NAME, MochiBotElement)
 }
@@ -384,16 +400,16 @@ defineMochiBot()
 /* ------------------------------------------------------------------ logique */
 
 /**
- * Met en place un Mochi sur l'element : horloge, moteur, humeurs, regard, reactions et dessin.
- * Tout ce qui est cree ici s'arrete avec la portee de l'element.
+ * Sets up a Mochi on the element: clock, engine, moods, gaze, reactions and drawing. Everything created here stops
+ * with the element's scope.
  */
 function mountBot(host: MochiBotElement): Internal {
   const r = <K extends keyof MochiBotProps>(k: K) => (host as unknown as { _refs: Map<string, Ref<MochiBotProps[K]>> })._refs.get(k)!
-  // lecture suivie des options : `props.x` dans un calcul ou un dessin se relance quand `x` change
+  // tracked read of the options: `props.x` in a computation or a drawing reruns when `x` changes
   const props = new Proxy({} as MochiBotProps, {
     get: (_, k: string) => r(k as keyof MochiBotProps).value
   })
-  // sorties du lecteur : lues comme des refs, ecrites avec signalement
+  // player outputs: read like refs, written with a signal
   const model = <K extends 'block' | 'state' | 'playing' | 'elapsed'>(k: K): Ref<MochiBotProps[K]> => ({
     get value() {
       return r(k).value
@@ -415,7 +431,7 @@ function mountBot(host: MochiBotElement): Internal {
   const ink = computed(() => colorOf(props.color))
   const expression = computed(() => EXPRESSION_BY_ID.get(props.expression) ?? null)
 
-  /* --------------------------------------------------------- style de rendu */
+  /* --------------------------------------------------------- render style */
 
   const renderStyle = computed(() => effectiveRenderStyle(props.renderStyle))
   const effectiveOutline = computed(() => props.outline ?? currentOutline.value)
@@ -427,11 +443,11 @@ function mountBot(host: MochiBotElement): Internal {
 
   const time = ref(props.frozenAt ?? 0)
 
-  /* ------------------------------------------------- humeurs et reactions */
+  /* ------------------------------------------------- moods and reactions */
 
   const reduced = ref(false)
   const moods = new Moods(resolveMood(props.mood), { base: expression.value })
-  /** Petits « z » de l'humeur `asleep`, dessines en SVG par-dessus tous les rendus. */
+  /** Small "z" of the `asleep` mood, drawn in SVG over every style. */
   const zMarques = computed(() => {
     if (resolveMood(props.mood) !== 'asleep') return []
     return sleepZ(reduced.value || props.frozenAt !== undefined ? 1.2 : time.value).map((z, i) => {
@@ -448,7 +464,7 @@ function mountBot(host: MochiBotElement): Internal {
   const colorZ = computed(() => mixHex(ink.value, '#1a1630', 0.5))
   const moodActive = computed(() => resolveMood(props.mood) !== null)
 
-  /** Accessoire porte connu, ou rien. */
+  /** Known worn accessory, or nothing. */
   const worn = computed<WornId | null>(() => (props.worn && (WORN_IDS as string[]).includes(props.worn) ? props.worn : null))
 
   const gestureA = (t: number): Gesture | undefined => {
@@ -463,7 +479,7 @@ function mountBot(host: MochiBotElement): Internal {
   let clock = 0
   let blockStart = 0
 
-  /** Pose le bloc `i` : etat, moteur, et date de fin. */
+  /** Sets block `i`: state, engine, and end time. */
   function apply(i: number, from = 0) {
     const b = props.cycle[i]
     if (!b) {
@@ -494,8 +510,8 @@ function mountBot(host: MochiBotElement): Internal {
   }
 
   /**
-   * Rend le MONTAGE a la date absolue `t`, sans horloge : capture d'un cycle entier hors ecran, image par image.
-   * Chaque changement d'etat est date a l'offset ABSOLU de son bloc ; un retour en arriere repart sans historique.
+   * Renders the MONTAGE at absolute time `t`, without a clock: off-screen capture of a whole cycle, frame by frame.
+   * Each state change is timed at the ABSOLUTE offset of its block; going back starts again without history.
    */
   let lastBlock = -1
   function renderAt(t: number) {
@@ -531,11 +547,11 @@ function mountBot(host: MochiBotElement): Internal {
     moods.lookAt(target, clock)
   }
 
-  /* -------------------------------------------------------------- vraie 3D */
+  /* -------------------------------------------------------------- real 3D */
 
   type Module3d = typeof import('@/ui/3d/scene3d')
   const m3d = shallowRef<Module3d | null>(null)
-  /** Le navigateur n'a pas de WebGL (ou le module 3D n'a pas pu se charger) : un message remplace le Mochi. */
+  /** The browser has no WebGL (or the 3D module could not load): a message replaces the Mochi. */
   const no3d = ref(false)
   let canvas: HTMLCanvasElement | null = null
   const canvasRef = ref(0)
@@ -546,13 +562,13 @@ function mountBot(host: MochiBotElement): Internal {
       : Math.round(props.size * Math.min(props.maxPixelRatio, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1))
   )
 
-  // la 3D (Three.js) est chargee au montage, une fois pour tous les Mochi de la page
+  // the 3D (Three.js) loads on mount, once for every Mochi of the page
   import('@/ui/3d/scene3d')
     .then((m) => {
       if (m.webglAvailable()) m3d.value = m
       else signalNo3d()
     })
-    // module introuvable : meme repli que sans WebGL
+    // module not found: same fallback as without WebGL
     .catch(signalNo3d)
   function signalNo3d() {
     no3d.value = true
@@ -561,7 +577,7 @@ function mountBot(host: MochiBotElement): Internal {
 
   const decorAlpha = computed(() => (real3d.value && props.yaw ? Math.max(0, Math.cos(props.yaw)) ** 3 : 1))
 
-  /* ------------------------------------------------- ordinateur du mood « travaille » */
+  /* ------------------------------------------------- laptop of the "working" mood */
 
   let laptopK = 0
   let laptopTo = 0
@@ -599,7 +615,7 @@ function mountBot(host: MochiBotElement): Internal {
     }
   }
 
-  /** Changement de forme : une fois le morph fini, les accessoires 3D se recalent sur la forme finale. */
+  /** Shape change: once the morph is over, the 3D accessories fit the final shape again. */
   let timerShape = 0
   watch(
     () => props.shape,
@@ -620,7 +636,7 @@ function mountBot(host: MochiBotElement): Internal {
     { flush: 'post' }
   )
 
-  /* ------------------------------------------------------- regard qui suit */
+  /* ------------------------------------------------------- tracking gaze */
 
   let svg: SVGSVGElement | null = null
   let pointer: { x: number; y: number } | null = null
@@ -628,7 +644,7 @@ function mountBot(host: MochiBotElement): Internal {
   let turnSince = 0
 
   function onPointerMove(event: PointerEvent) {
-    // le tactile n'a pas de curseur qui traine
+    // touch has no lingering cursor
     if (event.pointerType === 'touch') return
     pointer = { x: event.clientX, y: event.clientY }
   }
@@ -640,14 +656,14 @@ function mountBot(host: MochiBotElement): Internal {
     engine.setLook(null, clock, TURN_TIME)
     aiming = false
   }
-  /** Vise le pointeur ; le rectangle est relu a chaque image (l'avatar peut bouger). */
+  /** Aims at the pointer; the rectangle is read again every frame (the avatar can move). */
   function aim() {
     if (!STATE_BY_ID.get(state.value)?.baseFace) {
       endAim()
       return
     }
     const box = svg?.getBoundingClientRect()
-    // boite sans surface (volet masque) : rien a viser, et surtout pas de NaN dans le moteur
+    // box with no area (hidden panel): nothing to aim at, and above all no NaN in the engine
     if (!box || box.width === 0 || box.height === 0) return
     if (!aiming) turnSince = clock
     const halfWidth = Math.max(1, window.innerWidth / 2)
@@ -664,11 +680,11 @@ function mountBot(host: MochiBotElement): Internal {
     aiming = true
   }
 
-  /* ------------------------------------------------- regard d'arrivee */
+  /* ------------------------------------------------- arrival gaze */
 
   let gazeSince = 0
   let scripted = false
-  /** Rattrapage court mais non nul (a zero, le moteur divise zero par zero). */
+  /** Short but non-zero catch-up (at zero, the engine divides zero by zero). */
   const SCRIPT_MORPH = 1 / 60
   function scriptedGaze(run: GazeScript) {
     engine.setLook(run(clock - gazeSince), clock, SCRIPT_MORPH)
@@ -679,7 +695,7 @@ function mountBot(host: MochiBotElement): Internal {
       if (run) {
         gazeSince = clock
         scripted = true
-        // valeur de depart deja pleinement appliquee a la premiere image
+        // start value already fully applied on the first frame
         engine.setLook(run(0), clock - SCRIPT_MORPH, SCRIPT_MORPH)
         return
       }
@@ -690,7 +706,7 @@ function mountBot(host: MochiBotElement): Internal {
     { immediate: true }
   )
 
-  /* ------------------------------------------------- reactions a l'utilisateur */
+  /* ------------------------------------------------- reactions to the user */
 
   const TAP_MAX = 320
   const DOUBLE_MAX = 380
@@ -739,7 +755,7 @@ function mountBot(host: MochiBotElement): Internal {
     }
     shake = []
     lastDx = 0
-    // le parent peut capturer le pointeur (glisser pour tourner) : on suit la fin sur la fenetre
+    // the parent can capture the pointer (drag to turn): we follow the end on the window
     window.addEventListener('pointermove', onDrag)
     window.addEventListener('pointerup', onReleased)
     window.addEventListener('pointercancel', onReleased)
@@ -752,7 +768,7 @@ function mountBot(host: MochiBotElement): Internal {
       clearTimeout(press.timer)
       press.t = -1e9
     }
-    // secousse : au moins quatre inversions de sens, vives, en moins d'une demi-seconde
+    // shake: at least four sharp direction changes in less than half a second
     const step = e.movementX || e.clientX - lastDx
     if (Math.abs(step) > 6) {
       const direction = Math.sign(step)
@@ -791,7 +807,7 @@ function mountBot(host: MochiBotElement): Internal {
     }
   }
 
-  /** Tourne vite : le modele 3D (`yaw`) fait plus d'un tour en moins d'une seconde. */
+  /** Fast spin: the 3D model (`yaw`) does more than a turn in less than a second. */
   watch(
     () => props.yaw,
     (v) => {
@@ -818,11 +834,11 @@ function mountBot(host: MochiBotElement): Internal {
   let lastDrawing = 0
   function tick(ms: number) {
     raf = requestAnimationFrame(tick)
-    // horloge de scene a delta borne : un onglet masque puis reaffiche reprend sans sauter
+    // scene clock with a bounded delta: a tab hidden then shown again resumes without a jump
     const dt = last ? Math.min((ms - last) / 1000, 0.064) : 0
     last = ms
     clock += dt
-    // le stop ne gele pas l'horloge : seuls l'enchainement et la tete de lecture sont suspendus
+    // stopping does not freeze the clock: only the chaining and the playhead are suspended
     if (playing.value) {
       if (clock >= nextAt && props.cycle.length) goToBlock((block.value + 1) % props.cycle.length)
       else elapsed.value = clock - blockStart
@@ -837,7 +853,7 @@ function mountBot(host: MochiBotElement): Internal {
     triggerRef(frame)
   }
 
-  /** Redessine sans la boucle : sert aux images figees quand une option change. */
+  /** Redraws without the loop: used by still images when an option changes. */
   function redrawFrozen() {
     if (props.frozenAt === undefined) return
     time.value = props.frozenAt
@@ -853,7 +869,7 @@ function mountBot(host: MochiBotElement): Internal {
       pendingOffset = 0
     }
   )
-  // changement d'etat venu de l'exterieur (images figees) ; deja applique par `renderAt` ou `apply` sinon
+  // state change coming from outside (still images); otherwise already applied by `renderAt` or `apply`
   watch(
     () => state.value,
     (id) => {
@@ -885,7 +901,7 @@ function mountBot(host: MochiBotElement): Internal {
     }
   )
   watch(shapeRadii, (radii) => {
-    // l'horloge passee : le moteur morphe vers la nouvelle forme
+    // the clock has passed: the engine morphs to the new shape
     engine.setShape(radii, clock)
     redrawFrozen()
   })
@@ -915,7 +931,7 @@ function mountBot(host: MochiBotElement): Internal {
   )
   watch([() => props.gesture, () => props.worn], redrawFrozen)
 
-  /* ------------------------------------------------------------------ dessin */
+  /* ------------------------------------------------------------------ drawing */
 
   function dotAttrs(dot: BotFrame['dots'][number]) {
     const fill = dot.color ?? (dot.depth === undefined ? ink.value : mixHex(props.paper, ink.value, dot.depth))
@@ -941,7 +957,7 @@ function mountBot(host: MochiBotElement): Internal {
         )
       )
     )
-    // moitie arriere des orbites : posee avant le corps 3D, donc cachee par lui
+    // back half of the orbits: placed before the 3D body, so hidden by it
     children.push(
       h(
         'g',
@@ -950,7 +966,7 @@ function mountBot(host: MochiBotElement): Internal {
       )
     )
     if (real3d.value) {
-      // le corps, les yeux et les accessoires sont rendus par WebGL dans ce canvas, cale sur le viewBox
+      // the body, eyes and accessories are rendered by WebGL in this canvas, fitted to the viewBox
       children.push(
         h(
           'foreignObject',
@@ -968,7 +984,7 @@ function mountBot(host: MochiBotElement): Internal {
         )
       )
     } else if (no3d.value) {
-      // pas de WebGL : pas de dessin 2D de secours, un message court a la place du Mochi
+      // no WebGL: no 2D fallback drawing, a short message instead of the Mochi
       children.push(
         h(
           'text',
@@ -978,7 +994,7 @@ function mountBot(host: MochiBotElement): Internal {
       )
     }
     children.push(h('g', { opacity: decorAlpha.value }, f.dots.map((dot, i) => h(dot.d ? 'path' : 'circle', { key: `pf${i}`, ...dotAttrs(dot) }))))
-    // moitie avant des orbites
+    // front half of the orbits
     children.push(
       h(
         'g',
@@ -1017,7 +1033,7 @@ function mountBot(host: MochiBotElement): Internal {
     )
   }
 
-  // le dessin est un effet : il se refait (en file, une fois par tache, avant le dessin 3D) quand ce qu'il lit change
+  // drawing is an effect: it reruns (queued, once per task, before the 3D drawing) when what it reads changes
   watch(drawing, (v) => render(v, host))
 
   /* ------------------------------------------------------------------ montage */
@@ -1037,11 +1053,11 @@ function mountBot(host: MochiBotElement): Internal {
   if (props.frozenAt !== undefined) redrawFrozen()
   else {
     if (props.wave) {
-      // mouvement reduit : un simple fondu ; sinon la reaction fait grandir le Mochi
+      // reduced motion: a simple fade; otherwise the reaction makes the Mochi grow
       if (reduced.value) (svg as SVGSVGElement | null)?.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 400, easing: 'ease-out' })
       else moods.react(REACTION_FOR_EVENT.arrival, clock)
     }
-    // le curseur peut arriver deja pose
+    // the cursor can arrive already in place
     apply(block.value, elapsed.value)
     raf = requestAnimationFrame(tick)
   }

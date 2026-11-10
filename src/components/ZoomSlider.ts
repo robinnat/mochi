@@ -3,8 +3,8 @@ import { h, type Component } from '@/ui/dom/h'
 import { percentage, t } from '@/i18n'
 
 /**
- * Reglage de la loupe de la piste. Un `<input type="range">` natif plutot qu'un curseur maison : il apporte le
- * clavier, le pas et l'annonce aux lecteurs d'ecran. Le parent recoit la valeur et decide du point d'ancrage.
+ * Zoom setting of the track. A native `<input type="range">` rather than a custom slider: it brings keyboard, step
+ * and screen reader announcements. The parent gets the value and decides the anchor.
  */
 export interface ZoomSliderProps {
   zoom: number
@@ -19,7 +19,7 @@ export const ZoomSlider: Component<ZoomSliderProps> = (props) => {
     h(
       'div',
       { class: 'flex items-center gap-1.5' },
-      // les deux pastilles disent le sens : petit a gauche, grand a droite
+      // the two dots tell the direction: small on the left, big on the right
       h('span', { class: 'h-1 w-1 shrink-0 rounded-full bg-[var(--muted)]', 'aria-hidden': 'true' }),
       h('input', {
         type: 'range',
@@ -33,7 +33,7 @@ export const ZoomSlider: Component<ZoomSliderProps> = (props) => {
         onInput: (e: Event) => props.onZoom(Number((e.target as HTMLInputElement).value))
       }),
       h('span', { class: 'h-2 w-2 shrink-0 rounded-full bg-[var(--muted)]', 'aria-hidden': 'true' }),
-      // largeur fixe, alignee a gauche : le pourcentage reste pres du curseur
+      // fixed width, left aligned: the percentage stays near the slider
       h('span', { class: 'w-11 text-left text-xs tabular-nums text-[var(--muted)]' }, percent.value)
     )
 }

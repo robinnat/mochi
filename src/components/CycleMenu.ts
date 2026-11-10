@@ -4,8 +4,8 @@ import type { Cycle } from '@/bot/cycles'
 import { nameOfCycle, t } from '@/i18n'
 
 /**
- * Choix du montage. Un `<select>` natif ne peut pas porter la ligne « Nouveau » ni la suppression d'une entree,
- * d'ou ce menu ; il s'ouvre vers le haut, la barre etant en bas de l'ecran.
+ * Montage choice. A native `<select>` cannot hold the "New" row or deleting an entry, hence this menu; it opens
+ * upwards, since the bar is at the bottom of the screen.
  */
 export interface CycleMenuProps {
   cycles: Cycle[]
@@ -48,7 +48,7 @@ export const CycleMenu: Component<CycleMenuProps> = (props) => {
           if (e.key === 'Escape') open.value = false
         }
       },
-      // `text-left` : les navigateurs centrent le texte des boutons
+      // `text-left`: browsers center button text
       h(
         'button',
         {
@@ -74,7 +74,7 @@ export const CycleMenu: Component<CycleMenuProps> = (props) => {
               h(
                 'div',
                 { key: cy.id, class: 'group/row flex items-center gap-1' },
-                // `min-w-0` : sans lui, un nom long pousse la ligne au lieu d'etre coupe
+                // `min-w-0`: without it, a long name pushes the row instead of being cut
                 h(
                   'button',
                   {
@@ -104,7 +104,7 @@ export const CycleMenu: Component<CycleMenuProps> = (props) => {
                     h('path', { d: 'M8.2 1.8 10.2 3.8 4.4 9.6 1.8 10.2 2.4 7.6z', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.1', 'stroke-linejoin': 'round' })
                   )
                 ),
-                // le dernier montage ne se supprime pas : il n'y aurait plus rien a jouer
+                // the last montage cannot be deleted: there would be nothing left to play
                 props.cycles.length > 1
                   ? h(
                       'button',

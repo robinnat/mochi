@@ -5,8 +5,8 @@ import { copyPossible } from '@/ui/capture'
 import { ACTIONS, DEFAULT_ACTION, type ActionId, type StateExport } from '@/ui/export'
 
 /**
- * Barre d'export de l'avatar : un bouton pour le format courant, et une fleche accolee pour les autres. Purement
- * presentationnelle : c'est `App` qui possede le SVG a capturer. Le menu s'ouvre vers le HAUT.
+ * Avatar export bar: a button for the current format, and an attached arrow for the others. Purely presentational:
+ * `App` owns the SVG to capture. The menu opens UPWARDS.
  */
 export interface ExportBarProps {
   state: StateExport
@@ -31,10 +31,10 @@ export const ExportBar: Component<ExportBarProps> = (props) => {
   const open = ref(false)
   let root: HTMLElement | null = null
 
-  /** La copie d'IMAGE n'est pas proposee la ou le navigateur ne sait pas en ecrire. */
+  /** IMAGE copy is not offered where the browser cannot write one. */
   const actions = ACTIONS.filter((a) => a.mode !== 'copyImage' || copyPossible())
   const busy = computed(() => props.state === 'busy')
-  /** Le bouton principal rend compte de ce qui vient de se passer. */
+  /** The main button reports what just happened. */
   const label = computed(() => {
     if (props.state === 'export') return t('export.done')
     if (props.state === 'copy') return t('export.copied')
@@ -92,7 +92,7 @@ export const ExportBar: Component<ExportBarProps> = (props) => {
             : iconDownload('17'),
           label.value
         ),
-        // pleine hauteur : le conteneur est en `flex`, l'etirement suffit
+        // full height: the container is `flex`, stretching is enough
         h('div', { class: 'w-px self-stretch bg-current opacity-25' }),
         h(
           'button',

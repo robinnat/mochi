@@ -1,55 +1,49 @@
 /**
- * Reglages et mises en forme de la piste de montage. Tout est pur : la piste
- * n'a besoin d'aucun DOM pour savoir ou tomber, ce qui rend ses graduations
- * testables — c'est la meme discipline que `src/bot/`, appliquee a l'affichage.
+ * Settings and formatting of the montage track. Everything is pure: the track needs no DOM to know where to land,
+ * which makes its ticks testable (the same discipline as `src/bot/`, applied to display).
  */
 
 /**
- * Largeur d'une carte, en pixels par seconde : la duree se lit donc directement
- * dans la piste. Le zoom multiplie cette echelle — il ne change jamais le
- * montage, seulement la loupe qu'on pose dessus.
+ * Width of a card, in pixels per second: the duration reads directly on the track. Zoom multiplies this scale: it
+ * never changes the montage, only the lens put on it.
  */
 export const BASE_SCALE = 44
 
 /**
- * Bornes de la loupe : au plus petit, le montage releve sur la video tient
- * entier dans la piste ; au plus grand, une carte reste manipulable sans
- * devenir un mur.
+ * Zoom bounds: at the smallest, the montage measured on the video fits whole in the track; at the largest, a card
+ * stays easy to handle without becoming a wall.
  */
 export const MIN_ZOOM = 0.45
 export const MAX_ZOOM = 2.4
 
-/** Ecart minimal entre deux reperes chiffres de la regle, en pixels. */
+/** Minimum gap between two numbered marks of the ruler, in pixels. */
 const TICK_SPACING = 52
 
-/** Pas possibles de la regle, du plus fin au plus large. */
+/** Possible ruler steps, from finest to widest. */
 const STEPS = [0.5, 1, 2, 5, 10, 15, 30, 60]
 
 export function clampZoom(v: number) {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v))
 }
 
-/** `0:04` — les dixiemes changeraient trop vite pour etre lisibles. */
+/** `0:04`: tenths would change too fast to be readable. */
 export function mmss(t: number) {
   const s = Math.max(0, Math.floor(t))
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
 /*
- * Les durees en secondes ne sont PAS mises en forme ici : le separateur decimal
- * change avec la langue (virgule en francais, point en anglais) et l'unite se
- * traduit. Elles passent donc par `seconds` / `secondsShort` de `@/i18n`,
- * qui a la langue courante — ce module, lui, reste pur.
+ * Durations in seconds are NOT formatted here: the decimal separator changes with the language (comma in French,
+ * point in English) and the unit is translated. They go through `seconds` / `secondsShort` of `@/i18n`, which knows
+ * the current language; this module stays pure.
  *
- * `mmss` reste : le format mm:ss n'a ni unite ni separateur decimal.
+ * `mmss` stays: the mm:ss format has no unit and no decimal separator.
  */
 
 /**
- * Reperes de la regle pour une duree et une echelle donnees. Le pas chiffre est
- * le premier de `STEPS` qui laisse `TICK_SPACING` entre deux nombres : c'est ce
- * qui fait qu'en dezoomant on passe de 1 s a 5 s puis a 10 s au lieu d'empiler
- * des chiffres illisibles. Les reperes intermediaires n'apparaissent que s'ils
- * ne se collent pas les uns aux autres.
+ * Ruler marks for a given duration and scale. The numbered step is the first of `STEPS` that leaves `TICK_SPACING`
+ * between two numbers: zooming out goes from 1 s to 5 s then 10 s instead of piling up unreadable figures. In-between
+ * marks only appear when they do not stick to each other.
  */
 export function ticksFor(total: number, scale: number): Array<{ t: number; major: boolean }> {
   const major = STEPS.find((s) => s * scale >= TICK_SPACING) ?? STEPS[STEPS.length - 1]!
@@ -63,15 +57,13 @@ export function ticksFor(total: number, scale: number): Array<{ t: number; major
 }
 
 /**
- * Plafond du nombre de graduations. Garde-fou et non reglage.
+ * Cap on the number of ticks. A guard, not a setting.
  *
- * `parseCycles` borne deja la taille d'un montage relu, mais cette fonction ne doit pas
- * dependre de ce garde-la pour rester bornee : elle rend un objet par graduation et le
- * composant un `<span>` par objet, donc une duree aberrante — un montage bricole a la
- * main, un zoom extreme — se paie en centaines de milliers de noeuds et l'onglet fige.
+ * `parseCycles` already bounds the size of a montage read back, but this function must not rely on that guard to stay
+ * bounded: it returns one object per tick and the component one `<span>` per object, so an absurd duration (a
+ * hand-edited montage, an extreme zoom) costs hundreds of thousands of nodes and the tab freezes.
  *
- * Deux mille couvre trente minutes de montage au zoom le plus fin, soit bien plus que ce
- * que `MAX_BLOCKS` autorise a relire. La regle est de toute facon plus large que l'ecran :
- * la piste defile, elle n'affiche jamais tout.
+ * Two thousand covers thirty minutes of montage at the finest zoom, far more than `MAX_BLOCKS` allows to read back.
+ * The ruler is wider than the screen anyway: the track scrolls, it never shows everything.
  */
 const MAX_TICKS = 2000

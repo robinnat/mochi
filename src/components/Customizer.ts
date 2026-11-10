@@ -19,8 +19,8 @@ export interface CustomizerProps {
 }
 
 /**
- * Les vignettes sont figees a la meme date que la pose de repos : elles montrent
- * la forme et le visage tels qu'ils apparaitront, pas un aplat abstrait.
+ * Thumbnails are frozen at the same time as the resting pose: they show the shape and the face as they will appear,
+ * not an abstract flat swatch.
  */
 const PREVIEW_AT = 1
 
@@ -28,7 +28,7 @@ export const Customizer: Component<CustomizerProps> = (props) => () =>
   h(
     'div',
     null,
-    // le style en premier : c'est le choix qui change le plus l'avatar
+    // style first: it is the choice that changes the avatar the most
     h('h2', { class: 'text-sm font-semibold' }, t('panel.style')),
     h(
       'div',
@@ -47,7 +47,7 @@ export const Customizer: Component<CustomizerProps> = (props) => () =>
         })
       )
     ),
-    // le contour : les trois styles
+    // the outline: all three styles
     h(
       'label',
       { class: 'mt-3 flex cursor-pointer items-center gap-2 text-xs' },
@@ -111,7 +111,7 @@ export const Customizer: Component<CustomizerProps> = (props) => () =>
             'aria-pressed': col.id === props.color,
             onClick: () => props.onColor(col.id)
           },
-          // lisere interne : sinon la pastille creme disparait sur fond clair
+          // inner rim: otherwise the cream dot disappears on a light background
           h('span', { class: 'block h-[78%] w-[78%] rounded-full ring-1 ring-black/10 ring-inset', style: { background: col.hex } })
         )
       )

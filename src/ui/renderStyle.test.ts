@@ -14,32 +14,31 @@ import {
 } from './renderStyle'
 
 /**
- * Le choix du style de rendu. Le moteur et ses cinq etats ne bougent pas : seul le
- * dessin change, donc ce qui est verrouille ici, c'est le catalogue, sa valeur par defaut
- * et la facon dont une valeur relue du stockage est acceptee ou refusee.
+ * The render style choice. The engine and its five states do not move: only the drawing changes, so what is locked
+ * here is the catalog, its default value and how a value read back from storage is accepted or refused.
  */
-describe('catalogue des styles', () => {
-  it('garde la 3D douce (Soft) par defaut', () => {
+describe('style catalog', () => {
+  it('keeps the soft 3D (Soft) as default', () => {
     expect(DEFAULT_RENDER_STYLE).toBe('3d')
     expect(RENDER_STYLES[0]).toBe('3d')
   })
 
-  it('ne propose que trois styles, tous en vraie 3D : Soft, Flat, Pixel', () => {
+  it('only offers three styles, all real 3D: Soft, Flat, Pixel', () => {
     expect(RENDER_STYLES).toEqual(['3d', 'flat3d', 'pixel3d'])
   })
 
-  it("refuse les anciens styles 2D relus du stockage : l'application retombe sur Soft", () => {
+  it("refuses old 2D styles read back from storage: the app falls back to Soft", () => {
     for (const old of ['original', 'pixel', 'argile', 'bubble']) expect(isRenderStyle(old)).toBe(false)
   })
 
-  it('refuse une value inconnue relue du stockage', () => {
+  it('refuses an unknown value read back from storage', () => {
     for (const id of RENDER_STYLES) expect(isRenderStyle(id)).toBe(true)
     expect(isRenderStyle('4d')).toBe(false)
     expect(isRenderStyle('')).toBe(false)
     expect(isRenderStyle('constructor')).toBe(false)
   })
 
-  it('suit le reglage courant quand le composant ne recoit pas de style', () => {
+  it('follows the current setting when the component gets no style', () => {
     currentRenderStyle.value = 'flat3d'
     expect(effectiveRenderStyle(undefined)).toBe('flat3d')
     expect(effectiveRenderStyle('pixel3d')).toBe('pixel3d')
@@ -47,29 +46,29 @@ describe('catalogue des styles', () => {
     expect(effectiveRenderStyle(undefined)).toBe('3d')
   })
 
-  it('ignore un style inconnu passe au composant (ancien style 2D compris)', () => {
+  it('ignores an unknown style given to the component (old 2D style included)', () => {
     expect(effectiveRenderStyle('argile')).toBe('3d')
     expect(effectiveRenderStyle('original')).toBe('3d')
   })
 
-  it('nomme le fichier exporte avec le style reel', () => {
+  it('names the exported file with the real style', () => {
     expect(renderStyleSuffix('3d')).toBe('3d')
     expect(renderStyleSuffix('pixel3d')).toBe('pixel3d')
   })
 })
 
-describe('taille des pixels', () => {
-  it('a trois tailles, la plus fine par defaut', () => {
+describe('pixel size', () => {
+  it('has three sizes, the finest by default', () => {
     expect(PIXEL_SIZES.map((p) => p.id)).toEqual(['large', 'medium', 'fine'])
     expect(DEFAULT_PIXEL).toBe('fine')
     expect(isPixelSize('medium')).toBe(true)
     expect(isPixelSize('enorme')).toBe(false)
   })
 
-  it('donne une boule de 16 a 32 pixels de diametre', () => {
+  it('gives a ball 16 to 32 pixels wide', () => {
     for (const p of PIXEL_SIZES) {
       const g = pixelGrid(p.id)
-      // la grille couvre tout le viewBox, la boule n'en occupe que RAYON / DEMI_VIEWBOX
+      // the grid covers the whole viewBox, the ball only takes RADIUS / HALF_VIEWBOX of it
       const diameter = (g * RADIUS) / HALF_VIEWBOX
       expect(diameter).toBeGreaterThanOrEqual(15.5)
       expect(diameter).toBeLessThanOrEqual(32.5)

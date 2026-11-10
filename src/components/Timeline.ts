@@ -11,11 +11,11 @@ import { MAX_ZOOM, MIN_ZOOM, mmss } from '@/ui/timeline'
 import { nameOfCycle, plural, t } from '@/i18n'
 
 /**
- * Barre de montage : elle tient les cycles (choix, creation, renommage, suppression) et la lecture. La piste
- * elle-meme est dans `TimelineTrack` : ici on ne sait rien des gestes, la-bas on ne sait rien des cycles.
+ * Montage bar: it holds the cycles (choice, creation, renaming, deletion) and playback. The track itself is in
+ * `TimelineTrack`: here we know nothing of gestures, there nothing of cycles.
  */
 export interface TimelineProps {
-  /** temps ecoule dans le bloc courant, pour le compteur */
+  /** time elapsed in the current block, for the counter */
   elapsed: number
   shape: string
   color: string
@@ -28,7 +28,7 @@ export interface TimelineProps {
   onActiveId: (v: string) => void
   onBlock: (v: number) => void
   onPlaying: (v: boolean) => void
-  /** deplacement de la tete de lecture : seul le lecteur sait recaler le moteur */
+  /** moving the playhead: only the player can set the engine again */
   onSeek: (s: number) => void
   onPreview: () => void
   onExporter: () => void
@@ -51,16 +51,16 @@ export const Timeline: Component<TimelineProps> = (props) => {
   const total = computed(() => totalDuration(blocks.value))
   const at = computed(() => offsetOf(blocks.value, block.value) + props.elapsed)
 
-  /** Nommage d'un cycle : meme boite pour la creation et le renommage ; la creation n'a lieu qu'a la validation. */
+  /** Naming a cycle: the same dialog for creating and renaming; creation only happens on validation. */
   const naming = ref<{ mode: 'create' | 'rename'; id?: string } | null>(null)
   const nameDraft = ref('')
   const nameOpen = ref(false)
-  /** Montage en attente de confirmation de suppression. */
+  /** Montage waiting for deletion confirmation. */
   const removing = ref<Cycle | null>(null)
   const confirmOpen = ref(false)
   const removingDetail = computed(() => plural('dialog.removeDetail', removing.value?.blocks.length ?? 0))
 
-  /** Remplace le cycle courant : les cycles sont des valeurs, jamais mutees. */
+  /** Replaces the current cycle: cycles are values, never mutated. */
   function edit(next: Partial<Cycle>) {
     cycles.value = cycles.value.map((x) => (x.id === cycle.value.id ? { ...x, ...next } : x))
   }
@@ -76,7 +76,7 @@ export const Timeline: Component<TimelineProps> = (props) => {
   function askRename(id: string) {
     naming.value = { mode: 'rename', id }
     const aims = cycles.value.find((x) => x.id === id)
-    // le montage d'amorce n'a pas de nom propre : on part de celui qui s'affiche
+    // the seed montage has no own name: we start from the one displayed
     nameDraft.value = aims ? nameOfCycle(aims) : ''
     nameOpen.value = true
   }
@@ -85,7 +85,7 @@ export const Timeline: Component<TimelineProps> = (props) => {
     naming.value = null
     if (!request) return
     if (request.mode === 'create') {
-      // jamais de cycle vide : le lecteur aurait un montage sans rien a jouer
+      // never an empty cycle: the player would have a montage with nothing to play
       const fresh: Cycle = { id: nextCycleId(cycles.value), name: uniqueName(name, cycles.value), blocks: [makeBlock('idle')] }
       cycles.value = [...cycles.value, fresh]
       select(fresh.id)
@@ -95,7 +95,7 @@ export const Timeline: Component<TimelineProps> = (props) => {
     const unique = uniqueName(name, others)
     cycles.value = cycles.value.map((x) => (x.id === request.id ? { ...x, name: unique } : x))
   }
-  /** Suppression d'un montage : jamais sans confirmation, c'est irreversible. */
+  /** Deleting a montage: never without confirmation, it cannot be undone. */
   function askRemove(id: string) {
     removing.value = cycles.value.find((x) => x.id === id) ?? null
     confirmOpen.value = true
@@ -110,15 +110,15 @@ export const Timeline: Component<TimelineProps> = (props) => {
   }
 
   /*
-   * Barre de montage fixee en bas, sans fond ni cadre au-dessus de 64rem (la page ne defile pas, rien ne passe
-   * derriere). `lg:left-[4.5rem]` repond a `lg:right-[24.5rem]` : la bande couvre EXACTEMENT la colonne de l'avatar.
-   * En dessous de 64rem la page defile : fond et filet du haut.
+   * Montage bar fixed at the bottom, with no background or frame above 64rem (the page does not scroll, nothing
+   * passes behind). `lg:left-[4.5rem]` matches `lg:right-[24.5rem]`: the band covers EXACTLY the avatar column. Below
+   * 64rem the page scrolls: background and top line.
    */
   return () =>
     h(
       'div',
       { class: 'fixed inset-x-0 bottom-0 z-30 h-[var(--timeline)] px-6 pt-3 pb-5 max-lg:border-t max-lg:border-[var(--line)] max-lg:bg-[var(--paper)] max-lg:px-5 lg:right-[24.5rem] lg:left-[4.5rem]' },
-      // lecture : flottante au-dessus de la piste ; les compteurs disparaissent sous 64rem
+      // playback: floating above the track; counters disappear under 64rem
       h(
         'div',
         { class: 'absolute -top-5 left-1/2 flex -translate-x-1/2 items-center gap-3' },
@@ -137,11 +137,11 @@ export const Timeline: Component<TimelineProps> = (props) => {
         ),
         h('span', { class: 'text-sm tabular-nums text-[var(--muted)] max-lg:hidden' }, mmss(total.value))
       ),
-      // rien ne se selectionne dans une barre d'outils
+      // nothing gets selected in a toolbar
       h(
         'div',
         { class: 'flex h-full flex-col gap-2 select-none' },
-        // le nom du montage a gauche, ce qu'on en fait a droite (l'export est une action sur le CYCLE)
+        // the montage name on the left, what you do with it on the right (export is an action on the CYCLE)
         h(
           'div',
           { class: 'flex items-center justify-between gap-1' },
@@ -163,7 +163,7 @@ export const Timeline: Component<TimelineProps> = (props) => {
               onClick: () => props.onExporter()
             },
             iconDownload('16'),
-            // `sr-only` et pas `hidden` : le libelle reste le NOM accessible du bouton reduit a son icone
+            // `sr-only` and not `hidden`: the label stays the accessible NAME of the icon-only button
             h('span', { class: 'max-sm:sr-only' }, t('timeline.export'))
           )
         ),
@@ -181,13 +181,13 @@ export const Timeline: Component<TimelineProps> = (props) => {
           onAdd: (s) => edit({ blocks: blocksWith(blocks.value, s) }),
           onSeek: (s) => props.onSeek(s)
         }),
-        // barre d'outils, dans le coin : loupe, compteur, apercu
+        // toolbar, in the corner: zoom, counter, preview
         h(
           'div',
           { class: 'flex shrink-0 items-center justify-end gap-4 max-sm:gap-2' },
           c(ZoomSlider, { zoom: zoom.value, onZoom: (v) => (zoom.value = v), min: MIN_ZOOM, max: MAX_ZOOM }),
           h('p', { class: 'text-xs tabular-nums text-[var(--muted)]' }, h('span', { class: 'text-[var(--ink)]' }, mmss(at.value)), ` / ${mmss(total.value)}`),
-          // infobulle au survol ET au focus clavier, comme la barre laterale
+          // tooltip on hover AND on keyboard focus, like the side bar
           h(
             'span',
             { class: 'group relative flex' },

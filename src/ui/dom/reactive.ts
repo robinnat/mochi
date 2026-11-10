@@ -1,19 +1,18 @@
 /**
- * Reactivite minimale, sans dependance : `ref`, `computed`, `watch`, `watchEffect`, `nextTick`.
+ * Minimal reactivity, with no dependency: `ref`, `computed`, `watch`, `watchEffect`, `nextTick`.
  *
- * C'est tout ce dont le site, l'application et le composant `<mochi-bot>` ont besoin pour suivre
- * un etat et ne refaire que ce qui depend de ce qui a change. Le fonctionnement est le classique
- * « effet qui lit des valeurs, valeurs qui previennent leurs lecteurs » :
+ * That is all the site, the app and the `<mochi-bot>` component need to track a state and only redo what depends on
+ * what changed. It works the classic way, "an effect reads values, values notify their readers":
  *
- * - une `ref` garde une valeur et la liste des effets qui l'ont lue ;
- * - un effet relit ses sources a chaque passage, ce qui tient sa liste de dependances a jour ;
- * - les reactions (`watch`, rendu des composants) ne partent pas tout de suite : elles sont mises
- *   en file et jouees ensemble a la fin de la tache courante (microtache), dans cet ordre : les
- *   observateurs ordinaires, puis les rendus (parents avant enfants), puis les observateurs
- *   `flush: 'post'`, qui voient donc le DOM a jour. `nextTick()` attend la fin de cette file.
+ * - a `ref` keeps a value and the list of effects that read it;
+ * - an effect reads its sources again on each pass, which keeps its dependency list up to date;
+ * - reactions (`watch`, component rendering) do not run at once: they are queued and played together at the end of
+ *   the
+ *   current task (microtask), in this order: ordinary watchers, then renders (parents before children), then
+ *   `flush: 'post'` watchers, which therefore see the updated DOM. `nextTick()` waits for the end of that queue.
  *
- * Les noms et le comportement suivent volontairement l'usage courant (une `ref` a un `.value`),
- * pour que le code qui s'en sert se lise sans documentation.
+ * Names and behavior deliberately follow common usage (a `ref` has a `.value`), so the code using it reads without
+ * docs.
  */
 
 export interface Ref<T> {
@@ -66,7 +65,7 @@ function follow(dep: Dep) {
 
 function trigger(dep: Dep) {
   for (const e of [...dep]) {
-    // un effet qui modifie ce qu'il lit ne se relance pas lui-meme
+    // an effect that changes what it reads does not rerun itself
     if (e === effectCurrent) continue
     if (e.scheduler) e.scheduler()
     else e.run()
@@ -74,8 +73,8 @@ function trigger(dep: Dep) {
 }
 
 /**
- * Execute `fn` sans que ses lectures soient suivies par l'effet en cours. Les effets crees dedans (un `watch`,
- * un `computed`) suivent normalement leurs propres lectures.
+ * Runs `fn` without its reads being tracked by the current effect. Effects created inside (a `watch`, a `computed`)
+ * track their own reads normally.
  */
 export function untracked<T>(fn: () => T): T {
   const before = effectCurrent
@@ -94,7 +93,7 @@ const IS_REF = Symbol('ref')
 class RefImpl<T> {
   readonly [IS_REF] = true
   dep: Dep = new Set()
-  /** incremente a chaque changement : `watch` s'en sert pour savoir qu'une source a bouge */
+  /** incremented on each change: `watch` uses it to know a source moved */
   version = 0
   constructor(
     private v: T,
@@ -119,14 +118,14 @@ export function ref<T>(value?: T): Ref<T | undefined> {
 }
 
 /**
- * Comme `ref`, mais un `watch` qui l'observe se relance a CHAQUE signal, meme si l'objet garde est le
- * meme : c'est ce qui permet de muter une image en place puis de prevenir avec `triggerRef`.
+ * Like `ref`, but a `watch` observing it reruns on EVERY signal, even if the kept object is the same: that lets you
+ * mutate an image in place then notify with `triggerRef`.
  */
 export function shallowRef<T>(value: T): Ref<T> {
   return new RefImpl(value, true)
 }
 
-/** Previent les lecteurs d'une ref sans changer sa valeur (apres une mutation en place). */
+/** Notifies a ref's readers without changing its value (after an in-place mutation). */
 export function triggerRef(r: Ref<unknown>) {
   const i = r as unknown as RefImpl<unknown>
   i.version++
@@ -193,7 +192,7 @@ function clear() {
   try {
     let turns = 0
     while (fileBefore.length || fileRender.length || fileAfter.length) {
-      // garde-fou : une boucle de reactions qui ne converge pas ne doit pas figer la page
+      // guard: a loop of reactions that does not converge must not freeze the page
       if (++turns > 1000) {
         console.error('mochi: reactions sans fin, file videe')
         fileBefore.length = fileRender.length = fileAfter.length = 0
@@ -201,7 +200,7 @@ function clear() {
       }
       while (fileBefore.length) fileBefore.shift()!()
       if (fileRender.length) {
-        // parents d'abord : un parent rendu met a jour ses enfants dans la foulee
+        // parents first: a rendered parent updates its children right away
         fileRender.sort((a, b) => a.id - b.id)
         while (fileRender.length) fileRender.shift()!.job()
         continue
@@ -223,13 +222,13 @@ export function schedule(job: Job, flush: Flush = 'pre') {
   lancer()
 }
 
-/** File des rendus de composants, triee par numero d'ordre (un parent est cree avant ses enfants). */
+/** Queue of component renders, sorted by order number (a parent is created before its children). */
 export function scheduleRender(id: number, job: Job) {
   if (!fileRender.some((x) => x.job === job)) fileRender.push({ id, job })
   lancer()
 }
 
-/** Attend que les reactions en attente (observateurs, rendus) aient toutes ete jouees. */
+/** Waits until pending reactions (watchers, renders) have all run. */
 export function nextTick<T = void>(fn?: () => T): Promise<T> {
   const p = enCours ?? resolue
   return (fn ? p.then(fn) : p) as Promise<T>
@@ -238,9 +237,8 @@ export function nextTick<T = void>(fn?: () => T): Promise<T> {
 /* ------------------------------------------------------------- nettoyage */
 
 /**
- * Portee de nettoyage : tout ce qui est cree pendant `within(scope, ...)` (observateurs, valeurs
- * calculees, `onCleanup`) est arrete par `scope.stop()`. Les composants en ouvrent une
- * chacun ; en dehors (module charge une fois), rien n'est jamais arrete, et c'est voulu.
+ * Cleanup scope: everything created during `within(scope, ...)` (watchers, computed values, `onCleanup`) is stopped
+ * by `scope.stop()`. Each component opens one; outside (a module loaded once), nothing is ever stopped, on purpose.
  */
 export class Scope {
   private fns: (() => void)[] = []
@@ -278,7 +276,7 @@ function saveCleanup(fn: () => void) {
   scopeCurrent?.add(fn)
 }
 
-/** Fonction appelee quand la portee courante (le composant) s'arrete. */
+/** Function called when the current scope (the component) stops. */
 export function onCleanup(fn: () => void) {
   saveCleanup(fn)
 }
@@ -310,7 +308,7 @@ export function watch(
   const list = Array.isArray(source)
   const getter = list ? () => (source as Source<unknown>[]).map(read) : () => read(source as Source<unknown>)
   const sources = (list ? source : [source]) as Source<unknown>[]
-  // comme une `shallowRef` se signale aussi sans changer de valeur, sa presence force le rappel
+  // since a `shallowRef` also signals without changing value, its presence forces the call
   const force = sources.some((s) => s instanceof RefImpl && s.superficielle)
   let before: unknown = INIT
   const job = () => {
@@ -333,7 +331,7 @@ export function watch(
   return stop
 }
 
-/** Effet relance (en file) a chaque changement de ce qu'il lit ; le premier passage est immediat. */
+/** Effect rerun (queued) on each change of what it reads; the first pass is immediate. */
 export function watchEffect(fn: () => void, o: { flush?: Flush } = {}): () => void {
   const effect = new Effect(fn, () => schedule(job, o.flush))
   const job = () => {
@@ -346,8 +344,8 @@ export function watchEffect(fn: () => void, o: { flush?: Flush } = {}): () => vo
 }
 
 /**
- * Une valeur lue et ecrite ailleurs, presentee comme une ref : typiquement une prop d'un composant et la
- * fonction qui previent le parent (`link(() => props.open, (v) => props.onOpen(v))`).
+ * A value read and written elsewhere, shown as a ref: typically a component prop and the function that notifies the
+ * parent (`link(() => props.open, (v) => props.onOpen(v))`).
  */
 export function link<T>(read: () => T, write: (v: T) => void): Ref<T> {
   return {
@@ -360,7 +358,7 @@ export function link<T>(read: () => T, write: (v: T) => void): Ref<T> {
   }
 }
 
-/** Change la valeur d'une ref SANS prevenir ses lecteurs (un gestionnaire d'evenement neuf mais equivalent). */
+/** Changes a ref's value WITHOUT notifying its readers (a new but equivalent event handler). */
 export function setWithoutSignal<T>(r: Ref<T>, v: T) {
   ;(r as unknown as { v: T }).v = v
 }

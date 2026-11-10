@@ -1,53 +1,43 @@
 /**
- * Encodage video de l'animation, en MP4.
+ * Video encoding of the animation, as MP4.
  *
- * Seul module du projet a dependre d'une bibliotheque externe, et il le fait en import
- * DYNAMIQUE : mediabunny pese 43 ko gzip en import statique, soit plus que les
- * 34 ko qui avaient fait ecarter une bibliotheque i18n au profit d'une couche maison. Charge
- * a la demande, il ne coute que 0,7 ko au chargement du site et n'arrive que le
- * jour ou quelqu'un exporte une video.
+ * The only module of the project that depends on an external library, and it does so through a DYNAMIC import:
+ * mediabunny weighs 43 kB gzip as a static import, more than the 34 kB that ruled out an i18n library in favor of an
+ * in-house layer. Loaded on demand, it only costs 0.7 kB when the site loads and only arrives the day someone exports
+ * a video.
  *
- * Ecrire le conteneur a la main comme pour le GIF et le WebP n'etait pas tenable
- * ici : un MP4 demande tout l'arbre de boites ISO BMFF et ses tables
- * d'echantillons, la ou un GIF tient en quelques centaines de lignes.
+ * Writing the container by hand as for GIF and WebP was not workable here: an MP4 needs the whole ISO BMFF box tree
+ * and its sample tables, while a GIF fits in a few hundred lines.
  *
- * La video est forcement OPAQUE. Verifie sur place : `VideoEncoder` refuse
- * `alpha: 'keep'`, en H.264 comme en VP9. C'est pour ca que l'export video impose
- * un fond, la ou le GIF laisse le choix.
+ * The video is necessarily OPAQUE. Checked on the spot: `VideoEncoder` refuses `alpha: 'keep'`, in H.264 as in VP9.
+ * That is why the video export forces a background, while the GIF leaves the choice.
  */
 
 import { stops } from './export'
 
 /**
- * QUANTISEUR explicite, et pas un niveau `QUALITY_*`.
+ * Explicit QUANTIZER, not a `QUALITY_*` level.
  *
- * Ce n'est pas un detail de reglage, c'est la clef de la qualite ici. Les niveaux
- * nommes de mediabunny ne fixent PAS de debit : quand le navigateur sait encoder
- * a quantiseur fixe — Chrome 117 et au-dela pour tous ces codecs — ils se
- * traduisent en `bitrateMode: 'quantizer'` et le debit calcule ne sert qu'a
- * choisir le niveau AVC de la chaine de codec. `QUALITY_HIGH` posait donc un QP de
- * 22, et augmenter un debit n'y aurait rien change.
+ * Not a tuning detail, it is the key to quality here. mediabunny's named levels do NOT set a bitrate: when the
+ * browser can encode at a fixed quantizer (Chrome 117 and later for all these codecs) they become `bitrateMode:
+ * 'quantizer'` and the computed bitrate only picks the AVC level of the codec string. `QUALITY_HIGH` set a QP of 22,
+ * and raising a bitrate would have changed nothing.
  *
- * Mesure sur une image du bot, erreur au bord contre la source :
- * QP 22 → 3,06 · QP 16 → 1,75 · QP 10 → 0,58. On prend 12, presque transparent,
- * pour environ 50 % d'octets de plus qu'a 22 — un export offline n'a pas de
- * contrainte de taille, et c'est le bord des formes qui fait toute l'impression
- * de proprete.
+ * Measured on a frame of the bot, edge error against the source: QP 22 -> 3.06 · QP 16 -> 1.75 · QP 10 -> 0.58. We
+ * take 12, almost transparent, for about 50 % more bytes than at 22: an offline export has no size constraint, and
+ * the edge of the shapes is what gives the clean impression.
  *
- * Le debit accompagne le quantiseur comme REPLI : si un navigateur ne sait pas
- * encoder a quantiseur fixe, mediabunny bascule dessus au lieu d'echouer. Six
- * megabits pour du 1024 a 30 images est genereux sur des aplats.
+ * The bitrate goes with the quantizer as a FALLBACK: if a browser cannot encode at a fixed quantizer, mediabunny
+ * switches to it instead of failing. Six megabits for 1024 at 30 fps is generous on flat colors.
  */
 const QP = 12
 const BITRATE_FALLBACK = 6_000_000
 
 /**
- * Encode une suite d'images en MP4.
+ * Encodes a series of frames into MP4.
  *
- * `renders` dessine l'image `i` DANS le canvas fourni, puis rend la main. Les images
- * ne sont jamais accumulees : chacune est encodee et jetee avant la suivante,
- * sans quoi un cycle de trente secondes tiendrait 255 Mo de pixels bruts en
- * memoire.
+ * `renders` draws frame `i` INTO the given canvas, then hands back. Frames are never accumulated: each is encoded and
+ * dropped before the next, otherwise a thirty-second cycle would hold 255 MB of raw pixels in memory.
  */
 export async function toMp4(
   canvas: HTMLCanvasElement,
@@ -71,21 +61,18 @@ export async function toMp4(
   await exit.start()
 
   /*
-   * A partir d'ici l'encodeur est OUVERT, donc tout chemin de sortie doit passer par
-   * `cancel`. Sans ca, une image qui echoue a se rendre laissait le `VideoEncoder`
-   * derriere elle : Chrome plafonne le nombre d'encodeurs materiels simultanes, si bien
-   * qu'apres quelques echecs les exports suivants tombaient a `start()` pour une raison
-   * qui n'avait plus rien a voir avec la cause reelle. Le lecteur hors ecran de
-   * `capture.ts` est ferme dans un `finally` pour la meme raison ; l'encodeur n'avait pas
-   * son equivalent.
+   * From here the encoder is OPEN, so every exit path must go through `cancel`. Without it, a frame that failed to
+   * render left the `VideoEncoder` behind: Chrome caps the number of simultaneous hardware encoders, so after a few
+   * failures the next exports failed at `start()` for a reason that had nothing to do with the real cause. The
+   * off-screen player of `capture.ts` is closed in a `finally` for the same reason; the encoder had no equivalent.
    */
   try {
     const duration = 1 / fps
     for (let i = 0; i < images; i++) {
       stops(signal)
       await renders(i)
-      // `await` sur chaque image et non en lot : c'est ce qui applique la
-      // contre-pression de l'encodeur, donc ce qui borne la memoire.
+      // `await` on each frame and not in a batch: that applies the
+      // encoder's back-pressure, and so bounds memory.
       await source.add(i * duration, duration)
       advance?.(i + 1, images)
     }
