@@ -435,7 +435,34 @@ export function heightNorm(c: FieldCushion, a: number, b: number): number {
 }
 
 /** Extent of the outline on the line `y = v` (axis `v`) or `x = v` (axis `h`): [min, max] or null. */
-function chord(pts: Point[], v: number, axis: 'v' | 'h'): [number, number] | null {
+/**
+ * `chord` on an outline already split into two flat arrays: `U` the coordinate along the axis, `W` the other one.
+ * Same edges, same formula, so the same chord; without the per-edge object reads and branches it was a sixth of a
+ * Mochi's frame for the shapes of revolution (v13).
+ */
+export function chordFlat(U: Float64Array, W: Float64Array, v: number): [number, number] | null {
+  let a = Infinity
+  let b = -Infinity
+  const n = U.length
+  let pu = U[n - 1]!
+  let pw = W[n - 1]!
+  // the edge (i - 1, i), starting with the closing edge (n - 1, 0): the set of edges is chord's
+  for (let i = 0; i < n; i++) {
+    const qu = U[i]!
+    const qw = W[i]!
+    if (pu > v !== qu > v) {
+      const t = (v - pu) / (qu - pu)
+      const w = pw + t * (qw - pw)
+      if (w < a) a = w
+      if (w > b) b = w
+    }
+    pu = qu
+    pw = qw
+  }
+  return a === Infinity ? null : [a, b]
+}
+
+export function chord(pts: Point[], v: number, axis: 'v' | 'h'): [number, number] | null {
   let a = Infinity
   let b = -Infinity
   for (let i = 0; i < pts.length; i++) {
@@ -588,8 +615,10 @@ export function inflate(
     // solid of revolution: same rings as the sphere, but the depth of each point is the
     // half width of the outline at its height (vertical axis) or its abscissa (horizontal axis)
     const axis = profile.revolution
+    const U = Float64Array.from(pts, (p) => (axis === 'v' ? p.y : p.x))
+    const W = Float64Array.from(pts, (p) => (axis === 'v' ? p.x : p.y))
     const zOf = (x: number, y: number) => {
-      const ch = chord(pts, axis === 'v' ? y : x, axis)
+      const ch = chordFlat(U, W, axis === 'v' ? y : x)
       if (!ch) return 0
       const mid = (ch[0] + ch[1]) / 2
       const hw = (ch[1] - ch[0]) / 2

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { BufferAttribute, BufferGeometry, Box3, MeshStandardMaterial, type Mesh, type Object3D } from 'three'
+import { BufferAttribute, BufferGeometry, Box3, MeshStandardMaterial, type Mesh, type Object3D } from './three'
 import { BotEngine } from '@/bot/engine'
 import { HALF_VIEWBOX, RADIUS } from '@/bot/frame'
 import { SHAPES } from '@/bot/skins'
@@ -715,7 +715,7 @@ describe('customizer shape change (09/11/2026)', () => {
 
   it('<mochi-bot> invalidates the accessory pose after the morph when the shape changes', () => {
     const src = readFileSync(new URL('../../components/mochi-bot.ts', import.meta.url), 'utf8')
-    expect(src).toContain('invalidateAccessories3d()')
+    expect(src).toContain('invalidateAccessories3d(slot ?? undefined)')
     expect(src).toMatch(/watch\(\s*\(\) => props\.shape/)
     expect(src).toContain('BotEngine.SHAPE_MORPH')
   })

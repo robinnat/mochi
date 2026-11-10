@@ -28,6 +28,8 @@ vi.mock('@/ui/3d/scene3d', () => ({
     scene.last = frame
   },
   invalidateAccessories3d: () => {},
+  avatarSlot: () => ({ mochi: null, texture: 0 }),
+  releaseSlot: () => {},
   warmUp: () => {}
 }))
 

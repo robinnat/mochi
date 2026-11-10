@@ -38,7 +38,7 @@ import {
   TubeGeometry,
   Vector2,
   Vector3
-} from 'three'
+} from './three'
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { rim } from './rim'
 import { colorOutline } from './material'

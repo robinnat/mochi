@@ -34,7 +34,7 @@ import {
   SRGBColorSpace,
   UnsignedByteType,
   WebGLRenderer
-} from 'three'
+} from './three'
 import type { BotFrame } from '@/bot/engine'
 import { HALF_VIEWBOX } from '@/bot/frame'
 import { mixHex } from '@/bot/skins'
@@ -491,7 +491,7 @@ export class Mochi3d {
     }
     geo.attributes.position!.needsUpdate = true
     geo.attributes.uv!.needsUpdate = true
-    geo.computeVertexNormals()
+    vertexNormals(geo)
     weldNormals(geo.attributes.normal!.array as Float32Array, pts.length, finesseOf(this.renderStyle).rings)
     // Flat and Pixel: clean steps on irregular normals make spots (cloud, flower,
     // star). The normals are smoothed before cutting into tones: the boundaries become clean curves.
@@ -623,35 +623,136 @@ export class Mochi3d {
 }
 
 /**
- * A few passes averaging normals with those of neighboring vertices (through the triangles), to erase triangulation
- * folds that read as spots under stepped shading.
+ * `BufferGeometry.computeVertexNormals` for an indexed mesh, the same operations in the same order (so the same
+ * numbers), on the typed arrays directly. Three's version goes through a `Vector3` read and write per corner: it was a
+ * quarter of a Mochi's frame (v13).
  */
-function smoothNormals(nor: BufferAttribute, index: ArrayLike<number>, passes: number) {
-  const n = nor.count
-  const acc = new Float32Array(n * 3)
-  const A = nor.array as Float32Array
-  for (let p = 0; p < passes; p++) {
-    acc.fill(0)
-    for (let t = 0; t < index.length; t += 3) {
-      const a = index[t]!
-      const b = index[t + 1]!
-      const c = index[t + 2]!
-      for (let d = 0; d < 3; d++) {
-        acc[a * 3 + d]! += A[b * 3 + d]! + A[c * 3 + d]!
-        acc[b * 3 + d]! += A[a * 3 + d]! + A[c * 3 + d]!
-        acc[c * 3 + d]! += A[a * 3 + d]! + A[b * 3 + d]!
-      }
-    }
-    for (let i = 0; i < n; i++) {
-      const x = A[i * 3]! * 2 + acc[i * 3]!
-      const y = A[i * 3 + 1]! * 2 + acc[i * 3 + 1]!
-      const z = A[i * 3 + 2]! * 2 + acc[i * 3 + 2]!
-      const l = Math.hypot(x, y, z) || 1
-      A[i * 3] = x / l
-      A[i * 3 + 1] = y / l
-      A[i * 3 + 2] = z / l
+export function vertexNormals(geo: BufferGeometry) {
+  const pos = geo.attributes.position as BufferAttribute
+  const index = geo.index!.array
+  let nor = geo.attributes.normal as BufferAttribute | undefined
+  if (!nor || nor.count !== pos.count) {
+    nor = new BufferAttribute(new Float32Array(pos.count * 3), 3)
+    geo.setAttribute('normal', nor)
+  }
+  const P = pos.array as Float32Array
+  const N = nor.array as Float32Array
+  N.fill(0)
+  for (let i = 0; i < index.length; i += 3) {
+    const a = index[i]! * 3
+    const b = index[i + 1]! * 3
+    const c = index[i + 2]! * 3
+    // cb = C - B, ab = A - B, cb x ab
+    const cbx = P[c]! - P[b]!
+    const cby = P[c + 1]! - P[b + 1]!
+    const cbz = P[c + 2]! - P[b + 2]!
+    const abx = P[a]! - P[b]!
+    const aby = P[a + 1]! - P[b + 1]!
+    const abz = P[a + 2]! - P[b + 2]!
+    const x = cby * abz - cbz * aby
+    const y = cbz * abx - cbx * abz
+    const z = cbx * aby - cby * abx
+    // read the three corners first, then write (a corner repeated in a triangle behaves as in Three)
+    const ax = N[a]! + x, ay = N[a + 1]! + y, az = N[a + 2]! + z
+    const bx = N[b]! + x, by = N[b + 1]! + y, bz = N[b + 2]! + z
+    const cx = N[c]! + x, cy = N[c + 1]! + y, cz = N[c + 2]! + z
+    N[a] = ax
+    N[a + 1] = ay
+    N[a + 2] = az
+    N[b] = bx
+    N[b + 1] = by
+    N[b + 2] = bz
+    N[c] = cx
+    N[c + 1] = cy
+    N[c + 2] = cz
+  }
+  for (let i = 0; i < N.length; i += 3) {
+    const x = N[i]!
+    const y = N[i + 1]!
+    const z = N[i + 2]!
+    const k = 1 / (Math.sqrt(x * x + y * y + z * z) || 1)
+    N[i] = x * k
+    N[i + 1] = y * k
+    N[i + 2] = z * k
+  }
+  nor.needsUpdate = true
+}
+
+/**
+ * Neighbors of each vertex through the triangles (each triangle gives a vertex its two other corners), in compressed
+ * rows: `nbr[off[i]..off[i+1]]`, each neighbor once with its count `w` (an inner edge belongs to two triangles).
+ * Computed once per index array (a mesh keeps its index from frame to frame).
+ */
+const NEIGHBORS = new WeakMap<object, { off: Uint32Array; nbr: Uint32Array; w: Float32Array }>()
+function neighborsOf(index: ArrayLike<number>, n: number) {
+  const known = NEIGHBORS.get(index as object)
+  if (known && known.off.length === n + 1) return known
+  const lists: Map<number, number>[] = Array.from({ length: n }, () => new Map())
+  const add = (a: number, b: number) => lists[a]!.set(b, (lists[a]!.get(b) ?? 0) + 1)
+  for (let t = 0; t < index.length; t += 3) {
+    const a = index[t]!
+    const b = index[t + 1]!
+    const c = index[t + 2]!
+    add(a, b)
+    add(a, c)
+    add(b, a)
+    add(b, c)
+    add(c, a)
+    add(c, b)
+  }
+  const off = new Uint32Array(n + 1)
+  for (let i = 0; i < n; i++) off[i + 1] = off[i]! + lists[i]!.size
+  const nbr = new Uint32Array(off[n]!)
+  const w = new Float32Array(off[n]!)
+  for (let i = 0; i < n; i++) {
+    let j = off[i]!
+    for (const [q, k] of lists[i]!) {
+      nbr[j] = q
+      w[j++] = k
     }
   }
+  const r = { off, nbr, w }
+  NEIGHBORS.set(index as object, r)
+  return r
+}
+
+let smoothBuffer: Float32Array = new Float32Array(0)
+/**
+ * A few passes averaging normals with those of neighboring vertices (through the triangles), to erase triangulation
+ * folds that read as spots under stepped shading. Each pass: twice the normal plus the sum of its neighbors (one per
+ * triangle corner), normalized. The neighbors are read from a list built once (v13: it was half a Mochi's frame).
+ */
+export function smoothNormals(nor: BufferAttribute, index: ArrayLike<number>, passes: number) {
+  const n = nor.count
+  const { off, nbr, w } = neighborsOf(index, n)
+  let A: Float32Array = nor.array as Float32Array
+  if (smoothBuffer.length < n * 3) smoothBuffer = new Float32Array(n * 3)
+  let B: Float32Array = smoothBuffer
+  const original = A
+  for (let p = 0; p < passes; p++) {
+    for (let i = 0; i < n; i++) {
+      let x = A[i * 3]! * 2
+      let y = A[i * 3 + 1]! * 2
+      let z = A[i * 3 + 2]! * 2
+      for (let j = off[i]!, e = off[i + 1]!; j < e; j++) {
+        const q = nbr[j]! * 3
+        const k = w[j]!
+        x += k * A[q]!
+        y += k * A[q + 1]!
+        z += k * A[q + 2]!
+      }
+      // sqrt rather than Math.hypot: several times faster, same value to the last float bits that a color can show
+      const l = 1 / (Math.sqrt(x * x + y * y + z * z) || 1)
+      B[i * 3] = x * l
+      B[i * 3 + 1] = y * l
+      B[i * 3 + 2] = z * l
+    }
+    const t = A
+    A = B
+    B = t
+  }
+  if (A !== original) original.set(A.subarray(0, n * 3))
+  else smoothBuffer = B
   nor.needsUpdate = true
 }
 
@@ -742,7 +843,10 @@ let share: {
   renderer: WebGLRenderer
   scene: Scene
   camera: OrthographicCamera
+  /** body shared by the callers that bring no slot (one-off renders, tools, thumbnails) */
   mochi: Mochi3d
+  /** body currently in the scene: the shared one or an avatar's own (see `AvatarSlot`) */
+  current: Mochi3d
   /** installed material and its lights: changed only when the material changes */
   renderStyle: Material
   softness: Softness
@@ -764,8 +868,51 @@ function context() {
   for (const x of l.all) scene.add(x)
   const mochi = new Mochi3d(512)
   scene.add(mochi.mesh)
-  share = { renderer, scene, camera, mochi, renderStyle: DEFAULT_MATERIAL, softness: DEFAULT_SOFTNESS, lights: l.all }
+  share = { renderer, scene, camera, mochi, current: mochi, renderStyle: DEFAULT_MATERIAL, softness: DEFAULT_SOFTNESS, lights: l.all }
   return share
+}
+
+/** Puts `m` in the shared scene in place of the body that was there (a single body is drawn at a time). */
+function install(ctx3: NonNullable<typeof share>, m: Mochi3d) {
+  if (ctx3.current === m) return
+  ctx3.scene.remove(ctx3.current.mesh)
+  ctx3.scene.add(m.mesh)
+  ctx3.current = m
+}
+
+/**
+ * An avatar's own 3D body (v13): its mesh cache, its face textures and its accessories, kept from one frame to the
+ * next. With a single body shared by every Mochi of the page, each one undid the previous one's work: accessories
+ * rebuilt with ray casting, face repainted and sent again to the GPU, for every Mochi, every frame (6 Mochis with
+ * accessories: 4 frames per second on a Mac). The WebGL context stays shared. Made by `avatarSlot`, freed by
+ * `releaseSlot`.
+ */
+export interface AvatarSlot {
+  mochi: Mochi3d | null
+  /** side of its face texture, in pixels */
+  texture: number
+}
+
+export function avatarSlot(): AvatarSlot {
+  return { mochi: null, texture: 0 }
+}
+
+/** Frees an avatar's body (geometries, textures, materials). The slot can be used again: a new body is made. */
+export function releaseSlot(slot: AvatarSlot) {
+  const m = slot.mochi
+  if (!m) return
+  slot.mochi = null
+  slot.texture = 0
+  if (share?.current === m) install(share, share.mochi)
+  m.liberer()
+}
+
+/**
+ * Side of an avatar's face texture: at least the rendered size (no texel is stretched over several pixels), 512 at
+ * most (the shared body's size). A 120 px Mochi no longer carries two 512 px canvases.
+ */
+export function textureSizeFor(px: number): number {
+  return px <= 256 ? 256 : 512
 }
 
 /**
@@ -775,6 +922,7 @@ function context() {
 export function warmUp() {
   const ctx3 = context()
   const { renderer, scene, camera, mochi } = ctx3
+  install(ctx3, mochi)
   const before = { renderStyle: ctx3.renderStyle, softness: ctx3.softness }
   const trials: [Material, Softness][] = [['soft', 'strong'], ['toon', DEFAULT_SOFTNESS], ['pixel', DEFAULT_SOFTNESS]]
   for (const [r, d] of trials) {
@@ -814,8 +962,8 @@ export function webglAvailable(): boolean {
 /**
  * Shape (or other body geometry) changed: accessories are placed again as soon as the body has finished morphing.
  */
-export function invalidateAccessories3d() {
-  share?.mochi.invalidateAccessories()
+export function invalidateAccessories3d(slot?: AvatarSlot) {
+  ;(slot ? slot.mochi : share?.mochi)?.invalidateAccessories()
 }
 
 export function renderAvatar(
@@ -853,11 +1001,28 @@ export function renderAvatar(
   /**
  * center of the frame in engine units (y up); the origin by default. Used to frame tight on accessories alone.
  */
-  center: { x: number; y: number } = { x: 0, y: 0 }
+  center: { x: number; y: number } = { x: 0, y: 0 },
+  /** the avatar's own body (`avatarSlot`); absent, the body shared by one-off renders */
+  slot?: AvatarSlot
 ) {
   color = bodyForTheme(color, theme, eyeContrast)
   const ctx3 = context()
-  const { renderer, scene, camera, mochi } = ctx3
+  const { renderer, scene, camera } = ctx3
+  // pixel: render 4 times bigger then downscale (average) before reducing to the palette
+  const px = target.width
+  const pixel = material === 'pixel'
+  const pxRender = pixel ? px * 4 : px
+  let mochi = ctx3.mochi
+  if (slot) {
+    const t = textureSizeFor(pxRender)
+    if (!slot.mochi || slot.texture !== t) {
+      releaseSlot(slot)
+      slot.mochi = new Mochi3d(t)
+      slot.texture = t
+    }
+    mochi = slot.mochi
+  }
+  install(ctx3, mochi)
   if (ctx3.renderStyle !== material || ctx3.softness !== softness) {
     // a page can show several materials: lights only change when needed
     for (const x of ctx3.lights) scene.remove(x)
@@ -884,10 +1049,6 @@ export function renderAvatar(
   }
   // the instance is shared: the angle is set again every frame, never kept from one avatar to the next
   mochi.mesh.rotation.y = yaw
-  const px = target.width
-  // pixel: render 4 times bigger then downscale (average) before reducing to the palette
-  const pixel = material === 'pixel'
-  const pxRender = pixel ? px * 4 : px
   mochi.fitOutline(pxRender / (2 * viewHalf))
   // The shared WebGL canvas only GROWS: each avatar renders in the bottom left corner (viewport + scissor),
   // then that square is copied. Resizing the canvas for each avatar (two sizes on screen) reallocated the drawing

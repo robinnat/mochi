@@ -12,6 +12,9 @@ export default defineConfig({
   build: {
     outDir: 'dist-lib',
     emptyOutDir: true,
+    // minified like the site (v13): the files are often served as is (`<script type="module">`). Vite leaves the
+    // whitespace of ES libraries by default, so the output asks for it.
+    rolldownOptions: { output: { minify: true } },
     lib: {
       // two public entries: `mochis` (the tag and everything else) and `mochis/catalog` (without the tag)
       entry: {
@@ -23,6 +26,10 @@ export default defineConfig({
     }
   },
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }
+    alias: [
+      // Three.js add-ons (BufferGeometryUtils) import 'three': point it at our single entry, one copy of each class
+      { find: /^three$/, replacement: fileURLToPath(new URL('./src/ui/3d/three.ts', import.meta.url)) },
+      { find: /^@\//, replacement: fileURLToPath(new URL('./src/', import.meta.url)) }
+    ]
   }
 })

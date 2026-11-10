@@ -13,6 +13,12 @@ import type { AccessoryChoice, Slot } from 'mochis/catalog'
  */
 const OF_FACE = SCROLL.filter((d) => !d.variant.back)
 const N = 12
+/**
+ * The first posters of the crowd load at once, with a high priority: they are the largest image of the first screen
+ * on a phone (the LCP). `index.html` asks for them before the scripts even run (`HERO_FIRST`, checked by a test).
+ */
+export const HERO_EAGER = 4
+export const HERO_FIRST = OF_FACE.slice(0, HERO_EAGER).map((d) => d.name)
 const labelOf = (i: number) =>
   (Object.entries(OF_FACE[i]!.variant.acc) as [Slot, AccessoryChoice][])
     .map(([e, ch]) => SITE_ACCESSORIES(e).find((a) => a.id === (typeof ch === 'string' ? ch : ch.id))?.label)
@@ -77,7 +83,7 @@ export const Hero: Component<Record<string, never>> = () => {
                   onClick: () => toucher(m.i)
                 },
                 // the key changes on each tap: the jump starts over
-                h('span', { key: active.value === m.i ? jump.value : 0, class: 'hx-mochi-i' }, c(Poster, { name: m.name, size: 166, eager: k < 4 }))
+                h('span', { key: active.value === m.i ? jump.value : 0, class: 'hx-mochi-i' }, c(Poster, { name: m.name, size: 166, eager: k < HERO_EAGER }))
               )
             )
           )

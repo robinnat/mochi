@@ -31,6 +31,8 @@ export default defineConfig({
   resolve: {
     // the site, the docs and the lab use Mochis like a user of the package: through its public entries
     alias: [
+      // Three.js add-ons (BufferGeometryUtils) import 'three': point it at our single entry, one copy of each class
+      { find: /^three$/, replacement: fileURLToPath(new URL('./src/ui/3d/three.ts', import.meta.url)) },
       { find: /^mochis$/, replacement: fileURLToPath(new URL('./src/index.ts', import.meta.url)) },
       { find: /^mochis\/catalog$/, replacement: fileURLToPath(new URL('./src/catalog.ts', import.meta.url)) },
       { find: /^@\//, replacement: fileURLToPath(new URL('./src/', import.meta.url)) }

@@ -5,6 +5,21 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed (performance)
+
+- **Each Mochi keeps its own 3D body** (meshes, face texture, accessories) while all of them still share one WebGL
+  context. Before, every Mochi undid the previous one's work every frame (accessories rebuilt with ray casting, face
+  repainted): 6 Mochis with accessories drew at 4 frames per second on a Mac, now 60.
+- **Off-screen Mochis draw nothing** (`IntersectionObserver`); their clock keeps going.
+- **Adaptive cadence**: when drawing every Mochi at every frame gets too heavy, each one draws every other frame (30 per
+  second, steady). A Mochi with its own `fps` keeps it.
+- **Faster mesh**: vertex normals, normal smoothing and the depth of the shapes of revolution are computed directly
+  on typed arrays (same results).
+- **Smaller download**: Three.js enters through `src/ui/3d/three.ts`, one class per source file, so it is tree-shaken
+  (site chunk 744 kB to 587 kB); the library build is minified.
+- **Site**: the wordmark font (Fredoka 600, Latin letters, 7 kB) is served with the site instead of a blocking Google
+  Fonts stylesheet; the first posters of the hero are fetched before the scripts run.
+
 ### Changed (breaking)
 
 - **Everything is in English, and the product is now called Mochis.** Public ids, attributes, events, methods and

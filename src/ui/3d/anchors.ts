@@ -9,7 +9,7 @@
  *
  * Imports `three`: only loaded through `scene3d.ts`, itself dynamic.
  */
-import { Box3, BufferGeometry, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Triangle, Vector3 } from 'three'
+import { Box3, BufferGeometry, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Triangle, Vector3 } from './three'
 
 export interface Impact {
   p: Vector3
