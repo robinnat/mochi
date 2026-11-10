@@ -1,0 +1,18 @@
+<!doctype html>
+<!-- Source of the images of public/renders/ (posters and thumbnails of the site, in real 3D). Dev page, not built: served
+  by `pnpm dev` at /tools/renders.html; headless Chrome (deviceScaleFactor 2) calls `window.renderAll()` and writes
+  each received image into public/renders/. See CLAUDE.md, "Generated files". -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mochi renders</title>
+    <style>
+      html, body { margin: 0; background: transparent; }
+      #scene { position: absolute; left: 0; top: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="scene"></div>
+    <script type="module" src="./renders.ts"></script>
+  </body>
+</html>

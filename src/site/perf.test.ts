@@ -1,50 +1,50 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const lire = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8')
-const scene = lire('../ui/trois/scene3d.ts')
-const acc = lire('../ui/trois/accessoires3d.ts')
+const read = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8')
+const scene = read('../ui/3d/scene3d.ts')
+const acc = read('../ui/3d/accessories3d.ts')
 
-/** Garde-fous de la v12 (06/11/2026) : ce qui rendait la 3D lente sur iPhone ne doit pas revenir. */
-describe('performance de la 3D (v12)', () => {
-  it('le canvas WebGL partage ne fait que grandir : chaque avatar se rend dans un viewport, sans setSize a chaque image', () => {
-    expect(scene).toContain('renderer.setViewport(0, 0, pxRendu, pxRendu)')
+/** Guards of v12 (06/11/2026): what made the 3D slow on iPhone must not come back. */
+describe('3D performance (v12)', () => {
+  it('the shared WebGL canvas only grows: each avatar renders in a viewport, without setSize every frame', () => {
+    expect(scene).toContain('renderer.setViewport(0, 0, pxRender, pxRender)')
     expect(scene).toContain('renderer.setScissorTest(true)')
-    expect(scene).not.toMatch(/if \(taille !== pxRendu\) renderer\.setSize/)
-    expect(scene).toMatch(/toileGl\.width < pxRendu/)
+    expect(scene).not.toMatch(/if \(size !== pxRender\) renderer\.setSize/)
+    expect(scene).toMatch(/canvasGl\.width < pxRender/)
   })
 
-  it('les accessoires ne sont pas reconstruits a chaque respiration : leur cle ne contient pas le contour du corps', () => {
-    expect(scene).toContain('const cleCorps = `${this.rendu}|${this.forme}`')
-    expect(scene).toContain('this.suivreCorps(bb)')
+  it('accessories are not rebuilt on every breath: their key does not hold the body outline', () => {
+    expect(scene).toContain('const keyBody = `${this.renderStyle}|${this.shape}`')
+    expect(scene).toContain('this.followBody(bb)')
     expect(acc).toContain('pieces(): Object3D[]')
     expect(acc).toContain('this.version++')
   })
 
-  it('le Pixel relit ses pixels sur une toile logicielle (willReadFrequently), pas sur la toile visible', () => {
+  it('Pixel reads its pixels back on a software canvas (willReadFrequently), not on the visible canvas', () => {
     expect(scene).toContain("getContext('2d', { willReadFrequently: true })")
     expect(scene).toContain('cp.getImageData(0, 0, px, px)')
     expect(scene).not.toContain('c.getImageData(0, 0, px, px)')
   })
 
-  it('les shaders des trois styles sont compiles a l avance, apres la premiere image', () => {
-    expect(scene).toContain('export function prechauffer()')
-    expect(lire('./pret.ts')).toContain('m.prechauffer()')
-    expect(lire('./Vivant.ts')).toContain('prechaufferStyles()')
+  it('the shaders of the three styles are compiled in advance, after the first frame', () => {
+    expect(scene).toContain('export function warmUp()')
+    expect(read('./ready.ts')).toContain('m.warmUp()')
+    expect(read('./Alive.ts')).toContain('warmUpStyles()')
   })
 
-  it('un Mochi vivant se tourne au doigt, et le defilement vertical reste a la page', () => {
-    const v = lire('./Vivant.ts')
+  it('a live Mochi turns with a finger, and vertical scrolling stays with the page', () => {
+    const v = read('./Alive.ts')
     expect(v).toContain('yaw: (props.yaw ?? 0) + spin.value')
     expect(v).toContain('setPointerCapture')
     expect(v).toContain('onPointerdown: onDown')
-    expect(lire('./site.css')).toMatch(/\.vivant\.tournable \{\s*touch-action: pan-y;/)
+    expect(read('./site.css')).toMatch(/\.alive\.turnable \{\s*touch-action: pan-y;/)
   })
 
-  it('personnalisation : le bouton change tout de suite, le Mochi recoit le changement a l image suivante', () => {
-    const p = lire('./PersoCorps.ts')
-    expect(p).toContain('const bot = shallowRef(etatBot())')
-    expect(p).toContain('rendu: b.rendu')
-    expect(p).toContain('shape: b.forme')
+  it('customization: the button changes at once, the Mochi gets the change on the next frame', () => {
+    const p = read('./BodyCustomizer.ts')
+    expect(p).toContain('const bot = shallowRef(stateBot())')
+    expect(p).toContain('renderStyle: b.renderStyle')
+    expect(p).toContain('shape: b.shape')
   })
 })

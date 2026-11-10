@@ -1,41 +1,32 @@
 /**
- * Ou poser le visage sur une forme du personnalisateur.
+ * Where to place the face on a customizer shape.
  *
- * Les yeux vivent sur une sphere, et `radiusAtAngle` les recolle au contour reel au
- * prorata du rayon local. Ce prorata place bien leur CENTRE, mais l'oeil a une taille :
- * la marge qui lui reste devant le bord est multipliee par le meme facteur, donc une
- * silhouette etroite dans sa direction le pousse contre le bord jusqu'a ce que le
- * masque l'ouvre vers l'exterieur. La gelule apparaissait comme une encoche dans le
- * corps sur `capsule`, `triangle`, `nuage` et `goutte`.
+ * The eyes live on a sphere, and `radiusAtAngle` sticks them back onto the real outline in proportion to the local
+ * radius. That places their CENTER right, but an eye has a size: the margin left in front of the edge is multiplied
+ * by the same factor, so a silhouette that is narrow in its direction pushes it against the edge until the mask opens
+ * it to the outside. The capsule showed as a notch in the body on `capsule`, `triangle`, `cloud` and `drop`.
  *
- * Ce module resout le probleme UNE FOIS, au chargement, et rend une table de decalages.
- * Ce choix est l'essentiel du correctif, bien plus que la geometrie qui suit :
+ * This module solves the problem ONCE, at load time, and returns a table of offsets. That choice is the core of the
+ * fix, far more than the geometry that follows:
  *
- * Resolue dans la boucle de rendu, la correction reagit a tout ce qui bouge a soixante
- * images par seconde — la derive du regard, le pointeur, l'expression en cours de
- * morph, le bord le plus proche qui change, l'oeil le plus contraint qui change. Sept
- * variantes ont ete ecrites ainsi et toutes produisaient un artefact de mouvement
- * visible : tremblement permanent, saut de direction de 26 unites quand le bord de
- * reference basculait, grossissement brusque quand la taille entrait dans le calcul.
- * Le defaut n'etait dans aucune de leurs geometries, il etait dans le fait de resoudre
- * par image.
+ * Solved in the render loop, the correction reacts to everything that moves at sixty frames per second: gaze drift,
+ * the pointer, the expression mid-morph, the nearest edge changing, the most constrained eye changing. Seven variants
+ * were written that way and all produced a visible motion artifact: constant shaking, a 26-unit direction jump when
+ * the reference edge flipped, sudden growth when the size entered the computation. The flaw was in none of their
+ * geometries, it was in solving per frame.
  *
- * Le reste du moteur ne travaille pas comme ca : les poses sont DECLAREES et il ne fait
- * que les interpoler avec des courbes connues. Un decalage tabule rentre dans ce moule.
- * Il ne bouge pas quand le regard derive ni quand le pointeur bouge, et sur un changement
- * de forme ou d'expression il ne fait qu'aller d'une entree de table a l'autre, sur la
- * courbe de ce morph. Le tremblement devient impossible par construction, au lieu d'etre
- * repousse : interpoler entre deux constantes est monotone, alors que re-resoudre le
- * probleme sur un regard en cours d'interpolation ne l'est pas.
+ * The rest of the engine does not work that way: poses are DECLARED and it only interpolates them with known curves.
+ * A tabulated offset fits that mold. It does not move when the gaze drifts or the pointer moves, and on a shape or
+ * expression change it only goes from one table entry to the other, along that morph's curve. Shaking becomes
+ * impossible by construction instead of being pushed back: interpolating between two constants is monotonic, while
+ * solving again on a gaze mid-interpolation is not.
  *
- * Corollaire agreable : le solveur n'a plus aucune contrainte de continuite, puisqu'il ne
- * tourne pas pendant l'animation. Il peut donc sonder tout un faisceau de directions et
- * couvrir le pire cas de la derive du regard, ce qu'une version par image ne pouvait pas
- * se permettre.
+ * A nice side effect: the solver no longer has any continuity constraint, since it does not run during animation. It
+ * can probe a whole fan of directions and cover the worst case of the gaze drift, which a per-frame version could not
+ * afford.
  *
- * La table est une constante de module, batie a l'import a partir de donnees pures :
- * meme nature que le calendrier de clignements de `face.ts`, deterministe et sans etat,
- * donc sans effet sur la purete de `engine.sample(t)`.
+ * The table is a module constant, built at import from pure data: the same kind of thing as the blink schedule of
+ * `face.ts`, deterministic and stateless, so it does not affect the purity of `engine.sample(t)`.
  */
 
 import { EXPRESSIONS, type BotExpression } from './expressions'
@@ -44,76 +35,71 @@ import { radiusAtAngle, toPoints, type Point } from './shape'
 import { SHAPES } from './skins'
 import { STATES, type Pose, type StateDef, type StateId } from './states'
 
-/** Rayon de reference du solveur. Le decalage rendu est en unites de ce rayon. */
+/** Reference radius of the solver. The returned offset is in units of this radius. */
 const R = 100
 
 /**
- * Amplitudes maximales de la vie au repos, lues sur `liveliness` : `loopNoise` est
- * borne a 1 en valeur absolue, donc ces sommes sont des bornes exactes et non des
- * estimations.
+ * Maximum amplitudes of the resting life, read off `liveliness`: `loopNoise` is bounded by 1 in absolute value, so
+ * these sums are exact bounds, not estimates.
  *
- * Il faut les couvrir, sinon la correction est juste sur la pose nominale et fausse une
- * seconde plus tard : 7 degres de lacet deplacent l'oeil d'une douzaine d'unites sur une
- * boule de rayon 100. C'est precisement ce qui faisait deborder `capsule` + `effraye`
- * alors qu'une mesure a un seul instant le declarait bon.
+ * They must be covered, or the correction is right on the nominal pose and wrong a second later: 7 degrees of yaw
+ * move the eye by a dozen units on a ball of radius 100. That is exactly what made `capsule` + `scared` overflow
+ * while a single-instant measurement said it was fine.
  */
-const DERIVE_YAW = 5.5 + 1.6
-const DERIVE_PITCH = 4.2 + 1.3
-/** Flottement du centre, en unites de rayon de boule. */
-const DERIVE_X = 0.006
-const DERIVE_Y = 0.007
+const DRIFT_YAW = 5.5 + 1.6
+const DRIFT_PITCH = 4.2 + 1.3
+/** Center float, in ball radius units. */
+const DRIFT_X = 0.006
+const DRIFT_Y = 0.007
 
-/** Le visage d'une pose, ce dont le solveur a besoin pour placer ses gelules. */
-interface Visage {
+/** The face of a pose: what the solver needs to place its capsules. */
+interface Face {
   gaze: Pose['gaze']
   split: number
   eyes: Pose['eyes']
 }
 
 /**
- * Une gelule prete a etre mesuree : le segment de son axe, et de quoi calculer le rayon
- * a degager DANS UNE DIRECTION donnee.
+ * A capsule ready to measure: the segment of its axis, and what is needed to compute the radius to clear IN A GIVEN
+ * DIRECTION.
  *
- * Une gelule est exactement un segment epaissi d'un disque de rayon `r`. Son image par la
- * matrice tangente est donc un segment epaissi d'une ELLIPSE, et le rayon a degager
- * depend de la direction : c'est la fonction d'appui de cette ellipse, `r * |A^T u|`.
+ * A capsule is exactly a segment thickened by a disc of radius `r`. Its image through the tangent matrix is therefore
+ * a segment thickened by an ELLIPSE, and the radius to clear depends on the direction: it is the support function of
+ * that ellipse, `r * |A^T u|`.
  *
- * Prendre a la place sa plus grande valeur singuliere serait conservateur mais faux dans
- * la seule direction qui compte, et ca se paie cher : la marge de reference sur le cercle
- * ressortait NEGATIVE, donc la demande devenait sans dents et 34 combinaisons
- * continuaient de deborder.
+ * Using its largest singular value instead would be conservative but wrong in the only direction that matters, and
+ * that costs a lot: the reference margin on the circle came out NEGATIVE, so the requirement lost its teeth and 34
+ * combinations kept overflowing.
  */
-interface Empreinte {
-  /** centre, en unites de viewBox */
+interface Footprint {
+  /** center, in viewBox units */
   x: number
   y: number
-  /** demi-vecteur de l'axe */
+  /** half vector of the axis */
   ax: number
   ay: number
-  /** rayon du disque local, avant transformation */
+  /** radius of the local disc, before transformation */
   r: number
-  /** colonnes de la matrice tangente, pour la fonction d'appui */
+  /** columns of the tangent matrix, for the support function */
   m: [number, number, number, number]
 }
 
 /**
- * Empreintes des deux yeux d'un visage, posees sur un profil.
+ * Footprints of the two eyes of a face, placed on a profile.
  *
- * Une gelule est exactement un segment epaissi d'un disque de rayon `r`. Son image par
- * la matrice tangente est donc un segment epaissi d'une ELLIPSE, et un disque du rayon
- * de son grand axe la couvre : d'ou la plus grande valeur singuliere. La mesure reste
- * ainsi conservatrice au sens strict, une marge positive garantissant que la gelule est
- * dedans.
+ * A capsule is exactly a segment thickened by a disc of radius `r`. Its image through the tangent matrix is a segment
+ * thickened by an ELLIPSE, and a disc of the radius of its major axis covers it: hence the largest singular value.
+ * The measurement stays strictly conservative, a positive margin guaranteeing that the capsule is inside.
  *
- * Le clignement n'y est pas : un oeil ferme n'a pas besoin qu'on lui fasse de la place.
+ * The blink is not included: a closed eye does not need room.
  */
-function empreintes(visage: Visage, sil: Pose['sil'], radii: number[]): Empreinte[] {
-  const out: Empreinte[] = []
-  const poses = eyePoses(visage.gaze, R, visage.split)
+function footprints(face: Face, sil: Pose['sil'], radii: number[]): Footprint[] {
+  const out: Footprint[] = []
+  const poses = eyePoses(face.gaze, R, face.split)
   for (let i = 0; i < 2; i++) {
     const e = poses[i]!
     if (e.depth <= 0.02) continue
-    const cfg = visage.eyes[i]!
+    const cfg = face.eyes[i]!
     const phi = ((cfg.tilt ?? 0) * Math.PI) / 180
     const cp = Math.cos(phi)
     const sp = Math.sin(phi)
@@ -125,16 +111,16 @@ function empreintes(visage: Visage, sil: Pose['sil'], radii: number[]): Empreint
     const hw = Math.max(cfg.w * R, 0.01) / 2
     const hh = Math.max(cfg.h * R, 0.01) / 2
     const r = Math.min(hw, hh)
-    // l'axe est celui de la plus grande dimension
+    // the axis is that of the largest dimension
     const long = hh > hw
-    const demi = long ? hh - r : hw - r
-    // le prorata du rayon local, exactement comme le fait le moteur
+    const half = long ? hh - r : hw - r
+    // proportional to the local radius, exactly as the engine does
     const fit = radiusAtAngle(radii, Math.atan2(e.y, e.x) - sil.rot)
     out.push({
       x: e.x * fit,
       y: e.y * fit,
-      ax: (long ? cx : ax) * demi,
-      ay: (long ? cy : ay) * demi,
+      ax: (long ? cx : ax) * half,
+      ay: (long ? cy : ay) * half,
       r,
       m: [ax, ay, cx, cy]
     })
@@ -143,13 +129,13 @@ function empreintes(visage: Visage, sil: Pose['sil'], radii: number[]): Empreint
 }
 
 /**
- * Approche la plus courte entre un contour et un segment : la distance, et le vecteur
- * qui va du contour vers le segment — le sens qui degage.
+ * Shortest approach between an outline and a segment: the distance, and the vector from the outline to the segment
+ * (the direction that clears).
  *
- * Les deux sortent de la MEME passe. Les calculer separement doublait le seul vrai cout
- * de ce module, qui est ce balayage.
+ * Both come out of the SAME pass. Computing them separately doubled the only real cost of this module, which is this
+ * sweep.
  */
-function approche(pts: Point[], x0: number, y0: number, x1: number, y1: number) {
+function approach(pts: Point[], x0: number, y0: number, x1: number, y1: number) {
   const sx = x1 - x0
   const sy = y1 - y0
   const len2 = sx * sx + sy * sy
@@ -173,184 +159,175 @@ function approche(pts: Point[], x0: number, y0: number, x1: number, y1: number) 
   return { d, ux: d > 1e-9 ? vx / d : 0, uy: d > 1e-9 ? vy / d : 0 }
 }
 
-/** Une epreuve : des gelules a faire tenir dans un contour, et le contour de reference. */
-interface Epreuve {
-  empreintes: Empreinte[]
-  reference: Empreinte[]
-  contour: Point[]
-  calContour: Point[]
+/** A proof: capsules to fit in an outline, and the reference outline. */
+interface Proof {
+  footprints: Footprint[]
+  reference: Footprint[]
+  outline: Point[]
+  calOutline: Point[]
 }
 
 /**
- * Flottement du centre au repos, en unites de viewBox. Il est ajoute au rayon de la
- * gelule : moins d'une unite, donc l'absorber ainsi coute moins cher que de multiplier les
- * epreuves par ses quatre coins.
+ * Center float at rest, in viewBox units. It is added to the capsule radius: less than one unit, so absorbing it this
+ * way costs less than multiplying the proofs by its four corners.
  */
-const FLOTTEMENT = Math.hypot(DERIVE_X, DERIVE_Y) * R
+const FLOAT = Math.hypot(DRIFT_X, DRIFT_Y) * R
 
-/** Marge de la gelule la plus serree, et le sens qui la degage. */
-function pire(pts: Point[], emps: Empreinte[], tx: number, ty: number) {
-  let marge = Infinity
+/** Margin of the tightest capsule, and the direction that clears it. */
+function worst(pts: Point[], emps: Footprint[], tx: number, ty: number) {
+  let margin = Infinity
   let ux = 0
   let uy = 0
   for (const e of emps) {
     const x = e.x + tx
     const y = e.y + ty
-    const a = approche(pts, x - e.ax, y - e.ay, x + e.ax, y + e.ay)
-    // fonction d'appui de l'ellipse dans la direction de l'approche
+    const a = approach(pts, x - e.ax, y - e.ay, x + e.ax, y + e.ay)
+    // support function of the ellipse in the direction of the approach
     const [m0, m1, m2, m3] = e.m
-    const rayon =
-      e.r * Math.hypot(m0 * a.ux + m1 * a.uy, m2 * a.ux + m3 * a.uy) + FLOTTEMENT
-    if (a.d - rayon < marge) {
-      marge = a.d - rayon
+    const radius =
+      e.r * Math.hypot(m0 * a.ux + m1 * a.uy, m2 * a.ux + m3 * a.uy) + FLOAT
+    if (a.d - radius < margin) {
+      margin = a.d - radius
       ux = a.ux
       uy = a.uy
     }
   }
-  return { marge, ux, uy }
+  return { margin, ux, uy }
 }
 
 /**
- * Directions sondees et pas de la dichotomie. Le produit des deux est le cout de
- * construction de la table, seul chiffre a surveiller ici.
+ * Probed directions and bisection steps. Their product is the cost of building the table, the only number to watch
+ * here.
  */
 const DIRECTIONS = 12
-const DICHOTOMIE = 8
+const BISECTION = 8
 
 /**
- * Le decalage a poser sur les deux yeux pour cette forme, cet etat et cette expression.
+ * The offset to apply to both eyes for this shape, this state and this expression.
  *
- * Une TRANSLATION commune aux deux yeux, donc une isometrie : ecart entre les yeux,
- * tailles et inclinaisons sont conserves au pixel. Le visage est seulement pose un peu
- * plus bas sur un corps qui n'a pas de place en haut, ce qui est le geste qu'on ferait a
- * la main. Les variantes qui bornaient chaque oeil separement ecartaient la paire, et
- * celles qui mettaient le visage a l'echelle rapetissaient les yeux — visiblement.
+ * A TRANSLATION shared by both eyes, so an isometry: the gap between the eyes, sizes and tilts are kept to the pixel.
+ * The face is only set a little lower on a body that has no room at the top, which is what one would do by hand.
+ * Variants that bounded each eye separately spread the pair, and those that scaled the face made the eyes visibly
+ * smaller.
  *
- * La marge visee est celle du profil D'ORIGINE, pas un degagement strict : sur le cercle
- * l'oeil exterieur frole deja le bord, 17,3 unites pour une boule de rayon 100, et c'est
- * voulu, c'est ce qui donne le volume. Elle est plafonnee par ce que la forme offre en son
- * centre, sinon la demande est intenable sur un corps plat.
+ * The target margin is that of the ORIGINAL profile, not a strict clearance: on the circle the outer eye already
+ * brushes the edge, 17.3 units for a ball of radius 100, on purpose: it gives the volume. It is capped by what the
+ * shape offers at its center, otherwise the requirement is impossible on a flat body.
  *
- * RECHERCHE DIRECTIONNELLE et non descente. On cherche la translation de plus petite
- * norme qui tient, donc on sonde une couronne de directions et on dichotomie la distance
- * le long de chacune. Une descente de gradient a ete ecrite d'abord et elle ne converge
- * pas : degager la paire d'un bord la rapproche de l'autre, si bien qu'elle tatonne et ne
- * fait que garder son meilleur essai — passer ses tours de 40 a 18 suffisait a faire
- * reapparaitre 34 debordements. Ici le resultat ne depend pas d'une convergence : chaque
- * direction est resolue exactement, au pas de dichotomie pres.
+ * DIRECTIONAL SEARCH, not descent. We look for the translation with the smallest norm that fits, so we probe a ring
+ * of directions and bisect the distance along each. A gradient descent was written first and does not converge:
+ * clearing the pair from one edge brings it closer to the other, so it gropes around and only keeps its best try
+ * (dropping its rounds from 40 to 18 was enough to bring back 34 overflows). Here the result does not depend on
+ * convergence: each direction is solved exactly, to the bisection step.
  */
-function resous(epreuves: Epreuve[]): { x: number; y: number } {
-  if (!epreuves.length) return { x: 0, y: 0 }
+function resous(proofs: Proof[]): { x: number; y: number } {
+  if (!proofs.length) return { x: 0, y: 0 }
 
-  /** La marge la plus serree sur toutes les epreuves, pour une translation donnee. */
-  const marge = (tx: number, ty: number) => {
+  /** The tightest margin over all proofs, for a given translation. */
+  const margin = (tx: number, ty: number) => {
     let m = Infinity
-    for (const ep of epreuves) m = Math.min(m, pire(ep.contour, ep.empreintes, tx, ty).marge)
+    for (const th of proofs) m = Math.min(m, worst(th.outline, th.footprints, tx, ty).margin)
     return m
   }
 
-  // Marge exigee : la plus serree que le profil d'origine tolere, sur toutes les
-  // epreuves. Puis plafonnee par le plus degage que la forme puisse offrir a la paire,
-  // son centre.
-  let requis = Infinity
-  for (const ep of epreuves) {
-    requis = Math.min(requis, pire(ep.calContour, ep.reference, 0, 0).marge)
+  // Required margin: the tightest that the original profile tolerates, over all
+  // proofs. Then capped by the most room the shape can offer to the pair,
+  // its center.
+  let required = Infinity
+  for (const th of proofs) {
+    required = Math.min(required, worst(th.calOutline, th.reference, 0, 0).margin)
   }
   /*
-   * La course doit pouvoir atteindre le centre du corps : `wide` a des gelules de 87
-   * unites de long, et sur un triangle elles ne tiennent que vers le milieu, a une
-   * cinquantaine d'unites de leur place nominale. Une course fixe les laissait dehors.
+   * The travel must be able to reach the body's center: `wide` has capsules 87 units long, and on a triangle they
+   * only fit towards the middle, about fifty units from their nominal place. A fixed travel left them outside.
    */
   let mx = 0
   let my = 0
-  const emps = epreuves[0]!.empreintes
+  const emps = proofs[0]!.footprints
   for (const e of emps) {
     mx -= e.x / emps.length
     my -= e.y / emps.length
   }
   const course = Math.max(0.35 * R, Math.hypot(mx, my) * 1.25)
 
-  // Plafond de la demande : ce que la forme offre en son centre, toujours atteignable.
-  requis = Math.min(requis, marge(mx, my))
+  // Cap of the requirement: what the shape offers at its center, always reachable.
+  required = Math.min(required, margin(mx, my))
 
   /*
-   * Deja bon : le cas du cercle, et de toute forme assez large. La gelule doit RENTRER
-   * en plus de n'etre pas plus serree que sur le profil d'origine — sans cette seconde
-   * condition, une forme ou rien ne rentre satisfait la premiere de facon degeneree et
-   * on abandonnait. `wide` a des gelules de 87 unites de long : sur un triangle ou une goutte elles debordent quoi qu'on fasse, et il
-   * faut alors viser le moins pire, pas renoncer.
+   * Already fine: the circle's case, and any wide enough shape. The capsule must FIT besides being no tighter than on
+   * the original profile: without that second condition, a shape where nothing fits meets the first one in a
+   * degenerate way and we gave up. `wide` has capsules 87 units long: on a triangle or a drop they overflow whatever
+   * we do, and then we must aim for the least bad, not give up.
    */
-  const depart = marge(0, 0)
-  if (depart >= requis && depart >= 0) return { x: 0, y: 0 }
-  const cible = Math.max(requis, 0)
+  const startPos = margin(0, 0)
+  if (startPos >= required && startPos >= 0) return { x: 0, y: 0 }
+  const target = Math.max(required, 0)
 
-  let meilleurX = 0
-  let meilleurY = 0
-  let meilleureNorme = Infinity
-  // repli quand rien ne rentre : la translation qui degage le plus, sondee au passage
-  let secoursX = 0
-  let secoursY = 0
-  let secours = depart
+  let bestX = 0
+  let bestY = 0
+  let bestNorm = Infinity
+  // fallback when nothing fits: the translation that clears the most, probed on the way
+  let fallbackX = 0
+  let fallbackY = 0
+  let fallback = startPos
 
   for (let d = 0; d < DIRECTIONS; d++) {
     const a = (d / DIRECTIONS) * Math.PI * 2
     const ux = Math.cos(a)
     const uy = Math.sin(a)
-    if (marge(ux * course, uy * course) < cible) {
-      // cette direction ne mene nulle part ; on garde quand meme le meilleur degagement
-      // pas de solution par la, mais peut-etre un meilleur degagement
+    if (margin(ux * course, uy * course) < target) {
+      // this direction leads nowhere; we still keep the best clearance
+      // no solution that way, but maybe a better clearance
       for (const k of [0.3, 0.6, 1]) {
-        const m = marge(ux * course * k, uy * course * k)
-        if (m > secours) {
-          secours = m
-          secoursX = ux * course * k
-          secoursY = uy * course * k
+        const m = margin(ux * course * k, uy * course * k)
+        if (m > fallback) {
+          fallback = m
+          fallbackX = ux * course * k
+          fallbackY = uy * course * k
         }
       }
       continue
     }
-    // la plus courte distance qui tient, le long de cette direction
-    let bas = 0
-    let haut = course
-    for (let i = 0; i < DICHOTOMIE; i++) {
-      const mid = (bas + haut) / 2
-      if (marge(ux * mid, uy * mid) >= cible) haut = mid
-      else bas = mid
+    // the shortest distance that fits, along this direction
+    let neck = 0
+    let top = course
+    for (let i = 0; i < BISECTION; i++) {
+      const mid = (neck + top) / 2
+      if (margin(ux * mid, uy * mid) >= target) top = mid
+      else neck = mid
     }
-    if (haut < meilleureNorme) {
-      meilleureNorme = haut
-      meilleurX = ux * haut
-      meilleurY = uy * haut
+    if (top < bestNorm) {
+      bestNorm = top
+      bestX = ux * top
+      bestY = uy * top
     }
   }
 
-  const x = meilleureNorme === Infinity ? secoursX : meilleurX
-  const y = meilleureNorme === Infinity ? secoursY : meilleurY
-  // rendu en unites de RAYON DE BOULE : le moteur le remet a son echelle
+  const x = bestNorm === Infinity ? fallbackX : bestX
+  const y = bestNorm === Infinity ? fallbackY : bestY
+  // returned in BALL RADIUS units: the engine scales it back
   return { x: +(x / R).toFixed(6), y: +(y / R).toFixed(6) }
 }
 
 /**
- * Le visage a couvrir : celui de l'expression si l'etat l'accepte, le sien sinon.
+ * The face to cover: the expression's if the state accepts it, its own otherwise.
  *
- * UNE entree de table par expression, et non un pire cas commun a toutes. Un pire cas
- * paraissait plus sur — un decalage constant ne peut pas bouger quand l'expression change
- * — mais il est intenable : sur une capsule, `neutre` a les yeux hauts et demande a
- * descendre quand `effraye` les a bas et demande a monter. Aucune translation unique ne
- * satisfait les deux, et la mesure le confirme (4 debordements de 4,8 unites).
+ * ONE table entry per expression, not a worst case shared by all. A worst case looked safer (a constant offset cannot
+ * move when the expression changes) but it is impossible: on a capsule, `neutral` has high eyes and asks to go down
+ * while `scared` has low eyes and asks to go up. No single translation satisfies both, and the measurement confirms
+ * it (4 overflows of 4.8 units).
  *
- * Une entree par expression n'est pas moins fluide pour autant : le moteur interpole
- * entre DEUX CONSTANTES, ce qui est monotone par construction. Ce qui tremblait, c'etait
- * de re-resoudre le probleme sur un regard en cours d'interpolation.
+ * One entry per expression is no less smooth: the engine interpolates between TWO CONSTANTS, which is monotonic by
+ * construction. What shook was solving the problem again on a gaze mid-interpolation.
  */
-function visageDe(def: StateDef, pose: Pose, expr: BotExpression | null): Visage {
+function faceOf(def: StateDef, pose: Pose, expr: BotExpression | null): Face {
   if (def.baseFace && expr) return { gaze: expr.gaze, split: expr.split, eyes: expr.eyes }
   return { gaze: pose.gaze, split: pose.split, eyes: pose.eyes }
 }
 
-/** Les dates a echantillonner dans un etat : une seule si sa pose ne bouge pas. */
+/** The times to sample in a state: a single one if its pose does not move. */
 function dates(def: StateDef): number[] {
-  /** Tout ce dont le solveur se sert : si rien ne bouge, une date suffit. */
+  /** Everything the solver uses: if nothing moves, one time is enough. */
   const signature = (p: Pose) =>
     JSON.stringify([p.gaze, p.split, p.eyes, p.sil.rot, p.sil.cx, p.sil.cy, p.sil.sx, p.sil.sy])
   if (signature(def.pose(0)) === signature(def.pose(def.duration))) return [0]
@@ -358,97 +335,93 @@ function dates(def: StateDef): number[] {
   return Array.from({ length: n }, (_, i) => (i / (n - 1)) * def.duration)
 }
 
-/** Le decalage d'une forme sur un etat et une expression, derive comprise. */
-function decalagePour(
+/** The offset of a shape on a state and an expression, drift included. */
+function offsetFor(
   def: StateDef,
   radii: number[],
   expr: BotExpression | null
 ): { x: number; y: number } {
-  const epreuves: Epreuve[] = []
+  const proofs: Proof[] = []
   for (const t of dates(def)) {
     const pose = def.pose(t)
-    const contour = toPoints({ ...pose.sil, radii }, R)
-    const calContour = toPoints(pose.sil, R)
-    const v = visageDe(def, pose, expr)
-    // Les quatre coins de la derive bornent la pose nominale, qui est leur centre : la
-    // tester en plus ne changerait aucune marge et coute une epreuve sur cinq.
-    const coins: Visage[] = []
-    for (const dy of [-DERIVE_YAW, DERIVE_YAW]) {
-      for (const dp of [-DERIVE_PITCH, DERIVE_PITCH]) {
-        coins.push({
+    const outline = toPoints({ ...pose.sil, radii }, R)
+    const calOutline = toPoints(pose.sil, R)
+    const v = faceOf(def, pose, expr)
+    // The four corners of the drift bound the nominal pose, which is their center: testing
+    // it as well would change no margin and costs one proof in five.
+    const corners: Face[] = []
+    for (const dy of [-DRIFT_YAW, DRIFT_YAW]) {
+      for (const dp of [-DRIFT_PITCH, DRIFT_PITCH]) {
+        corners.push({
           ...v,
           gaze: { yaw: v.gaze.yaw + dy, pitch: v.gaze.pitch + dp, roll: v.gaze.roll }
         })
       }
     }
-    for (const c of coins) {
-      epreuves.push({
-        empreintes: empreintes(c, pose.sil, radii),
-        reference: empreintes(c, pose.sil, pose.sil.radii),
-        contour,
-        calContour
+    for (const c of corners) {
+      proofs.push({
+        footprints: footprints(c, pose.sil, radii),
+        reference: footprints(c, pose.sil, pose.sil.radii),
+        outline,
+        calOutline
       })
     }
   }
-  return resous(epreuves)
+  return resous(proofs)
 }
 
-/** Zero, la valeur commune a tout ce qui n'a rien a corriger. */
-const NUL = { x: 0, y: 0 } as const
+/** Zero, the value shared by everything that has nothing to fix. */
+const NULL = { x: 0, y: 0 } as const
 
-/** Clef d'une entree : l'etat, et l'expression quand l'etat l'accepte. */
-const clef = (state: StateId, expr: string | null) => `${state}|${expr ?? ''}`
+/** Key of an entry: the state, and the expression when the state accepts it. */
+const key = (state: StateId, expr: string | null) => `${state}|${expr ?? ''}`
 
 /**
- * Table des decalages, batie a l'import : une entree par (forme, etat a corps de base,
- * expression). Seuls `idle` et `swirl` portent le visage de repos, donc seuls eux se
- * declinent par expression — les trois autres etats a corps de base ont un visage releve
- * sur la video et une seule entree.
+ * Table of offsets, built at import: one entry per (shape, base-body state, expression). Only `idle` and `swirl`
+ * carry the resting face, so only they vary by expression: the three other base-body states have a face measured on
+ * the video and a single entry.
  *
- * Clef par REFERENCE du tableau de rayons, ce qui est deja la convention du moteur : ses
- * gardes `radii === this.shape` et `expression === this.expr` reposent sur la meme
- * stabilite. Un profil inconnu, ou `null`, ne corrige rien — l'API accepte n'importe quel
- * tableau et le moteur n'a pas a dependre de la prudence de ses appelants.
+ * Keyed by the REFERENCE of the radii array, which is already the engine's convention: its guards `radii ===
+ * this.shape` and `expression === this.expr` rely on the same stability. An unknown profile, or `null`, fixes
+ * nothing: the API accepts any array and the engine must not rely on its callers' care.
  */
 function batir(): Map<number[], Map<string, { x: number; y: number }>> {
   return new Map(
-  SHAPES.map((forme) => {
-    const par = new Map<string, { x: number; y: number }>()
+  SHAPES.map((shape) => {
+    const byKey = new Map<string, { x: number; y: number }>()
     for (const def of STATES) {
       if (!def.baseBody) continue
       const expressions = def.baseFace ? [null, ...EXPRESSIONS] : [null]
       for (const expr of expressions) {
-        par.set(clef(def.id, expr?.id ?? null), decalagePour(def, forme.radii, expr))
+        byKey.set(key(def.id, expr?.id ?? null), offsetFor(def, shape.radii, expr))
       }
     }
-    return [forme.radii, par]
+    return [shape.radii, byKey]
   })
   )
 }
 
-const DECALAGES = batir()
+const OFFSETS = batir()
 
 /**
- * Decalage a appliquer aux deux yeux pour cette forme sur cet etat, en unites de rayon
- * de boule — le moteur le remet a son echelle.
+ * Offset to apply to both eyes for this shape on this state, in ball radius units (the engine scales it back).
  *
- * Vaut zero des que la forme n'est pas au catalogue, ce qui couvre `null` et le cercle :
- * sur le cercle les deux profils sont le meme, donc la marge est deja celle exigee et la
- * descente sort au premier tour. La forme relevee sur la video ne bouge donc pas, sans
- * cas particulier.
+ * Zero as soon as the shape is not in the catalog, which covers `null` and the circle: on the circle both profiles
+ * are the same, so the margin is already the required one and the search exits on the first round. The shape measured
+ * on the video therefore does not move, with no special case.
  */
-export function decalageDesYeux(
+export function eyeOffset(
   radii: number[] | null,
   state: StateId,
   expr: string | null
 ): { x: number; y: number } {
-  if (!radii) return NUL
-  const par = DECALAGES.get(radii)
-  if (!par) return NUL
-  // un etat sans visage de repos n'a qu'une entree, quelle que soit l'expression
-  return par.get(clef(state, expr)) ?? par.get(clef(state, null)) ?? NUL
+  if (!radii) return NULL
+  const byKey = OFFSETS.get(radii)
+  if (!byKey) return NULL
+  // a state without a resting face has a single entry, whatever the expression
+  return byKey.get(key(state, expr)) ?? byKey.get(key(state, null)) ?? NULL
 }
 
-/** Pour les tests : de quoi verifier la table sans refaire la geometrie. */
-/** Pour les tests : de quoi chronometrer la construction de la table. */
-export const POUR_TESTS = { batir }
+/** For tests: what is needed to check the table without redoing the geometry. */
+/** For tests: what is needed to time the building of the table. */
+export const FOR_TESTS = { batir }

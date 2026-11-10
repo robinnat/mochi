@@ -1,14 +1,12 @@
 import { SEQUENCE, STATES, STATE_BY_ID, type StateId } from './states'
 
 /**
- * Un cycle est un montage : une suite de blocs, chacun un etat tenu pendant une
- * duree choisie. C'est la partie "editeur" du dossier, et elle en garde les
- * regles — donnees pures, aucune horloge, aucun import d'interface : le meme cycle doit
- * pouvoir etre relu par les tests, par le lecteur et par la timeline.
+ * A cycle is a montage: a list of blocks, each a state held for a chosen duration. It is the "editor" part of the
+ * folder, and it keeps the folder's rules: pure data, no clock, no interface import. The same cycle must be readable
+ * by the tests, the player and the timeline.
  *
- * Un bloc n'a pas d'identifiant : c'est une position dans une liste, la cle de
- * rendu est l'index. Ca garde le JSON du localStorage lisible et les tests
- * deterministes.
+ * A block has no id: it is a position in a list, the render key is the index. That keeps the localStorage JSON
+ * readable and the tests deterministic.
  */
 export interface Block {
   state: StateId
@@ -22,49 +20,44 @@ export interface Cycle {
 }
 
 /**
- * Plancher commun a tous les blocs. Le moteur ne garde qu'une case d'historique
- * (`BotEngine.setState` ecrase `prev`), donc un bloc plus court que le fondu d'entree du
- * bloc suivant saute a l'image au lieu de se fondre.
+ * Floor shared by all blocks. The engine keeps a single history slot (`BotEngine.setState` overwrites `prev`), so a
+ * block shorter than the entry fade of the next block jumps instead of fading.
  *
- * DERIVE du catalogue et non ecrit a la main. La valeur etait 0,6, ce qui marchait
- * uniquement parce que 0,6 etait le plus long `morph` du catalogue d'alors (l'orbite, retiree
- * depuis). Rien ne le garantissait : ajouter un etat qui morphe en 0,8 s aurait fait
- * trembler l'editeur sans qu'aucun test ne bronche. Maintenant le plancher suit.
+ * DERIVED from the catalog, not hand-written. The value used to be 0.6, which only worked because 0.6 was the longest
+ * `morph` of the catalog at the time (the orbit, since removed). Nothing guaranteed it: adding a state that morphs in
+ * 0.8 s would have made the editor shake with no test failing. Now the floor follows.
  */
 export const MIN_BLOCK = Math.max(...STATES.map((s) => s.morph))
 
 /**
- * Garde-fou d'editeur, pas une mesure : allonger un bloc est sans risque (les
- * etats saturent leurs rampes et tiennent leur pose finale), mais une piste de
- * blocs d'une minute n'est plus lisible.
+ * Editor guard, not a measurement: making a block longer is safe (states saturate their ramps and hold their final
+ * pose), but a track of one-minute blocks is no longer readable.
  */
 export const MAX_BLOCK = 10
 
 /**
- * Combien de blocs et de montages on accepte, a l'edition comme a la relecture.
+ * How many blocks and montages we accept, when editing and when reading back.
  *
- * Ce ne sont pas des limites de produit mais des bornes contre un stockage hostile, qui
- * est modifiable et tient quelques megaoctets alors que rien en aval n'est dimensionne
- * pour ca : un seul cycle de 150 000 blocs, soit environ 4 Mo de JSON, donne 1 500 000 s
- * de duree, autant de graduations a allouer et une piste de 29 700 000 px de large.
- * L'onglet figeait en entrant dans l'onglet Animations.
+ * Not product limits but bounds against a hostile storage, which can be edited and holds a few megabytes while
+ * nothing downstream is sized for it: a single cycle of 150,000 blocks (about 4 MB of JSON) gives 1,500,000 s of
+ * duration, as many ticks to allocate and a track 29,700,000 px wide. The tab froze when opening Animations.
  *
- * 200 blocs font une demi-heure de montage, largement au-dela de tout usage.
+ * 200 blocks make half an hour of montage, far beyond any use.
  */
-export const MAX_BLOCS = 200
+export const MAX_BLOCKS = 200
 export const MAX_CYCLES = 50
 
-/** Pas de la molette et du redimensionnement, en secondes. */
+/** Step of the wheel and of resizing, in seconds. */
 export const STEP = 0.1
 
-const DEFAULT_CYCLE_ID = 'defaut'
+const DEFAULT_CYCLE_ID = 'initial'
 
-/** Duree minimale d'un bloc : le plancher moteur, ou la mesure de l'etat. */
+/** Minimum duration of a block: the engine floor, or the state's measurement. */
 export function minDurationOf(state: StateId): number {
   return Math.max(MIN_BLOCK, STATE_BY_ID.get(state)?.minDuration ?? MIN_BLOCK)
 }
 
-/** Ramene une duree dans ses bornes et sur le pas, sans trainee de flottants. */
+/** Brings a duration back within its bounds and onto the step, with no floating point residue. */
 export function clampDuration(state: StateId, seconds: number): number {
   const snapped = Math.round(seconds / STEP) * STEP
   const bounded = Math.min(MAX_BLOCK, Math.max(minDurationOf(state), snapped))
@@ -72,23 +65,21 @@ export function clampDuration(state: StateId, seconds: number): number {
 }
 
 export function makeBlock(state: StateId): Block {
-  // la duree de reference est celle relevee sur la video pour cet etat
+  // the reference duration is the one measured on the video for this state
   return { state, duration: clampDuration(state, STATE_BY_ID.get(state)?.duration ?? 2) }
 }
 
 /**
- * Le montage releve sur la video : l'ordre de `SEQUENCE`, chaque etat tenu sa
- * duree mesuree. Il sert d'amorce au premier lancement, puis il appartient a
- * l'utilisateur — il s'edite et se stocke comme les autres. La reference, elle,
- * reste dans le code : vider le stockage la fait revenir.
+ * The montage measured on the video: the order of `SEQUENCE`, each state held for its measured duration. It seeds the
+ * first launch, then belongs to the user: it is edited and saved like the others. The reference stays in the code:
+ * clearing the storage brings it back.
  */
 export function defaultCycle(): Cycle {
   return {
     /**
-     * Nom vide = « jamais nomme par l'utilisateur », donc affiche dans la langue
-     * courante. Ecrire ici « Cycle par defaut » l'aurait fige : le nom part au
-     * localStorage des la premiere visite et redevient une donnee utilisateur,
-     * que changer de langue ne retraduirait plus.
+     * Empty name = "never named by the user", so shown in the current language. Writing "Default cycle" here would
+     * have frozen it: the name goes to localStorage on the first visit and becomes user data, which changing language
+     * would no longer translate.
      */
     name: '',
     id: DEFAULT_CYCLE_ID,
@@ -100,7 +91,7 @@ export function totalDuration(blocks: Block[]): number {
   return blocks.reduce((sum, b) => sum + b.duration, 0)
 }
 
-/** Date de debut d'un bloc dans le montage. */
+/** Start time of a block in the montage. */
 export function offsetOf(blocks: Block[], index: number): number {
   let acc = 0
   for (let i = 0; i < index && i < blocks.length; i++) acc += blocks[i]!.duration
@@ -108,15 +99,14 @@ export function offsetOf(blocks: Block[], index: number): number {
 }
 
 /**
- * Bloc joue a la date `t` et temps ecoule dedans. Au-dela du dernier bloc on
- * retombe au debut : la lecture boucle. L'appelant verifie que le montage n'est
- * pas vide.
+ * Block played at time `t` and the time elapsed in it. Past the last block we go back to the start: playback loops.
+ * The caller checks that the montage is not empty.
  */
 export function blockAt(blocks: Block[], t: number): { index: number; elapsed: number } {
   const total = totalDuration(blocks)
   if (!blocks.length || total <= 0) return { index: 0, elapsed: 0 }
-  // le modulo n'est applique que s'il sert : sur une date deja dans le cycle il
-  // n'ajouterait qu'une trainee de flottants au temps ecoule
+  // the modulo is only applied when needed: on a time already in the cycle it
+  // would only add floating point residue to the elapsed time
   const wrapped = t >= 0 && t < total ? t : ((t % total) + total) % total
   let acc = 0
   for (let i = 0; i < blocks.length; i++) {
@@ -128,19 +118,18 @@ export function blockAt(blocks: Block[], t: number): { index: number; elapsed: n
 }
 
 /**
- * Ajoute une animation a la fin du montage (palette de droite ou carte « + »).
+ * Adds an animation at the end of the montage (right palette or "+" card).
  *
- * Plafonnee a `MAX_BLOCS`, comme la relecture. Sans ca l'editeur laissait construire un
- * montage plus grand que ce que le stockage rend au rechargement, et le travail
- * disparaissait en silence — une borne de relecture qui n'est pas aussi une borne d'edition
- * est un piege, pas une protection.
+ * Capped at `MAX_BLOCKS`, like reading back. Without it the editor let you build a montage bigger than what the
+ * storage returns on reload, and the work vanished silently: a read-back bound that is not also an edit bound is a
+ * trap, not a protection.
  */
 export function blocksWith(blocks: Block[], state: StateId): Block[] {
-  if (blocks.length >= MAX_BLOCS) return blocks
+  if (blocks.length >= MAX_BLOCKS) return blocks
   return [...blocks, makeBlock(state)]
 }
 
-/** Deplace un bloc, en rendant une nouvelle liste (les etats reactifs sont remplaces). */
+/** Moves a block, returning a new list (reactive state is replaced). */
 export function moveBlock(blocks: Block[], from: number, to: number): Block[] {
   const next = blocks.slice()
   const [moved] = next.splice(from, 1)
@@ -149,7 +138,7 @@ export function moveBlock(blocks: Block[], from: number, to: number): Block[] {
   return next
 }
 
-/** `Mon cycle`, `Mon cycle 2`, `Mon cycle 3`... — jamais deux fois le meme nom. */
+/** `My cycle`, `My cycle 2`, `My cycle 3`... never the same name twice. */
 export function uniqueName(base: string, cycles: Cycle[]): string {
   const taken = new Set(cycles.map((c) => c.name))
   if (!taken.has(base)) return base
@@ -158,7 +147,7 @@ export function uniqueName(base: string, cycles: Cycle[]): string {
   return `${base} ${n}`
 }
 
-/** Identifiant sans collision, y compris avec un localStorage bricole a la main. */
+/** Collision-free id, even against a hand-edited localStorage. */
 export function nextCycleId(cycles: Cycle[]): string {
   const taken = new Set(cycles.map((c) => c.id))
   let n = 1
@@ -166,18 +155,16 @@ export function nextCycleId(cycles: Cycle[]): string {
   return `c${n}`
 }
 
-/* ------------------------------------------------------- lecture du stockage */
+/* ------------------------------------------------------- reading the storage */
 
 function parseBlock(raw: unknown): Block | null {
   if (typeof raw !== 'object' || raw === null) return null
   const { state, duration } = raw as { state?: unknown; duration?: unknown }
   /*
-   * Valide contre SEQUENCE et non contre `STATE_BY_ID` : ce dernier contient `swirl`, qui
-   * est deliberement hors du catalogue — c'est la transition d'entree des reglages, un
-   * test la verrouille hors de la palette et de la planche. Un montage utilisateur ne se
-   * construit qu'a partir de la palette, donc un `swirl` ne peut y arriver que par un
-   * stockage bricole a la main, et il n'y a aucune raison de l'y tolerer quand on l'exclut
-   * partout ailleurs.
+   * Validated against SEQUENCE and not `STATE_BY_ID`: the latter holds `swirl`, which is deliberately outside the
+   * catalog (it is the entry transition of the settings, and a test keeps it out of the palette and the sheet). A
+   * user montage is only built from the palette, so a `swirl` can only come from a hand-edited storage, and there is
+   * no reason to accept it when it is excluded everywhere else.
    */
   if (typeof state !== 'string' || !SEQUENCE.includes(state as StateId)) return null
   if (typeof duration !== 'number' || !Number.isFinite(duration)) return null
@@ -188,13 +175,13 @@ function parseCycle(raw: unknown, seen: Cycle[]): Cycle | null {
   if (typeof raw !== 'object' || raw === null) return null
   const { id, name, blocks } = raw as { id?: unknown; name?: unknown; blocks?: unknown }
   if (typeof id !== 'string' || !id) return null
-  // le nom peut etre vide — c'est le montage d'amorce, qui suit la langue
+  // the name can be empty: it is the seed montage, which follows the language
   if (typeof name !== 'string') return null
   if (!Array.isArray(blocks)) return null
-  // on tronque AVANT de relire : valider 150 000 blocs pour n'en garder que 200 serait
-  // faire le travail qu'on cherche justement a eviter
+  // we truncate BEFORE reading back: validating 150,000 blocks to keep 200 would
+  // do exactly the work we want to avoid
   const kept = blocks
-    .slice(0, MAX_BLOCS)
+    .slice(0, MAX_BLOCKS)
     .map(parseBlock)
     .filter((b): b is Block => b !== null)
   if (!kept.length) return null
@@ -203,9 +190,8 @@ function parseCycle(raw: unknown, seen: Cycle[]): Cycle | null {
 }
 
 /**
- * Le localStorage est modifiable a la main : on ne lui fait pas confiance, meme
- * regle que pour le hash de l'URL. Tout ce qui ne se relit pas est jete
- * silencieusement plutot que de casser l'application au demarrage.
+ * localStorage can be edited by hand: we do not trust it, same rule as for the URL hash. Whatever cannot be read back
+ * is dropped silently rather than breaking the app at startup.
  */
 export function parseCycles(raw: string | null): Cycle[] {
   if (!raw) return []

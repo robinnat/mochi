@@ -1,36 +1,34 @@
 import { describe, expect, it } from 'vitest'
 import { BotEngine, type RenderedEye } from './engine'
-import { decalageDesYeux, POUR_TESTS } from './eyefit'
+import { eyeOffset, FOR_TESTS } from './eyefit'
 import { EXPRESSIONS } from './expressions'
-import { DEFAULT_SHAPE, SHAPES, SHAPE_BY_ID, couleurDe, hexValide } from './skins'
+import { DEFAULT_SHAPE, SHAPES, SHAPE_BY_ID, colorOf, isValidHex } from './skins'
 import { STATES, type StateId } from './states'
 
 /**
- * Les formes du personnalisateur, mesurees contre le corps qu'elles remplacent.
+ * The customizer shapes, measured against the body they replace.
  *
- * Ce fichier verrouille deux choses, et la seconde a coute bien plus que la premiere :
+ * This file locks two things, and the second cost far more than the first:
  *
- * 1. **La gelule ne sort pas de la silhouette.** Les yeux vivent sur une sphere, et
- *    `radiusAtAngle` les recolle au contour au prorata du rayon local — ce qui divise leur
- *    marge par le meme prorata. Une forme etroite dans la direction de l'oeil le poussait
- *    contre le bord jusqu'a ce que le masque l'ouvre : la gelule apparaissait comme une
- *    encoche dans le corps.
- * 2. **La correction ne se voit pas bouger.** Sept versions l'ont calculee dans la boucle
- *    de rendu et toutes tremblaient. Les tests d'oscillation ci-dessous sont ce qui les a
- *    disqualifiees, et ils comparent au CERCLE, la forme que la correction ne touche pas.
+ * 1. **The capsule does not leave the silhouette.** The eyes live on a sphere, and `radiusAtAngle` sticks them to the
+ *    outline in proportion to the local radius, which divides their margin by the same ratio. A shape narrow in the
+ *    eye's direction pushed it against the edge until the mask opened it: the capsule showed as a notch in the body.
+ * 2. **The correction is not seen moving.** Seven versions computed it in the render loop and all of them shook. The
+ *    oscillation tests below are what ruled them out, and they compare against the CIRCLE, the shape the correction
+ *    does not touch.
  *
- * Tout porte sur la GEOMETRIE RENDUE et non sur le calcul : on reprend le contour du corps
- * et celui de chaque gelule tels que le composant les dessine. C'est la seule facon de
- * verifier ce que l'oeil voit, et ca ne suppose rien de la methode employee.
+ * Everything is about the RENDERED GEOMETRY, not the computation: we take the body outline and each capsule outline
+ * as the component draws them. That is the only way to check what the eye sees, and it assumes nothing about the
+ * method used.
  */
 
 const R = 100
 
 /**
- * Contour du corps, lu sur le `bodyPath`. `closedPath` emet `M x y` puis un `C` par point,
- * donc les points de la courbe sont la 3e paire de chaque `C`.
+ * Body outline, read off the `bodyPath`. `closedPath` emits `M x y` then one `C` per point, so the curve points are
+ * the 3rd pair of each `C`.
  */
-function contourDuCorps(d: string) {
+function bodyOutline(d: string) {
   const pts: Array<{ x: number; y: number }> = []
   for (const seg of d.slice(1).split('C')) {
     const n = seg.match(/-?\d+\.?\d*/g)?.map(Number) ?? []
@@ -40,7 +38,7 @@ function contourDuCorps(d: string) {
   return pts
 }
 
-/** Le point est-il dans le polygone ? Lancer de rayon. */
+/** Is the point inside the polygon? Ray casting. */
 function dedans(poly: Array<{ x: number; y: number }>, x: number, y: number) {
   let on = false
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -52,14 +50,14 @@ function dedans(poly: Array<{ x: number; y: number }>, x: number, y: number) {
 }
 
 /**
- * Contour d'une gelule en coordonnees ecran : un stade, echantillonne puis passe par la
- * matrice rendue. Les dimensions sont relues dans le `d` que `capsulePath` a produit
- * (`M-hw -hh+r A r r ...`), pour ne dependre que de la sortie.
+ * Outline of a capsule in screen coordinates: a stadium, sampled then passed through the rendered matrix. The
+ * dimensions are read back from the `d` that `capsulePath` produced (`M-hw -hh+r A r r ...`), so it only depends on
+ * the output.
  *
- * Trente-deux points suffisent : sur une gelule de 40 unites de long ils sont espaces de
- * moins de trois unites, la ou le plus petit debordement qu'on ait mesure en vaut trois.
+ * Thirty-two points are enough: on a 40-unit capsule they are less than three units apart, while the smallest
+ * overflow ever measured is three.
  */
-function contourDeLOeil(eye: RenderedEye, N = 32) {
+function eyeOutline(eye: RenderedEye, N = 32) {
   const g = eye.d.match(/-?\d+\.?\d*/g)!.map(Number)
   const hw = Math.abs(g[0]!)
   const r = Math.abs(g[2]!)
@@ -91,109 +89,101 @@ function contourDeLOeil(eye: RenderedEye, N = 32) {
   return out
 }
 
-/** Trois secondes a vingt images par seconde : assez pour plusieurs clignements. */
+/** Three seconds at twenty frames per second: enough for several blinks. */
 const INSTANTS = 60
-const PAS = 1 / 20
+const STEP = 1 / 20
 
 /**
- * De combien la gelule la plus debordante sort du corps, en unites de viewBox.
+ * How far the most overflowing capsule sticks out of the body, in viewBox units.
  *
- * Balaye le TEMPS et pas seulement la combinaison. La derive du regard deplace l'oeil
- * d'une douzaine d'unites, donc une seule image ne prouve rien : c'est en ne mesurant qu'a
- * `POSES[state]` que `capsule` + `effraye` est passe inapercu, alors qu'il sortait de
- * 4,4 unites une seconde plus tard.
+ * Sweeps TIME and not only the combination. The gaze drift moves the eye by a dozen units, so a single frame proves
+ * nothing: by measuring only at `POSES[state]`, `capsule` + `scared` went unnoticed, while it stuck out by 4.4 units
+ * a second later.
  */
-function debordement(state: StateId, radii: number[], expr: (typeof EXPRESSIONS)[number] | null) {
+function overflow(state: StateId, radii: number[], expr: (typeof EXPRESSIONS)[number] | null) {
   const e = new BotEngine(R, state, radii, expr)
-  let pire = 0
+  let worst = 0
   for (let i = 0; i < INSTANTS; i++) {
-    const f = e.sample(i * PAS)
-    const corps = contourDuCorps(f.bodyPath)
+    const f = e.sample(i * STEP)
+    const body = bodyOutline(f.bodyPath)
     for (const eye of f.eyes) {
-      for (const p of contourDeLOeil(eye)) {
-        if (dedans(corps, p.x, p.y)) continue
-        pire = Math.max(pire, Math.min(...corps.map((q) => Math.hypot(q.x - p.x, q.y - p.y))))
+      for (const p of eyeOutline(eye)) {
+        if (dedans(body, p.x, p.y)) continue
+        worst = Math.max(worst, Math.min(...body.map((q) => Math.hypot(q.x - p.x, q.y - p.y))))
       }
     }
   }
-  return pire
+  return worst
 }
 
-/** Les etats dont le corps est remplacable par une forme du personnalisateur. */
-const CORPS_DE_BASE = STATES.filter((s) => s.baseBody).map((s) => s.id)
-/** Les autres : leur silhouette EST l'animation, relevee sur la video. */
-const SILHOUETTE_MESUREE = STATES.filter((s) => !s.baseBody).map((s) => s.id)
+/** The states whose body can be replaced by a customizer shape. */
+const BODY_OF_BASE = STATES.filter((s) => s.baseBody).map((s) => s.id)
+/** The others: their silhouette IS the animation, measured on the video. */
+const SILHOUETTE_MEASURED = STATES.filter((s) => !s.baseBody).map((s) => s.id)
 
-describe('formes du personnalisateur', () => {
-  // 680 combinaisons x 60 instants x deux contours : le test le plus lourd du depot, et le
-  // seul qui prouve ce que l'oeil voit.
-  it("aucune forme ne laisse un oeil sortir de la silhouette", () => {
-    const fautifs: string[] = []
-    for (const state of CORPS_DE_BASE) {
-      for (const forme of SHAPES) {
+describe('customizer shapes', () => {
+  // 680 combinations x 60 instants x two outlines: the heaviest test of the repository, and the
+  // only one that proves what the eye sees.
+  it("no shape lets an eye leave the silhouette", () => {
+    const faulty: string[] = []
+    for (const state of BODY_OF_BASE) {
+      for (const shape of SHAPES) {
         for (const expr of [null, ...EXPRESSIONS]) {
-          const sortie = debordement(state, forme.radii, expr)
-          if (sortie > 0.05) {
-            fautifs.push(`${state}/${forme.id}/${expr?.id ?? 'pose'} ${sortie.toFixed(1)}`)
+          const exit = overflow(state, shape.radii, expr)
+          if (exit > 0.05) {
+            faulty.push(`${state}/${shape.id}/${expr?.id ?? 'pose'} ${exit.toFixed(1)}`)
           }
         }
       }
     }
-    // Cinq couples etat x forme debordaient : `wide`+`capsule` de 14,5 unites sur une boule
-    // de rayon 100, `wide`+`triangle` de 11,9, `idle`+`capsule` et `swirl`+`capsule` de 5,3,
-    // `notify`+`goutte` de 3,3.
-    expect(fautifs).toEqual([])
+    // Five state x shape pairs overflowed: `wide`+`capsule` by 14.5 units on a ball
+    // of radius 100, `wide`+`triangle` by 11.9, `idle`+`capsule` and `swirl`+`capsule` by 5.3,
+    // `notify`+`drop` by 3.3.
+    expect(faulty).toEqual([])
   }, 30_000)
 
   /**
-   * Le cercle est la forme relevee sur la video, et le corps par defaut : le choisir dans
-   * le personnalisateur ne doit RIEN changer par rapport a ne rien choisir. C'est ce qui
-   * garantit que la correction est neutre sur la reference — y compris son oeil exterieur,
-   * qui frole deja le bord et doit continuer de le froler. C'est aussi ce qui protege
-   * `public/favicon.svg`, dont les deux matrices d'yeux sont celles de `sample(1)` sur
-   * `idle`, au byte.
+   * The circle is the shape measured on the video, and the default body: choosing it in the customizer must change
+   * NOTHING compared to choosing nothing. That guarantees the correction is neutral on the reference, including its
+   * outer eye, which already brushes the edge and must keep brushing it.
    */
-  it('choisir le cercle rend exactement la meme chose que ne rien choisir', () => {
-    expect(DEFAULT_SHAPE).toBe('cercle')
-    const cercle = SHAPE_BY_ID.get('cercle')!.radii
-    for (const state of CORPS_DE_BASE) {
+  it('choosing the circle renders exactly the same as choosing nothing', () => {
+    expect(DEFAULT_SHAPE).toBe('circle')
+    const circle = SHAPE_BY_ID.get('circle')!.radii
+    for (const state of BODY_OF_BASE) {
       for (const expr of [null, ...EXPRESSIONS]) {
-        const avec = new BotEngine(R, state, cercle, expr).sample(1)
-        const sans = new BotEngine(R, state, null, expr).sample(1)
-        expect(avec.eyes, `${state}/${expr?.id ?? 'pose'}`).toEqual(sans.eyes)
+        const withIt = new BotEngine(R, state, circle, expr).sample(1)
+        const without = new BotEngine(R, state, null, expr).sample(1)
+        expect(withIt.eyes, `${state}/${expr?.id ?? 'pose'}`).toEqual(without.eyes)
       }
-      expect(decalageDesYeux(cercle, state, null)).toEqual({ x: 0, y: 0 })
+      expect(eyeOffset(circle, state, null)).toEqual({ x: 0, y: 0 })
     }
   })
 
   /**
-   * Les silhouettes relevees sur la video ne sont pas remplacables, donc la forme choisie
-   * ne doit pas les atteindre — ni leur corps, ni leurs yeux. `orbit` est le cas qui
-   * compte : la marge de son oeil est plus serree que celle du cercle et elle est pourtant
-   * juste, puisque relevee ainsi. Une regle de marge appliquee sans distinction la
-   * deplacerait.
+   * The silhouettes measured on the video cannot be replaced, so the chosen shape must not reach them: neither their
+   * body nor their eyes. `orbit` is the case that matters: its eye margin is tighter than the circle's and still
+   * right, since it was measured that way. A margin rule applied without distinction would move it.
    */
-  it("la forme choisie ne touche pas aux etats a silhouette mesuree", () => {
-    for (const state of SILHOUETTE_MESUREE) {
-      const nu = new BotEngine(R, state, null, null).sample(1)
-      for (const forme of SHAPES) {
-        const habille = new BotEngine(R, state, forme.radii, null).sample(1)
-        expect(habille.eyes, `${state}/${forme.id}`).toEqual(nu.eyes)
-        expect(habille.bodyPath).toBe(nu.bodyPath)
+  it("the chosen shape does not touch the states with a measured silhouette", () => {
+    for (const state of SILHOUETTE_MEASURED) {
+      const bare = new BotEngine(R, state, null, null).sample(1)
+      for (const shape of SHAPES) {
+        const dressed = new BotEngine(R, state, shape.radii, null).sample(1)
+        expect(dressed.eyes, `${state}/${shape.id}`).toEqual(bare.eyes)
+        expect(dressed.bodyPath).toBe(bare.bodyPath)
       }
     }
   })
 
   /**
-   * La correction ne doit RIEN modifier a la taille des yeux.
+   * The correction must change NOTHING in the eye size.
    *
-   * Une version la mettait a l'echelle en meme temps que la position : ca conservait tous
-   * les rapports du visage et restait stable, mais les yeux devenaient visiblement plus
-   * petits sur un corps plat, et changer d'expression animait alors ce grossissement. Ca se
-   * lisait comme un defaut.
+   * One version scaled it along with the position: that kept every ratio of the face and stayed stable, but the eyes
+   * became visibly smaller on a flat body, and changing expression then animated that growth. It read as a flaw.
    */
-  it('la taille des yeux ne depend pas de la forme', () => {
-    const tailles = new Set(
+  it('the eye size does not depend on the shape', () => {
+    const sizes = new Set(
       SHAPES.map((f) =>
         new BotEngine(R, 'idle', f.radii, null)
           .sample(1)
@@ -201,27 +191,26 @@ describe('formes du personnalisateur', () => {
           .join('|')
       )
     )
-    expect(tailles.size).toBe(1)
+    expect(sizes.size).toBe(1)
   })
 
   /**
-   * Le vrai piege : la correction doit etre INVISIBLE en mouvement.
+   * The real trap: the correction must be INVISIBLE in motion.
    *
-   * Ce qu'on mesure est l'OSCILLATION et non la vitesse. Un morph deplace les yeux vite de
-   * toute facon — les expressions ne regardent pas au meme endroit — et c'est du mouvement
-   * voulu. Trembler, c'est aller et REVENIR. On compte donc les changements de sens image
-   * par image, et on les compare au cercle, que la correction ne touche pas.
+   * What we measure is OSCILLATION, not speed. A morph moves the eyes fast anyway (expressions do not look at the
+   * same place), and that is wanted motion. Shaking is going and COMING BACK. So we count direction changes frame by
+   * frame, and compare them with the circle, which the correction does not touch.
    *
-   * La mesure discrimine tres bien : 0 a 1 aller-retour sur le moteur d'origine, 4 a 14
-   * avec des reculs jusqu'a 26 unites sur les versions qui tremblaient.
+   * The measure tells them apart very well: 0 to 1 back and forth on the original engine, 4 to 14 with backtracks up
+   * to 26 units on the versions that shook.
    */
-  it('la correction ne fait pas osciller les yeux', () => {
-    const pas = 1 / 60
+  it('the correction does not make the eyes oscillate', () => {
+    const step = 1 / 60
 
-    const trajectoire = (bâti: () => BotEngine, duree = BotEngine.SHAPE_MORPH) => {
+    const path = (bâti: () => BotEngine, duration = BotEngine.SHAPE_MORPH) => {
       const e = bâti()
       const out: Array<Array<{ x: number; y: number }>> = []
-      for (let t = 0; t <= duree + pas; t += pas) {
+      for (let t = 0; t <= duration + step; t += step) {
         out.push(
           e.sample(t).eyes.map((eye) => {
             const n = eye.matrix.match(/-?\d+\.?\d*/g)!.map(Number)
@@ -232,12 +221,12 @@ describe('formes du personnalisateur', () => {
       return out
     }
 
-    /** Combien de fois un oeil repart en arriere, et de combien au plus. */
-    const allersRetours = (suite: Array<Array<{ x: number; y: number }>>) => {
+    /** How many times an eye goes back, and by how much at most. */
+    const roundReturns = (suite: Array<Array<{ x: number; y: number }>>) => {
       let n = 0
       let amplitude = 0
-      const yeux = Math.min(...suite.map((f) => f.length))
-      for (let j = 0; j < yeux; j++) {
+      const eyes = Math.min(...suite.map((f) => f.length))
+      for (let j = 0; j < eyes; j++) {
         let px = 0
         let py = 0
         for (let i = 1; i < suite.length; i++) {
@@ -256,21 +245,21 @@ describe('formes du personnalisateur', () => {
       return { n, amplitude }
     }
 
-    const cercle = SHAPE_BY_ID.get('cercle')!.radii
-    const morphDeForme = (radii: number[]) =>
-      allersRetours(
-        trajectoire(() => {
-          const e = new BotEngine(R, 'idle', cercle, null)
+    const circle = SHAPE_BY_ID.get('circle')!.radii
+    const morphOfShape = (radii: number[]) =>
+      roundReturns(
+        path(() => {
+          const e = new BotEngine(R, 'idle', circle, null)
           e.setShape(radii, 0)
           return e
         })
       )
-    const auRepos = (radii: number[]) =>
-      allersRetours(trajectoire(() => new BotEngine(R, 'idle', radii, null), 3))
+    const atIdle = (radii: number[]) =>
+      roundReturns(path(() => new BotEngine(R, 'idle', radii, null), 3))
     const morphsDExpression = (radii: number[]) =>
       EXPRESSIONS.map((expr) =>
-        allersRetours(
-          trajectoire(() => {
+        roundReturns(
+          path(() => {
             const e = new BotEngine(R, 'idle', radii, EXPRESSIONS[0]!)
             e.setExpression(expr, 0)
             return e
@@ -282,59 +271,57 @@ describe('formes du personnalisateur', () => {
       })
 
     /*
-     * Sur le CERCLE, rien du tout : la correction y est nulle, donc elle ne peut ajouter
-     * aucun mouvement, et c'est la reference des trois comparaisons.
+     * On the CIRCLE, nothing at all: the correction is zero there, so it cannot add any motion, and it is the
+     * reference of the three comparisons.
      */
-    expect(morphsDExpression(cercle).n, 'cercle : morphs d expression').toBe(0)
+    expect(morphsDExpression(circle).n, 'circle: expression morphs').toBe(0)
 
-    for (const forme of SHAPES) {
-      // Au repos, la seule chose qui bouge est la derive du regard. Une correction qui la
-      // suivrait ferait trembler les yeux en permanence : c'est le defaut le plus visible
-      // de tous, et le premier qu'on a eu.
-      expect(auRepos(forme.radii).n, `${forme.id} : derive au repos`).toBeLessThanOrEqual(
-        auRepos(cercle).n + 1
+    for (const shape of SHAPES) {
+      // At rest, the only thing that moves is the gaze drift. A correction that
+      // followed it would make the eyes shake all the time: the most visible flaw
+      // of all, and the first we had.
+      expect(atIdle(shape.radii).n, `${shape.id}: idle drift`).toBeLessThanOrEqual(
+        atIdle(circle).n + 1
       )
-      // Un changement de forme fait bouger le decalage, mais sur la meme courbe que la
-      // silhouette : aucun aller-retour de plus que le cercle.
-      expect(morphDeForme(forme.radii).n, `morph de forme vers ${forme.id}`).toBeLessThanOrEqual(
-        morphDeForme(cercle).n + 1
+      // A shape change moves the offset, but on the same curve as the
+      // silhouette: no more back and forth than the circle.
+      expect(morphOfShape(shape.radii).n, `shape morph to ${shape.id}`).toBeLessThanOrEqual(
+        morphOfShape(circle).n + 1
       )
       /*
-       * Un changement d'expression fait passer le decalage d'une entree de table a l'autre.
-       * Sept formes sur huit n'y gagnent aucun aller-retour ; la `goutte` passe de un
-       * rebroussement de 6,3 unites — deja present sans correction — a deux de 11,1. La
-       * borne laisse passer ca et rien de plus : les versions fautives etaient a 26.
+       * An expression change moves the offset from one table entry to the other. Seven shapes out of eight gain no
+       * back and forth; the `drop` goes from one 6.3-unit backtrack (already there without correction) to two of
+       * 11.1. The bound lets that through and nothing more: the faulty versions were at 26.
        */
       expect(
-        morphsDExpression(forme.radii).amplitude,
-        `${forme.id} : morphs d expression`
+        morphsDExpression(shape.radii).amplitude,
+        `${shape.id}: expression morphs`
       ).toBeLessThan(14)
     }
   })
 
   /**
-   * La table est une constante de module. Elle doit rester assez rapide a batir pour ne pas
-   * peser sur le premier affichage : c'est le seul cout que ce correctif ajoute au moteur,
-   * qui ne fait plus ensuite qu'y lire deux entrees et les interpoler.
+   * The table is a module constant. It must stay quick enough to build not to weigh on the first display: it is the
+   * only cost this fix adds to the engine, which then only reads two entries and interpolates them.
    */
-  it('la table se batit en quelques millisecondes', () => {
+  it('the table builds in a few milliseconds', () => {
     const t = performance.now()
-    POUR_TESTS.batir()
+    FOR_TESTS.batir()
     expect(performance.now() - t).toBeLessThan(200)
   })
 })
 
-describe('couleur libre (hex) du corps', () => {
-  it('hexValide accepte #rgb et #rrggbb, avec ou sans diese, et normalise en minuscules', () => {
-    expect(hexValide('#FF8800')).toBe('#ff8800')
-    expect(hexValide('f80')).toBe('#ff8800')
-    expect(hexValide(' #AbC ')).toBe('#aabbcc')
-    for (const mauvais of ['', '#12', '#12345', '#1234567', 'rouge', '#ggg', null, undefined]) expect(hexValide(mauvais as string)).toBeNull()
+describe('free body color (hex)', () => {
+  it('isValidHex accepts #rgb and #rrggbb, with or without a hash, and normalizes to lowercase', () => {
+    expect(isValidHex('#FF8800')).toBe('#ff8800')
+    expect(isValidHex('f80')).toBe('#ff8800')
+    expect(isValidHex(' #AbC ')).toBe('#aabbcc')
+    for (const bad of ['', '#12', '#12345', '#1234567', 'red', '#ggg', null, undefined]) expect(isValidHex(bad as string)).toBeNull()
   })
-  it('couleurDe : un id du catalogue, sinon un hex libre, sinon l encre', () => {
-    expect(couleurDe('violet')).toBe('#8b3dff')
-    expect(couleurDe('#ff8800')).toBe('#ff8800')
-    expect(couleurDe('#f80')).toBe('#ff8800')
-    expect(couleurDe('nimporte')).toBe('#0a0a0c')
+  it('colorOf: a catalog id, else a free hex, else ink', () => {
+    expect(colorOf('violet')).toBe('#8b3dff')
+    expect(colorOf('#ff8800')).toBe('#ff8800')
+    expect(colorOf('#f80')).toBe('#ff8800')
+    expect(colorOf('nimporte')).toBe('#0a0a0c')
   })
 })

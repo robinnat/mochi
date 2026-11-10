@@ -1,9 +1,9 @@
-import { lien, nextTick, ref, watch } from '@/ui/dom/reactif'
-import { h, type Composant } from '@/ui/dom/h'
+import { link, nextTick, ref, watch } from '@/ui/dom/reactive'
+import { h, type Component } from '@/ui/dom/h'
 import { t } from '@/i18n'
-import { boiteModale, BOUTON_PRINCIPAL, BOUTON_SECONDAIRE } from './dialogue'
+import { boxModal, BUTTON_PRIMARY, BUTTON_SECONDARY } from './dialog'
 
-/** Boite de dialogue de nommage. */
+/** Naming dialog. */
 export interface NameDialogProps {
   title: string
   label: string
@@ -14,13 +14,13 @@ export interface NameDialogProps {
   onSubmit: (name: string) => void
 }
 
-export const NameDialog: Composant<NameDialogProps> = (props) => {
-  const open = lien(() => props.open, (v) => props.onOpen(v))
-  const boite = boiteModale(open)
+export const NameDialog: Component<NameDialogProps> = (props) => {
+  const open = link(() => props.open, (v) => props.onOpen(v))
+  const box = boxModal(open)
   let field: HTMLInputElement | null = null
   const draft = ref('')
 
-  // le nom propose arrive avec l'ouverture, et le champ s'offre deja selectionne
+  // the suggested name comes with opening, and the field is already selected
   watch(open, async (on) => {
     if (!on) return
     draft.value = props.value
@@ -30,7 +30,7 @@ export const NameDialog: Composant<NameDialogProps> = (props) => {
 
   function submit() {
     const clean = draft.value.trim()
-    // un nom vide ne veut rien dire : on garde la main plutot que de valider
+    // an empty name means nothing: we keep control rather than validate
     if (!clean) {
       field?.focus()
       return
@@ -40,7 +40,7 @@ export const NameDialog: Composant<NameDialogProps> = (props) => {
   }
 
   return () =>
-    boite.dessiner(
+    box.draw(
       { 'aria-label': props.title },
       () => (open.value = false),
       h(
@@ -70,8 +70,8 @@ export const NameDialog: Composant<NameDialogProps> = (props) => {
         h(
           'div',
           { class: 'flex justify-end gap-2' },
-          h('button', { type: 'button', class: BOUTON_SECONDAIRE, onClick: () => (open.value = false) }, t('dialog.cancel')),
-          h('button', { type: 'submit', class: BOUTON_PRINCIPAL }, props.submitLabel)
+          h('button', { type: 'button', class: BUTTON_SECONDARY, onClick: () => (open.value = false) }, t('dialog.cancel')),
+          h('button', { type: 'submit', class: BUTTON_PRIMARY }, props.submitLabel)
         )
       )
     )

@@ -1,48 +1,41 @@
 @import 'tailwindcss';
 
 :root {
-  /* Fond releve au pixel sur la video de reference. */
+  /* Background measured to the pixel on the reference video. */
   --paper: #f9f9f9;
   /*
-   * Couleur principale de l'INTERFACE : un bleu nuit choisi, pas releve. Le
-   * noir de la video, lui, n'a pas bouge — c'est celui du bot, dans skins.ts
-   * (`encre`, #0a0a0c). Les deux ne doivent pas etre confondus : changer
-   * celle-ci retouche le decor, changer l'autre casse la ressemblance.
+   * Main INTERFACE color: a chosen night blue, not measured. The video's black did not move: it is the bot's, in
+   * skins.ts (`ink`, #0a0a0c). Do not mix them up: changing this one retouches the decor, changing the other breaks
+   * the resemblance.
    */
   --ink: #111113;
   --line: #e3e5ea;
   --muted: #6e7382;
-  /* Rouge d'interface pour les actions destructrices — choisi, comme --ink. */
+  /* Interface red for destructive actions: chosen, like --ink. */
   --danger: #d63c34;
 
   /**
-   * Hauteur de la barre de montage. Elle est fixee en bas, donc c'est la scene
-   * qui lui reserve sa place — dans les DEUX onglets, sinon l'avatar centre change
-   * de position en passant a la personnalisation.
+   * Height of the montage bar. It is fixed at the bottom, so the scene keeps room for it, in BOTH tabs, otherwise the
+   * centered avatar moves when switching to customization.
    */
   --timeline: 236px;
 
   /**
-   * Duree et courbe du passage d'un onglet a l'autre : le glissement de la scene et
-   * la croissance de la boule. Le tour du regard, lui, a sa propre duree
-   * (`TURN_TIME` de `src/ui/gaze.ts`), volontairement un peu plus longue — les
-   * yeux finissent de se poser apres que la boule a fini de grandir, ce qui fait
-   * lire les deux comme un seul mouvement qui se termine. Ease-out sans
-   * depassement, comme tout le reste du projet.
+   * Duration and curve of switching tabs: the scene slide and the ball growth. The gaze turn has its own duration
+   * (`TURN_TIME` of `src/ui/gaze.ts`), deliberately a little longer: the eyes finish settling after the ball has
+   * finished growing, which makes both read as a single move that ends. Ease-out without overshoot, like the rest of
+   * the project.
    */
   --bascule: 1s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /*
- * La meme barre, sur une fenetre etroite : 236 px, c'est 29 % d'un ecran de
- * telephone, et la hauteur qu'elle prend est retranchee de tout ce qui reste.
- * 200 px laissent la regle (28 px) et des cartes de 64 px, soit la vignette a sa
- * taille maximale — en dessous les cartes ne montrent plus rien.
+ * The same bar, on a narrow window: 236 px is 29 % of a phone screen, and its height is taken from everything else.
+ * 200 px leave the ruler (28 px) and 64 px cards, so the thumbnail at its maximum size; below that, the cards no
+ * longer show anything.
  *
- * La variable est lue par la reserve de la scene et par le plafond de l'avatar,
- * qui valent a toutes les largeurs. Les calages fins de `.barre-export` et des
- * colonnes, eux, sont dans la requete `>= 64rem` : ils ne voient jamais cette
- * valeur.
+ * The variable is read by the scene's reserve and the avatar's cap, which apply at every width. The fine fits of
+ * `.bar-export` and the columns are in the `>= 64rem` query: they never see this value.
  */
 @media (width < 64rem) {
   :root {
@@ -57,33 +50,29 @@ body,
 }
 
 /*
- * La boule des reglages sort volontairement par la droite. Sans ce rognage, son
- * debordement deviendrait une zone defilable et la page partirait en largeur —
- * y compris pendant l'animation de RETOUR, ou la boule redescend alors que
- * l'onglet a deja change. D'ou un rognage permanent, et pas seulement sur cet onglet.
+ * The settings ball goes out to the right on purpose. Without this clip, its overflow would become a scrollable area
+ * and the page would widen, including during the RETURN animation, where the ball comes back down while the tab has
+ * already changed. Hence a permanent clip, not only on that tab.
  *
- * Sur `#app` et non sur `body` : l'`overflow` du corps est PROPAGE a la fenetre
- * quand la racine est en `visible`, donc l'y poser ne rogne rien du tout. `#app`
- * est un conteneur ordinaire, lui rogne pour de bon.
+ * On `#app` and not `body`: the body's `overflow` is PROPAGATED to the window when the root is `visible`, so setting
+ * it there clips nothing. `#app` is an ordinary container, it really clips.
  *
- * `clip` et pas `hidden` : `hidden` en ferait un conteneur de defilement, donc
- * rendrait le debordement navigable au lieu de le supprimer. Ici sur le seul axe
- * x, parce que sous 64rem la mise en page s'empile et doit defiler ; sur grand
- * ecran une seconde regle rogne aussi la hauteur (voir plus bas).
+ * `clip` and not `hidden`: `hidden` would make it a scroll container, so the overflow would become navigable instead
+ * of removed. Only on the x axis here, because under 64rem the layout stacks and must scroll; on a large screen a
+ * second rule also clips the height (see below).
  */
 #app {
   overflow-x: clip;
-  /* repere du grand mot du pied de page, qui s'y cale en `absolute` */
+  /* reference box for the big footer word, positioned `absolute` inside it */
   position: relative;
 }
 
 /*
- * Troncature d'une ligne. Volontairement pas `truncate` (text-overflow) : celui
- * -la coupe au milieu d'un mot et garde l'espace avant les points de suspension
- * quand la coupe tombe entre deux mots. `line-clamp` coupe au mot et colle les
- * points au texte, ce qui est la seule facon lisible d'ecrire « Mon cycle… ».
+ * One-line truncation. Deliberately not `truncate` (text-overflow): it cuts in the middle of a word and keeps the
+ * space before the ellipsis when the cut falls between two words. `line-clamp` cuts at a word and sticks the dots to
+ * the text, the only readable way to write "My cycle…".
  */
-@utility tronque {
+@utility truncated {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
@@ -91,14 +80,12 @@ body,
 }
 
 /*
- * Ouverture de la boite de dialogue. Une transition sur un element qui passe de
- * `display: none` a visible a besoin de `@starting-style` pour avoir un etat de
- * depart, et de `allow-discrete` pour que `display` et `overlay` attendent la
- * fin de l'animation a la fermeture. C'est pour ca que ce n'est pas ecrit en
- * classes utilitaires.
+ * Dialog opening. A transition on an element going from `display: none` to visible needs `@starting-style` for a
+ * start state, and `allow-discrete` so `display` and `overlay` wait for the end of the animation when closing. That
+ * is why it is not written with utility classes.
  */
-.dialogue,
-.dialogue::backdrop {
+.dialog,
+.dialog::backdrop {
   opacity: 0;
   transition:
     opacity 0.18s ease-out,
@@ -107,89 +94,79 @@ body,
     display 0.18s ease-out allow-discrete;
 }
 
-.dialogue {
+.dialog {
   transform: translateY(8px) scale(0.98);
 }
 
-.dialogue[open],
-.dialogue[open]::backdrop {
+.dialog[open],
+.dialog[open]::backdrop {
   opacity: 1;
 }
 
-.dialogue[open] {
+.dialog[open] {
   transform: none;
 }
 
-.dialogue::backdrop {
+.dialog::backdrop {
   background: rgb(10 12 20 / 0.4);
 }
 
 @starting-style {
-  .dialogue[open],
-  .dialogue[open]::backdrop {
+  .dialog[open],
+  .dialog[open]::backdrop {
     opacity: 0;
   }
 
-  .dialogue[open] {
+  .dialog[open] {
     transform: translateY(8px) scale(0.98);
   }
 }
 
 /*
- * Le nom du projet en grand, au pied des reglages. Reprise de la landing page de
- * Yuzu (`yuzu-releases/index.html`), transposee sur nos couleurs.
+ * The project name, big, at the foot of the settings. Taken from the Yuzu landing page, set in our colors.
  *
- * Le fondu est un DEGRADE DE COULEUR revele au travers des lettres
- * (`background-clip: text`), et non un `mask-image` : le texte n'est jamais peint,
- * c'est le fond qu'on voit a travers lui. Il part deja faible (22 %) et s'eteint
- * completement a 88 % de la hauteur, donc le bas des lettres est invisible avant
- * meme d'etre rogne.
+ * The fade is a COLOR GRADIENT revealed through the letters (`background-clip: text`), not a `mask-image`: the text
+ * is never painted, we see the background through it. It starts already faint (22 %) and goes out completely at 88 %
+ * of the height, so the bottom of the letters is invisible before it is even clipped.
  *
- * `line-height` sous 1 fait deborder les glyphes de leur boite : c'est ce qui les
- * fait rogner par le panneau et donne l'impression que le mot sort de la page.
- * D'ou `pointer-events: none` — sans lui, les lettres qui remontent volent le clic
- * des liens du dessus, piege deja tombe sur la landing page.
+ * `line-height` under 1 makes glyphs overflow their box: that gets them clipped by the panel and makes the word seem
+ * to leave the page. Hence `pointer-events: none`: without it, the rising letters steal the clicks of the links above
+ * (a trap already hit on the landing page).
  *
- * `-webkit-text-fill-color` en plus de `color` : Safari ne rend pas le texte
- * transparent avec le seul `color`. Tailwind n'a pas d'utilitaire pour cette
- * propriete, d'ou cette regle ecrite a la main plutot qu'en classes.
+ * `-webkit-text-fill-color` on top of `color`: Safari does not make the text transparent with `color` alone. Tailwind
+ * has no utility for this property, hence this hand-written rule.
  */
 .wordmark {
   /*
-   * `absolute` dans `#app`, et non `fixed`. `#app` fait exactement la hauteur de
-   * la fenetre, donc le bas est le meme — mais un element fixe est SORTI du
-   * document : il ne suit pas le rebond elastique quand on tente de defiler une
-   * page qui ne defile pas, alors que le mot de la landing page de Yuzu, lui, est
-   * dans le flux et accompagne le geste. En `absolute` il accompagne la page.
+   * `absolute` inside `#app`, not `fixed`. `#app` is exactly the window's height, so the bottom is the same, but a
+   * fixed element is OUT of the document: it does not follow the elastic bounce when you try to scroll a page that
+   * does not scroll, while the Yuzu landing page word is in the flow and follows the gesture. As `absolute` it
+   * follows the page.
    */
   position: absolute;
-  /* degage le rail, qui flotte (`fixed left-4`) et ne reserve rien dans la scene */
+  /* clears the rail, which floats (`fixed left-4`) and reserves nothing in the scene */
   left: 6rem;
-  /* legerement sous le bord : c'est ce qui fait mordre les lettres par l'ecran */
+  /* slightly under the edge: that makes the screen bite into the letters */
   bottom: -0.1em;
   pointer-events: none;
   user-select: none;
   line-height: 0.78;
   /*
-   * Dimensionne d'apres la place REELLEMENT disponible, et non en `vw` seul : le
-   * mot part a 6rem du bord gauche, donc une taille proportionnelle a la fenetre
-   * finissait par pousser le dernier B au-dela du bord droit. 3,05 est la largeur
-   * de « MOCHI » en cadratins a ce poids et cet interlettrage — mesuree, pas
-   * estimee — et le reste est la marge qu'on lui laisse a droite.
+   * Sized from the space REALLY available, not in `vw` alone: the word starts 6rem from the left edge, so a size
+   * proportional to the window ended up pushing the last letter past the right edge. 3.05 is the width of the word in
+   * ems at this weight and tracking (measured, not estimated) and the rest is the margin left on the right.
    */
   font-size: clamp(80px, calc((100vw - 7rem) / 3.05), 268px);
   font-weight: 900;
   letter-spacing: -0.045em;
   /*
-   * Marge a droite DANS la boite, et non un espacement autour.
+   * Right margin INSIDE the box, not spacing around it.
    *
-   * `background-clip: text` peint le degrade sur la boite de l'element et le
-   * revele au travers des lettres : tout glyphe qui depasse cette boite n'a donc
-   * aucun degrade a montrer, et `-webkit-text-fill-color: transparent` le rend
-   * purement invisible. Or l'interlettrage negatif retranche 0,045 cadratin apres
-   * le DERNIER glyphe aussi, et la panse droite d'un B depasse deja son avance :
-   * le B final se coupait net, quelle que soit la largeur de la fenetre. C'est le
-   * padding qui elargit la boite du degrade, pas la taille du texte.
+   * `background-clip: text` paints the gradient on the element's box and reveals it through the letters: any glyph
+   * that goes past that box has no gradient to show, and `-webkit-text-fill-color: transparent` makes it fully
+   * invisible. The negative tracking also removes 0.045 em after the LAST glyph, and the right bowl of the last
+   * letter already goes past its advance: it was cut sharp whatever the window width. The padding widens the
+   * gradient's box, not the text size.
    */
   padding-right: 0.1em;
   background: linear-gradient(
@@ -202,7 +179,7 @@ body,
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  /* il arrive avec le panneau, pas avant : meme retard que `.panneau--ouvert` */
+  /* it arrives with the panel, not before: same delay as `.panel--open` */
   opacity: 1;
   transition: opacity 0.35s ease-out 0.2s;
 }
@@ -214,26 +191,20 @@ body,
 }
 
 /*
- * Le mot sous 64rem : DANS LE FLUX, en bas de la page et centre.
+ * The word under 64rem: IN THE FLOW, at the bottom of the page and centered.
  *
- * Le calage sorti du flux ne tient que tant que `#app` fait exactement la hauteur
- * de la fenetre, ce qui est vrai au-dessus de 64rem — rien n'y defile. En dessous
- * la page defile pour de vrai, et le mot restait a 812 px du haut du DOCUMENT :
- * par-dessus le contenu du panneau au repos (mesure a 375 px : panneau jusqu'a 780, mot des
- * 753), puis en plein milieu de l'ecran une fois la page deroulee. Le remettre
- * dans le flux le rend a la page : il vient apres la scene, donc en dernier, et
- * rien ne peut plus lui passer dessus puisqu'il n'y a plus de recouvrement.
+ * Placing it out of the flow only holds while `#app` is exactly the window's height, which is true above 64rem
+ * (nothing scrolls there). Below, the page really scrolls, and the word stayed 812 px from the top of the DOCUMENT:
+ * over the content of the panel at rest (measured at 375 px: panel up to 780, word from 753), then in the middle of
+ * the screen once the page scrolled. Putting it back in the flow returns it to the page: it comes after the scene, so
+ * last, and nothing can pass over it any more since there is no overlap.
  *
- * Centre et non cale a gauche : les 6rem de marge degageaient le rail, qui est
- * passe en bande HAUTE a cette largeur. Il n'y a plus rien a contourner, et un mot
- * pleine largeur pose sous une colonne centree se lit de travers s'il ne l'est
- * pas. La marge droite de 0,1em disparait avec le calage : le centrage laisse du
- * jeu des deux cotes, donc le dernier B n'a plus de bord ou se couper.
+ * Centered and not left aligned: the 6rem margin cleared the rail, which became a TOP band at this width. There is
+ * nothing left to avoid, and a full-width word under a centered column reads crooked otherwise. The 0.1em right
+ * margin goes with the alignment: centering leaves room on both sides, so the last letter has no edge to be cut on.
  *
- * Le plafond descend a 200 px : sur une fenetre de tablette, 268 px de decoration
- * mangeaient un quart de la page. Et le diviseur perd les 6rem de marge gauche,
- * qui n'existent plus ici — le mot occupe la largeur entiere moins les gouttieres
- * de la scene.
+ * The cap goes down to 200 px: on a tablet window, 268 px of decoration ate a quarter of the page. And the divisor
+ * loses the 6rem left margin, which no longer exists here: the word takes the whole width minus the scene's gutters.
  */
 @media (width < 64rem) {
   .wordmark {
@@ -242,58 +213,47 @@ body,
     padding-right: 0;
     font-size: clamp(80px, calc((100vw - 2.5rem) / 3.05), 200px);
     /*
-     * Les lettres touchent le bord bas de la page.
+     * The letters touch the bottom edge of the page.
      *
-     * Une marge negative n'y suffit pas : la zone defilable est l'union des BOITES
-     * des descendants, les marges n'y entrent pas, et le talon de la fonte —
-     * l'espace des jambages, vide pour MOCHI qui n'en a aucun — depassait la boite
-     * de 21 px que la page comptait quand meme. D'ou 21 px de blanc sous le mot.
+     * A negative margin is not enough: the scrollable area is the union of the descendants' BOXES, margins do not
+     * count, and the font's foot (the descender space, empty for a word without descenders) went 21 px past the box,
+     * which the page still counted. Hence 21 px of white under the word.
      *
-     * On rogne donc a la LIGNE DE BASE : plus rien ne deborde, la page s'arrete ou
-     * les lettres s'arretent. C'est ce que fait le rognage de `#app` au-dessus de
-     * 64rem, ou le mot est simplement pose sous le bord.
+     * So we clip at the BASELINE: nothing overflows any more, the page stops where the letters stop. That is what the
+     * `#app` clip does above 64rem, where the word simply sits under the edge.
      */
     height: 0.69em;
     overflow: hidden;
     /*
-     * Le degrade est peint sur la BOITE et revele au travers des lettres : rogner
-     * la boite l'aurait eteint plus haut (il s'annule a 88 % de sa hauteur). On lui
-     * rend donc la hauteur de la boite pleine, independamment du rognage.
+     * The gradient is painted on the BOX and revealed through the letters: clipping the box would have faded it out
+     * higher (it reaches zero at 88 % of its height). So it gets the full box height back, whatever the clip.
      */
     background-size: 100% 0.78em;
   }
 }
 
 /*
- * Deplacement de l'avatar d'un onglet a l'autre.
+ * Moving the avatar from one tab to the other.
  *
- * La scene est une grille de trois colonnes : panneau gauche, avatar, panneau
- * droit. Une seule des deux colonnes de panneau a une largeur a la fois, et
- * c'est l'INTERPOLATION DE CES LARGEURS qui deplace l'avatar — les pistes de
- * grille s'animent, alors que `order` et `flex-direction` non. D'ou cette
- * grille plutot qu'une inversion de sens du conteneur, et d'ou son ecriture
- * ici : les deux etats doivent etre des valeurs litterales pour que la
- * transition ait de quoi interpoler.
+ * The scene is a three-column grid: left panel, avatar, right panel. Only one of the two panel columns has a width at
+ * a time, and it is the INTERPOLATION OF THOSE WIDTHS that moves the avatar: grid tracks animate, while `order` and
+ * `flex-direction` do not. Hence this grid rather than flipping the container's direction, and hence it is written
+ * here: both states must be literal values for the transition to have something to interpolate.
  *
- * Les gouttieres restent constantes dans les deux etats : la colonne de
- * l'avatar garde donc exactement la meme largeur, et son centre se decale de la
- * largeur d'un panneau, ni plus ni moins.
+ * The gutters stay constant in both states: the avatar column keeps exactly the same width, and its center moves by
+ * the width of a panel, no more, no less.
  *
- * En dessous de 64rem la grille n'existe pas : tout s'empile, et il n'y a plus
- * de glissement a animer.
+ * Under 64rem the grid does not exist: everything stacks, and there is no slide to animate.
  */
 
 /*
- * La TRANSITION de l'avatar est declaree ici, hors de la requete de largeur, la
- * ou ses positions sont dedans. Deux raisons : l'arrivee sur le site fait
- * apparaitre la boule a toutes les tailles, et une transition redeclaree plus bas
- * en chasserait l'opacite — une propriete absente de la liste ne transitionne
- * plus du tout.
+ * The avatar TRANSITION is declared here, outside the width query, while its positions are inside. Two reasons: the
+ * arrival on the site makes the ball appear at every size, and a transition declared again lower would drop its
+ * opacity (a property missing from the list no longer transitions at all).
  *
- * L'opacite prend son temps (0,8 s) : c'est une boule qui parait, pas un element
- * qui se charge. Elle reste plus courte que la bascule pour que la boule soit
- * entierement opaque avant d'avoir fini de s'installer — l'inverse donnerait un
- * fondu qui traine sur une forme deja immobile.
+ * Opacity takes its time (0.8 s): it is a ball appearing, not an element loading. It stays shorter than the switch so
+ * the ball is fully opaque before it has finished settling; the other way round would give a fade lingering on a
+ * shape already still.
  */
 .avatar {
   transition:
@@ -302,50 +262,42 @@ body,
 }
 
 /*
- * Arrivee de la barre d'export : elle monte en se revelant, APRES que l'avatar a
- * pris sa place.
+ * Arrival of the export bar: it rises while revealing itself, AFTER the avatar has taken its place.
  *
- * C'est une TRANSITION et pas une animation, exactement comme `.panneau` — et
- * c'est ce qui la fait se taire quand il le faut. Une transition ne joue pas sur
- * le premier style calcule d'un element : au rechargement, ou en revenant de
- * l'onglet Animations, la barre nait deja visible et rien ne bouge. Une animation,
- * elle, rejouait a chaque montage, donc a chaque changement d'onglet.
+ * It is a TRANSITION and not an animation, exactly like `.panel`, and that is what keeps it quiet when needed. A
+ * transition does not play on an element's first computed style: on reload, or coming back from the Animations tab,
+ * the bar is born already visible and nothing moves. An animation replayed on every mount, so on every tab change.
  *
- * D'ou aussi le fait que la barre soit montee PENDANT l'arrivee, juste masquee :
- * sans etat de depart present a l'ecran, il n'y aurait rien a interpoler.
+ * That is also why the bar is mounted DURING the arrival, only hidden: without a start state on screen, there would
+ * be nothing to interpolate.
  *
- * Le RETARD, lui, n'est pas ici mais dans `App.ts` (`RETARD_ARRIVEE`), et il ne
- * sert QU'A la fin de l'arrivee : le temps que l'avatar rejoigne sa place. En
- * venant d'un autre onglet il n'y a rien a attendre, la barre etant posee sur la
- * fenetre elle nait deja a sa place. En CSS il aurait fallu une valeur unique
- * pour les deux cas, donc fausse dans l'un des deux.
+ * The DELAY is not here but in `App.ts` (`ARRIVAL_DELAY`), and it only serves the end of the arrival: the time for
+ * the avatar to reach its place. Coming from another tab there is nothing to wait for, the bar being set on the
+ * window it is born in place. In CSS it would have taken a single value for both cases, so wrong in one of them.
  *
- * C'est `transform` et non `translate` qui porte la montee : le centrage
- * horizontal occupe deja `translate`, et les deux proprietes se composent au lieu
- * de s'ecraser.
+ * `transform` and not `translate` carries the rise: horizontal centering already uses `translate`, and the two
+ * properties compose instead of overwriting each other.
  */
-.barre-export {
+.bar-export {
   transition:
     opacity 0.6s ease-out,
     transform 0.6s ease-out;
 }
 
-.barre-export--cachee {
+.bar-export--hidden {
   opacity: 0;
   transform: translateY(0.85rem);
 }
 
 @media (width >= 64rem) {
   /*
-   * Sur grand ecran la mise en page est calee sur la fenetre : rien ne doit faire
-   * defiler la PAGE. Le seul debordement vertical vient de la boule geante, dont
-   * la boite grandit avec elle (2,5 fois 460 px) alors que seule la boule est
-   * peinte — du vide qui allongeait la page de deux cents pixels.
+   * On a large screen the layout is fitted to the window: nothing must scroll the PAGE. The only vertical overflow
+   * comes from the giant ball, whose box grows with it (2.5 times 460 px) while only the ball is painted: empty space
+   * that made the page two hundred pixels longer.
    *
-   * `clip` sur les deux axes ici, et non `hidden` : `hidden` ferait de `#app` un
-   * conteneur de defilement, donc rendrait ce debordement navigable au lieu de le
-   * supprimer. En dessous de 64rem la regle ne s'applique pas — la mise en page
-   * s'y empile et doit defiler pour de vrai.
+   * `clip` on both axes here, not `hidden`: `hidden` would make `#app` a scroll container, so the overflow would
+   * become navigable instead of removed. Under 64rem the rule does not apply: the layout stacks there and must really
+   * scroll.
    */
   #app {
     overflow: clip;
@@ -357,72 +309,64 @@ body,
     column-gap: 2.5rem;
     transition: grid-template-columns var(--bascule);
     /*
-     * Bornee a la fenetre. C'est ce qui donne aux panneaux une hauteur CONTRAINTE,
-     * sans quoi leur `overflow-y: auto` ne sert a rien : une piste de grille sans
-     * plafond prend la hauteur de son contenu, la boite ne deborde jamais d'
-     * elle-meme, et le panneau se retrouvait coupe par le rognage de `#app` sans
-     * pouvoir defiler. Sur une fenetre basse, c'est le panneau qui defile.
+     * Bounded by the window. That gives the panels a CONSTRAINED height, without which their `overflow-y: auto` does
+     * nothing: a grid track with no cap takes its content's height, the box never overflows by itself, and the panel
+     * ended up cut by the `#app` clip without being able to scroll. On a short window, the panel scrolls.
      */
     max-height: 100%;
     /*
-     * Piste unique DEFINIE, et non automatique. Une piste automatique prend la
-     * hauteur de son contenu et ignore le plafond du conteneur : le panneau
-     * gardait ses 773 px dans une fenetre de 620, se faisait rogner par `#app` et
-     * n'avait rien a defiler puisque sa boite ne debordait pas d'elle-meme.
+     * A single DEFINED track, not an automatic one. An automatic track takes its content's height and ignores the
+     * container's cap: the panel kept its 773 px in a 620 px window, got clipped by `#app` and had nothing to scroll
+     * since its box did not overflow by itself.
      */
     grid-template-rows: minmax(0, 1fr);
   }
 
-  .scene--gauche {
+  .scene--left {
     grid-template-columns: 20rem minmax(0, 1fr) 0;
   }
 
   /*
-   * La boule SEULE en scene : aucune colonne de panneau. Deux cas, et il fallait
-   * bien que ce soit la meme regle —
+   * The ball ALONE on stage: no panel column. Two cases, and it had to be the same rule:
    *
-   * - l'arrivee sur le site, ou c'est le RETOUR a `.scene` (la colonne de droite
-   *   qui reprend ses 20rem) qui fait glisser la boule a sa place ;
-   * - l'apercu, ou les panneaux sont demontes. Sans cette classe la grille leur
-   *   reserve quand meme leur piste — une colonne de 20rem plus sa gouttiere —
-   *   et l'avatar se retrouve centre dans une colonne decalee, donc a 180 px a
-   *   gauche du centre de l'ecran. Demonter un panneau ne retire pas sa piste.
+   * - the arrival on the site, where the RETURN to `.scene` (the right column taking its 20rem back) slides the ball
+   *   to its
+   *   place;
+   * - the preview, where the panels are unmounted. Without this class the grid still keeps their track (a 20rem
+   *   column plus
+   *   its gutter) and the avatar ends up centered in a shifted column, so 180 px left of the screen's center.
+   *   Unmounting a
+   *   panel does not remove its track.
    *
-   * Les deux gouttieres subsistent et sont egales, donc la colonne du milieu
-   * reste centree au pixel.
+   * Both gutters remain and are equal, so the middle column stays centered to the pixel.
    */
-  .scene--seule {
+  .scene--alone {
     grid-template-columns: 0 minmax(0, 1fr) 0;
   }
 
   /*
-   * La boule dans les reglages : elle grandit jusqu'a sortir de l'ecran par la
-   * droite, et descend assez pour degager le haut de la page : sans cet air
-   * au-dessus d'elle, la page se lit comme une image tronquee et non comme un
-   * cadrage.
+   * The ball in the settings: it grows until it leaves the screen on the right, and goes down enough to clear the top
+   * of the page: without that air above it, the page reads as a cropped image and not as a framing.
    *
-   * Un `transform` et pas la taille du SVG : la mise en page ne bouge pas, donc
-   * rien ne se remet en page a chaque image, et le trace restant vectoriel il
-   * reste net a n'importe quelle echelle.
+   * A `transform` and not the SVG size: the layout does not move, so nothing is laid out again every frame, and the
+   * drawing stays sharp at any scale.
    *
-   * Ici, QUE la taille et la place. Le tour sur soi-meme, lui, n'est pas un
-   * miroir CSS : il est joue par le regard, les yeux faisant reellement le tour
-   * de la sphere (`src/ui/gaze.ts`). Retourner l'image par une echelle negative
-   * aurait couche les yeux en `//` au lieu de `\\` et aplati la boule au passage
-   * par zero — deux choses que le projet refuse.
+   * Here, ONLY size and place. The spin on itself is not a CSS mirror: it is played by the gaze, the eyes really
+   * going around the sphere (`src/ui/gaze.ts`). Flipping the image with a negative scale would have laid the eyes as
+   * `//` instead of `\\` and flattened the ball when crossing zero, two things the project refuses.
    *
-   * Les deux etats declarent la meme suite de fonctions, sinon le navigateur n'a
-   * rien a interpoler et le changement se ferait d'un coup.
+   * Both states declare the same list of functions, otherwise the browser has nothing to interpolate and the change
+   * would happen at once.
    */
   .avatar {
     transform: translate(0, 0) scale(1);
   }
 
-  .avatar--geant {
+  .avatar--giant {
     transform: translate(30vw, 14vh) scale(2.5);
   }
 
-  .scene__gauche {
+  .scene__left {
     grid-column: 1;
   }
 
@@ -430,22 +374,20 @@ body,
     grid-column: 2;
   }
 
-  .scene__droite {
+  .scene__right {
     grid-column: 3;
   }
 
   /*
-   * Un panneau dans une colonne de largeur nulle doit disparaitre sans elargir sa
-   * piste : `min-width: 0` l'empeche de reclamer la largeur de son contenu, et le
-   * rognage coupe ce qui depasse pendant le glissement.
+   * A panel in a zero-width column must disappear without widening its track: `min-width: 0` stops it from claiming
+   * its content's width, and the clip cuts what overflows during the slide.
    */
-  .panneau {
+  .panel {
     min-width: 0;
     /*
-     * `hidden` en largeur pour que la colonne qui se referme ecrase son contenu,
-     * `auto` en hauteur pour que ce soit le PANNEAU qui defile et non la page :
-     * la grille des vignettes du personnalisateur est plus haute qu'une fenetre
-     * basse, et la page ne defile plus (voir `#app` ci-dessus).
+     * `hidden` in width so the closing column squashes its content, `auto` in height so the PANEL scrolls and not the
+     * page: the customizer's thumbnail grid is taller than a short window, and the page no longer scrolls (see `#app`
+     * above).
      */
     overflow-x: hidden;
     overflow-y: auto;
@@ -453,57 +395,50 @@ body,
     transition: opacity 0.3s ease-out;
   }
 
-  .panneau--ouvert {
+  .panel--open {
     opacity: 1;
-    /* le contenu n'apparait qu'une fois la place faite, sinon il se lit pendant
-       qu'il est encore ecrase */
+    /*
+ * the content only appears once the room is made, otherwise it reads while
+ *        it is still squashed
+ */
     transition: opacity 0.35s ease-out 0.2s;
   }
 
   /*
-   * Barre d'export : calee sur le bas de la BOITE de l'avatar, pas sur le bas de
-   * la colonne.
+   * Export bar: fitted to the bottom of the avatar's BOX, not the bottom of the column.
    *
-   * La boite est carree et centree dans la colonne, mais la silhouette n'occupe
-   * qu'environ 65 % de son cote — le viewBox du bot garde de quoi loger les
-   * anneaux des etats animes, qui n'existent pas au repos. Viser le bas de la
-   * colonne laissait donc 176 px de vide mesures entre la boule et le bouton, et
-   * la barre se lisait comme detachee de l'avatar.
+   * The box is square and centered in the column, but the silhouette only takes about 65 % of its side (the bot's
+   * viewBox keeps room for the rings of animated states, which do not exist at rest). Aiming at the bottom of the
+   * column left 176 px of measured empty space between the ball and the button, and the bar read as detached from the
+   * avatar.
    *
-   * Le `min()` est exactement celui du `max-w` de `.avatar` : c'est la meme
-   * boite, donc la barre suit son retrecissement sur une fenetre basse au lieu de
-   * lui passer dessus.
+   * The `min()` is exactly that of the `max-w` of `.avatar`: it is the same box, so the bar follows its shrinking on
+   * a short window instead of running over it.
    *
-   * Rien n'est reserve ici : `--timeline` est deja soustrait de la hauteur de la
-   * colonne dans les deux onglets, donc la bande du bas est libre et l'avatar ne
-   * bouge pas d'un pixel.
+   * Nothing is reserved here: `--timeline` is already subtracted from the column's height in both tabs, so the bottom
+   * band is free and the avatar does not move a pixel.
    */
   /*
-   * Calee comme la barre de MONTAGE, et pas dans la colonne de l'avatar.
+   * Fitted like the MONTAGE bar, not in the avatar column.
    *
-   * C'est ce qui lui evite de bouger. Ancree dans la colonne, elle suivait
-   * l'interpolation de la grille : en venant des reglages, le panneau de gauche se
-   * referme et le centre de la colonne se deplace de 320 px — la barre glissait
-   * donc jusqu'a sa place au lieu d'y etre. La barre de montage, elle, ne bouge
-   * jamais parce qu'elle est posee sur la FENETRE.
+   * That keeps it from moving. Anchored in the column, it followed the grid's interpolation: coming from the
+   * settings, the left panel closes and the column's center moves by 320 px, so the bar slid to its place instead of
+   * being there. The montage bar never moves because it is set on the WINDOW.
    *
-   * `left`/`right` sont exactement les siens : la bande couvre la colonne de
-   * l'avatar (4,5rem = marge + gouttiere ; 24,5rem = panneau + gouttiere + marge)
-   * et centre son contenu. L'onglet Personnaliser n'a qu'une seule disposition de
-   * grille, donc cette position est constante.
+   * `left`/`right` are exactly its own: the band covers the avatar column (4.5rem = margin + gutter; 24.5rem = panel
+   * + gutter + margin) and centers its content. The Customize tab has a single grid layout, so this position is
+   * constant.
    */
-  .barre-export {
+  .bar-export {
     position: fixed;
     left: 4.5rem;
     right: 24.5rem;
     display: flex;
     justify-content: center;
     /*
-     * Juste sous la boite de l'avatar : haut de la bande + demi-bande (le centre
-     * de la boite, qui y est centree) + demi-boite. Le `min()` est celui du
-     * `max-w` de `.avatar`, donc la barre suit son retrecissement sur une fenetre
-     * basse. Le demi-rem final la fait mordre dans la marge morte du bas de la
-     * boite, ou la silhouette ne va pas.
+     * Just under the avatar's box: top of the band + half band (the box's center, which is centered there) + half
+     * box. The `min()` is that of the `max-w` of `.avatar`, so the bar follows its shrinking on a short window. The
+     * final half rem makes it bite into the dead margin at the bottom of the box, where the silhouette does not go.
      */
     top: calc(
       2rem + (100dvh - 3rem - var(--timeline)) / 2 +
@@ -513,27 +448,23 @@ body,
 }
 
 /*
- * Arrivee sur le site (voir `src/ui/intro.ts` pour le montage et la regle).
+ * Arrival on the site (see `src/ui/intro.ts` for the montage and the rule).
  *
- * La boule parait seule au centre d'une page vide, a peine plus grande que sa
- * taille de croisiere, prend le temps de s'installer, puis redescend a l'echelle 1
- * en glissant vers sa place. Le glissement, lui, n'est pas ici : il vient des
- * colonnes de `.scene--seule` qui se rouvrent, comme un changement d'onglet.
+ * The ball appears alone in the center of an empty page, barely bigger than its cruising size, takes time to settle,
+ * then goes back down to scale 1 while sliding to its place. The slide is not here: it comes from the `.scene--alone`
+ * columns opening again, like a tab change.
  *
- * Les ecarts sont volontairement FAIBLES — 0,9 a l'apparition, 1,06 en attente —
- * la ou un surgissement ample (0,4 puis 1,22) se lisait comme un pop. La boule ne
- * doit pas jaillir : elle doit PARAITRE, et ce qu'on regarde ensuite est le tour
- * du regard puis le clignement qui pose l'interface, pas l'echelle.
+ * The gaps are deliberately SMALL (0.9 at appearance, 1.06 while waiting), where a big pop-in (0.4 then 1.22) read as
+ * a pop. The ball must not burst out: it must APPEAR, and what we watch then is the gaze turn and the blink that sets
+ * the interface, not the scale.
  *
- * Ecrit en `@starting-style` plutot qu'en `@keyframes` : la page est montee
- * en JavaScript, donc l'element est bel et bien INSERE, et une transition part
- * alors de l'etat declare ici. Meme mecanisme que le grand mot du pied de page,
- * et il a l'avantage de ne rien laisser tourner apres coup.
+ * Written with `@starting-style` rather than `@keyframes`: the page is mounted in JavaScript, so the element is
+ * really INSERTED, and a transition then starts from the state declared here. Same mechanism as the big footer word,
+ * with the advantage of leaving nothing running afterwards.
  *
- * Ecrit APRES la requete de largeur, et non dedans : le `transform` doit primer
- * sur celui que `.avatar` y declare, et l'apparition vaut a toutes les tailles —
- * sur petit ecran il n'y a pas de colonnes a rouvrir, mais la boule parait quand
- * meme.
+ * Written AFTER the width query, not inside: the `transform` must win over the one `.avatar` declares there, and the
+ * appearance applies at every size (on a small screen there are no columns to open again, but the ball still
+ * appears).
  */
 .avatar--intro {
   transform: translate(0, 0) scale(1.06);
@@ -542,18 +473,16 @@ body,
 @starting-style {
   .avatar--intro {
     opacity: 0;
-    /* meme suite de fonctions que l'etat d'arrivee, sinon rien a interpoler */
+    /* same list of functions as the arrival state, otherwise nothing to interpolate */
     transform: translate(0, 0) scale(0.9);
   }
 }
 
 /*
- * La barre laterale pendant l'arrivee. Elle reste montee — elle est `fixed`, la
- * demonter ne libererait aucune place — mais `inert`, ce qui la sort de l'ordre
- * de tabulation en meme temps que du clic. L'attribut sert donc de selecteur :
- * une seule source de verite pour « absente », au lieu d'une classe a tenir en
- * plus. Elle revient avec le meme retard que `.panneau--ouvert`, pour que tout
- * le decor se pose d'un seul mouvement.
+ * The side bar during the arrival. It stays mounted (it is `fixed`, unmounting it would free no room) but `inert`,
+ * which takes it out of the tab order as well as the clicks. So the attribute serves as the selector: a single source
+ * of truth for "absent", instead of one more class to keep. It comes back with the same delay as `.panel--open`, so
+ * the whole decor settles in a single move.
  */
 .rail {
   transition: opacity 0.35s ease-out 0.2s;
@@ -565,24 +494,23 @@ body,
 
 @media (prefers-reduced-motion: reduce) {
   .scene,
-  .panneau,
-  .panneau--ouvert,
+  .panel,
+  .panel--open,
   .avatar {
     transition: none;
   }
 
-  .barre-export {
+  .bar-export {
     transition: none;
   }
 
   /*
-   * Les boites modales manquaient a cette liste : `.dialogue` anime un
-   * `translateY(8px) scale(0.98)`, donc elles glissaient encore sous « mouvement
-   * reduit » alors que tout le reste etait neutralise. `.rail` et `.wordmark`, eux, ne
-   * jouent que sur l'opacite et n'ont rien a faire ici.
+   * Modal dialogs were missing from this list: `.dialog` animates a `translateY(8px) scale(0.98)`, so they still slid
+   * under "reduced motion" while everything else was neutralized. `.rail` and `.wordmark` only play on opacity and
+   * have nothing to do here.
    */
-  .dialogue,
-  .dialogue::backdrop {
+  .dialog,
+  .dialog::backdrop {
     transition: none;
     animation: none;
   }

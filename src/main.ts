@@ -1,8 +1,11 @@
-import { monterApp } from '@/ui/dom/h'
-import { suivreLangueDocument } from '@/i18n'
+import { mountApp } from '@/ui/dom/h'
+import { followLanguageDocument } from '@/i18n'
 import { App } from './App'
+import { currentTheme } from '@/ui/3d/currentTheme'
 import './styles.css'
 
-// seule l'application suit sa langue sur la page (attribut `lang`, titre de l'onglet)
-suivreLangueDocument()
-monterApp(App, '#app')
+// only the app follows its language on the page (`lang` attribute, tab title)
+followLanguageDocument()
+// the app's interface is light only: its Mochis stay light even when the device is in dark mode
+currentTheme.value = 'light'
+mountApp(App, '#app')

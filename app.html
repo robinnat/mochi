@@ -1,68 +1,48 @@
 <!doctype html>
 <!--
-  `lang` est reecrit au demarrage par src/i18n : la valeur ici est celle du
-  premier rendu, avant que la langue du visiteur soit connue. Les meta, elles,
-  restent en francais quoi qu'il arrive : les robots sociaux (X, Slack, Discord)
-  n'executent pas de JavaScript, donc l'apercu partage est toujours celui du
-  HTML servi. Une seule langue a choisir, autant que ce soit celle de l'auteur.
+  `lang` is rewritten at startup by src/i18n: the value here is the one of the first render, before the visitor's
+  language is known. The meta tags stay in English whatever happens: social bots (X, Slack, Discord) do not run
+  JavaScript, so the shared preview is always the one of the served HTML.
 -->
-<html lang="fr">
+<html lang="en">
   <head>
-    <!-- doit tenir dans les 1024 premiers octets, donc en premier -->
+    <!-- must fit in the first 1024 bytes, so it comes first -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>Mochi World, avatars animés</title>
+    <title>Mochis, animated avatars</title>
     <meta
       name="description"
-      content="Mochi : un moteur d'avatars animés en vraie 3D, en trois styles (Doux, Plat, Pixel), avec gestes, accessoires et exports. Sans librairie d'animation."
+      content="Mochis: animated avatars in real 3D, in three styles (Soft, Flat, Pixel), with moods, accessories and exports. No animation library."
     />
-
     <!--
-      Pas de <meta name="robots" content="index, follow"> : c'est la valeur par
-      defaut, et Google la documente comme sans effet. Cette balise ne sert qu'a
-      INTERDIRE quelque chose.
+      No <meta name="robots" content="index, follow">: it is the default value, and Google documents it as having no
+      effect. That tag only serves to FORBID something.
     -->
-
-    <!-- Open Graph : attribut `property`, alors que les balises X prennent `name` -->
+    <!-- Open Graph: `property` attribute, while X tags use `name` -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Mochi World, avatars animés" />
+    <meta property="og:title" content="Mochis, animated avatars" />
     <meta
       property="og:description"
-      content="Un moteur d'avatars animés en 3D : formes, expressions, gestes, accessoires, exports PNG, GIF et MP4."
+      content="Animated avatars in 3D: shapes, expressions, moods, accessories, PNG, GIF and MP4 exports."
     />
-    <meta property="og:site_name" content="Mochi World" />
-    <meta property="og:locale" content="fr_FR" />
-    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:site_name" content="Mochis" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="fr_FR" />
     <meta property="og:locale:alternate" content="zh_CN" />
-
-    <!--
-      `twitter:card` suffit : X reprend og:title et og:description.
-      Les dupliquer en twitter:* n'ajoute rien.
-    -->
+    <!-- `twitter:card` is enough: X reuses og:title and og:description. -->
     <meta name="twitter:card" content="summary" />
 
     <!--
-      Le `.ico` d'abord et le SVG apres : a pertinence egale les navigateurs
-      retiennent le DERNIER, et on veut le vectoriel quand il est compris.
-      Le `.ico` reste necessaire en 2026 : Safari ne lit le SVG qu'a partir de
-      la version 26, et iOS pas du tout avant 18.7.
-
-      Il embarque 16, 32 et 48 (48 pour les onglets a fort zoom et le raccourci
-      Windows), chaque taille rendue depuis le SVG plutot que reechantillonnee.
-      Les trois tailles sont declarees : avec `sizes="32x32"` seul, un
-      navigateur qui cherche une icone de 48 reechantillonne le 32 au lieu
-      d'ouvrir l'image de 48 qui est dans le fichier. Le `.ico` ignore
-      `prefers-color-scheme`, il porte la seule variante claire (corps #0a0a0c,
-      yeux troues), d'ou le SVG juste apres, qui lui s'inverse.
+      The `.ico` first and the SVG after: at equal relevance browsers keep the LAST one, and we want the vector one
+      when it is understood. The `.ico` is still needed: older Safari and iOS do not read SVG icons. It holds 16, 32 and
+      48 px.
     -->
     <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <!-- iOS aplatit la transparence en noir : celui-la est opaque, fond #f9f9f9 -->
+    <!-- iOS flattens transparency to black: this one is opaque -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-
-    <!-- pas de site.webmanifest : il ne sert qu'a l'installation PWA, et
-         couterait trois icones de plus pour aucun gain de referencement -->
 
     <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0a0a0c" media="(prefers-color-scheme: dark)" />

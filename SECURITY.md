@@ -4,7 +4,7 @@
 
 ## Supported versions
 
-Mochi World is not published on npm yet and has no releases. Only the latest commit of the
+Mochis is not published on npm yet and has no releases. Only the latest commit of the
 `main` branch is supported. Fixes land on `main`; older commits are not patched.
 
 | Version | Supported |
@@ -31,7 +31,7 @@ report is confirmed, the fix goes to `main` through a normal pull request.
 
 ## Scope
 
-Mochi World runs in the browser and has no server, no accounts and no data storage beyond the
+Mochis runs in the browser and has no server, no accounts and no data storage beyond the
 viewer's own `localStorage`. Reports about the code in this repository and the demo site
 built from it are welcome. Issues in third-party dependencies are better reported to their
 own projects.

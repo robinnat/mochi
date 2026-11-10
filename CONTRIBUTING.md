@@ -1,8 +1,8 @@
 **English** | [Français](CONTRIBUTING.fr.md)
 
-# Contributing to Mochi World
+# Contributing to Mochis
 
-Thanks for taking the time. Mochi World is a small project maintained in spare time, so reviews
+Thanks for taking the time. Mochis is a small project maintained in spare time, so reviews
 can take a while. Small, focused pull requests are the easiest to review.
 
 ## Before you start
@@ -26,10 +26,10 @@ npx -y pnpm@11.17.0 install
 ## Run
 
 ```bash
-npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site at /, app at /app.html, lab at /labo.html)
+npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site at /, app at /app.html, lab at /lab.html)
 ```
 
-The 3D needs WebGL. If your browser has none, the avatar falls back to its SVG drawing.
+The 3D needs WebGL. If your browser has none, a short message replaces the Mochi: there is no 2D fallback.
 
 ## Test
 
@@ -48,12 +48,14 @@ There is no formatter or linter config: follow the code around you.
 - Plain TypeScript, no framework: interface components are functions built with the small renderer of
   `src/ui/dom/`, and the avatar is the `<mochi-bot>` web component.
 - 2 spaces, single quotes, no semicolons.
-- `three`, `src/ui/trois/scene3d.ts` and the rest of the 3D are only ever imported dynamically
+- `three`, `src/ui/3d/scene3d.ts` and the rest of the 3D are only ever imported dynamically
   (`await import(...)`), never with a static `import` (`src/site/site.test.ts` checks it for the site).
 - The constants in `src/bot/` are measurements, not choices. Do not round or "clean up" them
   (see [docs/measurements.md](docs/measurements.md)).
-- Code comments, ids (`etoile`, `rendu`) and most files in `docs/` are in French. You can write
-  new comments and docs in English.
+- Everything is in English: code, comments, ids, tests and docs (`src/english.test.ts` checks it). Only the French
+  and Chinese translations of the app's interface (`src/i18n/locales/`) and the `*.fr.md` files are in French.
+- The website's `/docs` page is built from `README.md` and `docs/*.md`: edit the Markdown files, never the page
+  (`src/docs/docs-source.test.ts` keeps them identical).
 - Keep the MIT header in [LICENSE](LICENSE) as it is, both copyright lines included.
 
 ## Pull requests

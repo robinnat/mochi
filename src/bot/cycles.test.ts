@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   MAX_BLOCK,
-  MAX_BLOCS,
+  MAX_BLOCKS,
   MAX_CYCLES,
   MIN_BLOCK,
   blockAt,
@@ -19,63 +19,63 @@ import {
 } from './cycles'
 import { SEQUENCE, STATES, STATE_BY_ID } from './states'
 
-describe('cycle par defaut', () => {
-  it('reprend la sequence relevee sur la video, dans l ordre', () => {
+describe('default cycle', () => {
+  it('replays the sequence measured on the video, in order', () => {
     expect(defaultCycle().blocks.map((b) => b.state)).toEqual(SEQUENCE)
   })
 
-  it('tient chaque etat sa duree mesuree', () => {
+  it('holds each state for its measured duration', () => {
     for (const block of defaultCycle().blocks) {
       expect(block.duration).toBe(STATE_BY_ID.get(block.state)!.duration)
     }
   })
 
-  it('est reconstruit a l identique a chaque appel', () => {
+  it('is rebuilt identically at each call', () => {
     expect(defaultCycle()).toEqual(defaultCycle())
-    // ...sans partager d'objet, sinon editer un montage toucherait l amorce
+    // ...without sharing an object, otherwise editing a montage would touch the seed
     expect(defaultCycle().blocks[0]).not.toBe(defaultCycle().blocks[0])
   })
 
-  it('laisse toujours de la place pour un nouveau cycle, sans collision', () => {
+  it('always leaves room for a new cycle, without collision', () => {
     const reference = defaultCycle()
-    const un: Cycle = {
+    const one: Cycle = {
       id: nextCycleId([reference]),
       name: uniqueName('Mon cycle', [reference]),
       blocks: []
     }
-    const deux: Cycle = {
-      id: nextCycleId([reference, un]),
-      name: uniqueName('Mon cycle', [reference, un]),
+    const two: Cycle = {
+      id: nextCycleId([reference, one]),
+      name: uniqueName('Mon cycle', [reference, one]),
       blocks: []
     }
-    expect(un.id).not.toBe(reference.id)
-    expect(deux.id).not.toBe(un.id)
-    expect(deux.name).not.toBe(un.name)
+    expect(one.id).not.toBe(reference.id)
+    expect(two.id).not.toBe(one.id)
+    expect(two.name).not.toBe(one.name)
   })
 })
 
-describe('durees', () => {
-  it('ne descend pas sous le plancher du moteur', () => {
-    // en dessous, le bloc est plus court que le fondu d entree du suivant
+describe('durations', () => {
+  it('never goes below the engine floor', () => {
+    // below it, the block is shorter than the entry fade of the next one
     expect(clampDuration('idle', 0.1)).toBe(MIN_BLOCK)
     expect(clampDuration('idle', -5)).toBe(MIN_BLOCK)
   })
 
-  it('respecte la mesure des etats qui ont besoin d aboutir', () => {
-    // la transition d'entree des reglages doit aller au bout de son tour de regard
+  it('respects the measurement of states that need to complete', () => {
+    // the settings entry transition must finish its gaze turn
     expect(minDurationOf('swirl')).toBe(1.3)
     expect(clampDuration('swirl', 1)).toBe(1.3)
-    // un etat qui ignore le temps n a que le plancher
+    // a state that ignores time only has the floor
     expect(minDurationOf('idle')).toBe(MIN_BLOCK)
   })
 
-  it('n autorise aucun etat a descendre sous sa mesure', () => {
+  it('lets no state go below its measurement', () => {
     for (const state of SEQUENCE) {
       expect(clampDuration(state, 0)).toBeGreaterThanOrEqual(minDurationOf(state))
     }
   })
 
-  it('plafonne et tombe sur le pas, sans trainee de flottants', () => {
+  it('caps and lands on the step, with no floating point residue', () => {
     expect(clampDuration('idle', 999)).toBe(MAX_BLOCK)
     expect(clampDuration('idle', 2.44)).toBe(2.4)
     expect(clampDuration('idle', 2.46)).toBe(2.5)
@@ -93,29 +93,29 @@ describe('lecture', () => {
     ]
   }
 
-  it('additionne les blocs', () => {
+  it('adds up the blocks', () => {
     expect(totalDuration(cycle.blocks)).toBe(6)
   })
 
-  it('trouve le bloc joue et le temps ecoule dedans', () => {
+  it('finds the block played and the time elapsed in it', () => {
     expect(blockAt(cycle.blocks, 0)).toEqual({ index: 0, elapsed: 0 })
     expect(blockAt(cycle.blocks, 1.9)).toEqual({ index: 0, elapsed: 1.9 })
-    // la borne appartient au bloc suivant
+    // the boundary belongs to the next block
     expect(blockAt(cycle.blocks, 2)).toEqual({ index: 1, elapsed: 0 })
     expect(blockAt(cycle.blocks, 3.5)).toEqual({ index: 2, elapsed: 0.5 })
   })
 
-  it('boucle au-dela du dernier bloc', () => {
+  it('loops past the last block', () => {
     expect(blockAt(cycle.blocks, 6)).toEqual({ index: 0, elapsed: 0 })
     expect(blockAt(cycle.blocks, 8)).toEqual({ index: 1, elapsed: 0 })
   })
 
-  it('ne casse pas sur un cycle vide', () => {
+  it('does not break on an empty cycle', () => {
     expect(blockAt([], 3)).toEqual({ index: 0, elapsed: 0 })
     expect(totalDuration([])).toBe(0)
   })
 
-  it('deplace un bloc sans toucher la liste d origine', () => {
+  it('moves a block without touching the original list', () => {
     const blocks = cycle.blocks
     expect(moveBlock(blocks, 0, 2).map((b) => b.state)).toEqual(['wink', 'sleep', 'idle'])
     expect(moveBlock(blocks, 2, 0).map((b) => b.state)).toEqual(['sleep', 'idle', 'wink'])
@@ -123,75 +123,74 @@ describe('lecture', () => {
   })
 })
 
-describe('relecture du stockage', () => {
-  it('ne casse pas sur du vide ou du JSON invalide', () => {
+describe('reading the storage back', () => {
+  it('does not break on nothing or invalid JSON', () => {
     expect(parseCycles(null)).toEqual([])
     expect(parseCycles('')).toEqual([])
-    expect(parseCycles('{pas du json')).toEqual([])
+    expect(parseCycles('{not json')).toEqual([])
     expect(parseCycles('{"id":"c1"}')).toEqual([])
   })
 
-  it('jette les blocs dont l etat n existe plus', () => {
+  it('drops blocks whose state no longer exists', () => {
     const raw = '[{"id":"c1","name":"A","blocks":[{"state":"idle","duration":2},' +
       '{"state":"disparu","duration":2}]}]'
     expect(parseCycles(raw)[0]!.blocks.map((b) => b.state)).toEqual(['idle'])
   })
 
-  it('ramene les durees aberrantes dans leurs bornes', () => {
+  it('brings absurd durations back within bounds', () => {
     const raw = '[{"id":"c1","name":"A","blocks":[{"state":"idle","duration":-4},' +
       '{"state":"sleep","duration":9999}]}]'
     expect(parseCycles(raw)[0]!.blocks.map((b) => b.duration)).toEqual([MIN_BLOCK, MAX_BLOCK])
   })
 
-  it('jette un cycle vide, sans nom, ou en double', () => {
+  it('drops an empty, unnamed or duplicate cycle', () => {
     expect(parseCycles('[{"id":"c1","name":"A","blocks":[]}]')).toEqual([])
     expect(parseCycles('[{"id":"c1","blocks":[{"state":"idle","duration":2}]}]')).toEqual([])
-    const doublon = '[{"id":"c1","name":"A","blocks":[{"state":"idle","duration":2}]},' +
+    const duplicate = '[{"id":"c1","name":"A","blocks":[{"state":"idle","duration":2}]},' +
       '{"id":"c1","name":"B","blocks":[{"state":"egg","duration":2}]}]'
-    expect(parseCycles(doublon).map((c) => c.name)).toEqual(['A'])
+    expect(parseCycles(duplicate).map((c) => c.name)).toEqual(['A'])
   })
 
-  it('ne garde que les champs du modele, pas ce qu on lui glisse en plus', () => {
-    const raw = '[{"id":"defaut","name":"Mon montage","locked":true,"secret":1,' +
-      '"blocks":[{"state":"idle","duration":2,"vitesse":3}]}]'
+  it('only keeps the model\'s fields, not what is slipped in', () => {
+    const raw = '[{"id":"initial","name":"Mon montage","locked":true,"secret":1,' +
+      '"blocks":[{"state":"idle","duration":2,"speed":3}]}]'
     const cycle = parseCycles(raw)[0]!
     expect(Object.keys(cycle).sort()).toEqual(['blocks', 'id', 'name'])
     expect(Object.keys(cycle.blocks[0]!).sort()).toEqual(['duration', 'state'])
   })
 
   /*
-   * Le stockage est modifiable et tient quelques megaoctets, alors que rien en aval n'est
-   * dimensionne pour ca. Un seul cycle de 150 000 blocs — environ 4 Mo de JSON, donc dans
-   * le budget — donnait 1 500 000 s de duree, autant de graduations a allouer et une piste
-   * de 29 700 000 px : l'onglet figeait en entrant dans l'onglet Animations.
+   * Storage can be edited and holds a few megabytes, while nothing downstream is sized for it. A single cycle of
+   * 150,000 blocks (about 4 MB of JSON, so within budget) gave 1,500,000 s of duration, as many ticks to allocate and
+   * a 29,700,000 px track: the tab froze when opening Animations.
    */
-  it('borne la taille d un montage relu', () => {
-    const blocs = Array.from({ length: 200_000 }, () => ({ state: 'idle', duration: 10 }))
-    const raw = JSON.stringify([{ id: 'c1', name: 'A', blocks: blocs }])
-    expect(parseCycles(raw)[0]!.blocks).toHaveLength(MAX_BLOCS)
+  it('bounds the size of a montage read back', () => {
+    const blocks = Array.from({ length: 200_000 }, () => ({ state: 'idle', duration: 10 }))
+    const raw = JSON.stringify([{ id: 'c1', name: 'A', blocks: blocks }])
+    expect(parseCycles(raw)[0]!.blocks).toHaveLength(MAX_BLOCKS)
   })
 
   /*
-   * Le plancher est DERIVE du plus long `morph`, il n'est plus ecrit a la main. Ce test
-   * garde le lien visible : il valait 0,6 en dur, ce qui ne marchait que parce que 0,6
-   * etait justement le plus long morph du catalogue. Un etat qui morphe plus lentement le suit.
+   * The floor is DERIVED from the longest `morph`, it is no longer hand-written. This test keeps the link visible: it
+   * used to be a hard-coded 0.6, which only worked because 0.6 happened to be the longest morph of the catalog. A
+   * state that morphs more slowly moves it.
    */
-  it('le plancher de bloc couvre le plus long fondu du catalogue', () => {
-    const plusLong = Math.max(...STATES.map((s) => s.morph))
-    expect(MIN_BLOCK).toBeGreaterThanOrEqual(plusLong)
-    // et il n'est pas gratuitement plus grand : c'est exactement ce fondu
-    expect(MIN_BLOCK).toBe(plusLong)
+  it('the block floor covers the longest fade of the catalog', () => {
+    const longest = Math.max(...STATES.map((s) => s.morph))
+    expect(MIN_BLOCK).toBeGreaterThanOrEqual(longest)
+    // and it is not needlessly bigger: it is exactly that fade
+    expect(MIN_BLOCK).toBe(longest)
   })
 
-  it('borne aussi l ajout depuis l editeur, pas seulement la relecture', () => {
-    let blocs = Array.from({ length: MAX_BLOCS }, () => makeBlock('idle'))
-    expect(blocksWith(blocs, 'sleep')).toHaveLength(MAX_BLOCS)
-    // et il reste possible d'ajouter juste en dessous de la borne
-    blocs = blocs.slice(0, MAX_BLOCS - 1)
-    expect(blocksWith(blocs, 'sleep')).toHaveLength(MAX_BLOCS)
+  it('also bounds adding from the editor, not only reading back', () => {
+    let blocks = Array.from({ length: MAX_BLOCKS }, () => makeBlock('idle'))
+    expect(blocksWith(blocks, 'sleep')).toHaveLength(MAX_BLOCKS)
+    // and adding just below the bound is still possible
+    blocks = blocks.slice(0, MAX_BLOCKS - 1)
+    expect(blocksWith(blocks, 'sleep')).toHaveLength(MAX_BLOCKS)
   })
 
-  it('borne le nombre de montages relus', () => {
+  it('bounds the number of montages read back', () => {
     const raw = JSON.stringify(
       Array.from({ length: 5000 }, (_, i) => ({
         id: `c${i}`,
@@ -203,28 +202,27 @@ describe('relecture du stockage', () => {
   })
 
   /*
-   * `swirl` est la transition d'entree des reglages, deliberement hors de `SEQUENCE` : un
-   * test la garde hors de la palette et de la planche. Un montage utilisateur ne se
-   * construit qu'a partir de la palette, donc elle ne peut arriver ici que par un stockage
-   * bricole a la main — et on l'y refuse comme partout ailleurs.
+   * `swirl` is the settings entry transition, deliberately outside `SEQUENCE`: a test keeps it out of the palette and
+   * the sheet. A user montage is only built from the palette, so it can only arrive here through a hand-edited
+   * storage, and it is refused here like everywhere else.
    */
   /*
-   * Les etats retires du catalogue (orbit, burst, exclaim...) peuvent encore dormir dans le
-   * stockage d'un visiteur : ils sont ecartes bloc par bloc, sans casser le reste du montage.
+   * States removed from the catalog (orbit, burst, exclaim...) can still sleep in a visitor's storage: they are
+   * dropped block by block, without breaking the rest of the montage.
    */
-  it('ecarte les etats retires du catalogue sans casser le montage', () => {
+  it('drops states removed from the catalog without breaking the montage', () => {
     const raw = '[{"id":"c1","name":"A","blocks":[{"state":"orbit","duration":3},' +
       '{"state":"wink","duration":2},{"state":"comet","duration":2},{"state":"notify","duration":2}]}]'
     expect(parseCycles(raw)[0]!.blocks.map((b) => b.state)).toEqual(['wink'])
-    // un montage fait UNIQUEMENT d'etats retires tombe : l'application retrouve le montage par defaut
+    // a montage made ONLY of removed states falls: the app gets the default montage back
     expect(parseCycles('[{"id":"c1","name":"A","blocks":[{"state":"burst","duration":2}]}]')).toEqual([])
   })
 
-  it('refuse un etat hors catalogue, `swirl` compris', () => {
+  it('refuses a state outside the catalog, `swirl` included', () => {
     const raw = '[{"id":"c1","name":"A","blocks":[{"state":"swirl","duration":2},' +
       '{"state":"idle","duration":2}]}]'
     expect(parseCycles(raw)[0]!.blocks.map((b) => b.state)).toEqual(['idle'])
-    // un montage qui n'en contiendrait QUE devient vide, donc tombe
+    // a montage holding ONLY that becomes empty, so it falls
     expect(parseCycles('[{"id":"c1","name":"A","blocks":[{"state":"swirl","duration":2}]}]')).toEqual(
       []
     )

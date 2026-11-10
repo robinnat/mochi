@@ -1,19 +1,18 @@
-import { ref } from '@/ui/dom/reactif'
-import { surDemontage } from '@/ui/dom/h'
+import { ref } from '@/ui/dom/reactive'
+import { onUnmount } from '@/ui/dom/h'
 
 /**
- * `prefers-reduced-motion`, suivi en direct. Le site s'y plie plus strictement que
- * l'application : avec ce reglage, aucune demo n'a de boucle, elles montrent une image.
- * A appeler pendant la mise en place d'un composant (l'ecoute s'arrete avec lui).
+ * `prefers-reduced-motion`, tracked live. The site follows it more strictly than the app: with this setting, no demo
+ * loops, they show an image. Call it during a component's setup (listening stops with it).
  */
-export function useReduit() {
-  const reduit = ref(false)
+export function useReduced() {
+  const reduced = ref(false)
   if (typeof window !== 'undefined' && window.matchMedia) {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    reduit.value = mq.matches
-    const maj = () => (reduit.value = mq.matches)
-    mq.addEventListener('change', maj)
-    surDemontage(() => mq.removeEventListener('change', maj))
+    reduced.value = mq.matches
+    const update = () => (reduced.value = mq.matches)
+    mq.addEventListener('change', update)
+    onUnmount(() => mq.removeEventListener('change', update))
   }
-  return reduit
+  return reduced
 }

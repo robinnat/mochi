@@ -1,39 +1,39 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
-import { nextTick, ref, watch } from './reactif'
-import { c, h, monterApp, rendre, surDemontage, surMontage, type Composant } from './h'
+import { nextTick, ref, watch } from './reactive'
+import { c, h, mountApp, render, onUnmount, onMount, type Component } from './h'
 
-describe('rendu de l interface', () => {
-  it('cree et met a jour attributs, classes, styles et texte', () => {
+describe('interface rendering', () => {
+  it('creates and updates attributes, classes, styles and text', () => {
     const el = document.createElement('div')
-    rendre(h('p', { class: ['a', { b: true, c: false }], style: { color: 'red', '--x': '1' }, title: 't' }, 'bonjour'), el)
+    render(h('p', { class: ['a', { b: true, c: false }], style: { color: 'red', '--x': '1' }, title: 't' }, 'bonjour'), el)
     const p = el.firstElementChild as HTMLElement
     expect(p.className).toBe('a b')
     expect(p.style.getPropertyValue('--x')).toBe('1')
     expect(p.textContent).toBe('bonjour')
-    rendre(h('p', { class: 'a', title: null }, 'salut'), el)
+    render(h('p', { class: 'a', title: null }, 'hello'), el)
     expect(el.firstElementChild).toBe(p)
     expect(p.className).toBe('a')
     expect(p.hasAttribute('title')).toBe(false)
     expect(p.style.getPropertyValue('color')).toBe('')
-    expect(p.textContent).toBe('salut')
+    expect(p.textContent).toBe('hello')
   })
 
-  it('les enfants a cle gardent leur noeud quand l ordre change', () => {
+  it('keyed children keep their node when the order changes', () => {
     const el = document.createElement('ul')
-    rendre(h('div', null, ['a', 'b', 'c'].map((k) => h('li', { key: k }, k))), el)
-    const avant = [...el.querySelectorAll('li')]
-    rendre(h('div', null, ['c', 'a', 'b'].map((k) => h('li', { key: k }, k))), el)
-    const apres = [...el.querySelectorAll('li')]
-    expect(apres.map((x) => x.textContent)).toEqual(['c', 'a', 'b'])
-    expect(apres[0]).toBe(avant[2])
-    expect(apres[1]).toBe(avant[0])
+    render(h('div', null, ['a', 'b', 'c'].map((k) => h('li', { key: k }, k))), el)
+    const before = [...el.querySelectorAll('li')]
+    render(h('div', null, ['c', 'a', 'b'].map((k) => h('li', { key: k }, k))), el)
+    const after = [...el.querySelectorAll('li')]
+    expect(after.map((x) => x.textContent)).toEqual(['c', 'a', 'b'])
+    expect(after[0]).toBe(before[2])
+    expect(after[1]).toBe(before[0])
   })
 
-  it('evenements, attributs aria booleens et SVG', () => {
+  it('events, boolean aria attributes and SVG', () => {
     const el = document.createElement('div')
     let n = 0
-    rendre(h('button', { 'aria-pressed': false, onClick: () => n++ }, h('svg', { viewBox: '0 0 1 1' }, h('path', { d: 'M0 0' }))), el)
+    render(h('button', { 'aria-pressed': false, onClick: () => n++ }, h('svg', { viewBox: '0 0 1 1' }, h('path', { d: 'M0 0' }))), el)
     const b = el.querySelector('button')!
     expect(b.getAttribute('aria-pressed')).toBe('false')
     b.click()
@@ -41,64 +41,64 @@ describe('rendu de l interface', () => {
     expect(el.querySelector('path')!.namespaceURI).toBe('http://www.w3.org/2000/svg')
   })
 
-  it('un composant se redessine seul quand son etat change, et se nettoie au retrait', async () => {
+  it('a component redraws by itself when its state changes, and cleans up on removal', async () => {
     const journal: string[] = []
-    const Compteur: Composant<{ pas: number }> = (props) => {
+    const Counter: Component<{ step: number }> = (props) => {
       const n = ref(0)
-      surMontage(() => journal.push('monte'))
-      surDemontage(() => journal.push('retire'))
-      return () => h('button', { onClick: () => (n.value += props.pas) }, String(n.value))
+      onMount(() => journal.push('monte'))
+      onUnmount(() => journal.push('removed'))
+      return () => h('button', { onClick: () => (n.value += props.step) }, String(n.value))
     }
     const el = document.createElement('div')
     document.body.appendChild(el)
-    const retirer = monterApp(Compteur, el, { pas: 2 })
+    const remove = mountApp(Counter, el, { step: 2 })
     expect(journal).toEqual(['monte'])
     el.querySelector('button')!.click()
     await nextTick()
     expect(el.textContent).toBe('2')
-    retirer()
-    expect(journal).toEqual(['monte', 'retire'])
+    remove()
+    expect(journal).toEqual(['monte', 'removed'])
     expect(el.innerHTML).toBe('')
   })
 
-  it('les props d un enfant suivent le parent', async () => {
-    const Enfant: Composant<{ texte: string }> = (props) => () => h('span', null, props.texte)
-    const texte = ref('a')
-    const Parent: Composant<Record<string, never>> = () => () => h('div', null, c(Enfant, { texte: texte.value }))
+  it('a child\'s props follow the parent', async () => {
+    const Child: Component<{ text: string }> = (props) => () => h('span', null, props.text)
+    const text = ref('a')
+    const Parent: Component<Record<string, never>> = () => () => h('div', null, c(Child, { text: text.value }))
     const el = document.createElement('div')
-    monterApp(Parent, el)
+    mountApp(Parent, el)
     expect(el.textContent).toBe('a')
-    texte.value = 'b'
+    text.value = 'b'
     await nextTick()
     expect(el.textContent).toBe('b')
   })
 })
 
-describe('ordre du montage', () => {
-  it('surMontage voit deja les elements poses par ref', () => {
-    let vu: Element | null = null
-    let auMontage: Element | null | undefined
-    const C: Composant<Record<string, never>> = () => {
-      surMontage(() => (auMontage = vu))
-      return () => h('div', null, h('span', { ref: (e: Element | null) => (vu = e) }))
+describe('mount order', () => {
+  it('onMount already sees the elements set by ref', () => {
+    let seen: Element | null = null
+    let atMount: Element | null | undefined
+    const C: Component<Record<string, never>> = () => {
+      onMount(() => (atMount = seen))
+      return () => h('div', null, h('span', { ref: (e: Element | null) => (seen = e) }))
     }
-    monterApp(C, document.createElement('div'))
-    expect(auMontage).not.toBeNull()
-    expect(auMontage?.tagName).toBe('SPAN')
+    mountApp(C, document.createElement('div'))
+    expect(atMount).not.toBeNull()
+    expect(atMount?.tagName).toBe('SPAN')
   })
 })
 
-describe('observateurs crees pendant la mise en place', () => {
-  it('un watch d un composant suit ses sources', async () => {
-    const vu: number[] = []
+describe('watchers created during setup', () => {
+  it('a component\'s watch follows its sources', async () => {
+    const seen: number[] = []
     const n = ref(0)
-    const C: Composant<Record<string, never>> = () => {
-      watch(n, (v) => vu.push(v))
+    const C: Component<Record<string, never>> = () => {
+      watch(n, (v) => seen.push(v))
       return () => h('p', null, 'x')
     }
-    monterApp(C, document.createElement('div'))
+    mountApp(C, document.createElement('div'))
     n.value = 1
     await nextTick()
-    expect(vu).toEqual([1])
+    expect(seen).toEqual([1])
   })
 })

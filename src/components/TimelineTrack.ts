@@ -1,20 +1,19 @@
-import { computed, lien, nextTick, ref, watch } from '@/ui/dom/reactif'
-import { c, h, surMontage, type Composant } from '@/ui/dom/h'
+import { computed, link, nextTick, ref, watch } from '@/ui/dom/reactive'
+import { c, h, onMount, type Component } from '@/ui/dom/h'
 import '@/components/mochi-bot'
 import { BlockPicker } from '@/components/BlockPicker'
 import { clampDuration, moveBlock, offsetOf, STEP, totalDuration, type Block } from '@/bot/cycles'
 import { POSES, type StateId } from '@/bot/states'
 import { BASE_SCALE, clampZoom, ticksFor } from '@/ui/timeline'
-import { secondes, secondesCourtes, t } from '@/i18n'
+import { seconds, secondsShort, t } from '@/i18n'
 
 /**
- * La piste : une regle graduee, les cartes du montage, et les gestes qui vont avec (deplacer, etirer, promener la
- * tete de lecture, zoomer). Elle ne connait ni les cycles ni le lecteur : elle recoit une suite de blocs et rend
- * celle qu'on obtient apres le geste.
+ * The track: a graduated ruler, the montage cards, and their gestures (move, stretch, scrub the playhead, zoom). It
+ * knows neither cycles nor the player: it gets a list of blocks and returns the one you get after the gesture.
  */
 export interface TimelineTrackProps {
   blocks: Block[]
-  /** temps ecoule dans le bloc courant, pour la tete de lecture */
+  /** time elapsed in the current block, for the playhead */
   elapsed: number
   shape: string
   color: string
@@ -24,7 +23,7 @@ export interface TimelineTrackProps {
   onBlock: (i: number) => void
   onZoom: (z: number) => void
   onBlocks: (b: Block[]) => void
-  /** date visee sur la regle */
+  /** time aimed at on the ruler */
   onSeek: (s: number) => void
   onAdd: (s: StateId) => void
 }
@@ -32,20 +31,20 @@ export interface TimelineTrackProps {
 type Drag = { from: number; to: number; startX: number; dx: number; moved: boolean }
 type Resize = { index: number; startX: number; startDuration: number }
 
-export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
-  const block = lien(() => props.block, (v) => props.onBlock(v))
-  const zoom = lien(() => props.zoom, (v) => props.onZoom(v))
+export const TimelineTrack: Component<TimelineTrackProps> = (props) => {
+  const block = link(() => props.block, (v) => props.onBlock(v))
+  const zoom = link(() => props.zoom, (v) => props.onZoom(v))
 
   const scale = computed(() => BASE_SCALE * zoom.value)
   const total = computed(() => totalDuration(props.blocks))
   const at = computed(() => offsetOf(props.blocks, block.value) + props.elapsed)
   const ticks = computed(() => ticksFor(total.value, scale.value))
-  const exact = computed(() => secondes(at.value))
+  const exact = computed(() => seconds(at.value))
 
   let track: HTMLElement | null = null
-  /** Debordement de la piste, pour n'afficher les degrades que s'ils servent. */
+  /** Track overflow, to show the gradients only when they help. */
   const overflow = ref({ left: false, right: false })
-  /** Defilement de la piste : l'infobulle de temps vit dehors et doit le retrancher. */
+  /** Track scroll: the time tooltip lives outside and must subtract it. */
   const scrolled = ref(0)
 
   const width = (index: number) => props.blocks[index]!.duration * scale.value
@@ -61,7 +60,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
     if (o.left !== overflow.value.left || o.right !== overflow.value.right) overflow.value = o
   }
 
-  /** Point d'ancrage du prochain changement d'echelle, en coordonnees d'ecran : la seconde qui s'y trouve y reste. */
+  /** Anchor of the next zoom change, in screen coordinates: the second found there stays there. */
   let anchorX: number | null = null
   function setZoom(next: number, clientX?: number) {
     anchorX = clientX ?? null
@@ -71,17 +70,17 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
     const el = track
     if (!el || before === undefined) return
     const x = (anchorX ?? el.getBoundingClientRect().left + el.clientWidth / 2) - el.getBoundingClientRect().left
-    const seconde = (el.scrollLeft + x) / before
+    const second = (el.scrollLeft + x) / before
     anchorX = null
     nextTick(() => {
-      el.scrollLeft = seconde * now - x
+      el.scrollLeft = second * now - x
       onScroll()
     })
   })
 
   /**
-   * Molette et trackpad : pincement (molette + `ctrl`) ou `ctrl`/`cmd` + molette = loupe ; deux doigts a
-   * l'horizontale = defilement ; molette de souris = defilement horizontal. `deltaMode` 1 compte en lignes.
+   * Wheel and trackpad: pinch (wheel + `ctrl`) or `ctrl`/`cmd` + wheel = zoom; two fingers horizontally = scroll;
+   * mouse wheel = horizontal scroll. `deltaMode` 1 counts in lines.
    */
   function onWheel(e: WheelEvent) {
     const el = track
@@ -99,10 +98,10 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
     el.scrollLeft += d * unit
   }
 
-  surMontage(onScroll)
+  onMount(onScroll)
   watch([total, () => props.blocks], () => nextTick(onScroll))
 
-  // la carte courante reste visible quand la piste deborde
+  // the current card stays visible when the track overflows
   watch(
     () => block.value,
     () => {
@@ -118,11 +117,11 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
   /* --------------------------------------------------------------- montage */
 
   function removeBlock(index: number) {
-    // la derniere carte ne part pas : un montage vide n'aurait rien a jouer
+    // the last card does not leave: an empty montage would have nothing to play
     if (props.blocks.length < 2) return
     const n = props.blocks.length
     props.onBlocks(props.blocks.filter((_, i) => i !== index))
-    // le curseur suit, et ne pointe jamais au-dela de la piste
+    // the cursor follows, and never points past the track
     if (index < block.value) block.value = block.value - 1
     else if (block.value >= n - 1) block.value = n - 2
   }
@@ -138,8 +137,8 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
   /* ------------------------------------------------------ glisser / etirer */
 
   /**
-   * Glisser-deposer : pendant le geste, le montage n'est PAS modifie. La carte saisie suit le pointeur et les autres
-   * s'ecartent de sa largeur ; le montage n'est recompose qu'au lacher.
+   * Drag and drop: during the gesture, the montage is NOT changed. The grabbed card follows the pointer and the
+   * others move aside by its width; the montage is only rebuilt on drop.
    */
   const drag = ref<Drag | null>(null)
   const resize = ref<Resize | null>(null)
@@ -177,26 +176,26 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
   function onBlockMove(e: PointerEvent) {
     const d = drag.value
     if (!d) return
-    // quelques pixels de tolerance : un clic tremble toujours un peu
+    // a few pixels of tolerance: a click always shakes a little
     if (!d.moved && Math.abs(e.clientX - d.startX) <= 4) return
     drag.value = { ...d, moved: true, dx: e.clientX - d.startX, to: Math.max(0, indexAt(pointerSeconds(e))) }
   }
   function onBlockUp(index: number, e?: PointerEvent) {
-    const fin = drag.value
+    const end = drag.value
     drag.value = null
-    if (!fin) return
-    // la carte tombe la ou le doigt se LEVE : au toucher, le dernier `pointermove` peut arriver en retard ou
-    // avec une position perimee (vu en Chrome mobile emule), et la carte revenait a sa place
-    const d = e && (fin.moved || Math.abs(e.clientX - fin.startX) > 4) ? { ...fin, moved: true, to: Math.max(0, indexAt(pointerSeconds(e))) } : fin
-    // un clic sans deplacement, c'est un saut de la tete de lecture
+    if (!end) return
+    // the card drops where the finger LIFTS: on touch, the last `pointermove` can arrive late or
+    // with a stale position (seen in emulated mobile Chrome), and the card went back to its place
+    const d = e && (end.moved || Math.abs(e.clientX - end.startX) > 4) ? { ...end, moved: true, to: Math.max(0, indexAt(pointerSeconds(e))) } : end
+    // a click without a move is a playhead jump
     if (!d.moved) {
       block.value = index
       return
     }
     if (d.to === d.from) return
-    const suivi = block.value === d.from ? d.to : block.value
+    const tracking = block.value === d.from ? d.to : block.value
     props.onBlocks(moveBlock(props.blocks, d.from, d.to))
-    block.value = suivi
+    block.value = tracking
   }
 
   function onResizeDown(index: number, e: PointerEvent) {
@@ -210,33 +209,33 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
   }
   const onResizeKey = (index: number, delta: number) => setDuration(index, props.blocks[index]!.duration + delta)
 
-  /* -------------------------------------------------------------- au clavier */
+  /* -------------------------------------------------------------- keyboard */
 
   /**
-   * Reordonner et pointer AU CLAVIER : `Alt` + fleches deplace la carte, les fleches nues promenent la tete de
-   * lecture de `STEP`. Le focus SUIT la carte deplacee (apres le rendu). La carte porte `aria-keyshortcuts`.
+   * Reordering and scrubbing WITH THE KEYBOARD: `Alt` + arrows moves the card, bare arrows move the playhead by
+   * `STEP`. Focus FOLLOWS the moved card (after rendering). The card carries `aria-keyshortcuts`.
    */
   async function onCardKey(index: number, e: KeyboardEvent) {
-    const sens = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0
-    if (!sens) return
+    const direction = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0
+    if (!direction) return
     e.preventDefault()
     if (!e.altKey) {
-      props.onSeek(Math.max(0, Math.min(total.value - 0.001, at.value + sens * STEP)))
+      props.onSeek(Math.max(0, Math.min(total.value - 0.001, at.value + direction * STEP)))
       return
     }
-    const cible = index + sens
-    if (cible < 0 || cible >= props.blocks.length) return
-    props.onBlocks(moveBlock(props.blocks, index, cible))
-    block.value = cible
+    const target = index + direction
+    if (target < 0 || target >= props.blocks.length) return
+    props.onBlocks(moveBlock(props.blocks, index, target))
+    block.value = target
     await nextTick()
-    track?.querySelectorAll<HTMLButtonElement>('[data-carte]')[cible]?.focus()
+    track?.querySelectorAll<HTMLButtonElement>('[data-card]')[target]?.focus()
   }
 
   /* ----------------------------------------------------------------- scrub */
 
   const scrubTo = (e: PointerEvent) => props.onSeek(Math.max(0, Math.min(total.value - 0.001, pointerSeconds(e))))
   function onRulerDown(e: PointerEvent) {
-    // sans ca, promener la tete de lecture surligne les graduations au passage
+    // without it, moving the playhead highlights the ticks on the way
     e.preventDefault()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     scrubbing.value = true
@@ -258,11 +257,11 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
           onScroll,
           onWheel
         },
-        // la piste garde de la place pour la carte « + » a sa suite
+        // the track keeps room for the "+" card after it
         h(
           'div',
           { class: 'relative flex h-full flex-col', style: { width: `${total.value * scale.value + 76}px` } },
-          // regle graduee : on attrape n'importe ou dessus pour promener la tete de lecture
+          // graduated ruler: grab it anywhere to move the playhead
           h(
             'div',
             {
@@ -278,7 +277,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                 { key: tick.t, class: 'absolute bottom-1.5 flex items-end gap-1', style: { transform: `translateX(${tick.t * scale.value}px)` } },
                 h('span', { class: ['block w-px bg-[var(--line)]', tick.major ? 'h-3' : 'h-1.5'] }),
                 tick.major
-                  ? h('span', { class: '-mb-0.5 text-xs leading-none text-[var(--muted)]' }, secondesCourtes(tick.t, Number.isInteger(tick.t) ? 0 : 1))
+                  ? h('span', { class: '-mb-0.5 text-xs leading-none text-[var(--muted)]' }, secondsShort(tick.t, Number.isInteger(tick.t) ? 0 : 1))
                   : null
               )
             )
@@ -286,7 +285,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
           h(
             'ul',
             { class: 'flex flex-1 items-stretch' },
-            // la largeur du <li> vaut exactement la duree : la gouttiere est un padding interne
+            // the <li> width is exactly the duration: the gutter is inner padding
             props.blocks.map((b, i) =>
               h(
                 'li',
@@ -300,19 +299,19 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                   {
                     type: 'button',
                     class: [
-                      // `touch-none` : au doigt, sans lui le navigateur prend le geste pour un defilement de la piste et
-                      // annule le pointeur (pointercancel) au bout de quelques pixels, la carte ne bougeait jamais
+                      // `touch-none`: with a finger, without it the browser takes the gesture for a track scroll and
+                      // cancels the pointer (pointercancel) after a few pixels, the card never moved
                       'flex h-full w-full cursor-grab touch-none flex-col justify-between overflow-hidden rounded-lg px-1.5 py-1 text-left transition select-none active:cursor-grabbing',
                       i === block.value ? 'bg-white ring-2 ring-[var(--ink)] ring-inset' : 'bg-black/[0.045] hover:bg-black/[0.08]',
                       lifted(i) ? 'scale-[1.02] opacity-75 shadow-lg' : ''
                     ],
-                    'aria-label': t('timeline.blockAria', { state: label(i), duration: secondes(b.duration) }),
+                    'aria-label': t('timeline.blockAria', { state: label(i), duration: seconds(b.duration) }),
                     'aria-current': i === block.value ? 'true' : undefined,
                     onPointerdown: (e: PointerEvent) => onBlockDown(i, e),
                     onPointermove: onBlockMove,
                     onPointerup: (e: PointerEvent) => onBlockUp(i, e),
                     onPointercancel: () => (drag.value = null),
-                    'data-carte': '',
+                    'data-card': '',
                     'aria-keyshortcuts': 'Alt+ArrowLeft Alt+ArrowRight ArrowLeft ArrowRight',
                     onKeydown: (e: KeyboardEvent) => {
                       if (e.key === 'Enter' || e.key === ' ') {
@@ -321,13 +320,14 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') onCardKey(i, e)
                     }
                   },
-                  // la miniature EST l'identite de la carte ; le nom reste dans l'etiquette du bouton
+                  // the thumbnail IS the card's identity; the name stays in the button's label
                   h(
                     'span',
                     { class: 'flex min-w-0 flex-1 items-center justify-center' },
                     width(i) > 44
                       ? h('mochi-bot', {
                           class: 'shrink-0',
+                          label: t('app.botAria'),
                           state: b.state,
                           size: Math.min(56, Math.max(30, width(i) * 0.5)),
                           shape: props.shape,
@@ -344,16 +344,16 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                         {
                           class: ['tronque text-center text-xs leading-none font-semibold tabular-nums', i === block.value ? 'text-[var(--ink)]' : 'text-[var(--muted)]']
                         },
-                        secondes(b.duration)
+                        seconds(b.duration)
                       )
                     : null
                 ),
-                // poignee de duree : bouton a part entiere, donc utilisable au clavier
+                // duration handle: a full button, so usable with the keyboard
                 h('button', {
                   type: 'button',
                   class:
                     'absolute inset-y-2 right-0.5 w-1 cursor-ew-resize touch-none rounded-full bg-[var(--muted)] opacity-0 transition group-hover:opacity-60 hover:opacity-100! focus-visible:opacity-100',
-                  'aria-label': t('timeline.blockDurationAria', { state: label(i), duration: secondes(b.duration) }),
+                  'aria-label': t('timeline.blockDurationAria', { state: label(i), duration: seconds(b.duration) }),
                   onPointerdown: (e: PointerEvent) => onResizeDown(i, e),
                   onPointermove: onResizeMove,
                   onPointerup: () => (resize.value = null),
@@ -378,7 +378,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                         'aria-label': t('timeline.blockRemoveAria', { state: label(i) }),
                         onClick: () => removeBlock(i)
                       },
-                      // croix dessinee : le glyphe « × » ne tombe pas au centre optique de la pastille
+                      // drawn cross: the "×" glyph does not sit at the optical center of the dot
                       h(
                         'svg',
                         { width: '9', height: '9', viewBox: '0 0 10 10', 'aria-hidden': 'true' },
@@ -390,11 +390,11 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
             ),
             h(
               'li',
-              { key: 'plus', class: 'w-[72px] shrink-0 pl-1' },
+              { key: 'most', class: 'w-[72px] shrink-0 pl-1' },
               c(BlockPicker, { shape: props.shape, color: props.color, expression: props.expression, onPick: (s) => props.onAdd(s) })
             )
           ),
-          // tete de lecture : seule sa transformation change d'une image a l'autre
+          // playhead: only its transform changes from frame to frame
           h(
             'div',
             { class: 'pointer-events-none absolute inset-y-0 left-0 w-0.5 rounded-full bg-[var(--ink)]', style: { transform: `translateX(${at.value * scale.value}px)` } },
@@ -402,7 +402,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
           )
         )
       ),
-      // temps exact pendant le deplacement, hors du conteneur qui defile (d'ou `scrolled`)
+      // exact time during the move, outside the scrolling container (hence `scrolled`)
       scrubbing.value
         ? h(
             'div',
@@ -410,7 +410,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
             h('span', { class: 'block -translate-x-1/2 rounded-md bg-[var(--ink)] px-2 py-1 text-xs tabular-nums text-[var(--paper)] shadow-sm' }, exact.value)
           )
         : null,
-      // degrades de debordement : la piste continue par la
+      // overflow gradients: the track goes on that way
       overflow.value.left
         ? h('div', { key: 'g', class: 'pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-[var(--paper)] to-transparent' })
         : null,

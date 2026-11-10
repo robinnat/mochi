@@ -1,63 +1,63 @@
-import { c, h, type Composant } from '@/ui/dom/h'
+import { c, h, type Component } from '@/ui/dom/h'
 import { BotTile } from '@/components/BotTile'
 import { EXPRESSIONS } from '@/bot/expressions'
 import { COLORS, SHAPES } from '@/bot/skins'
 import { t } from '@/i18n'
-import { RENDUS, type RenduId } from '@/ui/rendu'
+import { RENDER_STYLES, type RenderStyleId } from '@/ui/renderStyle'
 
 export interface CustomizerProps {
   shape: string
   color: string
   expression: string
-  rendu: RenduId
-  contour: boolean
+  renderStyle: RenderStyleId
+  outline: boolean
   onShape: (v: string) => void
   onColor: (v: string) => void
   onExpression: (v: string) => void
-  onRendu: (v: RenduId) => void
-  onContour: (v: boolean) => void
+  onRender: (v: RenderStyleId) => void
+  onOutline: (v: boolean) => void
 }
 
 /**
- * Les vignettes sont figees a la meme date que la pose de repos : elles montrent
- * la forme et le visage tels qu'ils apparaitront, pas un aplat abstrait.
+ * Thumbnails are frozen at the same time as the resting pose: they show the shape and the face as they will appear,
+ * not an abstract flat swatch.
  */
 const PREVIEW_AT = 1
 
-export const Customizer: Composant<CustomizerProps> = (props) => () =>
+export const Customizer: Component<CustomizerProps> = (props) => () =>
   h(
     'div',
     null,
-    // le style en premier : c'est le choix qui change le plus l'avatar
+    // style first: it is the choice that changes the avatar the most
     h('h2', { class: 'text-sm font-semibold' }, t('panel.style')),
     h(
       'div',
       { class: 'mt-2 grid grid-cols-3 gap-1.5' },
-      RENDUS.map((r) =>
+      RENDER_STYLES.map((r) =>
         c(BotTile, {
           key: r,
           label: t(`styles.${r}`),
-          selected: r === props.rendu,
+          selected: r === props.renderStyle,
           shape: props.shape,
           color: props.color,
           expression: props.expression,
-          rendu: r,
+          renderStyle: r,
           frozenAt: PREVIEW_AT,
-          onClick: () => props.onRendu(r)
+          onClick: () => props.onRender(r)
         })
       )
     ),
-    // le contour : les trois styles
+    // the outline: all three styles
     h(
       'label',
       { class: 'mt-3 flex cursor-pointer items-center gap-2 text-xs' },
       h('input', {
         type: 'checkbox',
         class: 'size-4 cursor-pointer accent-[var(--ink)]',
-        checked: props.contour,
-        onChange: (e: Event) => props.onContour((e.target as HTMLInputElement).checked)
+        checked: props.outline,
+        onChange: (e: Event) => props.onOutline((e.target as HTMLInputElement).checked)
       }),
-      t('panel.contour')
+      t('panel.outline')
     ),
     h('h2', { class: 'mt-5 text-sm font-semibold' }, t('panel.shape')),
     h(
@@ -111,7 +111,7 @@ export const Customizer: Composant<CustomizerProps> = (props) => () =>
             'aria-pressed': col.id === props.color,
             onClick: () => props.onColor(col.id)
           },
-          // lisere interne : sinon la pastille creme disparait sur fond clair
+          // inner rim: otherwise the cream dot disappears on a light background
           h('span', { class: 'block h-[78%] w-[78%] rounded-full ring-1 ring-black/10 ring-inset', style: { background: col.hex } })
         )
       )

@@ -1,17 +1,16 @@
-import { h, type Composant } from '@/ui/dom/h'
+import { h, type Component } from '@/ui/dom/h'
 import '@/components/mochi-bot'
+import { t } from '@/i18n'
 import { DEFAULT_EXPRESSION } from '@/bot/expressions'
 import { DEFAULT_COLOR, DEFAULT_SHAPE } from '@/bot/skins'
 import type { StateId } from '@/bot/states'
-import type { RenduId, TaillePixelId } from '@/ui/rendu'
+import type { RenderStyleId, PixelSizeId } from '@/ui/renderStyle'
 
 /**
- * Vignette cliquable de la barre de droite : un bot fige, son nom dessous, une
- * bordure quand elle est retenue. Sert aux formes, aux expressions et aux
- * animations : les trois grilles doivent rester identiques a l'oeil.
+ * Clickable thumbnail of the right bar: a frozen bot, its name below, a border when it is selected. Used for shapes,
+ * expressions and animations: the three grids must look identical.
  *
- * `frozenAt` est obligatoire : une vignette animee ferait tourner autant de
- * boucles rAF qu'il y a de cases.
+ * `frozenAt` is required: an animated thumbnail would run as many rAF loops as there are cells.
  */
 export interface BotTileProps {
   label: string
@@ -22,13 +21,13 @@ export interface BotTileProps {
   color?: string
   expression?: string
   size?: number
-  /** absent : le style courant, comme toutes les vignettes */
-  rendu?: RenduId
-  pixel?: TaillePixelId
+  /** absent: the current style, like every thumbnail */
+  renderStyle?: RenderStyleId
+  pixel?: PixelSizeId
   onClick?: () => void
 }
 
-export const BotTile: Composant<BotTileProps> = (props) => () =>
+export const BotTile: Component<BotTileProps> = (props) => () =>
   h(
     'button',
     {
@@ -42,15 +41,16 @@ export const BotTile: Composant<BotTileProps> = (props) => () =>
       onClick: () => props.onClick?.()
     },
     h('mochi-bot', {
+      label: t('app.botAria'),
       state: props.state ?? 'idle',
       size: props.size ?? 60,
       shape: props.shape ?? DEFAULT_SHAPE,
       color: props.color ?? DEFAULT_COLOR,
       expression: props.expression ?? DEFAULT_EXPRESSION,
       frozenAt: props.frozenAt,
-      rendu: props.rendu,
+      renderStyle: props.renderStyle,
       pixel: props.pixel
     }),
-    // 12 px : en dessous, une legende n'est plus lisible pour tout le monde
+    // 12 px: below that, a caption is no longer readable for everyone
     h('span', { class: 'text-center text-xs leading-tight text-[var(--muted)]' }, props.label)
   )

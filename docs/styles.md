@@ -1,173 +1,56 @@
-# Styles de rendu
+# Styles
 
-Depuis la refonte « 3D seule », l'interface ne propose plus que trois styles, tous en VRAIE 3D
-(Three.js, import dynamique, un seul contexte WebGL partagé) :
+Mochis offers three styles, all in REAL 3D (Three.js, loaded on demand, one shared WebGL context):
 
-| Style | id `rendu` | Principe |
-|---|---|---|
-| **Soft** (défaut) | `3d` | matière douce : ombrage lisse, lueurs et reflet calculés en shader dans le repère de la caméra |
-| **Flat** | `flat3d` | `toon` : trois tons nets, contour optionnel (`contour`) |
-| **Pixel** | `pixel3d` | rendu à basse résolution (grille de `pixel`), réduit à une palette courte (3 tons du corps, tons des accessoires, blanc des yeux), contour de 1 px, agrandi avec `image-rendering: pixelated` (`src/ui/trois/pixel3d.ts`) |
+| Style | `render-style` id | How it is drawn |
+| --- | --- | --- |
+| **Soft** (default) | `3d` | soft material: smooth shading, glows and a highlight computed in the shader, in camera space |
+| **Flat** | `flat3d` | `toon`: three clean tones, optional `outline` |
+| **Pixel** | `pixel3d` | rendered at low resolution (the `pixel` grid), reduced to a short palette (3 body tones, accessory tones, white eyes), a 1 px outline, scaled up with `image-rendering: pixelated` (`src/ui/3d/pixel3d.ts`) |
 
-**Aucune 2D (Robin, 10/11/2026).** Les anciens dessins SVG (`original`, `pixel`, `argile`, `bulle`,
-issus en partie de bloub) sont RETIRÉS du code : plus de repli 2D, plus d'export 2D. Une valeur
-`rendu` inconnue (dont ces anciens ids) retombe sur le réglage courant. Sans WebGL, un court message
-remplace le Mochi (événement `sans3d`). Les exports (PNG, SVG, GIF, MP4) sont produits depuis la 3D :
-image fixe du canvas, ou rendu image par image hors écran (`docs/export.md`). Le SVG animé est retiré.
+**No 2D.** The old SVG drawings are gone from the code: no 2D fallback, no 2D export. An unknown `render-style` value falls back to the current setting. Without WebGL, a short message replaces the Mochi (`no3d` event). Exports (PNG, SVG, GIF, MP4) are made from the 3D: a still of the canvas, or an off-screen render frame by frame (see [Export](export.md)).
 
-**Yeux (Robin, 10/11/2026).** En thème clair, les yeux sont TOUJOURS blancs, pour toutes les couleurs
-(jaune `#ffd60a` et citron vert `#b6e800` compris), sans contour ni liseré ; seul l'ombrage 3D normal
-de l'œil reste. En thème sombre, ils sont noirs. Le contour du 09/11 et l'essai « yeux noirs en clair »
-du 10/11 sont retirés.
+**Eyes.** In the light theme the eyes are ALWAYS white, for every color (yellow `#ffd60a` and lime `#b6e800` included), with no outline: only the normal 3D shading of the eye remains. In the dark theme they are black.
 
-## Ombrage continu sur 360 degrés (`src/ui/trois/lisere.ts`)
+## Shading all around (`src/ui/3d/rim.ts`)
 
-L'ombrage n'est PAS peint dans la texture de visage (c'est ce qui assombrissait le dos et les
-flancs et laissait une couture) : tout est calculé dans le shader, en repère de la caméra, sur tout
-le volume. Ombrage doux (AO) vers le bas et les bords, lueur bas-droite (4 h), lueur légère
-haut-gauche (10 h), reflet doux. La texture ne porte que la couleur et les yeux.
+Shading is NOT painted in the face texture (that used to darken the back and sides and left a seam). Everything is computed in the shader, in camera space, on the whole volume: soft occlusion towards the bottom and the edges, a glow at the bottom right (4 o'clock), a light glow at the top left (10 o'clock), and a soft highlight. The texture only holds the color and the eyes.
 
-## Formes 3D
+## 3D shapes
 
-Les 12 formes du catalogue ont un vrai volume sous tous les angles : sphère (cercle), galet
-(ellipsoïde), squircle (galet-cube très arrondi), capsule (tube couché), triangle (cône arrondi),
-hexagone (profond), nuage, goutte, étoile, fleur, œuf. Étoile, hexagone, nuage et fleur sont gonflés en « coussin » (`ProfilVolume.coussin`) : la hauteur est
-la solution d'une équation de Poisson sur l'intérieur du contour (u = 0 au bord), calculée une fois par
-forme et mise en cache (`champCoussin`, `hauteurCoussin`), puis z = H·(u/umax)^0,45. Surface lisse partout,
-sans arête sur l'axe médian ni pli entre lobes, bord arrondi à tangente verticale, sans gorge sur la
-tranche ; les normales sont en plus lissées. Goutte, œuf, triangle et capsule sont des
-solides de révolution (`ProfilVolume.revolution`) : la profondeur d'un point est la demi-largeur
-du contour à sa hauteur.
+The 12 shapes have a real volume from every angle: a sphere (circle), an ellipsoid (pebble), a very round pillow (squircle), a lying tube (capsule), a rounded cone (triangle), a deep hexagon, cloud, drop, star, flower, egg and heart.
 
-Le moteur ne change pas : `engine.sample(t)` rend la même image et les 5 états, leurs
-mesures et leurs durées sont identiques. Seul `mochi-bot.ts` peint l'image autrement.
-Le catalogue et le réglage courant vivent dans `src/ui/rendu.ts`.
+- Star, hexagon, cloud and flower are inflated as a "cushion" (`ProfileVolume.cushion`): the height solves a Poisson equation inside the outline (0 on the edge), computed once per shape and cached, then `z = H * (u / umax) ^ 0.45`. The surface is smooth everywhere, with a rounded edge and no fold between lobes; normals are smoothed on top.
+- Drop, egg, triangle and capsule are solids of revolution (`ProfileVolume.revolution`): the depth of a point is the half width of the outline at its height.
 
-> Les sections « Pixel art SVG » et « 3D douce en SVG » ont été retirées avec le code le 10/11/2026
-> (historique dans git). La section suivante garde l'historique de la vraie 3D.
+The engine does not change: `engine.sample(t)` gives the same frame, and the states, their measurements and durations are the same. Only `mochi-bot.ts` paints the frame differently. The catalog and the current setting live in `src/ui/renderStyle.ts`.
 
-## [LEGACY] Vraie 3D, historique (WebGL, Three.js)
+## How the 3D works
 
-Le style `3d` (`src/ui/trois/`) rend le corps en volume réel, avec une caméra et une
-lumière, là où la 3D douce n'est qu'un dessin de dégradés. Le moteur ne change pas : on
-lit `engine.sample(t)` et on le dessine.
+- **The body is the outline, inflated** (`volume.ts`, pure and tested under Node): the `bodyPath` of the frame becomes points, then each ray from the center to the edge becomes a series of rings.
+- **The eyes are on the front face only.** On a shape with a flat front, the pair of eyes is shifted (same vector, same gap) so it never bites into the rounded edge.
+- **The eyes are painted in a texture** projected from the front, at the exact positions given by the engine, and ALSO in an emission texture (white on black): an eye is a light hole, the lighting must not gray it.
+- **One WebGL context** for every avatar of the page (`renderAvatar`): each one asks for a frame, which is rendered and copied into its own canvas. The outline and the face are rebuilt only when they changed.
+- **Loaded on demand**: `scene3d.ts` is never imported statically (about 133 kB gzip). `mochi-bot.ts` loads it when it mounts; until then the Mochi is not drawn (the `ready` event fires on the first frame).
 
-- **Le corps est le contour gonflé** (`volume.ts`, pur et testé sous `node`) : le
-  `bodyPath` de l'image est évalué en points, puis chaque rayon centre -> bord devient une
-  suite d'anneaux. La hauteur d'un sommet ne dépend que de sa DISTANCE au bord : face avant
-  plane, arête en quart de cercle de rayon constant, mur droit, face arrière symétrique
-  (un cercle donne exactement une sphère). Chaque forme a un **profil de volume**
-  (`PROFILS` : profondeur en fraction de la plus petite dimension, rayon d'arête, face
-  arrière) : le carré est un VRAI cube (profondeur = largeur, aretes arrondies), triangle,
-  hexagone et étoile des prismes arrondis (profondeur 0,7 à 0,8), cœur, fleur et nuage des
-  coussins bombés, les boules (cercle, œuf, galet, goutte, capsule) restent toutes rondes.
-  Profondeur minimale 0,6 x la largeur, verrouillée par un test. Les anneaux internes sont
-  arrondis pour qu'une forme à angles ne prenne pas de plis en éventail.
-- **Les yeux sont sur la face avant seulement** : le bord avant et le mur sont dédoublés
-  (même position, texture différente), donc le visage s'arrête à l'arête et les côtés et le
-  dos sont de la couleur du corps. Sur une forme à face plane, la paire d'yeux est décalée
-  (même vecteur, écart conservé) pour ne jamais mordre sur l'arête arrondie. Labo `#tour` :
-  chaque forme sous quatre angles.
-- **Les yeux sont peints dans une texture** projetée de face, aux positions exactes du
-  moteur, et AUSSI dans une texture d'émission (blanc sur noir) : un œil est un trou clair,
-  la lumière ne doit pas le griser. Sans cela, les yeux disparaissaient sur le dos du
-  corps et de trois quarts.
-- **Un seul contexte WebGL** pour tous les avatars de la page (`rendreAvatar`) : chaque
-  vignette demande une image, elle est rendue puis recopiée dans son canvas 2D. Le contour
-  et le visage ne sont refaits que s'ils ont changé d'une image à l'autre.
-- **Chargement à la demande** : `scene3d.ts` n'est jamais importé statiquement
-  (133 ko gzip). `mochi-bot.ts` le charge au montage ; tant qu'il n'est pas là, le Mochi
-  n'est pas dessiné (événement `pret` à la première image), et sans WebGL un message le remplace.
-- **Intégration** : le canvas est dans un `<foreignObject>` calé sur le viewBox, entre la
-  moitié arrière et la moitié avant des anneaux, qui restent en SVG.
+## Materials
 
-### 3D flat : `aplat` (ancien défaut, remplacé par `doux` le 03/11/2026)
+The material of the Soft style is `soft`. It has one setting, `softness`:
 
-Décision sur la matière réaliste : pas de 3D réaliste, plutôt de la 3D flat. Quatre
-variantes ont été comparées (A toon, B toon + contour, C low poly, D aplat) ; **D a été retenue, avec le contour cartoon en option**. Même volume et même moteur (`volume.ts`,
-`scene3d.ts`, `iso.ts`), choisis par `rendu3d` (`src/ui/trois/rendu3d.ts`, pur et testé) :
-prop `rendu3d` et `contour` de `MochiBot`, options `rendu3d` et `contour` de `EspaceIso`,
-arguments de `rendreAvatar`.
+- `strong` (default): the darkest tone is 0.56 in linear light, about 24 % darker on screen;
+- `light`: 0.70, about 16 % darker.
 
-- **`aplat`** (n'est plus le défaut) : deux tons seulement, la couleur choisie telle quelle et une teinte
-  d'ombre ; ombre au sol en ellipse pleine semi-transparente ; yeux blancs en aplat (texture
-  et émission), sans creux ombré.
-- **Contour cartoon** (`contour: boolean`, défaut `false`) : coque inversée, teinte du corps
-  assombrie en HSL (`couleurContour` : l'ambre reste de l'ambre fonce, pas du brun),
-  épaisseur en pixels qui s'allège en petite taille (2 % du diamètre, entre 1,3 et 3,4 px,
-  `epaisseurContourPx`).
-- **Limite d'ombre organique** : la normale d'éclairage est perturbée par un bruit basse
-  fréquence ancré sur le corps (`organiser` dans `scene3d.ts`), de sorte que la limite
-  ondule au lieu de former une ligne droite sur l'étoile et la fleur. Les yeux (émission)
-  ne bougent pas.
-- **Interface** : style « 3D » = aplat, avec la case « Contour cartoon » (persistée sous
-  `mochi:contour`). `toon` et `lowpoly` ne sont plus proposés ni dans l'interface ni dans le
-  labo ; ils restent dans le code (une ligne de table chacun, aucun coût) et `?r=toon`,
-  `?r=toon-contour`, `?r=lowpoly`, `?r=realiste` les montrent dans `#gros` et `#iso`. Le
-  `realiste` est disponible en interne seulement (`rendu3d="realiste"`).
-- Les tons sont des multiples de la couleur du flat (1 = la couleur telle quelle) : pas plus
-  pastel. Dans la scène isométrique, les dalles prennent la même rampe et l'ombre au sol est
-  l'ellipse pleine (pas d'ombre portée du soleil).
+The shadow is a smooth, matte ramp of `dot(normal, light)`, with the light at the top left, in front. A soft highlight (`highlight.ts`) is painted in the body texture BEFORE the eyes, so the eyes are never touched; its place follows the shape (the highest top-left point where it still fits, away from the eyes).
 
-Captures : `docs/variantes/3d-choix-D-etoile.png` (avant et après l'adoucissement) ; `3d-flat-*.png` : la comparaison
-A, B, C, D qui a mené au choix.
-À voir : `labo.html#formes3d` (`?v=lignes` : une ligne par style, portrait), `#gros` et
-`#iso` (`?contour=1`, `?r=<id>`).
+Flat uses the `toon` material and Pixel the `pixel` material: the render style picks the material, there is no option for it. Other materials stay in the code but are not offered: `flat` (two tones only, judged too heavy), `toon-outline`, `lowpoly` and `realistic` (internal only).
 
-### Matière `doux` : ombrage lisse (PR feat/ombrage-lisse, 03/11/2026)
+The cartoon outline (`outline`) is an inverted shell, colored with the body color darkened in HSL, with a width in pixels that gets lighter at small sizes (`outlineWidthPx`).
 
-Constat sur l'aplat : un gros bloc d'ombre n'est pas très joli, un ombrage LISSE est préférable. `doux` = même volume et même moteur, mais l'ombre est un passage
-progressif et mat : une rampe continue de `dot(normale, lumière)` (smoothstep de -0,75 à
-0,70, lue en filtrage linéaire dans le `gradientMap`), sans palier, sans reflet, sans rim
-light, sans bruit de limite. Lumière en haut à gauche, devant ; la couleur du flat domine
-(ton plein du centre au haut gauche), l'ombre ne s'installe que vers le bas droite. Yeux
-blancs et nets (émission), ombre au sol en dégradé radial très léger, `contour` compatible.
+Screenshots: `docs/variants/`.
 
-Une seule matière, un paramètre `douceur` (prop `douceur` de `MochiBot`, option de
-`EspaceIso`, argument de `rendreAvatar`) : `leger` (ton le plus sombre = 0,70 en linéaire,
-soit environ 16 % plus sombre à l'écran) et `marque` (0,56, environ 24 %). **Défaut depuis le 03/11/2026 (choix de design)** : `doux`
-marqué ; le style « 3D » de Personnaliser = doux marqué. `leger` reste un paramètre, `aplat`
-(jugé trop lourd, un gros bloc d'ombre) reste dans le code hors interface. À voir : `labo.html#formes3d` (lignes : aplat, aplat +
-contour, doux léger, doux marqué ; `?x=1,3,4` filtre les lignes, `?f=etoile` une forme),
-`#gros` et `#iso` avec `?r=doux&d=marque`. Captures : `docs/variantes/3d-doux-*.png`.
+## Known limits
 
-### Reflet doux de `doux` (PR feat/reflet-doux, 03/11/2026)
-
-Objectif : une petite lumière en haut à gauche, comme sur les Mochi 2D. La matière
-`doux` porte une tache claire : un dégradé radial blanc semi-transparent (0,46 au centre, 0 au
-bord), allongé le long de la lumière (inclinée de -32 degrés, comme le reflet de la pâte), mat, sans
-éclat spéculaire. Elle est peinte dans la texture du corps AVANT les yeux (`reflet.ts`,
-`peindreReflet`), donc les yeux (texture et émission) ne sont jamais touchés. Sa place
-(`positionReflet`, pur et testé) suit la forme : le point le plus en haut à gauche qui reste assez à
-l'intérieur pour que la tache tienne (marge 43 % du plus grand cercle inscrit), loin des yeux ;
-étoile, cœur, fleur, goutte et morphing en profitent sans cas particulier. Option `reflet: boolean`
-(défaut `true`) : prop de `MochiBot`, option d'`EspaceIso`, dernier argument de `rendreAvatar`.
-Seule la matière `doux` le porte. À voir : `labo.html#formes3d` (ligne « avec reflet » et ligne « sans
-reflet », `?f=cercle,etoile,nuage`), captures `docs/variantes/3d-doux-reflet-*.png`.
-
-### Où la regarder
-
-`labo.html` (entrée Vite séparée, l'application ne grossit pas) : `#formes` est la planche
-des formes dans les quatre styles (flat, pixel, pâte, 3D ; `?c=<couleur>`, `?s=<taille>`),
-`#gros` un gros plan en trois quarts.
-
-### Risques connus
-
-- **Coût par image** : mesuré en navigateur sans GPU (swiftshader, donc un pire cas) pour
-  trois mochis 3D animés : 2,7 ms de mise à jour côté JS (contour, texture) et environ
-  21 ms de rendu logiciel. Sur GPU réel le rendu est négligeable ; la mise à jour JS reste.
-  Une planche de dizaines de vignettes 3D animées en même temps coûterait cher : les
-  vignettes figées (`frozenAt`) ne rendent qu'une fois.
-- **`<foreignObject>` dans Safari / iPhone** : non testé (aucun Safari ici). WebKit est
-  connu pour mal placer un contenu HTML dans un `foreignObject` quand le SVG est mis à
-  l'échelle ou transformé. Repli prévu si besoin : poser le canvas au-dessus du SVG,
-  en `position: absolute`, avec les mêmes proportions. À tester sur un vrai iPhone avant de
-  proposer la 3D au public.
-
-## Limites connues
-
-- Les GIF en 3D pèsent lourd (environ 800 ko pour 3 s) : les dégradés font beaucoup de
-  couleurs, le GIF en garde 256.
-- Le reflet et le dégradé 3D sont fixes dans l'espace : sur un état où le corps se déplace
-  ou se réduit (veille), la lumière ne le suit pas exactement.
-Captures : `docs/variantes/` (3D seulement ; les captures des anciens styles 2D sont retirées).
+- Cost per frame: measured in a browser without a GPU (a worst case) for three animated 3D Mochis, 2.7 ms of JavaScript update and about 21 ms of software rendering. On a real GPU the rendering is negligible. Still images (`frozen-at`) render only once.
+- `<foreignObject>` in Safari on iPhone is not tested yet.
+- 3D GIFs are heavy (about 800 kB for 3 s): gradients make many colors, and a GIF keeps 256.
+- The highlight is fixed in space: when the body moves or shrinks (asleep), the light does not follow it exactly.

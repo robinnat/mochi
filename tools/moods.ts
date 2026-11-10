@@ -1,73 +1,76 @@
 import { BotEngine } from '../src/bot/engine'
-import { DEMI_VIEWBOX, RAYON } from '../src/bot/repere'
+import { HALF_VIEWBOX, RADIUS } from '../src/bot/frame'
 import { COLORS, SHAPES } from '../src/bot/skins'
-import { Humeurs, MOODS, REACTIONS, type MoodId } from '../src/bot/humeurs'
-import type { Selection } from '../src/bot/emplacements'
-import type { Rendu3d } from '../src/ui/trois/rendu3d'
-import type { Theme } from '../src/ui/trois/theme'
-import { grillePixel } from '../src/ui/rendu'
+import { Moods, MOODS, REACTIONS, type MoodId } from '../src/bot/moods'
+import type { AccessorySelection } from '../src/bot/slots'
+import type { Material } from '../src/ui/3d/material'
+import type { Theme } from '../src/ui/3d/theme'
+import { pixelGrid } from '../src/ui/renderStyle'
 
 /**
- * Rend une animation d'humeur ou d'interaction : trois Mochi cote a cote (formes, couleurs, styles
- * et accessoires varies, un en theme sombre). Meme chaine que le composant : `Humeurs.sample` ->
- * `BotEngine.sample(t, geste)` -> `rendreAvatar`. Chaque image est une fonction pure de `t` : les
- * evenements (tap, appui...) sont rejoues avec leurs dates, donc n'importe quelle image se rend seule.
+ * Renders a mood or interaction animation: three Mochis side by side (varied shapes, colors, styles and accessories,
+ * one in the dark theme). Same chain as the component: `Moods.sample` -> `BotEngine.sample(t, gesture)` ->
+ * `renderAvatar`. Each frame is a pure function of `t`: events (tap, press...) are replayed with their times, so any
+ * frame renders alone.
  */
 const q = new URLSearchParams(location.search)
 const W = 1080
 const H = 720
-const FOND = '#f4f1ea'
-const ENCRE = '#26222f'
-const GRIS = '#8a8794'
-const PAPIER = '#f9f9f9'
-const CARTE = '#fffdf9'
-const CARTE_SOMBRE = '#1b1922'
+const BACKGROUND = '#f4f1ea'
+const INK = '#26222f'
+const GRAY = '#8a8794'
+const PAPER = '#f9f9f9'
+const CARD = '#fffdf9'
+const CARD_DARK = '#1b1922'
 
-const hexDe = (id: string) => COLORS.find((c) => c.id === id)!.hex
-const FORMES = ['etoile', 'cercle', 'squircle', 'goutte', 'hexagone', 'nuage', 'oeuf', 'triangle', 'fleur', 'capsule', 'galet']
-const NOMS_FORMES: Record<string, string> = {
-  cercle: 'rond', etoile: 'étoile', squircle: 'cube', nuage: 'nuage', triangle: 'pyramide', hexagone: 'hexagone',
-  goutte: 'goutte', oeuf: 'œuf', fleur: 'fleur', capsule: 'capsule', galet: 'galet'
+const hexOf = (id: string) => COLORS.find((c) => c.id === id)!.hex
+const SHAPE_LIST = ['star', 'circle', 'squircle', 'drop', 'hexagon', 'cloud', 'egg', 'triangle', 'flower', 'capsule', 'pebble']
+const SHAPE_NAMES: Record<string, string> = {
+  circle: 'round', star: 'star', squircle: 'cube', cloud: 'cloud', triangle: 'pyramid', hexagon: 'hexagon',
+  drop: 'drop', egg: 'egg', flower: 'flower', capsule: 'capsule', pebble: 'pebble'
 }
-const COULEURS = ['turquoise', 'ambre', 'rose', 'bleu', 'violet', 'orange', 'vert', 'rouge', 'encre', 'turquoise', 'rose']
-const STYLES: Array<{ nom: string; rendu: Rendu3d }> = [
-  { nom: 'Soft', rendu: 'doux' },
-  { nom: 'Flat', rendu: 'toon' },
-  { nom: 'Pixel', rendu: 'pixel' }
+const ACCESSORY_PALETTE = ['turquoise', 'amber', 'pink', 'blue', 'violet', 'orange', 'green', 'red', 'ink', 'turquoise', 'pink']
+const STYLES: Array<{ name: string; renderStyle: Material }> = [
+  { name: 'Soft', renderStyle: 'soft' },
+  { name: 'Flat', renderStyle: 'toon' },
+  { name: 'Pixel', renderStyle: 'pixel' }
 ]
-const ACCESSOIRES: Selection[] = [
-  { tete: 'casquette' },
-  { yeux: 'rondes', bas: 'papillon' },
+const SELECTIONS: AccessorySelection[] = [
+  { head: 'cap' },
+  { eyes: 'round', neck: 'bowtie' },
   {},
-  { tete: 'toque' },
-  { bas: 'echarpe' },
-  { yeux: 'carrees' },
-  { tete: 'casquette', bas: 'papillon' },
+  { head: 'toque' },
+  { neck: 'scarf' },
+  { eyes: 'square' },
+  { head: 'cap', neck: 'bowtie' },
   {},
-  { dos: 'cape' },
-  { tete: 'beret' },
+  { back: 'cape' },
+  { head: 'beret' },
   {}
 ]
 
-interface Perso {
-  forme: string
-  couleur: string
+interface Custom {
+  shape: string
+  color: string
   style: (typeof STYLES)[number]
   theme: Theme
-  sel: Selection
+  sel: AccessorySelection
 }
 
-/** La distribution d'une animation : 3 Mochi, tous differents, un en sombre ; couvre les 11 formes d'une animation a l'autre. */
-function distribution(a: number): Perso[] {
+/**
+ * The cast of an animation: 3 Mochis, all different, one in dark; covers the 11 shapes from one animation to the
+ * next.
+ */
+function distribution(a: number): Custom[] {
   return [0, 1, 2].map((i) => {
     const n = a * 3 + i
-    const forme = FORMES[n % FORMES.length]!
+    const shape = SHAPE_LIST[n % SHAPE_LIST.length]!
     return {
-      forme,
-      couleur: hexDe(COULEURS[(n * 3 + a) % COULEURS.length]!),
+      shape,
+      color: hexOf(ACCESSORY_PALETTE[(n * 3 + a) % ACCESSORY_PALETTE.length]!),
       style: STYLES[(i + a) % 3]!,
       theme: (i + a) % 3 === 1 ? 'dark' : 'light',
-      sel: ACCESSOIRES[(n + 2) % ACCESSOIRES.length]!
+      sel: SELECTIONS[(n + 2) % SELECTIONS.length]!
     }
   })
 }
@@ -76,75 +79,75 @@ function distribution(a: number): Perso[] {
 
 type Evt =
   | { t: number; i: number; type: 'react'; id: string }
-  | { t: number; i: number; type: 'relacher' }
-  | { t: number; i: number; type: 'regarder'; nx: number; ny: number }
-  | { t: number; i: number; type: 'lacher' }
+  | { t: number; i: number; type: 'release' }
+  | { t: number; i: number; type: 'lookAt'; nx: number; ny: number }
+  | { t: number; i: number; type: 'letGo' }
   | { t: number; i: number; type: 'mood'; id: string }
 
 interface Anim {
   id: string
-  groupe: 'humeur' | 'interaction'
-  nom: string
+  group: 'mood' | 'interaction'
+  name: string
   code: string
-  duree: number
-  /** date de l'image cle (planche) */
-  cle: number
+  duration: number
+  /** time of the key frame (sheet) */
+  key: number
   mood: MoodId
-  /** decalage de phase par Mochi (humeurs : ils ne bougent pas en bloc) */
+  /** phase offset per Mochi (moods: they do not move as one block) */
   phase: number[]
   evts?: Evt[]
-  /** angle de la scene 3D de chaque Mochi a la date t */
+  /** angle of each Mochi's 3D scene at time t */
   yaw?: (i: number, t: number) => number
   visible?: (i: number, t: number) => boolean
-  /** echelle de l'ordinateur (0 a ~1) a la date t */
-  ordi?: (i: number, t: number) => number
-  /** indice de distribution impose (formes, couleurs, themes) ; defaut : le rang de l'animation */
+  /** laptop scale (0 to about 1) at time t */
+  laptop?: (i: number, t: number) => number
+  /** forced cast index (shapes, colors, themes); default: the animation's rank */
   cast?: number
-  /** demi-largeur du cadre (grandes courses : sauts, chapeaux) ; defaut 150 */
-  cadre?: number
+  /** half width of the frame (big moves: jumps, hats); default 150 */
+  frame?: number
   /** surimpression : curseur, doigts */
-  incruste?: (c: CanvasRenderingContext2D, t: number, centres: Array<{ x: number; y: number }>) => void
+  inset?: (c: CanvasRenderingContext2D, t: number, centers: Array<{ x: number; y: number }>) => void
 }
 
-const NOMS_HUMEURS: Record<string, string> = {
-  repos: 'Repos', reflechit: 'Réfléchit', travaille: 'Travaille', attend: 'Attend Robin', termine: 'Terminé', bloque: 'Bloqué', dort: 'Dort'
+const MOOD_NAMES: Record<string, string> = {
+  idle: 'Idle', thinking: 'Thinking', working: 'Working', waiting: 'Waiting', done: 'Done', blocked: 'Blocked', asleep: 'Asleep'
 }
-const DUREES_HUMEURS: Record<string, number> = { repos: 4, reflechit: 4, travaille: 4, attend: 4, termine: 3, bloque: 3, dort: 4.6 }
-const CLES_HUMEURS: Record<string, number> = { repos: 0.6, reflechit: 1.2, travaille: 0.55, attend: 0.9, termine: 0.95, bloque: 0.8, dort: 1.4 }
+const MOOD_DURATIONS: Record<string, number> = { idle: 4, thinking: 4, working: 4, waiting: 4, done: 3, blocked: 3, asleep: 4.6 }
+const MOOD_KEYS: Record<string, number> = { idle: 0.6, thinking: 1.2, working: 0.55, waiting: 0.9, done: 0.95, blocked: 0.8, asleep: 1.4 }
 
 const ANIMS: Anim[] = []
 for (const m of MOODS) {
   ANIMS.push({
-    id: m.id, groupe: 'humeur', nom: NOMS_HUMEURS[m.id]!, code: `setMood('${m.id}')`,
-    duree: DUREES_HUMEURS[m.id]!, cle: CLES_HUMEURS[m.id]!, mood: m.id, phase: [0, 0.37, 0.71], cadre: m.id === 'termine' ? 175 : undefined
+    id: m.id, group: 'mood', name: MOOD_NAMES[m.id]!, code: `setMood('${m.id}')`,
+    duration: MOOD_DURATIONS[m.id]!, key: MOOD_KEYS[m.id]!, mood: m.id, phase: [0, 0.37, 0.71], frame: m.id === 'done' ? 175 : undefined
   })
 }
 
-/* centres des trois cellules, pour les doigts et le curseur */
+/* centers of the three cells, for the fingers and the cursor */
 const COL = W / 3
 const CY = 412
-const centreDe = (i: number) => ({ x: COL * i + COL / 2, y: CY })
+const centerOf = (i: number) => ({ x: COL * i + COL / 2, y: CY })
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k
-const lisse = (u: number) => { const k = Math.max(0, Math.min(1, u)); return k * k * (3 - 2 * k) }
-/** Trajet par cles [t, x, y] : lineaire adouci. */
-function trajet(K: number[][], t: number): { x: number; y: number } | null {
+const smooth = (u: number) => { const k = Math.max(0, Math.min(1, u)); return k * k * (3 - 2 * k) }
+/** Path by keys [t, x, y]: smoothed linear. */
+function path(K: number[][], t: number): { x: number; y: number } | null {
   if (t < K[0]![0]! || t > K[K.length - 1]![0]!) return null
   for (let i = 1; i < K.length; i++) {
     if (t <= K[i]![0]!) {
       const a = K[i - 1]!
       const b = K[i]!
-      const k = lisse((t - a[0]!) / (b[0]! - a[0]!))
+      const k = smooth((t - a[0]!) / (b[0]! - a[0]!))
       return { x: lerp(a[1]!, b[1]!, k), y: lerp(a[2]!, b[2]!, k) }
     }
   }
   return null
 }
 
-function curseur(c: CanvasRenderingContext2D, x: number, y: number, appuye = false) {
+function slider(c: CanvasRenderingContext2D, x: number, y: number, pressed = false) {
   c.save()
   c.translate(x, y)
-  c.scale(appuye ? 0.92 : 1, appuye ? 0.92 : 1)
+  c.scale(pressed ? 0.92 : 1, pressed ? 0.92 : 1)
   c.beginPath()
   c.moveTo(0, 0)
   c.lineTo(0, 30)
@@ -163,350 +166,352 @@ function curseur(c: CanvasRenderingContext2D, x: number, y: number, appuye = fal
   c.restore()
 }
 
-const R = RAYON
-// la boule fait RAYON unites sur un cadre de DEMI_VIEWBOX : en pixels, avec une cellule de 340 px
+const R = RADIUS
+// the ball is RADIUS units on a frame of HALF_VIEWBOX: in pixels, with a 340 px cell
 const PX = 340
-let CADRE = 150
-const rayonPx = (R / CADRE) * (PX / 2)
+let FRAME = 150
+const radiusPx = (R / FRAME) * (PX / 2)
 
-/* --- survol : un curseur qui traverse les trois cellules */
-const CURSEUR: number[][] = [
+/* --- hover: a cursor crossing the three cells */
+const SLIDER: number[][] = [
   [0.0, 90, 640], [0.7, 250, 470], [1.2, 400, 330], [1.6, 330, 300], [2.0, 480, 480],
   [2.6, 720, 330], [3.0, 780, 250], [3.5, 960, 470], [4.0, 1010, 600], [4.4, 1070, 700]
 ]
-const evtsSurvol: Evt[] = []
+const evtsHover: Evt[] = []
 for (let k = 0; k <= 4.4 * 24; k++) {
   const t = k / 24
-  const p = trajet(CURSEUR, t)
+  const p = path(SLIDER, t)
   for (let i = 0; i < 3; i++) {
-    const c = centreDe(i)
-    const sur = p && Math.abs(p.x - c.x) < COL / 2 && Math.abs(p.y - c.y) < 300
-    if (sur && p) evtsSurvol.push({ t, i, type: 'regarder', nx: Math.max(-1, Math.min(1, (p.x - c.x) / (PX * 0.6))), ny: Math.max(-1, Math.min(1, (p.y - c.y) / (PX * 0.6))) })
-    else evtsSurvol.push({ t, i, type: 'lacher' })
+    const c = centerOf(i)
+    const on = p && Math.abs(p.x - c.x) < COL / 2 && Math.abs(p.y - c.y) < 300
+    if (on && p) evtsHover.push({ t, i, type: 'lookAt', nx: Math.max(-1, Math.min(1, (p.x - c.x) / (PX * 0.6))), ny: Math.max(-1, Math.min(1, (p.y - c.y) / (PX * 0.6))) })
+    else evtsHover.push({ t, i, type: 'letGo' })
   }
 }
 ANIMS.push({
-  id: 'survol', groupe: 'interaction', nom: 'Survol', code: 'pointer over : le regard suit', duree: 4.4, cle: 1.4, mood: 'repos',
-  phase: [0, 0.4, 0.8], evts: evtsSurvol,
-  incruste: (c, t) => { const p = trajet(CURSEUR, t); if (p) curseur(c, p.x, p.y) }
+  id: 'hover', group: 'interaction', name: 'Hover', code: 'pointer over: the gaze follows', duration: 4.4, key: 1.4, mood: 'idle',
+  phase: [0, 0.4, 0.8], evts: evtsHover,
+  inset: (c, t) => { const p = path(SLIDER, t); if (p) slider(c, p.x, p.y) }
 })
 
-/* --- tap : un doigt par Mochi, a tour de role */
+/* --- tap: one finger per Mochi, in turn */
 const TAPS = [0.7, 1.7, 2.7]
-/** Le curseur arrive en bas a droite du corps, appuie, repart : un clic, ou un doigt tenu pour l'appui long. */
-const doigtsTaps = (decal: number[], longs?: number[][]) => (c: CanvasRenderingContext2D, t: number) => {
+/**
+ * The cursor arrives at the bottom right of the body, presses, leaves: a click, or a finger held for the long press.
+ */
+const fingersTaps = (decal: number[], longs?: number[][]) => (c: CanvasRenderingContext2D, t: number) => {
   for (let i = 0; i < 3; i++) {
-    const ct = centreDe(i)
+    const ct = centerOf(i)
     const x = ct.x + 38
     const y = ct.y + 52
     if (longs) {
       const [a, b] = longs[i]!
-      if (t >= a - 0.25 && t < a) curseur(c, x + (a - t) * 160, y + (a - t) * 160)
-      else if (t >= a && t <= b) curseur(c, x, y, true)
-      else if (t > b && t < b + 0.25) curseur(c, x + (t - b) * 160, y + (t - b) * 160)
+      if (t >= a - 0.25 && t < a) slider(c, x + (a - t) * 160, y + (a - t) * 160)
+      else if (t >= a && t <= b) slider(c, x, y, true)
+      else if (t > b && t < b + 0.25) slider(c, x + (t - b) * 160, y + (t - b) * 160)
     } else {
       const a = decal[i]!
-      if (t >= a - 0.2 && t < a) curseur(c, x + (a - t) * 160, y + (a - t) * 160)
-      else if (t >= a && t < a + 0.12) curseur(c, x, y, true)
-      else if (t >= a + 0.12 && t < a + 0.3) curseur(c, x + (t - a - 0.12) * 160, y + (t - a - 0.12) * 160)
+      if (t >= a - 0.2 && t < a) slider(c, x + (a - t) * 160, y + (a - t) * 160)
+      else if (t >= a && t < a + 0.12) slider(c, x, y, true)
+      else if (t >= a + 0.12 && t < a + 0.3) slider(c, x + (t - a - 0.12) * 160, y + (t - a - 0.12) * 160)
     }
   }
 }
 ANIMS.push({
-  id: 'tap', groupe: 'interaction', nom: 'Tap ou clic', code: 'tap : sursaut, écrasement, rebond', duree: 3.6, cle: TAPS[1]! + 0.1, mood: 'repos', cadre: 165,
+  id: 'tap', group: 'interaction', name: 'Tap or click', code: 'tap: startle, squash, bounce', duration: 3.6, key: TAPS[1]! + 0.1, mood: 'idle', frame: 165,
   phase: [0, 0.4, 0.8],
-  evts: TAPS.map((t, i) => ({ t, i, type: 'react', id: 'sursaut' }) as Evt),
-  incruste: doigtsTaps(TAPS)
+  evts: TAPS.map((t, i) => ({ t, i, type: 'react', id: 'startle' }) as Evt),
+  inset: fingersTaps(TAPS)
 })
 
 /* --- double tap */
 const DOUBLES = [0.6, 1.75, 2.9]
 ANIMS.push({
-  id: 'double', groupe: 'interaction', nom: 'Double tap', code: 'double tap : il rigole', duree: 4.7, cle: DOUBLES[1]! + 0.7, mood: 'repos', cadre: 165,
+  id: 'double', group: 'interaction', name: 'Double tap', code: 'double tap: it laughs', duration: 4.7, key: DOUBLES[1]! + 0.7, mood: 'idle', frame: 165,
   phase: [0, 0.4, 0.8],
   evts: DOUBLES.flatMap((t, i): Evt[] => [
-    { t, i, type: 'react', id: 'sursaut' },
-    { t: t + 0.25, i, type: 'react', id: 'rigole' }
+    { t, i, type: 'react', id: 'startle' },
+    { t: t + 0.25, i, type: 'react', id: 'laugh' }
   ]),
-  incruste: (c, t) => {
-    doigtsTaps(DOUBLES)(c, t)
-    doigtsTaps(DOUBLES.map((d) => d + 0.25))(c, t)
+  inset: (c, t) => {
+    fingersTaps(DOUBLES)(c, t)
+    fingersTaps(DOUBLES.map((d) => d + 0.25))(c, t)
   }
 })
 
 /* --- longue pression */
-const APPUIS = [[0.3, 2.5], [0.55, 2.75], [0.8, 3.0]]
+const PRESSES = [[0.3, 2.5], [0.55, 2.75], [0.8, 3.0]]
 ANIMS.push({
-  id: 'longue', groupe: 'interaction', nom: 'Longue pression', code: 'long press : il rougit, content', duree: 4.4, cle: 2.0, mood: 'repos',
+  id: 'long', group: 'interaction', name: 'Longue pression', code: 'long press: it blushes, happy', duration: 4.4, key: 2.0, mood: 'idle',
   phase: [0, 0.4, 0.8],
-  evts: APPUIS.flatMap(([a, b], i): Evt[] => [
-    { t: a! + 0.45, i, type: 'react', id: 'rougit' },
-    { t: b!, i, type: 'relacher' }
+  evts: PRESSES.flatMap(([a, b], i): Evt[] => [
+    { t: a! + 0.45, i, type: 'react', id: 'blush' },
+    { t: b!, i, type: 'release' }
   ]),
-  incruste: doigtsTaps([], APPUIS)
+  inset: fingersTaps([], PRESSES)
 })
 
-/* --- secoue : la scene 3D tourne tres vite, puis il est etourdi */
-const TOURS = [0.5, 0.68, 0.86]
+/* --- shake: the 3D scene turns very fast, then it is dizzy */
+const TURNS = [0.5, 0.68, 0.86]
 ANIMS.push({
-  id: 'secoue', groupe: 'interaction', nom: 'Secoué ou tourné vite', code: 'drag rapide : étourdi', duree: 4.2, cle: 2.1, mood: 'repos',
+  id: 'shaken', group: 'interaction', name: 'Shaken or spun fast', code: 'fast drag: dizzy', duration: 4.2, key: 2.1, mood: 'idle',
   phase: [0, 0.4, 0.8],
-  evts: TOURS.map((s, i) => ({ t: s + 0.62, i, type: 'react', id: 'etourdi' }) as Evt),
+  evts: TURNS.map((s, i) => ({ t: s + 0.62, i, type: 'react', id: 'dizzy' }) as Evt),
   yaw: (i, t) => {
-    const u = (t - TOURS[i]!) / 1.0
+    const u = (t - TURNS[i]!) / 1.0
     return Math.PI * 4 * (1 - (1 - Math.max(0, Math.min(1, u))) ** 3)
   }
 })
 
-/* --- coucou : ils apparaissent l'un apres l'autre */
-const ARRIVEES = [0.25, 0.65, 1.05]
+/* --- wave: they appear one after the other */
+const ARRIVALS = [0.25, 0.65, 1.05]
 ANIMS.push({
-  id: 'coucou', groupe: 'interaction', nom: 'Coucou', code: 'à l’apparition : il pousse, puis salue', duree: 3.8, cle: 1.45, mood: 'repos', cadre: 175,
+  id: 'wave', group: 'interaction', name: 'Wave', code: 'on appearing: it grows, then waves', duration: 3.8, key: 1.45, mood: 'idle', frame: 175,
   phase: [0, 0.4, 0.8],
-  evts: ARRIVEES.map((t, i) => ({ t, i, type: 'react', id: 'coucou' }) as Evt),
-  visible: (i, t) => t >= ARRIVEES[i]!
+  evts: ARRIVALS.map((t, i) => ({ t, i, type: 'react', id: 'wave' }) as Evt),
+  visible: (i, t) => t >= ARRIVALS[i]!
 })
 
-/* --- travail : l'ordinateur pousse a l'entree dans le mood, il rétrécit a la sortie */
-const ENTREE = [0.3, 0.5, 0.7]
-const SORTIE = 5.4
+/* --- work: the laptop grows when the mood starts, it shrinks when it ends */
+const ENTRY = [0.3, 0.5, 0.7]
+const EXIT = 5.4
 const progression = (t: number, i: number) => {
-  const k = Math.min(1, Math.max(0, (t - ENTREE[i]!) / 0.45))
-  if (t < SORTIE + 0.2 * i) return k
-  return Math.max(0, 1 - (t - SORTIE - 0.2 * i) / 0.45)
+  const k = Math.min(1, Math.max(0, (t - ENTRY[i]!) / 0.45))
+  if (t < EXIT + 0.2 * i) return k
+  return Math.max(0, 1 - (t - EXIT - 0.2 * i) / 0.45)
 }
 ANIMS.push({
-  id: 'travail', groupe: 'humeur', nom: 'Travaille (ordinateur)', code: "setMood('travaille')", duree: 7, cle: 1.0, mood: 'repos', cadre: 150, cast: 2,
+  id: 'working', group: 'mood', name: 'Working (laptop)', code: "setMood('working')", duration: 7, key: 1.0, mood: 'idle', frame: 150, cast: 2,
   phase: [0, 0.31, 0.62],
-  evts: ENTREE.flatMap((t, i) => [{ t, i, type: 'mood', id: 'travaille' }, { t: SORTIE + 0.2 * i, i, type: 'mood', id: 'repos' }] as Evt[]),
+  evts: ENTRY.flatMap((t, i) => [{ t, i, type: 'mood', id: 'working' }, { t: EXIT + 0.2 * i, i, type: 'mood', id: 'idle' }] as Evt[]),
   yaw: (i, t) => [0.12, -0.08, 0][i]! + 0.05 * Math.sin(t * 0.8 + i),
-  ordi: (i, t) => {
+  laptop: (i, t) => {
     const k = progression(t, i)
     if (k <= 0) return 0
-    const montee = t < SORTIE + 0.2 * i
-    if (montee && k >= 1) return 1
-    if (montee) return 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2
+    const rise = t < EXIT + 0.2 * i
+    if (rise && k >= 1) return 1
+    if (rise) return 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2
     return k * k * (3 - 2 * k)
   }
 })
 
-const REACTION_NOMS = REACTIONS.map((r) => r.id)
-void REACTION_NOMS
+const REACTION_NAMES = REACTIONS.map((r) => r.id)
+void REACTION_NAMES
 
-/* ------------------------------------------------------------- rendu */
+/* ------------------------------------------------------------- rendering */
 
-let rendreAvatar: typeof import('../src/ui/trois/scene3d').rendreAvatar
-const moteurs = new Map<string, BotEngine>()
-function moteur(forme: string) {
-  let e = moteurs.get(forme)
+let renderAvatar: typeof import('../src/ui/3d/scene3d').renderAvatar
+const engines = new Map<string, BotEngine>()
+function engine(shape: string) {
+  let e = engines.get(shape)
   if (!e) {
-    e = new BotEngine(RAYON, 'idle', SHAPES.find((s) => s.id === forme)!.radii, null)
-    moteurs.set(forme, e)
+    e = new BotEngine(RADIUS, 'idle', SHAPES.find((s) => s.id === shape)!.radii, null)
+    engines.set(shape, e)
   }
   return e
 }
 
-function humeursDe(a: Anim, i: number): Humeurs {
-  const h = new Humeurs(a.mood)
+function moodsOf(a: Anim, i: number): Moods {
+  const h = new Moods(a.mood)
   return h
 }
 
-/** Les evenements de Mochi `i` jusqu'a la date `t` (decalee de la phase), rejoues dans l'ordre. */
-function appliquer(a: Anim, i: number, h: Humeurs, t: number) {
+/** The events of Mochi `i` up to time `t` (shifted by the phase), replayed in order. */
+function apply(a: Anim, i: number, h: Moods, t: number) {
   for (const e of a.evts ?? []) {
     if (e.i !== i || e.t > t + 1e-9) continue
     const d = e.t + a.phase[i]!
     if (e.type === 'react') h.react(e.id, d)
-    else if (e.type === 'relacher') h.relacher(d)
+    else if (e.type === 'release') h.release(d)
     else if (e.type === 'mood') h.setMood(e.id, d)
-    else if (e.type === 'regarder') h.regarder({ nx: e.nx, ny: e.ny }, d)
-    else h.regarder(null, d)
+    else if (e.type === 'lookAt') h.lookAt({ nx: e.nx, ny: e.ny }, d)
+    else h.lookAt(null, d)
   }
 }
 
-function dessinerCarte(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, sombre: boolean) {
+function drawCard(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, dark: boolean) {
   c.beginPath()
   c.roundRect(x, y, w, h, 28)
-  c.fillStyle = sombre ? CARTE_SOMBRE : CARTE
+  c.fillStyle = dark ? CARD_DARK : CARD
   c.fill()
 }
 
-function texte(c: CanvasRenderingContext2D, s: string, x: number, y: number, taille: number, couleur = ENCRE, gras = false, align: CanvasTextAlign = 'left', mono = false) {
-  c.font = `${gras ? '700' : '500'} ${taille}px ${mono ? 'ui-monospace, Menlo, monospace' : '-apple-system, Helvetica, Arial, sans-serif'}`
-  c.fillStyle = couleur
+function text(c: CanvasRenderingContext2D, s: string, x: number, y: number, size: number, color = INK, bold = false, align: CanvasTextAlign = 'left', mono = false) {
+  c.font = `${bold ? '700' : '500'} ${size}px ${mono ? 'ui-monospace, Menlo, monospace' : '-apple-system, Helvetica, Arial, sans-serif'}`
+  c.fillStyle = color
   c.textAlign = align
   c.textBaseline = 'alphabetic'
   c.fillText(s, x, y)
 }
 
-const tuile = document.createElement('canvas')
+const tile = document.createElement('canvas')
 
-/** Un Mochi a la date `t`, dans la cellule `i` du canevas `c`. */
-function mochi(c: CanvasRenderingContext2D, a: Anim, i: number, p: Perso, t: number, x0: number, y0: number, taille: number) {
-  const h = humeursDe(a, i)
-  appliquer(a, i, h, t)
+/** A Mochi at time `t`, in cell `i` of the canvas `c`. */
+function mochi(c: CanvasRenderingContext2D, a: Anim, i: number, p: Custom, t: number, x0: number, y0: number, size: number) {
+  const h = moodsOf(a, i)
+  apply(a, i, h, t)
   const ts = t + a.phase[i]!
-  const kOrdi = a.ordi ? Math.min(1, a.ordi(i, t)) : 0
-  h.regardOrdi = kOrdi
-  const geste = h.sample(ts)
-  const frame = moteur(p.forme).sample(ts, geste)
-  const pixel = p.style.rendu === 'pixel'
-  tuile.width = tuile.height = pixel ? Math.round((grillePixel('fin') * CADRE) / DEMI_VIEWBOX) : taille
-  const yaw = (a.yaw ? a.yaw(i, t) : 0) + 0.3 * kOrdi
-  rendreAvatar(tuile, frame, p.couleur, PAPIER, p.style.rendu, false, 'marque', true, p.forme, yaw, null, p.sel, CADRE, p.theme, undefined, a.ordi ? a.ordi(i, t) : 0)
+  const kLaptop = a.laptop ? Math.min(1, a.laptop(i, t)) : 0
+  h.gazeLaptop = kLaptop
+  const gesture = h.sample(ts)
+  const frame = engine(p.shape).sample(ts, gesture)
+  const pixel = p.style.renderStyle === 'pixel'
+  tile.width = tile.height = pixel ? Math.round((pixelGrid('fine') * FRAME) / HALF_VIEWBOX) : size
+  const yaw = (a.yaw ? a.yaw(i, t) : 0) + 0.3 * kLaptop
+  renderAvatar(tile, frame, p.color, PAPER, p.style.renderStyle, false, 'strong', true, p.shape, yaw, p.sel, FRAME, p.theme, undefined, a.laptop ? a.laptop(i, t) : 0)
   c.imageSmoothingEnabled = !pixel
-  c.drawImage(tuile, x0, y0, taille, taille)
+  c.drawImage(tile, x0, y0, size, size)
   c.imageSmoothingEnabled = true
 }
 
-/** Une image de l'animation, a la date `t`. */
+/** One frame of the animation, at time `t`. */
 function image(a: Anim, t: number): HTMLCanvasElement {
   const cv = document.createElement('canvas')
   cv.width = W
   cv.height = H
   const c = cv.getContext('2d')!
-  c.fillStyle = FOND
+  c.fillStyle = BACKGROUND
   c.fillRect(0, 0, W, H)
-  CADRE = a.cadre ?? 150
+  FRAME = a.frame ?? 150
   const casting = distribution(a.cast ?? ANIMS.indexOf(a))
-  texte(c, a.groupe === 'humeur' ? 'HUMEUR' : 'INTERACTION', 44, 58, 22, GRIS, true)
-  texte(c, a.nom, 44, 112, 54, ENCRE, true)
-  texte(c, a.code, W - 44, 112, 26, GRIS, false, 'right', true)
+  text(c, a.group === 'mood' ? 'MOOD' : 'INTERACTION', 44, 58, 22, GRAY, true)
+  text(c, a.name, 44, 112, 54, INK, true)
+  text(c, a.code, W - 44, 112, 26, GRAY, false, 'right', true)
   casting.forEach((p, i) => {
     const cx = COL * i
-    dessinerCarte(c, cx + 14, 150, COL - 28, 524, p.theme === 'dark')
+    drawCard(c, cx + 14, 150, COL - 28, 524, p.theme === 'dark')
     if (!a.visible || a.visible(i, t)) mochi(c, a, i, p, t, cx + (COL - PX) / 2, CY - PX / 2 - 12, PX)
-    texte(c, `${NOMS_FORMES[p.forme]} · ${p.style.nom} · ${p.theme === 'dark' ? 'sombre' : 'clair'}`, cx + COL / 2, 650, 21, p.theme === 'dark' ? '#cfcad8' : GRIS, false, 'center')
+    text(c, `${SHAPE_NAMES[p.shape]} · ${p.style.name} · ${p.theme === 'dark' ? 'dark' : 'light'}`, cx + COL / 2, 650, 21, p.theme === 'dark' ? '#cfcad8' : GRAY, false, 'center')
   })
-  a.incruste?.(c, t, [0, 1, 2].map(centreDe))
+  a.inset?.(c, t, [0, 1, 2].map(centerOf))
   return cv
 }
 
-/** Planche : une image cle par animation, un Mochi chacune. */
-function planche(): HTMLCanvasElement {
-  const colonnes = 4
+/** Sheet: one key frame per animation, one Mochi each. */
+function sheet(): HTMLCanvasElement {
+  const columns = 4
   const cell = 400
-  const lignes = Math.ceil(ANIMS.length / colonnes)
+  const rows = Math.ceil(ANIMS.length / columns)
   const cv = document.createElement('canvas')
-  cv.width = colonnes * cell
-  cv.height = 150 + lignes * (cell + 30) + 10
+  cv.width = columns * cell
+  cv.height = 150 + rows * (cell + 30) + 10
   const c = cv.getContext('2d')!
-  c.fillStyle = FOND
+  c.fillStyle = BACKGROUND
   c.fillRect(0, 0, cv.width, cv.height)
-  texte(c, 'Mochi : humeurs et interactions', 40, 76, 52, ENCRE, true)
-  texte(c, '7 humeurs jouées en boucle, 6 interactions déclenchées par l’utilisateur. Une image clé chacune ; les vidéos montrent le mouvement.', 40, 118, 24, GRIS)
+  text(c, 'Mochi: moods and interactions', 40, 76, 52, INK, true)
+  text(c, '7 moods played on a loop, 6 interactions triggered by the user. One key frame each; the videos show the motion.', 40, 118, 24, GRAY)
   ANIMS.forEach((a, k) => {
-    const x = (k % colonnes) * cell
-    const y = 150 + Math.floor(k / colonnes) * (cell + 30)
+    const x = (k % columns) * cell
+    const y = 150 + Math.floor(k / columns) * (cell + 30)
     const casting = distribution(k)
-    // le Mochi du milieu, sauf en Pixel (ses yeux de 3 cases ne montrent ni croissant ni inclinaison) :
-    // l'image cle montre alors le Soft ou le Flat du meme tirage ; les videos gardent les trois styles
-    const i = [1, 0, 2].find((n) => casting[n]!.style.nom !== 'Pixel') ?? 1
+    // the middle Mochi, except in Pixel (its 3-cell eyes show neither crescent nor tilt):
+    // the key frame then shows the Soft or Flat of the same cast; the videos keep the three styles
+    const i = [1, 0, 2].find((n) => casting[n]!.style.name !== 'Pixel') ?? 1
     const p = casting[i]!
     const ch = cell - 40
-    dessinerCarte(c, x + 14, y, cell - 28, ch, p.theme === 'dark')
-    // le Mochi est rendu sur 360 px, centre dans sa carte (le clip garde les grands chapeaux dans la carte)
+    drawCard(c, x + 14, y, cell - 28, ch, p.theme === 'dark')
+    // the Mochi is rendered on 360 px, centered in its card (the clip keeps big hats inside the card)
     const px = 360
     c.save()
     c.beginPath()
     c.roundRect(x + 14, y, cell - 28, ch, 28)
     c.clip()
-    mochi(c, a, i, p, a.cle, x + (cell - px) / 2, y + (ch - px) / 2 + 6, px)
+    mochi(c, a, i, p, a.key, x + (cell - px) / 2, y + (ch - px) / 2 + 6, px)
     c.restore()
-    texte(c, a.nom, x + cell / 2, y + ch + 34, 28, ENCRE, true, 'center')
+    text(c, a.name, x + cell / 2, y + ch + 34, 28, INK, true, 'center')
   })
   return cv
 }
 
-/** Planche de l'ordinateur : les 11 formes (3/4 puis face, clair) et 3 formes en sombre, en train d'ecrire. */
-function planOrdinateur(): HTMLCanvasElement {
-  CADRE = 200
+/** Laptop sheet: the 11 shapes (3/4 then front, light) and 3 shapes in dark, writing. */
+function planLaptop(): HTMLCanvasElement {
+  FRAME = 200
   const cell = 300
   const cols = 4
-  const entete = 120
-  const rowsClair = Math.ceil(FORMES.length / 2)
-  const sombres: string[] = []
-  const rowsSombre = Math.ceil(sombres.length / 2)
+  const header = 120
+  const rowsLight = Math.ceil(SHAPE_LIST.length / 2)
+  const dark: string[] = []
+  const rowsDark = Math.ceil(dark.length / 2)
   const cv = document.createElement('canvas')
   cv.width = cols * cell
-  cv.height = entete + rowsClair * (cell + 8) + 20
+  cv.height = header + rowsLight * (cell + 8) + 20
   const c = cv.getContext('2d')!
-  c.fillStyle = FOND
+  c.fillStyle = BACKGROUND
   c.fillRect(0, 0, cv.width, cv.height)
-  texte(c, 'Mochi travaille : ordinateur portable 3D', 40, 62, 44, ENCRE, true)
-  texte(c, "Vu de dos, devant le corps · 3/4 puis face", 40, 100, 20, GRIS)
-  const dessiner = (forme: string, k: number, x: number, y: number, theme: Theme) => {
-    const couleur = hexDe(COULEURS[FORMES.indexOf(forme) % COULEURS.length]!)
+  text(c, 'A working Mochi: 3D laptop', 40, 62, 44, INK, true)
+  text(c, "Seen from behind, in front of the body · 3/4 then front", 40, 100, 20, GRAY)
+  const draw = (shape: string, k: number, x: number, y: number, theme: Theme) => {
+    const color = hexOf(ACCESSORY_PALETTE[SHAPE_LIST.indexOf(shape) % ACCESSORY_PALETTE.length]!)
     if (theme === 'dark') {
       c.fillStyle = '#15141b'
       c.fillRect(x, y, cell * 2, cell + 8)
     }
     ;[0.55, 0].forEach((yaw, v) => {
-      const h = new Humeurs('travaille')
-      h.regardOrdi = 1
+      const h = new Moods('working')
+      h.gazeLaptop = 1
       const t = 0.85 + (k % 5) * 0.11
-      const frame = moteur(forme).sample(t, h.sample(t))
-      tuile.width = tuile.height = cell
-      rendreAvatar(tuile, frame, couleur, PAPIER, 'doux', false, 'marque', true, forme, yaw + 0.3, null, k % 3 === 1 ? { tete: 'casquette', yeux: 'rondes' } : {}, CADRE, theme, undefined, 1)
-      c.drawImage(tuile, x + v * cell, y, cell, cell)
+      const frame = engine(shape).sample(t, h.sample(t))
+      tile.width = tile.height = cell
+      renderAvatar(tile, frame, color, PAPER, 'soft', false, 'strong', true, shape, yaw + 0.3, k % 3 === 1 ? { head: 'cap', eyes: 'round' } : {}, FRAME, theme, undefined, 1)
+      c.drawImage(tile, x + v * cell, y, cell, cell)
     })
-    texte(c, NOMS_FORMES[forme] ?? forme, x + 10, y + 26, 20, theme === 'dark' ? '#cfcbd6' : GRIS, true)
+    text(c, SHAPE_NAMES[shape] ?? shape, x + 10, y + 26, 20, theme === 'dark' ? '#cfcbd6' : GRAY, true)
   }
-  FORMES.forEach((f, k) => dessiner(f, k, (k % 2) * 2 * cell, entete + Math.floor(k / 2) * (cell + 8), 'light'))
-  const y0 = entete + rowsClair * (cell + 8)
-  sombres.forEach((f, k) => dessiner(f, k + 3, (k % 2) * 2 * cell, y0 + 70 + Math.floor(k / 2) * (cell + 8), 'dark'))
+  SHAPE_LIST.forEach((f, k) => draw(f, k, (k % 2) * 2 * cell, header + Math.floor(k / 2) * (cell + 8), 'light'))
+  const y0 = header + rowsLight * (cell + 8)
+  dark.forEach((f, k) => draw(f, k + 3, (k % 2) * 2 * cell, y0 + 70 + Math.floor(k / 2) * (cell + 8), 'dark'))
   return cv
 }
 
-async function envoyer(nom: string, c: HTMLCanvasElement, type = 'image/jpeg') {
+async function send(name: string, c: HTMLCanvasElement, type = 'image/jpeg') {
   const dest = q.get('save')
   if (!dest) return
   const blob: Blob = await new Promise((r) => c.toBlob((b) => r(b!), type, 0.95))
-  await fetch(`${dest}?name=${encodeURIComponent(nom)}`, { method: 'POST', body: blob })
+  await fetch(`${dest}?name=${encodeURIComponent(name)}`, { method: 'POST', body: blob })
 }
 
 async function main() {
-  ;({ rendreAvatar } = await import('../src/ui/trois/scene3d'))
-  if (q.get('planche')) {
-    const c = planche()
-    await envoyer('moods.png', c, 'image/png')
+  ;({ renderAvatar } = await import('../src/ui/3d/scene3d'))
+  if (q.get('sheet')) {
+    const c = sheet()
+    await send('moods.png', c, 'image/png')
     const dest = q.get('save')
     if (dest) await fetch(`${dest}?name=DONE-planche`, { method: 'POST', body: 'ok' })
     if (!q.get('save')) document.body.appendChild(c)
-    document.title = 'fini'
+    document.title = 'finished'
     return
   }
-  if (q.get('ordinateur')) {
-    const c = planOrdinateur()
-    await envoyer('ordinateur.png', c, 'image/png')
+  if (q.get('laptop')) {
+    const c = planLaptop()
+    await send('laptop.png', c, 'image/png')
     const dest = q.get('save')
     if (dest) await fetch(`${dest}?name=DONE-ordinateur`, { method: 'POST', body: 'ok' })
     if (!q.get('save')) document.body.appendChild(c)
-    document.title = 'fini'
+    document.title = 'finished'
     return
   }
   const a = ANIMS.find((x) => x.id === q.get('anim'))
   if (!a) throw new Error('anim inconnue : ' + q.get('anim'))
   const fps = Number(q.get('fps') ?? 24)
-  const n = Math.round(a.duree * fps)
-  const seul = q.get('t')
-  if (seul) {
-    const c = image(a, Number(seul))
-    await envoyer(`${a.id}/t.png`, c, 'image/png')
+  const n = Math.round(a.duration * fps)
+  const alone = q.get('t')
+  if (alone) {
+    const c = image(a, Number(alone))
+    await send(`${a.id}/t.png`, c, 'image/png')
     const dest = q.get('save')
     if (dest) await fetch(`${dest}?name=${encodeURIComponent(a.id + '/DONE')}`, { method: 'POST', body: 'ok' })
     if (!q.get('save')) document.body.appendChild(c)
-    document.title = 'fini'
+    document.title = 'finished'
     return
   }
   for (let k = 0; k < n; k++) {
     const c = image(a, k / fps)
-    await envoyer(`${a.id}/f${String(k).padStart(4, '0')}.jpg`, c)
+    await send(`${a.id}/f${String(k).padStart(4, '0')}.jpg`, c)
     if (!q.get('save') && k === 0) document.body.appendChild(c)
   }
   const dest = q.get('save')
   if (dest) await fetch(`${dest}?name=${encodeURIComponent(a.id + '/DONE')}`, { method: 'POST', body: 'ok' })
-  document.title = 'fini'
+  document.title = 'finished'
 }
 
 main().catch((e) => {

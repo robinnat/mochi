@@ -1,41 +1,37 @@
 /**
- * Mecanique de texte de la couche i18n : substitution et choix de forme.
+ * Text mechanics of the i18n layer: substitution and plural form choice.
  *
- * Separee de `index.ts` parce qu'elle est pure — ni dictionnaire, ni langue
- * courante, ni DOM. C'est la partie ou les regles sont subtiles (le francais
- * compte zero comme un singulier, le chinois n'a qu'une forme), donc celle qui
- * merite d'etre testee sans avoir a simuler un navigateur.
+ * Separate from `index.ts` because it is pure: no dictionary, no current language, no DOM. It is the part where the
+ * rules are subtle (French counts zero as singular, Chinese has a single form), so the one worth testing without
+ * simulating a browser.
  */
 
-/** Separateur des formes de pluriel dans les dictionnaires. */
-const SEPARATEUR = ' | '
+/** Separator of plural forms in the dictionaries. */
+const SEPARATOR = ' | '
 
 /**
- * Remplace les `{nom}` par leur valeur. Un `{nom}` sans valeur fournie reste
- * tel quel : visible a l'ecran, donc reperable, la ou une chaine vide se
- * confondrait avec un texte simplement mal ecrit.
+ * Replaces `{name}` with its value. A `{name}` with no value stays as is: visible on screen, so easy to spot, while
+ * an empty string would look like a simply badly written text.
  */
-export function interpoler(texte: string, valeurs?: Record<string, string | number>): string {
-  if (!valeurs) return texte
-  let sortie = texte
-  for (const [nom, valeur] of Object.entries(valeurs)) {
-    sortie = sortie.replaceAll(`{${nom}}`, String(valeur))
+export function interpolate(text: string, values?: Record<string, string | number>): string {
+  if (!values) return text
+  let exit = text
+  for (const [name, value] of Object.entries(values)) {
+    exit = exit.replaceAll(`{${name}}`, String(value))
   }
-  return sortie
+  return exit
 }
 
 /**
- * Choisit la forme qui convient a `n` parmi celles du gabarit, separees par
- * ` | ` dans l'ordre singulier puis pluriel.
+ * Picks the form that fits `n` among those of the template, separated by ` | ` in singular then plural order.
  *
- * C'est `Intl.PluralRules` qui tranche, et pas un `n === 1` : le francais range
- * zero avec le singulier (« 0 animation »), l'anglais avec le pluriel
- * (« 0 animations »). Un gabarit d'une seule forme la rend toujours — c'est le
- * cas du chinois, qui n'a pas de pluriel.
+ * `Intl.PluralRules` decides, not an `n === 1`: French puts zero with the singular ("0 animation"), English with the
+ * plural ("0 animations"). A single-form template always returns it: that is the case of Chinese, which has no
+ * plural.
  */
-export function formePlurielle(gabarit: string, n: number, tag: string): string {
-  const formes = gabarit.split(SEPARATEUR)
-  if (formes.length < 2) return formes[0]!
+export function pluralForm(template: string, n: number, tag: string): string {
+  const shapes = template.split(SEPARATOR)
+  if (shapes.length < 2) return shapes[0]!
   const index = new Intl.PluralRules(tag).select(n) === 'one' ? 0 : 1
-  return formes[index] ?? formes[0]!
+  return shapes[index] ?? shapes[0]!
 }

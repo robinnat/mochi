@@ -1,28 +1,23 @@
 /**
- * Locale de reference. Les deux autres sont typees `typeof fr`, donc c'est ce
- * fichier qui definit le contrat : y ajouter une cle fait echouer `tsc` sur
- * `en.ts` et `zh.ts` jusqu'a ce qu'elles soient traduites.
+ * Reference locale. The other two are typed `typeof fr`, so this file defines the contract: adding a key here makes
+ * `tsc` fail on `en.ts` and `zh.ts` until they are translated.
  *
- * Surtout PAS de `as const` : chaque valeur deviendrait son propre type
- * litteral, et toute traduction serait alors refusee comme n'etant pas la
- * chaine francaise.
+ * Above all NO `as const`: each value would become its own literal type, and any translation would then be refused as
+ * not being the French string.
  *
- * Les guillemets et les espaces font partie de la traduction, pas du code : le
- * francais veut « ... » avec espaces insecables, l'anglais "...", le chinois
- * n'a pas d'espace avant ses unites. Aucun composant ne doit les ajouter.
+ * Quotes and spaces belong to the translation, not the code: French wants « ... » with non-breaking spaces, English
+ * "...", Chinese has no space before its units. No component must add them.
  */
 export default {
   app: {
     /**
-     * Nom du produit. En minuscules dans les trois langues, ce n'est pas une
-     * coquille : les capitales de `NOM` (App.ts) sont un logotype, pas le nom.
-     * Un nom propre ne se traduit pas non plus. `title` sert de `document.title`.
-     * Voir aussi le <title> de index.html, qui est statique.
+     * Product name. Lowercase in the three languages, it is not a typo: the capitals of `NAME` (App.ts) are a
+     * logotype, not the name. A proper name is not translated either. `title` serves as `document.title`. See also
+     * the <title> of index.html, which is static.
      */
-    name: 'mochi world',
-    title: 'Mochi World, avatar animé',
-    botAria: 'Avatar mochi animé',
-    sans3d: 'La 3D demande WebGL'
+    name: 'mochis',
+    title: 'Mochis, avatar animé',
+    botAria: 'Avatar Mochi animé'
   },
 
   gallery: {
@@ -38,9 +33,8 @@ export default {
 
   panel: {
     /**
-     * Au SINGULIER, comme les trois autres : un titre de grille nomme ce qu'un
-     * clic pose, pas le nombre de vignettes proposees. Le pluriel reste au rail,
-     * qui nomme l'onglet et non le choix (`rail.animations`).
+     * SINGULAR, like the three others: a grid title names what a click sets, not the number of thumbnails offered.
+     * The plural stays on the rail, which names the tab and not the choice (`rail.animations`).
      */
     animations: 'Animation',
     shape: 'Forme',
@@ -48,14 +42,12 @@ export default {
     color: 'Couleur',
     style: 'Style',
     pixelSize: 'Taille des pixels',
-    contour: 'Contour cartoon'
+    outline: 'Contour cartoon'
   },
 
   /**
-   * Barre d'export de l'onglet Personnaliser. Les libelles du menu sont des
-   * ACTIONS et pas des noms de format : « Télécharger le PNG » se comprend sans
-   * savoir ce qu'est un PNG, « PNG · 1024 px » demande de trancher une question
-   * qui n'est pas celle de l'utilisateur.
+   * Export bar of the Customize tab. Menu labels are ACTIONS and not format names: "Download the PNG" is understood
+   * without knowing what a PNG is, "PNG · 1024 px" asks a question that is not the user's.
    */
   export: {
     action: 'Exporter en PNG',
@@ -66,22 +58,22 @@ export default {
     cycleDetail: 'La vidéo est plus légère et plus fluide ; le GIF passe partout.',
     cycleFormat: 'Format',
     cycle_mp4: 'Vidéo MP4',
-    cycle_mp4_aide: 'Léger et fluide, fond obligatoire',
+    cycle_mp4_help: 'Léger et fluide, fond obligatoire',
     cycle_gif: 'GIF animé',
-    cycle_gif_aide: 'Lu partout, plus lourd',
+    cycle_gif_help: 'Lu partout, plus lourd',
     cycleProgress: 'Export en cours…',
-    cycleReessayer: 'Réessayer',
+    cycleRetry: 'Réessayer',
     gifTitle: 'Télécharger le GIF animé',
     gifDetail:
       "Le GIF ne gère la transparence qu'en tout ou rien : sans fond, le contour de la boule est un peu dur.",
     gifBackground: 'Fond',
-    fond_blanc: 'Fond blanc',
-    fond_blanc_aide: 'Contour lisse, à poser sur du clair',
-    fond_transparent: 'Fond transparent',
-    fond_transparent_aide: "S'adapte à tout fond, contour un peu dur",
+    background_white: 'Fond blanc',
+    background_white_help: 'Contour lisse, à poser sur du clair',
+    background_transparent: 'Fond transparent',
+    background_transparent_help: "S'adapte à tout fond, contour un peu dur",
     gifConfirm: 'Télécharger',
-    copie: "Copier l'image",
-    copieSvg: 'Copier le SVG',
+    copy: "Copier l'image",
+    copySvg: 'Copier le SVG',
     done: 'Exporté',
     copied: 'Copié',
     failed: "Échec de l'export"
@@ -89,7 +81,7 @@ export default {
 
   preview: {
     exit: "Quitter l'aperçu",
-    /** Nom de la touche tel qu'il est grave sur le clavier de la langue. */
+    /** Name of the key as engraved on the language's keyboard. */
     key: 'Échap'
   },
 
@@ -128,7 +120,7 @@ export default {
 
   units: {
     seconds: '{n} s',
-    /** Graduation de la règle : serré, le chiffre est déjà petit. */
+    /** Ruler tick: tight, the figure is already small. */
     secondsShort: '{n}s'
   },
 
@@ -155,63 +147,63 @@ export default {
   },
 
   pixelSizes: {
-    gros: 'Gros',
-    moyen: 'Moyens',
-    fin: 'Fins'
+    large: 'Gros',
+    medium: 'Moyens',
+    end: 'Fins'
   },
 
   shapes: {
-    cercle: 'Cercle',
-    galet: 'Galet',
+    circle: 'Cercle',
+    pebble: 'Galet',
     squircle: 'Squircle',
     capsule: 'Capsule',
     triangle: 'Triangle',
-    hexagone: 'Hexagone',
-    nuage: 'Nuage',
-    goutte: 'Goutte',
-    etoile: 'Étoile',
-    fleur: 'Fleur',
-    oeuf: 'Œuf',
-    coeur: 'Cœur'
+    hexagon: 'Hexagone',
+    cloud: 'Nuage',
+    drop: 'Goutte',
+    star: 'Étoile',
+    flower: 'Fleur',
+    egg: 'Œuf',
+    heart: 'Cœur'
   },
 
   colors: {
-    encre: 'Encre',
-    creme: 'Crème',
-    brun: 'Brun',
-    rouge: 'Tomate',
-    corail: 'Corail',
+    ink: 'Encre',
+    cream: 'Crème',
+    brown: 'Brun',
+    red: 'Tomate',
+    coral: 'Corail',
     orange: 'Orange',
-    ambre: 'Jaune vif',
-    citron: 'Citron vert',
-    pomme: 'Pomme',
-    vert: 'Émeraude',
+    amber: 'Jaune vif',
+    lime: 'Citron vert',
+    apple: 'Pomme',
+    green: 'Émeraude',
     turquoise: 'Turquoise',
-    ciel: 'Ciel',
-    bleu: 'Bleu roi',
+    sky: 'Ciel',
+    blue: 'Bleu roi',
     violet: 'Violet',
     magenta: 'Magenta',
-    rose: 'Rose',
-    cerise: 'Cerise',
-    gris: 'Gris'
+    pink: 'Rose',
+    cherry: 'Cerise',
+    gray: 'Gris'
   },
 
   expressions: {
-    neutre: 'Neutre',
-    attentif: 'Attentif',
-    surpris: 'Surpris',
-    excite: 'Excité',
-    heureux: 'Heureux',
-    hilare: 'Hilare',
-    colere: 'En colère',
-    triste: 'Triste',
-    effraye: 'Effrayé',
-    mefiant: 'Méfiant',
-    confus: 'Confus',
-    curieux: 'Curieux',
-    fier: 'Fier',
-    timide: 'Timide',
-    blase: 'Blasé',
-    somnolent: 'Somnolent'
+    neutral: 'Neutre',
+    attentive: 'Attentif',
+    surprised: 'Surpris',
+    excited: 'Excité',
+    happy: 'Heureux',
+    laughing: 'Hilare',
+    angry: 'En colère',
+    sad: 'Triste',
+    scared: 'Effrayé',
+    suspicious: 'Méfiant',
+    confused: 'Confus',
+    curious: 'Curieux',
+    proud: 'Fier',
+    shy: 'Timide',
+    unimpressed: 'Blasé',
+    sleepy: 'Somnolent'
   }
 }
