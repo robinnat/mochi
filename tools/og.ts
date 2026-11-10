@@ -1,7 +1,7 @@
 import { h, render } from '../src/ui/dom/h'
 import 'mochis'
 
-// deux mochis fixes : une boule bleu ciel et une etoile orange (P1, 09/11/2026), en 3D Soft, a une date precise
+// two still Mochis: a sky blue ball and an orange star (P1, 09/11/2026), in Soft 3D, at a precise time
 render(
   h('div', { style: 'display: contents' }, [
     h('div', { style: 'position:absolute; left:610px; top:70px' }, [

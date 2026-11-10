@@ -6,7 +6,9 @@ import { Moods, type MoodId } from '../src/bot/moods'
 import type { AccessorySelection } from '../src/bot/slots'
 import type { Material } from '../src/ui/3d/material'
 
-/** Planche du coeur : 3 styles, face et trois quarts, sans et avec chapeau, plus lunettes et quelques humeurs. */
+/**
+ * Heart sheet: 3 styles, front and three quarters, without and with a hat, plus glasses and a few moods.
+ */
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
@@ -47,9 +49,9 @@ function sheet() {
   const angles = [
     { name: 'face', yaw: 0, sel: {} as AccessorySelection },
     { name: '3/4', yaw: 0.6, sel: {} as AccessorySelection },
-    { name: 'face, casquette', yaw: 0, sel: { head: 'cap' } as AccessorySelection },
-    { name: '3/4, haut-de-forme', yaw: 0.6, sel: { head: 'top-hat' } as AccessorySelection },
-    { name: 'lunettes, noeud', yaw: 0, sel: { eyes: 'round', neck: 'bowtie' } as AccessorySelection },
+    { name: 'front, cap', yaw: 0, sel: { head: 'cap' } as AccessorySelection },
+    { name: '3/4, top hat', yaw: 0.6, sel: { head: 'top-hat' } as AccessorySelection },
+    { name: 'glasses, bow', yaw: 0, sel: { eyes: 'round', neck: 'bowtie' } as AccessorySelection },
     { name: 'couronne, soleil', yaw: 0.4, sel: { head: 'crown', eyes: 'sunglasses' } as AccessorySelection }
   ]
   const moods: Array<{ name: string; mood: MoodId; t: number }> = [
@@ -68,7 +70,7 @@ function sheet() {
   const ctx = c.getContext('2d')!
   ctx.fillStyle = BACKGROUND
   ctx.fillRect(0, 0, c.width, c.height)
-  text(ctx, 'Forme cœur : 3 styles, face et 3/4, accessoires, humeurs', 30, 56, 34, INK, true)
+  text(ctx, 'Heart shape: 3 styles, front and 3/4, accessories, moods', 30, 56, 34, INK, true)
   const colors = [hexOf('pink'), hexOf('violet'), hexOf('red')]
   STYLES.forEach((s, si) => {
     const y1 = 90 + si * 2 * (cell + 36)

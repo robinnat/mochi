@@ -12,7 +12,10 @@ import {
 } from '../src/bot/slots'
 import type { Material } from '../src/ui/3d/material'
 
-/** Planches de la v4 (accessoires simplifies, une ou deux couleurs, personnalisables). Rend les planches : un seul contexte WebGL, des cellules recopiees dans un canvas 2D. */
+/**
+ * Sheets of v4 (simplified accessories, one or two colors, customizable). Renders the sheets: a single WebGL context,
+ * cells copied into a 2D canvas.
+ */
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
@@ -27,7 +30,7 @@ const distance = (a: string, b: string) => {
   return Math.hypot(x[0]! - y[0]!, x[1]! - y[1]!, x[2]! - y[2]!)
 }
 
-/** Couleurs de corps qui ressortent contre les couleurs de l'accessoire. */
+/** Body colors that stand out against the accessory colors. */
 function bodyFor(colors: string[], n: number, offset: number): string[] {
   const candidats = ['turquoise', 'amber', 'pink', 'blue', 'green', 'orange', 'violet'].map(hexOf)
   const good = candidats.filter((h) => colors.every((c) => distance(h, c) > 110))
@@ -37,13 +40,13 @@ function bodyFor(colors: string[], n: number, offset: number): string[] {
 
 const SHAPE_NAMES: Record<string, string> = {
   circle: 'round',
-  star: 'étoile',
+  star: 'star',
   squircle: 'cube',
   cloud: 'cloud',
   triangle: 'pyramid',
   hexagon: 'hexagon',
   drop: 'drop',
-  egg: 'œuf',
+  egg: 'egg',
   flower: 'flower',
   capsule: 'capsule',
   pebble: 'pebble'
@@ -69,7 +72,7 @@ interface Cell {
   frame?: number
 }
 
-/** Dessine un Mochi (3D temps reel) dans le canvas de la planche, carre de `px` en (x, y). */
+/** Draws a Mochi (real-time 3D) in the sheet's canvas, a `px` square at (x, y). */
 function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, c: Cell) {
   const t = document.createElement('canvas')
   t.width = t.height = px
@@ -88,7 +91,7 @@ function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, si
 const W = 1080
 const BODY = hexOf('blue')
 
-/** Demi-largeur du cadre par accessoire : les coiffes hautes en demandent plus pour ne jamais etre coupees en haut. */
+/** Half width of the frame per accessory: tall headwear needs more so it is never cut at the top. */
 const FRAMES: Record<string, number> = {
   toque: 235,
   antenna: 250,
@@ -120,7 +123,7 @@ function fresh(w: number, h: number) {
   return { c, ctx }
 }
 
-/** Planche du catalogue : tous les accessoires, un par case, meme forme (rond) et meme couleur de corps. */
+/** Catalog sheet: every accessory, one per cell, same shape (round) and same body color. */
 function planCatalogue() {
   const cols = 4
   const cell = W / cols
@@ -128,7 +131,7 @@ function planCatalogue() {
   const rows = Math.ceil(ACCESSORIES.length / cols)
   const { c, ctx } = fresh(W, 150 + rows * row + 20)
   text(ctx, 'Catalogue v4', 40, 78, 58, INK, true)
-  text(ctx, `${ACCESSORIES.length} accessories · une color, two au maximum · même shape, même body`, 40, 122, 26, GREY)
+  text(ctx, `${ACCESSORIES.length} accessories · one color, two at most · same shape, same body`, 40, 122, 26, GREY)
   ACCESSORIES.forEach((a, i) => {
     const x = (i % cols) * cell
     const y = 150 + Math.floor(i / cols) * row
@@ -139,21 +142,21 @@ function planCatalogue() {
   return c
 }
 
-/** Personnalisation : cinq accessoires, chacun dans quatre couleurs (c1, et c2 pour la fleur). */
+/** Customization: five accessories, each in four colors (c1, and c2 for the flower). */
 function planColors() {
   const P = ACCESSORY_PALETTE
   const rows: Array<{ name: string; e: Slot; id: string; choice: Array<{ c1: string; c2?: string }> }> = [
-    { name: 'Nœud papillon (une couleur)', e: 'neck', id: 'bowtie', choice: [{ c1: P.black }, { c1: P.red }, { c1: P.blue }, { c1: P.pink }] },
-    { name: 'Casque de musique (une couleur)', e: 'head', id: 'headphones', choice: [{ c1: P.red }, { c1: P.black }, { c1: P.turquoise }, { c1: P.violet }] },
-    { name: 'Fleur (pétales + cœur)', e: 'head', id: 'flower', choice: [{ c1: P.pink, c2: P.yellow }, { c1: P.cream, c2: P.orange }, { c1: P.violet, c2: P.yellow }, { c1: P.red, c2: P.cream }] },
-    { name: 'Cravate (une couleur)', e: 'neck', id: 'tie', choice: [{ c1: P.navy }, { c1: P.red }, { c1: P.green }, { c1: P.yellow }] },
-    { name: 'Cape (une couleur)', e: 'back', id: 'cape', choice: [{ c1: P.red }, { c1: P.violet }, { c1: P.green }, { c1: P.black }] }
+    { name: 'Bow tie (one color)', e: 'neck', id: 'bowtie', choice: [{ c1: P.black }, { c1: P.red }, { c1: P.blue }, { c1: P.pink }] },
+    { name: 'Headphones (one color)', e: 'head', id: 'headphones', choice: [{ c1: P.red }, { c1: P.black }, { c1: P.turquoise }, { c1: P.violet }] },
+    { name: 'Flower (petals + center)', e: 'head', id: 'flower', choice: [{ c1: P.pink, c2: P.yellow }, { c1: P.cream, c2: P.orange }, { c1: P.violet, c2: P.yellow }, { c1: P.red, c2: P.cream }] },
+    { name: 'Tie (one color)', e: 'neck', id: 'tie', choice: [{ c1: P.navy }, { c1: P.red }, { c1: P.green }, { c1: P.yellow }] },
+    { name: 'Cape (one color)', e: 'back', id: 'cape', choice: [{ c1: P.red }, { c1: P.violet }, { c1: P.green }, { c1: P.black }] }
   ]
   const cell = W / 4
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
   text(ctx, 'Customization', 40, 78, 58, INK, true)
-  text(ctx, 'Même accessoire, quatre couleurs : c1 et, si besoin, c2 réglables par l’API', 40, 122, 26, GREY)
+  text(ctx, 'Same accessory, four colors: c1 and, if needed, c2 set through the API', 40, 122, 26, GREY)
   rows.forEach((l, i) => {
     const y0 = 150 + i * row
     text(ctx, l.name, 40, y0 + 30, 30, INK, true)
@@ -165,11 +168,11 @@ function planColors() {
   return c
 }
 
-/** Angles : face, 3/4, profil, dos pour le noeud papillon, la queue, la cape et la cravate. */
+/** Angles: front, 3/4, profile, back for the bow tie, the tail, the cape and the tie. */
 function planAngles() {
   const rows: Array<{ name: string; sel: AccessorySelection; shape: string; color: string; frame: number }> = [
-    { name: 'Nœud papillon', sel: { neck: 'bowtie' }, shape: 'circle', color: hexOf('amber'), frame: 170 },
-    { name: 'Queue', sel: { back: 'tail' }, shape: 'squircle', color: hexOf('turquoise'), frame: 235 },
+    { name: 'Bow tie', sel: { neck: 'bowtie' }, shape: 'circle', color: hexOf('amber'), frame: 170 },
+    { name: 'Tail', sel: { back: 'tail' }, shape: 'squircle', color: hexOf('turquoise'), frame: 235 },
     { name: 'Cape', sel: { back: 'cape' }, shape: 'egg', color: hexOf('blue'), frame: 235 },
     { name: 'Tie', sel: { neck: 'tie' }, shape: 'squircle', color: hexOf('orange'), frame: 185 }
   ]
@@ -183,7 +186,7 @@ function planAngles() {
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
   text(ctx, 'Angles : face, 3/4, profil, dos', 40, 78, 52, INK, true)
-  text(ctx, 'Le corps tourne, la lumière reste en haut à left', 40, 122, 26, GREY)
+  text(ctx, 'The body turns, the light stays at the top left', 40, 122, 26, GREY)
   rows.forEach((t, i) => {
     const y0 = 150 + i * row
     text(ctx, t.name, 40, y0 + 30, 32, INK, true)
@@ -195,7 +198,7 @@ function planAngles() {
   return c
 }
 
-/** Alfred : le Mochi pyramide jaune, lunettes rondes noires et noeud papillon noir, a cote de la reference. */
+/** Alfred: the yellow pyramid Mochi, black round glasses and black bow tie, next to the reference. */
 async function planAlfred() {
   const ref = new Image()
   ref.crossOrigin = 'anonymous'
@@ -206,12 +209,12 @@ async function planAlfred() {
   })
   const cell = 520
   const { c, ctx } = fresh(W, 150 + cell + 120)
-  text(ctx, 'Comparaison avec Alfred', 40, 78, 54, INK, true)
-  text(ctx, 'Mêmes lunettes rondes noires, même nœud papillon noir tout en bas', 40, 122, 26, GREY)
+  text(ctx, 'Comparison with Alfred', 40, 78, 54, INK, true)
+  text(ctx, 'Same black round glasses, same black bow tie at the very bottom', 40, 122, 26, GREY)
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 150, cell, cell)
   ctx.drawImage(ref, 0, 150 + (cell - ref.height * (cell / ref.width)) / 2, cell, ref.height * (cell / ref.width))
-  text(ctx, 'Référence (Alfred)', cell / 2, 150 + cell + 40, 28, INK, true, 'center')
+  text(ctx, 'Reference (Alfred)', cell / 2, 150 + cell + 40, 28, INK, true, 'center')
   drawCell(ctx, cell + 40, 150, cell, { shape: 'triangle', color: hexOf('amber'), sel: { eyes: 'round', neck: 'bowtie' }, frame: 150, yaw: 0 })
   text(ctx, 'Mochi pyramide', cell + 40 + cell / 2, 150 + cell + 40, 28, INK, true, 'center')
   return c
@@ -231,7 +234,7 @@ function planCombos() {
   const lh = 100
   const { c, ctx } = fresh(W, 150 + (defs.length / 2) * (cell + lh) + 20)
   text(ctx, 'Combos', 40, 78, 58, INK, true)
-  text(ctx, 'Les emplacements se cumulent, chaque accessoire reste simple', 40, 122, 26, GREY)
+  text(ctx, 'Slots stack, each accessory stays simple', 40, 122, 26, GREY)
   defs.forEach((d, i) => {
     const x = (i % 2) * cell
     const y = 150 + Math.floor(i / 2) * (cell + lh)

@@ -5,7 +5,9 @@ import { COLORS, SHAPES } from '../src/bot/skins'
 import { accessoriesInSlot } from '../src/bot/slots'
 import type { Material } from '../src/ui/3d/material'
 
-/** Planche : tous les chapeaux sur le coeur, trois styles, de face et de trois quarts. `?f=<shape>` pour une autre forme. */
+/**
+ * Sheet: every hat on the heart, three styles, from the front and at three quarters. `?f=<shape>` for another shape.
+ */
 const q = new URLSearchParams(location.search)
 const SHAPE = SHAPES.find((s) => s.id === (q.get('f') ?? 'heart'))!
 const BACKGROUND = '#faf8f3'
@@ -35,7 +37,7 @@ function sheet() {
   ctx.fillRect(0, 0, c.width, c.height)
   ctx.font = '700 28px -apple-system, Helvetica, Arial, sans-serif'
   ctx.fillStyle = INK
-  ctx.fillText(`Chapeaux sur la shape ${SHAPE.id} : face et 3/4, trois styles`, 20, 40)
+  ctx.fillText(`Hats on the shape ${SHAPE.id}: front and 3/4, three styles`, 20, 40)
   ctx.font = '600 16px -apple-system, Helvetica, Arial, sans-serif'
   STYLES.forEach((s, si) => {
     ctx.fillStyle = INK

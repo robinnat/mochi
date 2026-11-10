@@ -4,7 +4,10 @@ import { COLORS, SHAPES } from '../src/bot/skins'
 import type { AccessorySelection } from '../src/bot/slots'
 import type { Material } from '../src/ui/3d/material'
 
-/** Planche du contour : trois styles, trois epaisseurs (fin, moyen, epais), avec accessoires. Un seul contexte WebGL, des cellules recopiees dans un canvas 2D. */
+/**
+ * Outline sheet: three styles, three thicknesses (thin, medium, thick), with accessories. A single WebGL context,
+ * cells copied into a 2D canvas.
+ */
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
@@ -23,7 +26,9 @@ function image(shape: string) {
   return f
 }
 
-/** Un Mochi dans le canvas `ctx`. Pixel : grille de 32 pixels de diametre (le defaut), agrandie sans lissage. */
+/**
+ * A Mochi in the canvas `ctx`. Pixel: a grid 32 pixels across (the default), scaled up without smoothing.
+ */
 function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, o: { shape: string; color: string; renderStyle: Material; sel: AccessorySelection; outline: boolean; th: number; frame: number; yaw?: number }) {
   const pixel = o.renderStyle === 'pixel'
   const t = document.createElement('canvas')
@@ -60,8 +65,8 @@ function sheet() {
   const cell = 300
   const cols = styles.length * thicknesses.length
   const { c, ctx } = fresh(cols * cell, 150 + rows.length * (cell + 20) + 20)
-  text(ctx, 'Contour : fin, moyen, épais, dans les trois styles', 40, 70, 46, INK, true)
-  text(ctx, 'Le contour suit le corps ET les accessoires (haut-de-forme, lunettes, casquette, nœud)', 40, 108, 24, GREY)
+  text(ctx, 'Outline: thin, medium, thick, in the three styles', 40, 70, 46, INK, true)
+  text(ctx, 'The outline follows the body AND the accessories (top hat, glasses, cap, bow)', 40, 108, 24, GREY)
   styles.forEach((s, i) => {
     text(ctx, s.name, (i * thicknesses.length + 1.5) * cell, 142, 28, INK, true, 'center')
     thicknesses.forEach((e, k) => {

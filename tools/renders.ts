@@ -1,7 +1,7 @@
 /**
- * Rend les images pre-rendues du site (`src/site/affiches.ts`) avec le VRAI composant, en vraie 3D, en clair et en sombre.
- * Chaque Mochi est monte fige a son instant, on attend sa premiere image 3D (`ready`), puis on lit son canvas en webp.
- * Les pieces d'accessoires passent par `renderThumbnail` (piece seule, cadree), comme dans l'ancien site.
+ * Renders the site's pre-rendered images (`src/site/posters.ts`) with the REAL component, in real 3D, in light and
+ * dark. Each Mochi is mounted frozen at its instant, we wait for its first 3D frame (`ready`), then read its canvas
+ * as webp. Accessory pieces go through `renderThumbnail` (piece alone, framed).
  */
 import { createBot } from '../src/ui/capture'
 import { currentTheme } from '../src/ui/3d/currentTheme'
@@ -16,17 +16,17 @@ function renderOne(props: Record<string, unknown>, size: number): Promise<string
   return new Promise((ok, ko) => {
     const host = document.createElement('div')
     document.getElementById('scene')!.appendChild(host)
-    const timer = setTimeout(() => ko(new Error('pas de 3D')), 15000)
+    const timer = setTimeout(() => ko(new Error('no 3D')), 15000)
     const bot = createBot({ ...props, size: size, interactions: false, label: '' })
     bot.addEventListener(
       'ready',
       () => {
-        // une image de plus : la premiere peut partir avant que tous les observateurs aient pose leurs valeurs
+        // one more frame: the first can leave before every watcher has set its values
         requestAnimationFrame(() =>
           requestAnimationFrame(() => {
             clearTimeout(timer)
             const cv = host.querySelector('canvas[data-real3d]') as HTMLCanvasElement
-            // Pixel : le canvas est la petite grille ; on l'agrandit sans lissage, comme l'affiche le composant
+            // Pixel: the canvas is the small grid; scale it up without smoothing, as the component shows it
             const side = size * 2
             let source = cv
             if (cv.width < side) {
@@ -62,11 +62,11 @@ async function asWebp(url: string, side: number): Promise<string> {
 declare global {
   interface Window {
     renderList: (list: { props: Record<string, unknown>; size: number; theme?: ThemeSite }[]) => Promise<string[]>
-    allRender: (prefix?: string) => Promise<{ file: string; data: string }[]>
+    renderAll: (prefix?: string) => Promise<{ file: string; data: string }[]>
   }
 }
 
-window.allRender = async (prefix = '') => {
+window.renderAll = async (prefix = '') => {
   const out: { file: string; data: string }[] = []
   for (const theme of THEMES) {
     currentTheme.value = theme
@@ -88,7 +88,7 @@ window.allRender = async (prefix = '') => {
   return out
 }
 
-/** Rend une liste libre de Mochi (planches de controle, hors du manifeste du site). */
+/** Renders a free list of Mochis (check sheets, outside the site's manifest). */
 window.renderList = async (list) => {
   const out: string[] = []
   for (const it of list) {

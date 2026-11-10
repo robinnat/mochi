@@ -8,10 +8,10 @@ import type { Theme } from '../src/ui/3d/theme'
 import { pixelGrid } from '../src/ui/renderStyle'
 
 /**
- * Rend une animation d'humeur ou d'interaction : trois Mochi cote a cote (formes, couleurs, styles
- * et accessoires varies, un en theme sombre). Meme chaine que le composant : `Moods.sample` ->
- * `BotEngine.sample(t, gesture)` -> `renderAvatar`. Chaque image est une fonction pure de `t` : les
- * evenements (tap, appui...) sont rejoues avec leurs dates, donc n'importe quelle image se rend seule.
+ * Renders a mood or interaction animation: three Mochis side by side (varied shapes, colors, styles and accessories,
+ * one in the dark theme). Same chain as the component: `Moods.sample` -> `BotEngine.sample(t, gesture)` ->
+ * `renderAvatar`. Each frame is a pure function of `t`: events (tap, press...) are replayed with their times, so any
+ * frame renders alone.
  */
 const q = new URLSearchParams(location.search)
 const W = 1080
@@ -26,8 +26,8 @@ const CARD_DARK = '#1b1922'
 const hexOf = (id: string) => COLORS.find((c) => c.id === id)!.hex
 const SHAPE_LIST = ['star', 'circle', 'squircle', 'drop', 'hexagon', 'cloud', 'egg', 'triangle', 'flower', 'capsule', 'pebble']
 const SHAPE_NAMES: Record<string, string> = {
-  circle: 'round', star: 'étoile', squircle: 'cube', cloud: 'cloud', triangle: 'pyramid', hexagon: 'hexagon',
-  drop: 'drop', egg: 'œuf', flower: 'flower', capsule: 'capsule', pebble: 'pebble'
+  circle: 'round', star: 'star', squircle: 'cube', cloud: 'cloud', triangle: 'pyramid', hexagon: 'hexagon',
+  drop: 'drop', egg: 'egg', flower: 'flower', capsule: 'capsule', pebble: 'pebble'
 }
 const ACCESSORY_PALETTE = ['turquoise', 'amber', 'pink', 'blue', 'violet', 'orange', 'green', 'red', 'ink', 'turquoise', 'pink']
 const STYLES: Array<{ name: string; renderStyle: Material }> = [
@@ -57,7 +57,10 @@ interface Custom {
   sel: AccessorySelection
 }
 
-/** La distribution d'une animation : 3 Mochi, tous differents, un en sombre ; couvre les 11 formes d'une animation a l'autre. */
+/**
+ * The cast of an animation: 3 Mochis, all different, one in dark; covers the 11 shapes from one animation to the
+ * next.
+ */
 function distribution(a: number): Custom[] {
   return [0, 1, 2].map((i) => {
     const n = a * 3 + i
@@ -87,27 +90,27 @@ interface Anim {
   name: string
   code: string
   duration: number
-  /** date de l'image cle (planche) */
+  /** time of the key frame (sheet) */
   key: number
   mood: MoodId
-  /** decalage de phase par Mochi (humeurs : ils ne bougent pas en bloc) */
+  /** phase offset per Mochi (moods: they do not move as one block) */
   phase: number[]
   evts?: Evt[]
-  /** angle de la scene 3D de chaque Mochi a la date t */
+  /** angle of each Mochi's 3D scene at time t */
   yaw?: (i: number, t: number) => number
   visible?: (i: number, t: number) => boolean
-  /** echelle de l'ordinateur (0 a ~1) a la date t */
+  /** laptop scale (0 to about 1) at time t */
   laptop?: (i: number, t: number) => number
-  /** indice de distribution impose (formes, couleurs, themes) ; defaut : le rang de l'animation */
+  /** forced cast index (shapes, colors, themes); default: the animation's rank */
   cast?: number
-  /** demi-largeur du cadre (grandes courses : sauts, chapeaux) ; defaut 150 */
+  /** half width of the frame (big moves: jumps, hats); default 150 */
   frame?: number
   /** surimpression : curseur, doigts */
   inset?: (c: CanvasRenderingContext2D, t: number, centers: Array<{ x: number; y: number }>) => void
 }
 
 const MOOD_NAMES: Record<string, string> = {
-  idle: 'Idle', thinking: 'Réfléchit', working: 'Working', waiting: 'Attend Robin', done: 'Terminé', blocked: 'Bloqué', asleep: 'Asleep'
+  idle: 'Idle', thinking: 'Thinking', working: 'Working', waiting: 'Waiting', done: 'Done', blocked: 'Blocked', asleep: 'Asleep'
 }
 const MOOD_DURATIONS: Record<string, number> = { idle: 4, thinking: 4, working: 4, waiting: 4, done: 3, blocked: 3, asleep: 4.6 }
 const MOOD_KEYS: Record<string, number> = { idle: 0.6, thinking: 1.2, working: 0.55, waiting: 0.9, done: 0.95, blocked: 0.8, asleep: 1.4 }
@@ -120,14 +123,14 @@ for (const m of MOODS) {
   })
 }
 
-/* centres des trois cellules, pour les doigts et le curseur */
+/* centers of the three cells, for the fingers and the cursor */
 const COL = W / 3
 const CY = 412
 const centerOf = (i: number) => ({ x: COL * i + COL / 2, y: CY })
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k
 const smooth = (u: number) => { const k = Math.max(0, Math.min(1, u)); return k * k * (3 - 2 * k) }
-/** Trajet par cles [t, x, y] : lineaire adouci. */
+/** Path by keys [t, x, y]: smoothed linear. */
 function path(K: number[][], t: number): { x: number; y: number } | null {
   if (t < K[0]![0]! || t > K[K.length - 1]![0]!) return null
   for (let i = 1; i < K.length; i++) {
@@ -164,12 +167,12 @@ function slider(c: CanvasRenderingContext2D, x: number, y: number, pressed = fal
 }
 
 const R = RADIUS
-// la boule fait RAYON unites sur un cadre de DEMI_VIEWBOX : en pixels, avec une cellule de 340 px
+// the ball is RADIUS units on a frame of HALF_VIEWBOX: in pixels, with a 340 px cell
 const PX = 340
 let FRAME = 150
 const radiusPx = (R / FRAME) * (PX / 2)
 
-/* --- survol : un curseur qui traverse les trois cellules */
+/* --- hover: a cursor crossing the three cells */
 const SLIDER: number[][] = [
   [0.0, 90, 640], [0.7, 250, 470], [1.2, 400, 330], [1.6, 330, 300], [2.0, 480, 480],
   [2.6, 720, 330], [3.0, 780, 250], [3.5, 960, 470], [4.0, 1010, 600], [4.4, 1070, 700]
@@ -186,14 +189,16 @@ for (let k = 0; k <= 4.4 * 24; k++) {
   }
 }
 ANIMS.push({
-  id: 'hover', group: 'interaction', name: 'Hover', code: 'pointer over : le regard suit', duration: 4.4, key: 1.4, mood: 'idle',
+  id: 'hover', group: 'interaction', name: 'Hover', code: 'pointer over: the gaze follows', duration: 4.4, key: 1.4, mood: 'idle',
   phase: [0, 0.4, 0.8], evts: evtsHover,
   inset: (c, t) => { const p = path(SLIDER, t); if (p) slider(c, p.x, p.y) }
 })
 
-/* --- tap : un doigt par Mochi, a tour de role */
+/* --- tap: one finger per Mochi, in turn */
 const TAPS = [0.7, 1.7, 2.7]
-/** Le curseur arrive en bas a droite du corps, appuie, repart : un clic, ou un doigt tenu pour l'appui long. */
+/**
+ * The cursor arrives at the bottom right of the body, presses, leaves: a click, or a finger held for the long press.
+ */
 const fingersTaps = (decal: number[], longs?: number[][]) => (c: CanvasRenderingContext2D, t: number) => {
   for (let i = 0; i < 3; i++) {
     const ct = centerOf(i)
@@ -213,7 +218,7 @@ const fingersTaps = (decal: number[], longs?: number[][]) => (c: CanvasRendering
   }
 }
 ANIMS.push({
-  id: 'tap', group: 'interaction', name: 'Tap ou clic', code: 'tap : sursaut, écrasement, rebond', duration: 3.6, key: TAPS[1]! + 0.1, mood: 'idle', frame: 165,
+  id: 'tap', group: 'interaction', name: 'Tap or click', code: 'tap: startle, squash, bounce', duration: 3.6, key: TAPS[1]! + 0.1, mood: 'idle', frame: 165,
   phase: [0, 0.4, 0.8],
   evts: TAPS.map((t, i) => ({ t, i, type: 'react', id: 'startle' }) as Evt),
   inset: fingersTaps(TAPS)
@@ -222,7 +227,7 @@ ANIMS.push({
 /* --- double tap */
 const DOUBLES = [0.6, 1.75, 2.9]
 ANIMS.push({
-  id: 'double', group: 'interaction', name: 'Double tap', code: 'double tap : il rigole', duration: 4.7, key: DOUBLES[1]! + 0.7, mood: 'idle', frame: 165,
+  id: 'double', group: 'interaction', name: 'Double tap', code: 'double tap: it laughs', duration: 4.7, key: DOUBLES[1]! + 0.7, mood: 'idle', frame: 165,
   phase: [0, 0.4, 0.8],
   evts: DOUBLES.flatMap((t, i): Evt[] => [
     { t, i, type: 'react', id: 'startle' },
@@ -237,7 +242,7 @@ ANIMS.push({
 /* --- longue pression */
 const PRESSES = [[0.3, 2.5], [0.55, 2.75], [0.8, 3.0]]
 ANIMS.push({
-  id: 'long', group: 'interaction', name: 'Longue pression', code: 'long press : il rougit, content', duration: 4.4, key: 2.0, mood: 'idle',
+  id: 'long', group: 'interaction', name: 'Longue pression', code: 'long press: it blushes, happy', duration: 4.4, key: 2.0, mood: 'idle',
   phase: [0, 0.4, 0.8],
   evts: PRESSES.flatMap(([a, b], i): Evt[] => [
     { t: a! + 0.45, i, type: 'react', id: 'blush' },
@@ -246,10 +251,10 @@ ANIMS.push({
   inset: fingersTaps([], PRESSES)
 })
 
-/* --- secoue : la scene 3D tourne tres vite, puis il est etourdi */
+/* --- shake: the 3D scene turns very fast, then it is dizzy */
 const TURNS = [0.5, 0.68, 0.86]
 ANIMS.push({
-  id: 'shaken', group: 'interaction', name: 'Secoué ou tourné vite', code: 'drag rapide : étourdi', duration: 4.2, key: 2.1, mood: 'idle',
+  id: 'shaken', group: 'interaction', name: 'Shaken or spun fast', code: 'fast drag: dizzy', duration: 4.2, key: 2.1, mood: 'idle',
   phase: [0, 0.4, 0.8],
   evts: TURNS.map((s, i) => ({ t: s + 0.62, i, type: 'react', id: 'dizzy' }) as Evt),
   yaw: (i, t) => {
@@ -258,16 +263,16 @@ ANIMS.push({
   }
 })
 
-/* --- coucou : ils apparaissent l'un apres l'autre */
+/* --- wave: they appear one after the other */
 const ARRIVALS = [0.25, 0.65, 1.05]
 ANIMS.push({
-  id: 'wave', group: 'interaction', name: 'Wave', code: 'à l’apparition : il pousse, puis salue', duration: 3.8, key: 1.45, mood: 'idle', frame: 175,
+  id: 'wave', group: 'interaction', name: 'Wave', code: 'on appearing: it grows, then waves', duration: 3.8, key: 1.45, mood: 'idle', frame: 175,
   phase: [0, 0.4, 0.8],
   evts: ARRIVALS.map((t, i) => ({ t, i, type: 'react', id: 'wave' }) as Evt),
   visible: (i, t) => t >= ARRIVALS[i]!
 })
 
-/* --- travail : l'ordinateur pousse a l'entree dans le mood, il rétrécit a la sortie */
+/* --- work: the laptop grows when the mood starts, it shrinks when it ends */
 const ENTRY = [0.3, 0.5, 0.7]
 const EXIT = 5.4
 const progression = (t: number, i: number) => {
@@ -276,7 +281,7 @@ const progression = (t: number, i: number) => {
   return Math.max(0, 1 - (t - EXIT - 0.2 * i) / 0.45)
 }
 ANIMS.push({
-  id: 'travail', group: 'mood', name: 'Travaille (ordinateur)', code: "setMood('travaille')", duration: 7, key: 1.0, mood: 'idle', frame: 150, cast: 2,
+  id: 'working', group: 'mood', name: 'Working (laptop)', code: "setMood('working')", duration: 7, key: 1.0, mood: 'idle', frame: 150, cast: 2,
   phase: [0, 0.31, 0.62],
   evts: ENTRY.flatMap((t, i) => [{ t, i, type: 'mood', id: 'working' }, { t: EXIT + 0.2 * i, i, type: 'mood', id: 'idle' }] as Evt[]),
   yaw: (i, t) => [0.12, -0.08, 0][i]! + 0.05 * Math.sin(t * 0.8 + i),
@@ -293,7 +298,7 @@ ANIMS.push({
 const REACTION_NAMES = REACTIONS.map((r) => r.id)
 void REACTION_NAMES
 
-/* ------------------------------------------------------------- rendu */
+/* ------------------------------------------------------------- rendering */
 
 let renderAvatar: typeof import('../src/ui/3d/scene3d').renderAvatar
 const engines = new Map<string, BotEngine>()
@@ -311,7 +316,7 @@ function moodsOf(a: Anim, i: number): Moods {
   return h
 }
 
-/** Les evenements de Mochi `i` jusqu'a la date `t` (decalee de la phase), rejoues dans l'ordre. */
+/** The events of Mochi `i` up to time `t` (shifted by the phase), replayed in order. */
 function apply(a: Anim, i: number, h: Moods, t: number) {
   for (const e of a.evts ?? []) {
     if (e.i !== i || e.t > t + 1e-9) continue
@@ -341,7 +346,7 @@ function text(c: CanvasRenderingContext2D, s: string, x: number, y: number, size
 
 const tile = document.createElement('canvas')
 
-/** Un Mochi a la date `t`, dans la cellule `i` du canevas `c`. */
+/** A Mochi at time `t`, in cell `i` of the canvas `c`. */
 function mochi(c: CanvasRenderingContext2D, a: Anim, i: number, p: Custom, t: number, x0: number, y0: number, size: number) {
   const h = moodsOf(a, i)
   apply(a, i, h, t)
@@ -359,7 +364,7 @@ function mochi(c: CanvasRenderingContext2D, a: Anim, i: number, p: Custom, t: nu
   c.imageSmoothingEnabled = true
 }
 
-/** Une image de l'animation, a la date `t`. */
+/** One frame of the animation, at time `t`. */
 function image(a: Anim, t: number): HTMLCanvasElement {
   const cv = document.createElement('canvas')
   cv.width = W
@@ -382,7 +387,7 @@ function image(a: Anim, t: number): HTMLCanvasElement {
   return cv
 }
 
-/** Planche : une image cle par animation, un Mochi chacune. */
+/** Sheet: one key frame per animation, one Mochi each. */
 function sheet(): HTMLCanvasElement {
   const columns = 4
   const cell = 400
@@ -393,19 +398,19 @@ function sheet(): HTMLCanvasElement {
   const c = cv.getContext('2d')!
   c.fillStyle = BACKGROUND
   c.fillRect(0, 0, cv.width, cv.height)
-  text(c, 'Mochi : humeurs et interactions', 40, 76, 52, INK, true)
-  text(c, '7 humeurs jouées en boucle, 6 interactions déclenchées par l’utilisateur. Une image clé chacune ; les vidéos montrent le mouvement.', 40, 118, 24, GREY)
+  text(c, 'Mochi: moods and interactions', 40, 76, 52, INK, true)
+  text(c, '7 moods played on a loop, 6 interactions triggered by the user. One key frame each; the videos show the motion.', 40, 118, 24, GREY)
   ANIMS.forEach((a, k) => {
     const x = (k % columns) * cell
     const y = 150 + Math.floor(k / columns) * (cell + 30)
     const casting = distribution(k)
-    // le Mochi du milieu, sauf en Pixel (ses yeux de 3 cases ne montrent ni croissant ni inclinaison) :
-    // l'image cle montre alors le Soft ou le Flat du meme tirage ; les videos gardent les trois styles
+    // the middle Mochi, except in Pixel (its 3-cell eyes show neither crescent nor tilt):
+    // the key frame then shows the Soft or Flat of the same cast; the videos keep the three styles
     const i = [1, 0, 2].find((n) => casting[n]!.style.name !== 'Pixel') ?? 1
     const p = casting[i]!
     const ch = cell - 40
     drawCard(c, x + 14, y, cell - 28, ch, p.theme === 'dark')
-    // le Mochi est rendu sur 360 px, centre dans sa carte (le clip garde les grands chapeaux dans la carte)
+    // the Mochi is rendered on 360 px, centered in its card (the clip keeps big hats inside the card)
     const px = 360
     c.save()
     c.beginPath()
@@ -418,7 +423,7 @@ function sheet(): HTMLCanvasElement {
   return cv
 }
 
-/** Planche de l'ordinateur : les 11 formes (3/4 puis face, clair) et 3 formes en sombre, en train d'ecrire. */
+/** Laptop sheet: the 11 shapes (3/4 then front, light) and 3 shapes in dark, writing. */
 function planLaptop(): HTMLCanvasElement {
   FRAME = 200
   const cell = 300
@@ -433,8 +438,8 @@ function planLaptop(): HTMLCanvasElement {
   const c = cv.getContext('2d')!
   c.fillStyle = BACKGROUND
   c.fillRect(0, 0, cv.width, cv.height)
-  text(c, 'Mochi travaille : ordinateur portable 3D', 40, 62, 44, INK, true)
-  text(c, "Vu de dos, devant le corps · 3/4 puis face", 40, 100, 20, GREY)
+  text(c, 'A working Mochi: 3D laptop', 40, 62, 44, INK, true)
+  text(c, "Seen from behind, in front of the body · 3/4 then front", 40, 100, 20, GREY)
   const draw = (shape: string, k: number, x: number, y: number, theme: Theme) => {
     const color = hexOf(ACCESSORY_PALETTE[SHAPE_LIST.indexOf(shape) % ACCESSORY_PALETTE.length]!)
     if (theme === 'dark') {
@@ -478,7 +483,7 @@ async function main() {
   }
   if (q.get('laptop')) {
     const c = planLaptop()
-    await send('ordinateur.png', c, 'image/png')
+    await send('laptop.png', c, 'image/png')
     const dest = q.get('save')
     if (dest) await fetch(`${dest}?name=DONE-ordinateur`, { method: 'POST', body: 'ok' })
     if (!q.get('save')) document.body.appendChild(c)

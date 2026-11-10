@@ -7,7 +7,7 @@ import { resolveAccessories, SLOTS, type AccessorySelection } from '../src/bot/s
 import type { Material } from '../src/ui/3d/material'
 import { contrast, bodyForTheme, DARK_EYE, type Theme } from '../src/ui/3d/theme'
 
-/** Rend les planches du mode sombre : un seul contexte WebGL, des cellules recopiees dans un canvas 2D. */
+/** Renders the dark mode sheets: a single WebGL context, cells copied into a 2D canvas. */
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const BACKGROUND_DARK = '#121212'
@@ -20,19 +20,19 @@ const hexOf = (id: string) => COLORS.find((c) => c.id === id)!.hex
 
 const SHAPE_NAMES: Record<string, string> = {
   circle: 'round',
-  star: 'étoile',
+  star: 'star',
   squircle: 'cube',
   cloud: 'cloud',
   triangle: 'pyramid',
   hexagon: 'hexagon',
   drop: 'drop',
-  egg: 'œuf',
+  egg: 'egg',
   flower: 'flower',
   capsule: 'capsule',
   pebble: 'pebble'
 }
 const SHAPE_LIST = SHAPES.map((s) => s.id)
-// couleurs variées, dont une encre (corps éclairci en sombre) ; décalées d'un style à l'autre
+// varied colors, ink included (body lightened in dark); shifted from one style to the next
 const ACCESSORY_PALETTE = ['turquoise', 'amber', 'pink', 'blue', 'violet', 'orange', 'green', 'red', 'grey', 'cream', 'ink']
 
 let renderAvatar: typeof import('../src/ui/3d/scene3d').renderAvatar
@@ -57,14 +57,14 @@ interface Cell {
   state?: 'idle' | 'wink'
   yaw?: number
   frame?: number
-  /** contraste oeil/corps minimal en sombre ; 0 = corps jamais eclairci */
+  /** minimum eye/body contrast in dark; 0 = body never lightened */
   min?: number
 }
 
 function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, c: Cell) {
   const t = document.createElement('canvas')
   const frame = c.frame ?? 140
-  // pixel : la vraie grille de l'application (taille « moyen »), agrandie sans lissage
+  // pixel: the app's real grid ("medium" size), scaled up without smoothing
   const pixel = c.renderStyle === 'pixel'
   t.width = t.height = pixel ? Math.round((pixelGrid('medium') * frame) / HALF_VIEWBOX) : px
   renderAvatar(t, image(c.shape, c.mood, c.state), c.color, PAPER, c.renderStyle ?? 'soft', false, 'strong', true, c.shape, c.yaw ?? 0, null, c.sel ?? {}, frame, c.theme, c.min)
@@ -97,15 +97,15 @@ const STYLES: Record<string, { name: string; renderStyle: Material }> = {
   pixel: { name: 'Pixel', renderStyle: 'pixel' }
 }
 
-/** Clair | sombre côte à côte, deux formes par ligne, les 11 formes, dans un style. */
+/** Light | dark side by side, two shapes per row, the 11 shapes, in one style. */
 function sheetShapes(style: keyof typeof STYLES, offset: number) {
   const s = STYLES[style]!
   const cell = 270
   const row = cell + 46
   const rows = Math.ceil(SHAPE_LIST.length / 2)
   const { c, ctx } = fresh(W, 170 + rows * row + 20)
-  text(ctx, `${s.name} : light et dark`, 40, 78, 56, INK, true)
-  text(ctx, 'Les 11 shapes. À left light, à droite dark (yeux noirs).', 40, 122, 26, GREY)
+  text(ctx, `${s.name}: light and dark`, 40, 78, 56, INK, true)
+  text(ctx, 'The 11 shapes. Light on the left, dark on the right (black eyes).', 40, 122, 26, GREY)
   SHAPE_LIST.forEach((f, i) => {
     const x0 = (i % 2) * 540
     const y0 = 150 + Math.floor(i / 2) * row
@@ -117,7 +117,7 @@ function sheetShapes(style: keyof typeof STYLES, offset: number) {
   return c
 }
 
-/** Les mêmes Mochi en sombre, sur un fond sombre (dashboard) puis sur un fond clair. */
+/** The same Mochis in dark, on a dark background (dashboard) then on a light background. */
 function planchefonds() {
   const cell = 270
   const cols = 4
@@ -125,8 +125,8 @@ function planchefonds() {
   const block = 90 + rows * cell + 20
   const { c, ctx } = fresh(W, 2 * block)
   const backgrounds: Array<[string, string, string]> = [
-    ['Sur fond dark (#121212)', BACKGROUND_DARK, '#f2f0f5'],
-    ['Sur fond light', '#ffffff', INK]
+    ['On a dark background (#121212)', BACKGROUND_DARK, '#f2f0f5'],
+    ['On a light background', '#ffffff', INK]
   ]
   backgrounds.forEach(([title, background, ink], b) => {
     ctx.fillStyle = background
@@ -141,7 +141,7 @@ function planchefonds() {
   return c
 }
 
-/** Palette : agents du dashboard (PROJ_PALETTE de core.js) puis palette de la librairie. */
+/** Palette: dashboard agents (PROJ_PALETTE of core.js) then the library palette. */
 const PALETTE: Array<[string, string]> = [
   ...COLORS.map((c) => [c.id, c.hex] as [string, string]),
   ['flash', '#ffc21a'],
@@ -154,7 +154,7 @@ const PALETTE: Array<[string, string]> = [
   ['jean-claude', '#ff7a1a']
 ]
 
-/** Palette complète en sombre, avec le rapport de contraste de chaque couleur. */
+/** Full palette in dark, with the contrast ratio of each color. */
 function planchepalette() {
   const cols = 4
   const cell = 270
@@ -162,7 +162,7 @@ function planchepalette() {
   const rows = Math.ceil(PALETTE.length / cols)
   const { c, ctx } = fresh(W, 170 + rows * row + 20)
   text(ctx, 'Palette en dark', 40, 78, 56, INK, true)
-  text(ctx, 'Rapport de contraste œil noir / corps (seuil 3:1). Rouge = éclairci.', 40, 122, 26, GREY)
+  text(ctx, 'Contrast ratio black eye / body (3:1 threshold). Red = lightened.', 40, 122, 26, GREY)
   PALETTE.forEach(([name, hex], i) => {
     const x = (i % cols) * cell
     const y = 150 + Math.floor(i / cols) * row
@@ -171,23 +171,23 @@ function planchepalette() {
     const r = contrast(hex, DARK_EYE)
     const lift = after !== hex
     text(ctx, `${name}  ${r.toFixed(1)}:1`, x + cell / 2, y + cell + 24, 23, lift ? '#d23b3b' : INK, true, 'center')
-    text(ctx, lift ? `éclairci : ${contrast(after, DARK_EYE).toFixed(1)}:1` : 'inchangé', x + cell / 2, y + cell + 50, 21, GREY, false, 'center')
+    text(ctx, lift ? `lightened: ${contrast(after, DARK_EYE).toFixed(1)}:1` : 'unchanged', x + cell / 2, y + cell + 50, 21, GREY, false, 'center')
   })
   return c
 }
 
-/** Les couleurs à éclaircir : sans correctif / avec, côte à côte (et le clair pour mémoire). */
+/** Colors to lighten: without fix / with, side by side (and light for reference). */
 function planchecontraste() {
   const scenario = PALETTE.filter(([, h]) => bodyForTheme(h, 'dark') !== h)
   const cell = 340
   const row = cell + 74
   const { c, ctx } = fresh(W, 200 + scenario.length * row + 20)
-  text(ctx, 'Corps éclairci en dark', 40, 78, 52, INK, true)
-  text(ctx, 'Seulement les couleurs sous 3:1, juste assez pour atteindre 3:1.', 40, 122, 26, GREY)
+  text(ctx, 'Body lightened in dark', 40, 78, 52, INK, true)
+  text(ctx, 'Only colors under 3:1, just enough to reach 3:1.', 40, 122, 26, GREY)
   const x1 = 120
   const x2 = 120 + cell + 20
-  text(ctx, 'sans correctif', x1 + cell / 2 - 60, 180, 26, INK, true, 'center')
-  text(ctx, 'corps éclairci', x2 + cell / 2 - 60, 180, 26, INK, true, 'center')
+  text(ctx, 'without fix', x1 + cell / 2 - 60, 180, 26, INK, true, 'center')
+  text(ctx, 'body lightened', x2 + cell / 2 - 60, 180, 26, INK, true, 'center')
   scenario.forEach(([name, hex], i) => {
     const y0 = 200 + i * row
     const after = bodyForTheme(hex, 'dark')
@@ -198,21 +198,21 @@ function planchecontraste() {
   return c
 }
 
-/** Cinq humeurs du visage (+ un clin d'œil) en sombre. */
+/** Five face moods (+ a wink) in dark. */
 function planchehumeurs() {
   const defs: Array<{ name: string; mood?: string; state?: 'idle' | 'wink'; shape: string; color: string }> = [
     { name: 'neutral', mood: 'neutral', shape: 'circle', color: hexOf('turquoise') },
     { name: 'surprised', mood: 'surprised', shape: 'star', color: hexOf('amber') },
     { name: 'happy', mood: 'happy', shape: 'squircle', color: hexOf('pink') },
-    { name: 'colère', mood: 'angry', shape: 'cloud', color: hexOf('red') },
+    { name: 'angry', mood: 'angry', shape: 'cloud', color: hexOf('red') },
     { name: 'sleepy', mood: 'sleepy', shape: 'drop', color: hexOf('blue') },
-    { name: 'clin d’œil (geste)', state: 'wink', shape: 'egg', color: hexOf('violet') }
+    { name: 'wink (gesture)', state: 'wink', shape: 'egg', color: hexOf('violet') }
   ]
   const cell = 360
   const row = cell + 56
   const { c, ctx } = fresh(W, 160 + 2 * row + 10)
-  text(ctx, 'Humeurs du visage en dark', 40, 78, 50, INK, true)
-  text(ctx, 'Paupières et shapes d’yeux inchangées, seule la couleur change.', 40, 122, 26, GREY)
+  text(ctx, 'Face moods in dark', 40, 78, 50, INK, true)
+  text(ctx, 'Lids and eye shapes unchanged, only the color changes.', 40, 122, 26, GREY)
   defs.forEach((d, i) => {
     const x = (i % 3) * cell
     const y = 140 + Math.floor(i / 3) * row
@@ -224,7 +224,7 @@ function planchehumeurs() {
 
 const namesOf = (sel: AccessorySelection) => SLOTS.map((e) => resolveAccessories(e, sel[e])?.name).filter(Boolean) as string[]
 
-/** Combinaisons d'accessoires en sombre (clair en vignette pour comparer). */
+/** Accessory combinations in dark (light as a thumbnail to compare). */
 function sheetcombos() {
   const defs: Array<{ shape: string; color: string; sel: AccessorySelection }> = [
     { shape: 'circle', color: hexOf('turquoise'), sel: { head: 'headphones', eyes: 'round', face: 'cheeks', neck: 'bowtie', back: 'cape' } },
@@ -234,8 +234,8 @@ function sheetcombos() {
   const cell = 520
   const row = cell + 90
   const { c, ctx } = fresh(W, 150 + defs.length * row)
-  text(ctx, 'Accessoires en dark', 40, 78, 52, INK, true)
-  text(ctx, 'À left light, à droite dark : les accessoires ne changent pas.', 40, 122, 26, GREY)
+  text(ctx, 'Accessories in dark', 40, 78, 52, INK, true)
+  text(ctx, 'Light on the left, dark on the right: the accessories do not change.', 40, 122, 26, GREY)
   defs.forEach((d, i) => {
     const y = 140 + i * row
     drawCell(ctx, 20, y, cell, { shape: d.shape, color: d.color, theme: 'light', sel: d.sel, frame: 205 })
@@ -245,22 +245,22 @@ function sheetcombos() {
   return c
 }
 
-/** Conflits possibles entre yeux noirs et accessoires de l'emplacement yeux : avant / après la solution. */
+/** Possible conflicts between black eyes and accessories of the eyes slot: before / after the fix. */
 function planchecconflits() {
-  const SUN_BLACK = { id: 'sunglasses', c2: '#26222f' } // verre noir du catalogue, sans la solution
+  const SUN_BLACK = { id: 'sunglasses', c2: '#26222f' } // black lens from the catalog, without the fix
   const rows: Array<{ name: string; light: AccessorySelection; without: AccessorySelection; withIt: AccessorySelection; shape: string; color: string }> = [
-    { name: 'Lunettes de soleil (verre noir)', shape: 'circle', color: hexOf('amber'), light: { eyes: 'sunglasses' }, without: { eyes: SUN_BLACK }, withIt: { eyes: 'sunglasses' } },
-    { name: 'Lunettes rondes (monture noire)', shape: 'squircle', color: hexOf('turquoise'), light: { eyes: 'round' }, without: { eyes: 'round' }, withIt: { eyes: 'round' } },
-    { name: 'Lunettes carrées (monture marine)', shape: 'cloud', color: hexOf('pink'), light: { eyes: 'square' }, without: { eyes: 'square' }, withIt: { eyes: 'square' } },
+    { name: 'Sunglasses (black lens)', shape: 'circle', color: hexOf('amber'), light: { eyes: 'sunglasses' }, without: { eyes: SUN_BLACK }, withIt: { eyes: 'sunglasses' } },
+    { name: 'Round glasses (black frame)', shape: 'squircle', color: hexOf('turquoise'), light: { eyes: 'round' }, without: { eyes: 'round' }, withIt: { eyes: 'round' } },
+    { name: 'Square glasses (navy frame)', shape: 'cloud', color: hexOf('pink'), light: { eyes: 'square' }, without: { eyes: 'square' }, withIt: { eyes: 'square' } },
     { name: 'Monocle', shape: 'drop', color: hexOf('green'), light: { eyes: 'monocle' }, without: { eyes: 'monocle' }, withIt: { eyes: 'monocle' } },
-    { name: 'Masque de sommeil', shape: 'egg', color: hexOf('blue'), light: { eyes: 'sleep' }, without: { eyes: 'sleep' }, withIt: { eyes: 'sleep' } }
+    { name: 'Sleep mask', shape: 'egg', color: hexOf('blue'), light: { eyes: 'sleep' }, without: { eyes: 'sleep' }, withIt: { eyes: 'sleep' } }
   ]
   const cell = 340
   const row = cell + 60
   const { c, ctx } = fresh(W, 210 + rows.length * row)
-  text(ctx, 'Yeux noirs et lunettes', 40, 78, 52, INK, true)
-  text(ctx, 'Seul vrai conflit : le verre noir des lunettes de soleil.', 40, 122, 26, GREY)
-  ;['light', 'dark, sans solution', 'dark, verre ardoise'].forEach((t, k) => text(ctx, t, 20 + k * 357 + 170, 190, 22, INK, true, 'center'))
+  text(ctx, 'Black eyes and glasses', 40, 78, 52, INK, true)
+  text(ctx, 'The only real conflict: the black lens of the sunglasses.', 40, 122, 26, GREY)
+  ;['light', 'dark, without the fix', 'dark, verre ardoise'].forEach((t, k) => text(ctx, t, 20 + k * 357 + 170, 190, 22, INK, true, 'center'))
   rows.forEach((l, i) => {
     const y = 210 + i * row
     drawCell(ctx, 0, y, 357, { shape: l.shape, color: l.color, theme: 'light', sel: l.light, frame: 150 })
@@ -289,9 +289,9 @@ async function main() {
     ['04-fonds', planchefonds],
     ['05-contraste-palette', planchepalette],
     ['06-corps-eclairci', planchecontraste],
-    ['07-humeurs', planchehumeurs],
+    ['07-moods', planchehumeurs],
     ['08-accessoires', sheetcombos],
-    ['09-conflits-lunettes', planchecconflits]
+    ['09-glasses-conflicts', planchecconflits]
   ]
   for (const [name, f] of todo) {
     if (!everything && !who.some((x) => name.includes(x))) continue

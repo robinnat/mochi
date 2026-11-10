@@ -1,9 +1,9 @@
 /**
- * Point d entree du moteur seul (sans composant), pour l utiliser dans une autre page :
+ * Entry point of the engine alone (without the component), to use it in another page:
  *
- *   npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify --outfile=mochi-engine.js
+ *   npx esbuild@0.24.0 tools/engine.ts --bundle --format=esm --minify --outfile=mochi-engine.js
  *
- * Le fichier produit garde la licence MIT : recopier l'en-tete de LICENSE en tete du fichier.
+ * The produced file keeps the MIT license: copy the header of LICENSE at the top of the file.
  */
 export { BotEngine } from '../src/bot/engine'
 export { COLOR_BY_ID, SHAPE_BY_ID, mixHex } from '../src/bot/skins'

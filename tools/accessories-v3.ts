@@ -12,7 +12,7 @@ import {
 } from '../src/bot/slots'
 import type { Material } from '../src/ui/3d/material'
 
-/** Rend les planches de propositions : un seul contexte WebGL, des cellules recopiees dans un canvas 2D. */
+/** Renders the proposal sheets: a single WebGL context, cells copied into a 2D canvas. */
 const q = new URLSearchParams(location.search)
 const BACKGROUND = '#faf8f3'
 const INK = '#26222f'
@@ -27,7 +27,7 @@ const distance = (a: string, b: string) => {
   return Math.hypot(x[0]! - y[0]!, x[1]! - y[1]!, x[2]! - y[2]!)
 }
 
-/** Couleurs de corps qui ressortent contre les couleurs de l'accessoire. */
+/** Body colors that stand out against the accessory colors. */
 function bodyFor(colors: string[], n: number, offset: number): string[] {
   const candidats = ['turquoise', 'amber', 'pink', 'blue', 'green', 'orange', 'violet'].map(hexOf)
   const good = candidats.filter((h) => colors.every((c) => distance(h, c) > 110))
@@ -37,13 +37,13 @@ function bodyFor(colors: string[], n: number, offset: number): string[] {
 
 const SHAPE_NAMES: Record<string, string> = {
   circle: 'round',
-  star: 'étoile',
+  star: 'star',
   squircle: 'cube',
   cloud: 'cloud',
   triangle: 'pyramid',
   hexagon: 'hexagon',
   drop: 'drop',
-  egg: 'œuf',
+  egg: 'egg',
   flower: 'flower',
   capsule: 'capsule',
   pebble: 'pebble'
@@ -69,7 +69,7 @@ interface Cell {
   frame?: number
 }
 
-/** Dessine un Mochi (3D temps reel) dans le canvas de la planche, carre de `px` en (x, y). */
+/** Draws a Mochi (real-time 3D) in the sheet's canvas, a `px` square at (x, y). */
 function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, c: Cell) {
   const t = document.createElement('canvas')
   t.width = t.height = px
@@ -98,7 +98,7 @@ function fresh(w: number, h: number) {
 const W = 1080
 const SHAPES_SHEET = ['circle', 'star', 'squircle']
 
-/** Planche d'un emplacement : un accessoire par ligne, trois formes. */
+/** Sheet of a slot: one accessory per row, three shapes. */
 const FRAMES_HEAD: Record<string, number> = { toque: 200, antenna: 215, 'top-hat': 195, crown: 190 }
 
 function sheetSlot(e: Slot, frame: number, yaw: number | number[] = 0, angles?: string[]) {
@@ -108,7 +108,7 @@ function sheetSlot(e: Slot, frame: number, yaw: number | number[] = 0, angles?: 
   const row = cell + 60
   const { c, ctx } = fresh(W, header + list.length * row + 30)
   text(ctx, SLOT_NAMES[e], 40, 78, 58, INK, true)
-  text(ctx, `${list.length} propositions · vraie 3D, même éclairage que le body`, 40, 122, 28, GREY)
+  text(ctx, `${list.length} proposals · real 3D, same lighting as the body`, 40, 122, 28, GREY)
   list.forEach((a, i) => {
     const y0 = header + i * row
     text(ctx, `${i + 1}. ${a.name}`, 40, y0 + 44, 38, INK, true)
@@ -144,12 +144,12 @@ function sheetCombos() {
   const rows = defs.length / 2
   const { c, ctx } = fresh(W, 150 + rows * (cell + lh - 60) + 20)
   text(ctx, 'Combos', 40, 78, 58, INK, true)
-  text(ctx, 'Tous les emplacements se cumulent, sans collision', 40, 122, 28, GREY)
+  text(ctx, 'All slots stack, without collision', 40, 122, 28, GREY)
   defs.forEach((d, i) => {
     const x = (i % 2) * cell
     const y = 150 + Math.floor(i / 2) * (cell + lh - 60)
     drawCell(ctx, x, y, cell, d)
-    // noms sur autant de lignes que necessaire (largeur de la cellule)
+    // names on as many lines as needed (cell width)
     ctx.font = '700 24px -apple-system, Helvetica, Arial, sans-serif'
     const rowsTxt: string[] = []
     let cur = ''
@@ -168,11 +168,11 @@ function sheetCombos() {
 
 function sheetAngles() {
   const rows: Array<{ name: string; sel: AccessorySelection; shape: string; color: string; frame: number }> = [
-    { name: 'Nœud papillon', sel: { neck: 'bowtie' }, shape: 'circle', color: hexOf('turquoise'), frame: 150 },
+    { name: 'Bow tie', sel: { neck: 'bowtie' }, shape: 'circle', color: hexOf('turquoise'), frame: 150 },
     { name: 'Cape', sel: { back: 'cape' }, shape: 'egg', color: hexOf('blue'), frame: 215 },
-    { name: 'Queue', sel: { back: 'tail' }, shape: 'squircle', color: hexOf('green'), frame: 225 },
-    { name: 'Cravate (avec lunettes)', sel: { neck: 'tie', eyes: 'star' }, shape: 'star', color: hexOf('orange'), frame: 165 },
-    { name: 'Sac à dos', sel: { back: 'backpack' }, shape: 'circle', color: hexOf('turquoise'), frame: 215 }
+    { name: 'Tail', sel: { back: 'tail' }, shape: 'squircle', color: hexOf('green'), frame: 225 },
+    { name: 'Tie (with glasses)', sel: { neck: 'tie', eyes: 'star' }, shape: 'star', color: hexOf('orange'), frame: 165 },
+    { name: 'Backpack', sel: { back: 'backpack' }, shape: 'circle', color: hexOf('turquoise'), frame: 215 }
   ]
   const angles = [
     { yaw: 0, name: 'face' },
@@ -183,8 +183,8 @@ function sheetAngles() {
   const cell = 270
   const row = cell + 70
   const { c, ctx } = fresh(W, 150 + rows.length * row + 20)
-  text(ctx, 'Vraie 3D : face, 3/4, profil, dos', 40, 78, 52, INK, true)
-  text(ctx, 'Le corps tourne, la lumière reste en haut à left', 40, 122, 28, GREY)
+  text(ctx, 'Real 3D: front, 3/4, profile, back', 40, 78, 52, INK, true)
+  text(ctx, 'The body turns, the light stays at the top left', 40, 122, 28, GREY)
   rows.forEach((t, i) => {
     const y0 = 150 + i * row
     text(ctx, t.name, 40, y0 + 30, 32, INK, true)
@@ -196,7 +196,7 @@ function sheetAngles() {
   return c
 }
 
-/** Gros plan du nœud papillon : trois formes, de face puis en 3/4. */
+/** Close-up of the bow tie: three shapes, from the front then at 3/4. */
 function sheetBowtie() {
   const shapes = [
     { shape: 'circle', color: hexOf('turquoise') },
@@ -205,8 +205,8 @@ function sheetBowtie() {
   ]
   const cell = 360
   const { c, ctx } = fresh(W, 150 + 2 * (cell + 50) + 20)
-  text(ctx, 'Nœud papillon', 40, 78, 58, INK, true)
-  text(ctx, 'Deux triangles arrondis, small nœud central, volume doux et mat', 40, 122, 28, GREY)
+  text(ctx, 'Bow tie', 40, 78, 58, INK, true)
+  text(ctx, 'Two rounded triangles, a small central knot, soft matte volume', 40, 122, 28, GREY)
   ;[
     { name: 'face', yaw: 0 },
     { name: '3/4', yaw: 0.62 }
@@ -235,7 +235,7 @@ function planchestyles() {
   const row = cell + 20
   const { c, ctx } = fresh(W, 190 + combos.length * row + 30)
   text(ctx, 'Soft, Flat, Pixel', 40, 78, 54, INK, true)
-  text(ctx, 'Les mêmes accessoires dans les trois styles', 40, 122, 28, GREY)
+  text(ctx, 'The same accessories in the three styles', 40, 122, 28, GREY)
   styles.forEach((s, k) => text(ctx, s.name, k * cell + cell / 2, 176, 30, INK, true, 'center'))
   combos.forEach((cb, i) => {
     styles.forEach((s, k) => drawCell(ctx, k * cell, 190 + i * row, cell, { ...cb, renderStyle: s.renderStyle, frame: 190 }))
@@ -259,7 +259,7 @@ async function main() {
     ['eyes', () => sheetSlot('eyes', 165, 0.25)],
     ['face', () => sheetSlot('face', 150, 0.25)],
     ['neck', () => sheetSlot('neck', 160, 0.25)],
-    ['back', () => sheetSlot('back', 245, [0.55, 2.55, 3.4], ['3/4 avant', '3/4 dos', 'de dos'])],
+    ['back', () => sheetSlot('back', 245, [0.55, 2.55, 3.4], ['front 3/4', '3/4 dos', 'from behind'])],
     ['combos', sheetCombos],
     ['angles', sheetAngles],
     ['bowtie', sheetBowtie],
