@@ -40,7 +40,7 @@
     "@types/node": "^26.0.0",
     "@types/three": "0.186.0",
     "@vitejs/plugin-vue": "^6.0.8",
-    "happy-dom": "^20.11.2",
+    "happy-dom": "^21.0.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^8.2.1",
