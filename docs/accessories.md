@@ -1,27 +1,41 @@
-# Accessoires de métier : retirés (10/11/2026)
+# Accessories (how they are built)
 
-Les accessoires de métier (`src/bot/accessoires.ts` : carnet, portable, clap, loupe, avion, palette,
-presse-papiers, liste, engrenage, avec leurs mains et leurs gestes) étaient DESSINÉS EN SVG 2D
-par-dessus le corps. Avec la règle « aucune 2D » (Robin, 10/11/2026), ils sont retirés du code avec
-la prop `accessoire` de `<mochi-bot>` (historique dans git). L'humeur `travaille` montre un ordinateur
-portable en 3D ; les accessoires portés en 3D sont décrits ci-dessous et dans
-`docs/accessoires-emplacements.md`.
+For the list of ids, see the [reference](reference.md#accessories). This page explains how accessories work inside the code.
 
-## Accessoires portes (`portes.ts`)
+- `src/bot/slots.ts`: the catalog (ids, names, colors). No geometry.
+- `src/ui/3d/accessories3d.ts`: the 3D volumes.
+- `src/ui/3d/anchors.ts`: where each piece sits, found by casting rays on the body of the current frame.
 
-Huit accessoires posés sur le corps (seuls `lunettes`, `haut-de-forme` et `noeud` sont exposés sur le site ; les autres restent dans le moteur, en attente) : `lunettes`, `soleil`, `haut-de-forme`, `paille`, `bonnet`,
-`noeud`, `couronne`, `casque`. Prop `porte` de `<mochi-bot>`. Ils
-ne sont pas animés pour eux-mêmes : ils sont recalculés à CHAQUE image depuis `bodyPath` et les
-yeux de cette image (`mesuresPorte`, `yeuxDe`). Un saut, un écrasement, une autre forme, un
-regard ou un clin d'œil les déplacent donc avec le corps, sans réglage.
+## Slots
 
-- Une seule description (`partiesPorte`, en unités du moteur) sert la 3D (Soft, Flat, Pixel : les
-  teintes passent par le matériau du corps) : volumes de `ui/trois/porte3d.ts`, enfants du maillage donc
-  tournés avec lui. Les sorties 2D (`porteSvg`, `dessinPorte`, `lunettesDe`) sont retirées (10/11/2026).
-- Les lunettes sont une vraie monture 3D en tube épais, posée DEVANT les yeux 3D (toujours de face) avec un
-  écart ; leurs branches rentrent dans la tête, d'où elles ressortent à la hauteur des côtés. Une ombre
-  douce est peinte sur le visage sous chaque verre.
-- Pas de verre dans la version 3D : les yeux restent entièrement visibles (clin d'œil, yeux
-  écarquillés). Sans visage (`thinking`, `sleep`) les lunettes
-  disparaissent ; le chapeau reste.
-- Limites : pas de contour cartoon sur les pièces 3D.
+One accessory per slot at most, and all slots stack:
+
+| Slot | Where | Examples |
+| --- | --- | --- |
+| `head` | on top of the head (never lower than 28 % of the height) | cap, top hat, crown |
+| `eyes` | on the line of the eyes | round glasses, sunglasses, monocle |
+| `neck` | the "neck", around 76 % of the height, with tilted rings | bow tie, scarf, pearl necklace |
+| `back` | sides and back | backpack, cape |
+
+A fifth slot, `face`, still exists in the code but holds no accessory today: all its pieces were removed.
+
+```ts
+mochi.setAccessories({ head: 'cap', eyes: 'sunglasses', neck: 'bowtie' })
+// or with your own colors: { head: { id: 'cap', c1: '#e8505b' } }
+```
+
+Rule for every accessory: a very simple shape, ONE color (`c1`), TWO at most (`c2`, for example a flower: petals and center). No stripes, gems or patterns.
+
+## Light and styles
+
+In the Soft style, accessories get the same light as the body (`rim.ts`). Flat and Pixel reuse the body material. Soft shadows on the body go through the same texture as the older worn accessories.
+
+## Removed accessories
+
+Removed pieces stay in `REMOVED` (`src/bot/slots.ts`) with their 3D builders, so one can come back by copying it into the catalog. They no longer show anywhere.
+
+## Older worn accessories (`worn.ts`)
+
+Eight older pieces (`glasses`, `sunglasses`, `top-hat`, `straw`, `beanie`, `bow`, `crown`, `headphones`), set with the `worn` option. They are not animated on their own: they are measured again at EVERY frame from the body and the eyes of that frame. A jump, a squash, another shape or a wink moves them with the body, with no extra setting. Their volumes are in `src/ui/3d/worn3d.ts`.
+
+Known limits: pieces are rebuilt when the outline changes (ray casting), and 3D pieces have no cartoon outline.

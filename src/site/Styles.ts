@@ -5,7 +5,7 @@ import { Alive } from './Alive'
 import { STYLE_BOT } from './posters'
 import { useReduced } from './reduced'
 import { reveal, useWidth, useVisible } from './motion'
-import type { RenderStyleId } from 'mochi-world/catalogue'
+import type { RenderStyleId } from 'mochis/catalogue'
 
 /**
  * Les trois styles, au defilement : la scene reste collee pendant que les trois etapes passent, et le Mochi change

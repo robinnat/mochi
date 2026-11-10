@@ -1,6 +1,6 @@
 import { h, type Component } from '@/ui/dom/h'
-import 'mochi-world'
-import type { Softness, Material, RenderStyleId } from 'mochi-world'
+import 'mochis'
+import type { Softness, Material, RenderStyleId } from 'mochis'
 import { sizeCell } from './width'
 
 /**

@@ -4,7 +4,7 @@ import { Poster } from './Poster'
 import { HeroFigures } from './HeroFigures'
 import { SCROLL } from './posters'
 import { SITE_ACCESSORIES } from './catalog'
-import type { AccessoryChoice, Slot } from 'mochi-world/catalogue'
+import type { AccessoryChoice, Slot } from 'mochis/catalogue'
 
 /**
  * Hero : « la foule » (choisi par Robin le 09/11/2026). Aucune 3D au premier ecran : une petite foule de Mochi tous

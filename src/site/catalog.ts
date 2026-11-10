@@ -1,11 +1,11 @@
 /**
- * Catalogue du site : libelles ANGLAIS. Les ids viennent du paquet (`mochi-world`, l'entree
+ * Catalogue du site : libelles ANGLAIS. Les ids viennent du paquet (`mochis`, l'entree
  * publique de la bibliotheque, comme pour n'importe quel utilisateur) ; le site ne definit
  * aucune mesure. Les libelles de formes, couleurs, etats et styles reprennent ceux de
  * l'application (`src/i18n/locales/en.ts`).
  */
 import en from '@/i18n/locales/en'
-import { ACCESSORIES, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochi-world/catalogue'
+import { ACCESSORIES, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochis/catalogue'
 
 export const SHAPE_LABEL = en.shapes as Record<string, string>
 export const COLOR_LABEL = en.colors as Record<string, string>
@@ -83,32 +83,7 @@ export const SLOT_LABEL: Record<Slot, string> = {
 export const SLOT_IDS = SLOTS
 
 /** Libelles anglais des accessoires du catalogue. */
-const ACC_EN: Record<string, string> = {
-  cap: 'Cap',
-  beret: 'Beret',
-  'top-hat': 'Top hat',
-  crown: 'Crown',
-  straw: 'Straw hat',
-  antenna: 'Antenna',
-  headphones: 'Headphones',
-  ribbon: 'Ribbon bow',
-  flower: 'Flower',
-  toque: 'Chef hat',
-  round: 'Round glasses',
-  square: 'Square glasses',
-  sunglasses: 'Sunglasses',
-  heart: 'Heart glasses',
-  star: 'Star glasses',
-  monocle: 'Monocle',
-  bowtie: 'Bow tie',
-  scarf: 'Scarf',
-  pearls: 'Pearl necklace',
-  lei: 'Flower necklace',
-  backpack: 'Backpack',
-  cape: 'Cape'
-}
-export const SITE_ACCESSORIES = (e: Slot) => accessoriesInSlot(e).map((a) => ({ id: a.id, label: ACC_EN[a.id] ?? a.id, c1: a.c1, c2: a.c2 }))
-export const ACC_EN_IDS = Object.keys(ACC_EN)
+export const SITE_ACCESSORIES = (e: Slot) => accessoriesInSlot(e).map((a) => ({ id: a.id, label: a.name, c1: a.c1, c2: a.c2 }))
 
 /** Les chiffres du hero : tous lus dans les catalogues du moteur, aucun n'est ecrit a la main. */
 export const FIGURES: { value: number; label: string }[] = [

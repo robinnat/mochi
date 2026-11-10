@@ -1,4 +1,5 @@
 import { h, type Component } from '@/ui/dom/h'
+import { brandMark } from './Nav'
 
 export const Footer: Component<Record<string, never>> = () => () =>
   h(
@@ -7,7 +8,7 @@ export const Footer: Component<Record<string, never>> = () => () =>
     h(
       'div',
       { class: 'wrap footer-in' },
-      h('div', { class: 'footer-strong' }, h('img', { src: '/favicon.svg', width: '28', height: '28', alt: '' }), h('span', null, 'Mochi World')),
+      h('div', { class: 'footer-brand' }, brandMark(30), h('span', { class: 'wordmark' }, 'Mochis')),
       h('p', null, 'An animated avatar engine for the web. MIT licensed.'),
       h(
         'nav',

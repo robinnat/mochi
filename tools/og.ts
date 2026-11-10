@@ -1,5 +1,5 @@
 import { h, render } from '../src/ui/dom/h'
-import 'mochi-world'
+import 'mochis'
 
 // deux mochis fixes : une boule bleu ciel et une etoile orange (P1, 09/11/2026), en 3D Soft, a une date precise
 render(

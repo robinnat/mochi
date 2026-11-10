@@ -1,8 +1,8 @@
 **English** | [Français](CONTRIBUTING.fr.md)
 
-# Contributing to Mochi World
+# Contributing to Mochis
 
-Thanks for taking the time. Mochi World is a small project maintained in spare time, so reviews
+Thanks for taking the time. Mochis is a small project maintained in spare time, so reviews
 can take a while. Small, focused pull requests are the easiest to review.
 
 ## Before you start

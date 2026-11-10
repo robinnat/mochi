@@ -1,5 +1,5 @@
 import { ref } from '@/ui/dom/reactive'
-import { load3d } from 'mochi-world/catalogue'
+import { load3d } from 'mochis/catalogue'
 
 /**
  * La page est « prete » quand son chargement est fini et que le navigateur a un moment de libre : seulement alors

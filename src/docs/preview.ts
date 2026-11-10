@@ -19,7 +19,7 @@ export interface PreviewProps {
 export const Preview: Component<PreviewProps> = (props) => {
   // la balise n'est declaree qu'une fois la bibliotheque chargee : les elements deja poses se mettent a jour seuls
   onMount(() => {
-    import('mochi-world').catch(() => {})
+    import('mochis').catch(() => {})
   })
   return () =>
     h(

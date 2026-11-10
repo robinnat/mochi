@@ -4,7 +4,7 @@
 
 ## Versions suivies
 
-Mochi World n'est pas encore publié sur npm et n'a pas de version publiée. Seul le dernier commit de
+Mochis n'est pas encore publié sur npm et n'a pas de version publiée. Seul le dernier commit de
 la branche `main` est suivi. Les correctifs arrivent sur `main` ; les commits plus anciens ne sont pas
 corrigés.
 
@@ -33,7 +33,7 @@ Si le signalement est confirmé, le correctif arrive sur `main` par une pull req
 
 ## Périmètre
 
-Mochi World tourne dans le navigateur et n'a ni serveur, ni comptes, ni stockage de données en dehors
+Mochis tourne dans le navigateur et n'a ni serveur, ni comptes, ni stockage de données en dehors
 du `localStorage` du visiteur. Les signalements sur le code de ce dépôt et sur le site de démo construit
 à partir de lui sont les bienvenus. Les problèmes des dépendances tierces sont mieux signalés à leurs
 propres projets.

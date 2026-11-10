@@ -4,7 +4,7 @@
  * d'image. Les bandes defilent ensuite en CSS pur sur des images : aucun rendu 3D pendant le defilement, fluide meme
  * sur iPhone. La 3D arrive par `load3d` (entree publique) : chargement dynamique seulement. Sert a `tools/rendus.ts`.
  */
-import { BotEngine, load3d, contrast, HALF_VIEWBOX, mixHex, RADIUS, SHAPE_BY_ID } from 'mochi-world'
+import { BotEngine, load3d, contrast, HALF_VIEWBOX, mixHex, RADIUS, SHAPE_BY_ID } from 'mochis'
 import type { ItemStrip } from './strips'
 
 /** Cote d'une vignette en pixels (affichee a la moitie : ecrans denses). */

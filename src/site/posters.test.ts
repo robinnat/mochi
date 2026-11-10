@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { ACCESSORIES, ACCESSORY_BY_KEY } from 'mochi-world/catalogue'
+import { ACCESSORIES, ACCESSORY_BY_KEY } from 'mochis/catalogue'
 import { POSTERS, SCROLL, PIECES, urlPoster, urlPiece } from './posters'
 
 const publicDir = new URL('../../public', import.meta.url)
@@ -34,7 +34,7 @@ describe('images pre-rendues (v11)', () => {
     }
     const v = read('Vivant.ts')
     // le composant arrive par l'entree publique du paquet, comme chez un utilisateur
-    expect(v).toContain("import('mochi-world')")
+    expect(v).toContain("import('mochis')")
     expect(v).toContain('onPret: surPret')
     expect(v).toContain('IntersectionObserver')
   })

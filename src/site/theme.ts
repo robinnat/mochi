@@ -1,5 +1,5 @@
 import { computed, ref, watch } from '@/ui/dom/reactive'
-import { currentTheme } from 'mochi-world/catalogue'
+import { currentTheme } from 'mochis/catalogue'
 
 /**
  * Clair, sombre ou celui de l'appareil. Le choix est range dans le navigateur (si possible) ; la page porte

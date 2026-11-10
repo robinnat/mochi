@@ -1,7 +1,7 @@
 /**
- * Entree publique LEGERE de la bibliotheque (`mochi-world/catalogue`) : les catalogues (formes, couleurs, humeurs,
+ * Entree publique LEGERE de la bibliotheque (`mochis/catalogue`) : les catalogues (formes, couleurs, humeurs,
  * accessoires, styles) et les reglages communs, SANS la balise `<mochi-bot>`. Pour construire une interface autour des
- * Mochi (choix de forme, de couleur, d'accessoires) sans charger le composant tout de suite ; `mochi-world` (l'entree
+ * Mochi (choix de forme, de couleur, d'accessoires) sans charger le composant tout de suite ; `mochis` (l'entree
  * complete) reexporte tout ceci et declare la balise.
  *
  * Le site, la doc et le labo du depot n'utilisent que ces deux entrees : ils consomment Mochi exactement comme un

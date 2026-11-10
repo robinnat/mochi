@@ -1,10 +1,10 @@
 [English](README.md) | **Français**
 
-# Mochi World
+# Mochis
 
 [![Licence : MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Démo en ligne**](https://mochi-red-phi.vercel.app)
 
-Mochi World est un petit moteur d'avatars animés pour le web. Ses personnages, les Mochi, sont une
+Mochis est un petit moteur d'avatars animés pour le web. Ses personnages, les Mochi, sont une
 forme pleine avec sept humeurs, deux yeux qui bougent tout seuls, et des réactions quand on les touche
 (survol, tape, double tape, appui long, secousse, un coucou à l'arrivée). Tout est dessiné en vraie 3D,
 en trois styles (Soft, Flat et Pixel), en clair et en sombre, avec 22 accessoires à cumuler par
@@ -16,7 +16,7 @@ emplacement et par couleur, et des exports (PNG, SVG, GIF, MP4). Aucune biblioth
 ## Installation
 
 ```bash
-npm install mochi-world   # bientôt : le paquet n'est PAS encore publié
+npm install mochis   # bientôt : le paquet n'est PAS encore publié
 ```
 
 D'ici là, construisez la bibliothèque depuis le dépôt. Elle n'ajoute aucune dépendance à votre app :
@@ -26,13 +26,13 @@ Three.js est dans un fichier à part, chargé seulement quand un Mochi en 3D s'a
 git clone https://github.com/robinnat/mochi.git
 cd mochi
 npx -y pnpm@11.17.0 install
-npx -y pnpm@11.17.0 build:lib     # écrit dist-lib/mochi-world.js et ses morceaux 3D chargés à la demande
+npx -y pnpm@11.17.0 build:lib     # écrit dist-lib/mochis.js et ses morceaux 3D chargés à la demande
 cp -r dist-lib ../my-app/public/mochi   # gardez les fichiers ensemble
 ```
 
 ## Utilisation
 
-Mochi est un seul Web Component, `<mochi-bot>`. Chargez `mochi-world.js` une fois par page : il déclare la
+Mochi est un seul Web Component, `<mochi-bot>`. Chargez `mochis.js` une fois par page : il déclare la
 balise. Chaque option est un **attribut** (texte en kebab-case : `frozen-at="1.2"`, `contour`,
 `reflet="false"`, `accessoires='{"tete":"casquette"}'`) et une **propriété** (camelCase, n'importe quelle
 valeur : `el.accessoires = { tete: 'casquette' }`). Les méthodes (`setMood`, `react`, `relacher`,
@@ -46,7 +46,7 @@ Les identifiants sont ceux des catalogues, en français pour l'instant (`etoile`
 ### HTML
 
 ```html
-<script type="module" src="/mochi/mochi-world.js"></script>
+<script type="module" src="/mochi/mochis.js"></script>
 
 <!-- une humeur, 3D Soft, suit le pointeur ; dit bonjour à l'arrivée -->
 <mochi-bot mood="repos" shape="fleur" color="rose" rendu="3d" size="160" follow coucou></mochi-bot>
@@ -68,7 +68,7 @@ Les identifiants sont ceux des catalogues, en français pour l'instant (`etoile`
 ### React
 
 ```jsx
-import '/mochi/mochi-world.js'
+import '/mochi/mochis.js'
 
 export function Avatar({ mood }) {
   // React 19 passe les props d'un élément personnalisé en propriétés, et `on<événement>` en écouteurs
@@ -82,7 +82,7 @@ Avec React 18, passez les objets (`accessoires`, `cycle`) et les écouteurs par 
 
 ```vue
 <script setup>
-import '/mochi/mochi-world.js'
+import '/mochi/mochis.js'
 import { ref } from 'vue'
 const mood = ref('repos')
 </script>
@@ -100,7 +100,7 @@ Indiquez au compilateur Vue que `mochi-bot` est un élément personnalisé
 
 ```svelte
 <script>
-  import '/mochi/mochi-world.js'
+  import '/mochi/mochis.js'
   let mood = $state('repos')
 </script>
 
@@ -113,8 +113,8 @@ Indiquez au compilateur Vue que `mochi-bot` est un élément personnalisé
 Deux points d'entrée, ceux-là mêmes qu'utilisent le site, la doc et le labo du dépôt (ils n'importent
 jamais un fichier interne, un test le vérifie) :
 
-- `mochi-world` (`dist-lib/mochi-world.js`) : déclare `<mochi-bot>` et exporte tout ce qui suit.
-- `mochi-world/catalogue` (`dist-lib/catalogue.js`) : les catalogues et réglages communs sans la balise
+- `mochis` (`dist-lib/mochis.js`) : déclare `<mochi-bot>` et exporte tout ce qui suit.
+- `mochis/catalogue` (`dist-lib/catalogue.js`) : les catalogues et réglages communs sans la balise
   (`SHAPES`, `COLORS`, `CATALOGUE`, `EMPLACEMENTS`, `MOOD_IDS`, `REACTION_IDS`, `RENDUS`, `themeCourant`,
   `cheminDeForme` pour une icône de forme, `charger3d` pour charger la 3D à la demande), pour construire
   un sélecteur avant de charger la balise.

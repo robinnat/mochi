@@ -1,9 +1,9 @@
 {
-  "name": "mochi-world",
+  "name": "mochis",
   "private": true,
   "version": "0.1.1",
   "type": "module",
-  "description": "Mochi World: animated avatar engine for the web. Mochi characters in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch, 22 accessories and exports (PNG, SVG, GIF, MP4), all from the 3D.",
+  "description": "Mochis: animated avatar engine for the web. Mochi characters in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch, 22 accessories and exports (PNG, SVG, GIF, MP4), all from the 3D.",
   "license": "MIT",
   "author": "SYGEN SAS",
   "repository": {

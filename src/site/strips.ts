@@ -3,7 +3,7 @@
  * remplie des PIECES SEULES (sans corps), dans beaucoup de variantes de couleurs. Tout est DETERMINISTE : memes
  * bandes a chaque visite, et testable sans navigateur. Aucun rendu ici : `vignettes.ts` dessine, `Habillage.ts` affiche.
  */
-import { SLOTS, type Slot } from 'mochi-world/catalogue'
+import { SLOTS, type Slot } from 'mochis/catalogue'
 import { SITE_ACCESSORIES, PALETTE_SITE } from './catalog'
 
 export interface ItemStrip {

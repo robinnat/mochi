@@ -1,8 +1,8 @@
 [English](CONTRIBUTING.md) | **Français**
 
-# Contribuer à Mochi World
+# Contribuer à Mochis
 
-Merci de prendre ce temps. Mochi World est un petit projet maintenu sur du temps libre, donc les
+Merci de prendre ce temps. Mochis est un petit projet maintenu sur du temps libre, donc les
 relectures peuvent prendre un moment. Les pull requests petites et ciblées sont les plus faciles à relire.
 
 ## Avant de commencer

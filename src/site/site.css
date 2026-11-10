@@ -186,25 +186,29 @@ header[id] {
   align-items: center;
   gap: 28px;
 }
-.strong {
+.brand {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-family: var(--font-titre);
-  font-weight: 800;
-  font-size: 1.12rem;
-  letter-spacing: -0.03em;
+  font-size: 1.18rem;
   color: var(--ink);
   text-decoration: none;
 }
-.strong img,
-.footer-strong img {
-  transition: filter 0.2s;
+/* the mark exists in a light and a dark version: show the one of the current theme */
+.mark-dark {
+  display: none;
 }
-/* le logo est noir (favicon.svg) : en sombre il passe en clair, sinon il disparait sur le fond */
-:root[data-theme='dark'] .strong img,
-:root[data-theme='dark'] .footer-strong img {
-  filter: invert(1);
+:root[data-theme='dark'] .mark-light {
+  display: none;
+}
+:root[data-theme='dark'] .mark-dark {
+  display: block;
+}
+/* the word "Mochis" is set in Fredoka 600 (Google Fonts, display=swap) */
+.wordmark {
+  font-family: 'Fredoka', var(--font-titre);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 .nav-links {
   display: flex;
@@ -1482,14 +1486,11 @@ header[id] {
   align-items: center;
   gap: 14px 28px;
 }
-.footer-strong {
+.footer-brand {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-family: var(--font-titre);
-  font-weight: 800;
-  font-size: 1.1rem;
-  letter-spacing: -0.03em;
+  font-size: 1.15rem;
 }
 .footer p {
   color: var(--muted);

@@ -1,7 +1,7 @@
 import { c, h, type Component } from '@/ui/dom/h'
 import { Poster } from './Poster'
 import { AccessoryScroller } from './AccessoryScroller'
-import { ACCESSORIES, SLOTS } from 'mochi-world/catalogue'
+import { ACCESSORIES, SLOTS } from 'mochis/catalogue'
 import { SLOT_LABEL } from './catalog'
 import { reveal } from './motion'
 

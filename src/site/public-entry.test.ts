@@ -5,13 +5,13 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * Le site (accueil, docs) et le labo sont des VITRINES : ils utilisent Mochi exactement comme un utilisateur du
- * paquet, par ses entrees publiques (`mochi-world`, `mochi-world/catalogue`) et la balise `<mochi-bot>`. Aucun import
+ * paquet, par ses entrees publiques (`mochis`, `mochis/catalogue`) et la balise `<mochi-bot>`. Aucun import
  * d'un fichier interne du moteur (`src/bot`, `src/ui/trois`, `src/components`...). Restent permis : leur propre code,
  * la petite bibliotheque d'interface du depot (`@/ui/dom`, ce n'est pas Mochi), les textes (`@/i18n`) et les styles.
  */
 const SRC = fileURLToPath(new URL('..', import.meta.url))
 const FOLDERS = ['site', 'docs', 'lab']
-const ALLOWED = [/^mochi-world(\/catalogue)?$/, /^\/mochi\/(mochi-world|catalogue)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|labo)\//, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
+const ALLOWED = [/^mochis(\/catalogue)?$/, /^\/mochi\/(mochis|catalogue)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|labo)\//, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
 
 const sources = FOLDERS.flatMap((d) =>
   readdirSync(join(SRC, d))
@@ -42,7 +42,7 @@ describe('le site consomme Mochi par son entree publique', () => {
     for (const { file, text } of sources) {
       // le labo monte des Mochi des le chargement ; vignettes.ts ne sert qu'a l'outil tools/rendus.ts
       if (file.startsWith('labo/') || file === 'site/vignettes.ts') continue
-      expect(text, file).not.toMatch(/(?:^|\n)\s*import\s+(?!type\b)[^'";]*['"]mochi-world['"]/)
+      expect(text, file).not.toMatch(/(?:^|\n)\s*import\s+(?!type\b)[^'";]*['"]mochis['"]/)
     }
   })
 

@@ -7,7 +7,7 @@
  *
  * Les props ecrites ici sont celles que la page passe au Mochi vivant : l'affiche et la 3D vivante sont la meme image.
  */
-import { ACCESSORIES, type Slot, type RenderStyleId, type AccessorySelection } from 'mochi-world/catalogue'
+import { ACCESSORIES, type Slot, type RenderStyleId, type AccessorySelection } from 'mochis/catalogue'
 import { SHAPES_3D } from './catalog'
 import { STYLES_SITE } from './style'
 

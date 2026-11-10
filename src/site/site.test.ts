@@ -41,7 +41,7 @@ describe('site v10', () => {
   it('le npm install n est jamais presente comme disponible sur le site', () => {
     for (const f of pages) {
       const t = read(f)
-      if (t.includes('npm install mochi-world')) expect(t, f).toMatch(/coming soon/i)
+      if (t.includes('npm install mochis')) expect(t, f).toMatch(/coming soon/i)
     }
     expect(read('DocsTeaser.ts')).toMatch(/coming\s+soon/)
   })

@@ -1,7 +1,12 @@
+/// <reference types="vite/client" />
 import { c, h, type Component } from '@/ui/dom/h'
 import { CodeBlock } from './CodeBlock'
-import { QUICK_EXAMPLE } from '@/docs/examples'
+import guide from '../../docs/getting-started.md?raw'
+import { parseMarkdown } from '@/docs/markdown'
 import { reveal } from './motion'
+
+/** The first live example of the guide (docs/getting-started.md): the home page shows the same code as the docs. */
+export const QUICK_EXAMPLE = (parseMarkdown(guide).find((b) => b.t === 'code' && b.live) as { code: string }).code
 
 export const DocsTeaser: Component<Record<string, never>> = () => () =>
   h(

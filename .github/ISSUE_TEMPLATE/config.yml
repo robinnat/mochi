@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Live demo
     url: https://mochi-red-phi.vercel.app
-    about: Try Mochi World in your browser (the app is at /app, the docs at /docs).
+    about: Try Mochis in your browser (the app is at /app, the docs at /docs).
   - name: Report a security problem
     url: https://github.com/robinnat/mochi/security/advisories/new
     about: Please report vulnerabilities privately, not in a public issue. See SECURITY.md.

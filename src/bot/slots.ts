@@ -27,11 +27,11 @@ export const ALL_SLOTS: Slot[] = ['head', 'eyes', 'face', 'neck', 'back']
 export const SLOTS: Slot[] = ['head', 'eyes', 'neck', 'back']
 
 export const SLOT_NAMES: Record<Slot, string> = {
-  head: 'Tête',
+  head: 'Head',
   eyes: 'Eyes',
-  face: 'Visage et joues',
-  neck: 'Bas et cou',
-  back: 'Côtés et dos'
+  face: 'Face and cheeks',
+  neck: 'Neck',
+  back: 'Sides and back'
 }
 
 export interface AccessoryDef {
@@ -68,29 +68,29 @@ const def = (slot: Slot, id: string, name: string, c1: string, c2: string): Acce
 export const ACCESSORIES: AccessoryDef[] = [
   // tete
   def('head', 'cap', 'Cap', C.red, C.red),
-  def('head', 'beret', 'Béret', C.black, C.black),
+  def('head', 'beret', 'Beret', C.black, C.black),
   def('head', 'top-hat', 'Top hat', C.black, C.red),
   def('head', 'crown', 'Crown', C.gold, C.gold),
-  def('head', 'straw', 'Chapeau de paille', C.straw, C.red),
+  def('head', 'straw', 'Straw hat', C.straw, C.red),
   def('head', 'antenna', 'Antenna', C.black, C.red),
-  def('head', 'headphones', 'Casque de musique', C.red, C.red),
-  def('head', 'ribbon', 'Nœud ruban', C.pink, C.pink),
+  def('head', 'headphones', 'Headphones', C.red, C.red),
+  def('head', 'ribbon', 'Ribbon bow', C.pink, C.pink),
   def('head', 'flower', 'Flower', C.pink, C.yellow),
-  def('head', 'toque', 'Toque de chef', C.cream, C.cream),
+  def('head', 'toque', 'Chef hat', C.cream, C.cream),
   // yeux
-  def('eyes', 'round', 'Lunettes rondes', C.black, C.black),
-  def('eyes', 'square', 'Lunettes carrées', C.navy, C.navy),
-  def('eyes', 'sunglasses', 'Lunettes de soleil', C.black, C.black),
-  def('eyes', 'heart', 'Lunettes cœur', C.pink, C.pink),
-  def('eyes', 'star', 'Lunettes étoile', C.gold, C.gold),
+  def('eyes', 'round', 'Round glasses', C.black, C.black),
+  def('eyes', 'square', 'Square glasses', C.navy, C.navy),
+  def('eyes', 'sunglasses', 'Sunglasses', C.black, C.black),
+  def('eyes', 'heart', 'Heart glasses', C.pink, C.pink),
+  def('eyes', 'star', 'Star glasses', C.gold, C.gold),
   def('eyes', 'monocle', 'Monocle', C.gold, C.gold),
   // bas
-  def('neck', 'bowtie', 'Nœud papillon', C.black, C.black),
-  def('neck', 'scarf', 'Écharpe', C.orange, C.orange),
-  def('neck', 'pearls', 'Collier de perles', C.cream, C.cream),
-  def('neck', 'lei', 'Collier de fleurs', C.pink, C.yellow),
+  def('neck', 'bowtie', 'Bow tie', C.black, C.black),
+  def('neck', 'scarf', 'Scarf', C.orange, C.orange),
+  def('neck', 'pearls', 'Pearl necklace', C.cream, C.cream),
+  def('neck', 'lei', 'Flower necklace', C.pink, C.yellow),
   // dos
-  def('back', 'backpack', 'Sac à dos', C.orange, C.navy),
+  def('back', 'backpack', 'Backpack', C.orange, C.navy),
   def('back', 'cape', 'Cape', C.red, C.red)
 ]
 
@@ -103,32 +103,32 @@ export const ACCESSORIES: AccessoryDef[] = [
 export const REMOVED: AccessoryDef[] = [
   // v14 (10/11/2026, Robin) : joues roses retirees (la rougeur de l'appui long, une EXPRESSION, reste) ; plus
   // aucun accessoire dans l'emplacement visage, qui n'est plus propose (lunettes et monocle restent dans « yeux »)
-  def('face', 'cheeks', 'Joues roses', C.pink, C.pink),
+  def('face', 'cheeks', 'Pink cheeks', C.pink, C.pink),
   // v13 (09/11/2026, Robin) : les deux paires d'ailes (ange et chauve-souris) sont retirees
-  def('back', 'wings', 'Ailes d’ange', C.cream, C.cream),
-  def('back', 'batwings', 'Ailes de chauve-souris', C.violet, C.violet),
+  def('back', 'wings', 'Angel wings', C.cream, C.cream),
+  def('back', 'batwings', 'Bat wings', C.violet, C.violet),
   // v12 (09/11/2026, Robin) : taches de rousseur, grain de beaute, moustache et moustaches de chat retires
-  def('face', 'whiskers', 'Moustaches de chat', C.black, C.pink),
-  def('face', 'freckles', 'Taches de rousseur', '#c8733a', '#c8733a'),
-  def('face', 'mole', 'Grain de beauté', C.black, C.black),
+  def('face', 'whiskers', 'Cat whiskers', C.black, C.pink),
+  def('face', 'freckles', 'Freckles', '#c8733a', '#c8733a'),
+  def('face', 'mole', 'Beauty mark', C.black, C.black),
   def('neck', 'mustache', 'Mustache', C.black, C.black),
   // v11 (05/11/2026) : la cravate (essais v9 a v11 refuses)
   def('neck', 'tie', 'Tie', C.red, C.red),
-  def('head', 'ears', 'Serre-tête à oreilles', C.pink, C.cream),
-  def('eyes', 'ski', 'Lunettes de ski', C.orange, C.blue),
-  def('eyes', 'domino', 'Masque de héros', C.red, C.cream),
+  def('head', 'ears', 'Ear headband', C.pink, C.cream),
+  def('eyes', 'ski', 'Ski goggles', C.orange, C.blue),
+  def('eyes', 'domino', 'Hero mask', C.red, C.cream),
   def('face', 'bandage', 'Bandage', C.cream, C.pink),
   def('face', 'tear', 'Tear', C.blue, C.blue),
-  def('neck', 'medal', 'Médaille', C.gold, C.red),
-  def('neck', 'bell', 'Collier à clochette', C.turquoise, C.gold),
+  def('neck', 'medal', 'Medal', C.gold, C.red),
+  def('neck', 'bell', 'Bell collar', C.turquoise, C.gold),
   // v3 (05/11/2026)
-  def('head', 'party', 'Chapeau de fête', C.violet, C.yellow),
+  def('head', 'party', 'Party hat', C.violet, C.yellow),
   def('head', 'bob', 'Bob', C.yellow, C.cream),
   def('neck', 'bandana', 'Bandana', C.red, C.cream),
   // v4 (05/11/2026)
-  def('head', 'beanie', 'Bonnet à pompon', C.turquoise, C.cream),
-  def('back', 'tail', 'Queue', C.orange, C.orange),
-  def('eyes', 'sleep', 'Masque de sommeil', C.violet, C.cream)
+  def('head', 'beanie', 'Pompom beanie', C.turquoise, C.cream),
+  def('back', 'tail', 'Tail', C.orange, C.orange),
+  def('eyes', 'sleep', 'Sleep mask', C.violet, C.cream)
 ]
 
 export const ACCESSORY_BY_KEY = new Map(ACCESSORIES.map((a) => [`${a.slot}:${a.id}`, a]))

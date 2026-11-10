@@ -21,8 +21,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and the montage (GIF, MP4) are rendered frame by frame from an off-screen 3D Mochi, in the screen's style.
 - No outline around the eyes any more: in the light theme the eyes are always white, for every colour (yellow
   and lime included); in the dark theme they stay black.
-- The site, the docs and the lab use Mochi only through its public entry points, `mochi-world` and the new
-  `mochi-world/catalogue` (catalogues and shared settings without the tag; `dist-lib/catalogue.js`). A test fails
+- The site, the docs and the lab use Mochi only through its public entry points, `mochis` and the new
+  `mochis/catalogue` (catalogues and shared settings without the tag; `dist-lib/catalogue.js`). A test fails
   if they import an internal file. The docs show each example's result live, from the example's own tags.
 
 ### Added
@@ -43,13 +43,13 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The lab (`/labo`) fits a phone screen.
 - Dev dependencies: Vite 8.3, Vitest 4.1.12, happy-dom 21.0.4 (security fixes).
 
-- The project is now called **Mochi World** (the characters are still Mochi). The package name in
-  `package.json` is `mochi-world` (not published yet). Page titles, meta tags, the site header and footer
+- The project is now called **Mochis** (the characters are still Mochi). The package name in
+  `package.json` is `mochis` (not published yet). Page titles, meta tags, the site header and footer
   follow. Code names do not change: the component (`MochiBot`), the `mochi:` storage keys and every prop stay as they are.
 
 ### Added
 
-- `pnpm build:lib`: the library alone in `dist-lib/` (`mochi-world.js` plus the lazy 3D chunks), to copy
+- `pnpm build:lib`: the library alone in `dist-lib/` (`mochis.js` plus the lazy 3D chunks), to copy
   into any project until the npm package is published.
 
 - Community files: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, issue and pull request templates,
