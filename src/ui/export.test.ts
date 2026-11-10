@@ -211,7 +211,7 @@ describe('nom de fichier', () => {
 
   /*
    * `App.ts` relit forme / expression / couleur du localStorage sans les
-   * valider : une valeur trafiquee ne doit pas pouvoir composer un chemin.
+   * valider : une valeur trafiquee ne doit pas pouvoir compose un chemin.
    */
   it('ne laisse pas passer de separateur de chemin', () => {
     const name = nameFile('../../etc/passwd', 'neutral', 'ink', 'png')

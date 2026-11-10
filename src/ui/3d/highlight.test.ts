@@ -34,8 +34,8 @@ describe('reflet doux', () => {
     expect(r!.x).toBeLessThan(cx + 5)
     expect(r!.y).toBeLessThan(cy)
     // la tache est petite, douce et semi-transparente
-    expect(r!.opacite).toBeGreaterThan(0.1)
-    expect(r!.opacite).toBeLessThan(0.6)
+    expect(r!.opacity).toBeGreaterThan(0.1)
+    expect(r!.opacity).toBeLessThan(0.6)
     // ne touche pas les yeux
     for (const e of eyes) expect(Math.hypot(e.x - r!.x, e.y - r!.y)).toBeGreaterThan(0.2 * r!.rx)
   })

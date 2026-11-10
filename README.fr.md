@@ -33,15 +33,15 @@ cp -r dist-lib ../my-app/public/mochi   # gardez les fichiers ensemble
 ## Utilisation
 
 Mochi est un seul Web Component, `<mochi-bot>`. Chargez `mochis.js` une fois par page : il déclare la
-balise. Chaque option est un **attribut** (texte en kebab-case : `frozen-at="1.2"`, `contour`,
-`reflet="false"`, `accessoires='{"tete":"casquette"}'`) et une **propriété** (camelCase, n'importe quelle
-valeur : `el.accessoires = { tete: 'casquette' }`). Les méthodes (`setMood`, `react`, `relacher`,
-`regarder`, `seek`, `rendAt`) sont sur l'élément ; les événements sont des `CustomEvent` (`pret` à la
+balise. Chaque option est un **attribut** (texte en kebab-case : `frozen-at="1.2"`, `outline`,
+`highlight="false"`, `accessories='{"head":"cap"}'`) et une **propriété** (camelCase, n'importe quelle
+valeur : `el.accessories = { head: 'cap' }`). Les méthodes (`setMood`, `react`, `release`,
+`lookAt`, `seek`, `renderAt`) sont sur l'élément ; les événements sont des `CustomEvent` (`ready` à la
 première image 3D peinte, puis `statechange`, `blockchange`, `playingchange`, `elapsedchange`). Retiré de
 la page, il arrête sa boucle.
 
-Les identifiants sont ceux des catalogues, en français pour l'instant (`etoile` est l'étoile,
-`rendu` est le style de rendu : `3d` Soft, `flat3d` Flat, `pixel3d` Pixel).
+Les identifiants sont ceux des catalogues, en français pour l'instant (`star` est l'étoile,
+`renderStyle` est le style de rendu : `3d` Soft, `flat3d` Flat, `pixel3d` Pixel).
 
 ### HTML
 
@@ -76,7 +76,7 @@ export function Avatar({ mood }) {
 }
 ```
 
-Avec React 18, passez les objets (`accessoires`, `cycle`) et les écouteurs par une `ref`.
+Avec React 18, passez les objets (`accessories`, `cycle`) et les écouteurs par une `ref`.
 
 ### Vue
 
@@ -115,8 +115,8 @@ jamais un fichier interne, un test le vérifie) :
 
 - `mochis` (`dist-lib/mochis.js`) : déclare `<mochi-bot>` et exporte tout ce qui suit.
 - `mochis/catalogue` (`dist-lib/catalogue.js`) : les catalogues et réglages communs sans la balise
-  (`SHAPES`, `COLORS`, `CATALOGUE`, `EMPLACEMENTS`, `MOOD_IDS`, `REACTION_IDS`, `RENDUS`, `themeCourant`,
-  `cheminDeForme` pour une icône de forme, `charger3d` pour charger la 3D à la demande), pour construire
+  (`SHAPES`, `COLORS`, `ACCESSORIES`, `SLOTS`, `MOOD_IDS`, `REACTION_IDS`, `RENDER_STYLES`, `currentTheme`,
+  `shapePath` pour une icône de forme, `load3d` pour charger la 3D à la demande), pour construire
   un sélecteur avant de charger la balise.
 
 `src/bot/` n'a ni framework ni horloge : `engine.sample(t)` est une fonction pure du temps, et `BotEngine`
@@ -125,46 +125,46 @@ n'y a pas de dessin 2D.
 
 ## Ce qu'il contient
 
-**Styles de rendu** (`rendu`), tous en vraie 3D : `3d` (Soft, par défaut : ombrage doux, lueurs de
+**Styles de rendu** (`renderStyle`), tous en vraie 3D : `3d` (Soft, par défaut : ombrage doux, lueurs de
 bord et reflet calculés dans le repère de la caméra, pour que tout le volume soit éclairé de la même façon
-de tous les côtés), `flat3d` (Flat : deux ou trois tons en aplat, `contour` en option) et `pixel3d`
-(Pixel : rendu en basse résolution, palette courte, contour de 1 px ; `pixel` : `gros` 16, `moyen` 24,
-`fin` 32 px pour la boule). `yaw` fait tourner le modèle. Tout est en 3D, exports compris : il n'y a pas
-de dessin 2D. Sans WebGL, un court message remplace le Mochi et l'élément envoie l'événement `sans3d`.
+de tous les côtés), `flat3d` (Flat : deux ou trois tons en aplat, `outline` en option) et `pixel3d`
+(Pixel : rendu en basse résolution, palette courte, contour de 1 px ; `pixel` : `large` 16, `medium` 24,
+`fine` 32 px pour la boule). `yaw` fait tourner le modèle. Tout est en 3D, exports compris : il n'y a pas
+de dessin 2D. Sans WebGL, un court message remplace le Mochi et l'élément envoie l'événement `no3d`.
 
-**Formes** (12) : `cercle`, `galet`, `squircle`, `capsule`, `triangle`, `hexagone`, `nuage`,
-`goutte`, `etoile`, `fleur`, `oeuf`, `coeur`. Chaque forme a un vrai volume sous tous les angles : le
+**Formes** (12) : `circle`, `pebble`, `squircle`, `capsule`, `triangle`, `hexagon`, `cloud`,
+`drop`, `star`, `flower`, `egg`, `heart`. Chaque forme a un vrai volume sous tous les angles : le
 cercle est une sphère, le squircle un coussin arrondi, le triangle un cône arrondi, la goutte, l'œuf et
 la capsule sont des solides de révolution, et l'étoile, la fleur, l'hexagone, le nuage et le cœur sont
 des corps épais et arrondis.
 
-**Couleurs** (18 : 14 vives et 4 neutres) : `encre`, `brun`, `rouge`, `corail`, `orange`, `ambre`,
-`citron`, `pomme`, `vert`, `turquoise`, `ciel`, `bleu`, `violet`, `magenta`, `rose`, `cerise`, `gris`,
-`creme`. `color` accepte aussi n'importe quel code hexadécimal.
+**Couleurs** (18 : 14 vives et 4 neutres) : `ink`, `brown`, `red`, `coral`, `orange`, `amber`,
+`lime`, `apple`, `green`, `turquoise`, `sky`, `blue`, `violet`, `magenta`, `pink`, `cherry`, `grey`,
+`cream`. `color` accepte aussi n'importe quel code hexadécimal.
 
-**Humeurs** (7, en boucle, visage et corps) : `repos`, `reflechit`, `travaille` (tape sur un petit
-ordinateur portable 3D vu de dos, `ordinateur` le cache), `attend`, `termine`, `bloque`, `dort`. On en
-choisit une avec `<mochi-bot mood="travaille">` ou `setMood()`. **Interactions** (actives par défaut,
+**Humeurs** (7, en boucle, visage et corps) : `idle`, `thinking`, `working` (tape sur un petit
+ordinateur portable 3D vu de dos, `laptop` le cache), `waiting`, `done`, `blocked`, `asleep`. On en
+choisit une avec `<mochi-bot mood="working">` ou `setMood()`. **Interactions** (actives par défaut,
 `interactions`) : au survol le regard suit, une tape le fait sursauter, une double tape le fait rire, un
-appui long le fait rougir, une secousse ou un tour rapide lui donne le tournis, et `coucou` joue un
-bonjour à l'arrivée (il sort du sol en grandissant). Cela fait 5 réactions : `sursaut`, `rigole`,
-`rougit`, `etourdi`, `coucou`. Voir [docs/moods.md](docs/moods.md).
+appui long le fait rougir, une secousse ou un tour rapide lui donne le tournis, et `wave` joue un
+bonjour à l'arrivée (il sort du sol en grandissant). Cela fait 5 réactions : `startle`, `laugh`,
+`blush`, `dizzy`, `wave`. Voir [docs/moods.md](docs/moods.md).
 
-**Contrôles 3D** : `<mochi-bot rendu="3d" yaw="0.5">` fait tourner le modèle autour de son axe
+**Contrôles 3D** : `<mochi-bot renderStyle="3d" yaw="0.5">` fait tourner le modèle autour de son axe
 vertical (en radians ; les yeux sont peints sur la face avant seulement). La section 3D du site le pilote
 au glisser.
 
-**Accessoires** (22, prop `accessoires`, catalogue dans `src/bot/emplacements.ts`) : un par
+**Accessoires** (22, prop `accessories`, catalogue dans `src/bot/slots.ts`) : un par
 emplacement, tous cumulables, chacun une forme simple en une ou deux couleurs au choix.
 
 | Emplacement | Accessoires |
 |---|---|
-| `tete` (tête, 10) | `casquette`, `beret`, `haut-de-forme`, `couronne`, `paille`, `antenne`, `casque`, `ruban`, `fleur`, `toque` |
-| `yeux` (yeux, 6) | `rondes`, `carrees`, `soleil`, `coeur`, `etoile`, `monocle` |
-| `bas` (cou, 4) | `papillon`, `echarpe`, `perles`, `fleurs` |
-| `dos` (dos, 2) | `sac`, `cape` |
+| `head` (tête, 10) | `cap`, `beret`, `top-hat`, `crown`, `straw`, `antenna`, `headphones`, `ribbon`, `flower`, `toque` |
+| `eyes` (yeux, 6) | `round`, `square`, `sunglasses`, `heart`, `star`, `monocle` |
+| `neck` (cou, 4) | `bowtie`, `scarf`, `pearls`, `lei` |
+| `back` (dos, 2) | `backpack`, `cape` |
 
-`el.accessoires = { tete: { id: 'casquette', c1: '#e8505b' }, yeux: 'rondes' }`, ou la même chose en JSON dans l'attribut.
+`el.accessories = { head: { id: 'cap', c1: '#e8505b' }, eyes: 'round' }`, ou la même chose en JSON dans l'attribut.
 **Thème** : `theme="dark"` rend les yeux noirs (sans lui, c'est le thème courant du site). En thème clair, les yeux
 sont toujours blancs, pour toutes les couleurs, sans contour.
 
@@ -184,9 +184,9 @@ engine.setLook({ yaw, pitch, mix, wander }, t) // aim the eyes (null to release)
 const frame = engine.sample(t, geste?) // pure: bodyPath, eyes, arcs, dots, notif
 ```
 
-Options de `<mochi-bot>` : `size`, `shape`, `color`, `paper`, `frozen-at`, `follow`, `rendu`, `pixel`,
-`rendu3d`, `douceur`, `contour`, `epaisseur-contour`, `reflet`, `ombre`, `ombrage`, `yaw`, `theme`, `mood`,
-`interactions`, `coucou`, `ordinateur`, `accessoires`, `fps`, `label`, `max-pixel-ratio` (la propriété porte
+Options de `<mochi-bot>` : `size`, `shape`, `color`, `paper`, `frozen-at`, `follow`, `renderStyle`, `pixel`,
+`material`, `softness`, `outline`, `outline-width`, `highlight`, `shadow`, `shading`, `yaw`, `theme`, `mood`,
+`interactions`, `wave`, `laptop`, `accessories`, `fps`, `label`, `max-pixel-ratio` (la propriété porte
 le même nom en camelCase). `color` est un identifiant du catalogue (`violet`) ou n'importe quel code
 hexadécimal (`#ff8800`, `#f80`). Voir [mochi-bot.ts](src/components/mochi-bot.ts) et la
 [page docs](https://mochi-red-phi.vercel.app/docs).

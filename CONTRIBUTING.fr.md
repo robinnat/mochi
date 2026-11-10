@@ -49,11 +49,11 @@ Il n'y a pas de configuration de formateur ni de linter : suivez le code autour.
 - TypeScript simple, sans framework : les composants d'interface sont des fonctions construites avec le
   petit moteur de rendu de `src/ui/dom/`, et l'avatar est le Web Component `<mochi-bot>`.
 - 2 espaces, apostrophes simples, pas de points-virgules.
-- `three`, `src/ui/trois/scene3d.ts` et le reste de la 3D ne sont importés que dynamiquement
+- `three`, `src/ui/3d/scene3d.ts` et le reste de la 3D ne sont importés que dynamiquement
   (`await import(...)`), jamais par un `import` statique (`src/site/site.test.ts` le vérifie pour le site).
 - Les constantes de `src/bot/` sont des mesures, pas des choix. Ne les arrondissez pas et ne les
   « nettoyez » pas (voir [docs/measurements.md](docs/measurements.md)).
-- Les commentaires du code, les identifiants (`etoile`, `rendu`) et la plupart des fichiers de `docs/`
+- Les commentaires du code, les identifiants (`star`, `renderStyle`) et la plupart des fichiers de `docs/`
   sont en français. Vous pouvez écrire les nouveaux commentaires et la nouvelle documentation en anglais.
 - Gardez l'en-tête MIT de [LICENSE](LICENSE) tel quel, avec ses deux lignes de copyright.
 

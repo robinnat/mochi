@@ -5,35 +5,33 @@ import { radiusAtAngle, silhouette } from './shape'
 import { SHAPES } from './skins'
 
 /**
- * `radiusAtAngle`, la fonction qui recolle sur le contour reel tout ce qui est pose « sur »
- * le corps — les yeux et la pastille de notification.
+ * `radiusAtAngle`, the function that sticks back onto the real outline whatever sits "on" the body: the eyes and the
+ * notification dot.
  *
- * Elle n'avait aucun test, alors que le moteur l'appelle en `atan2(y, x) - pose.sil.rot` et
- * qu'`orbit` pousse `rot` jusqu'a environ -30 rad : son argument sort donc largement de
- * `[0, 2*PI)`. Toute simplification de son double modulo decollerait les yeux de la
- * silhouette pendant l'orbite, soit exactement la panne que cette fonction existe pour
- * eviter.
+ * It had no test, while the engine calls it as `atan2(y, x) - pose.sil.rot` and `orbit` pushes `rot` to about -30
+ * rad: its argument goes far outside `[0, 2*PI)`. Any simplification of its double modulo would detach the eyes from
+ * the silhouette during the orbit, exactly the failure this function exists to prevent.
  */
 
-/** Un profil franchement non circulaire : sur un cercle, tout angle donnerait 1. */
+/** A clearly non circular profile: on a circle, every angle would give 1. */
 const TRIANGLE = silhouette('triangle').radii
 
 describe('radiusAtAngle', () => {
-  it('rend le rayon du profil, pas une constante', () => {
+  it('returns the profile\'s radius, not a constant', () => {
     const seen = new Set(Array.from({ length: 16 }, (_, i) => radiusAtAngle(TRIANGLE, (i / 16) * TAU)))
     expect(seen.size).toBeGreaterThan(8)
   })
 
-  it('enroule les angles negatifs', () => {
+  it('wraps negative angles', () => {
     expect(radiusAtAngle(TRIANGLE, -0.1)).toBeCloseTo(radiusAtAngle(TRIANGLE, TAU - 0.1), 12)
     expect(radiusAtAngle(TRIANGLE, -1)).toBeCloseTo(radiusAtAngle(TRIANGLE, TAU - 1), 12)
   })
 
   /**
-   * Le cas d'`orbit` : plusieurs tours dans le negatif. C'est ce que le double modulo de
-   * `((x % 1) + 1) % 1` gere et qu'un modulo simple casse.
+   * The `orbit` case: several turns into the negative. That is what the double modulo of `((x % 1) + 1) % 1` handles
+   * and a simple modulo breaks.
    */
-  it('enroule sur plusieurs tours, dans les deux sens', () => {
+  it('wraps over several turns, both ways', () => {
     for (const base of [-30, -12.5, 7.3]) {
       for (const turns of [-3, -1, 1, 5]) {
         expect(
@@ -45,33 +43,30 @@ describe('radiusAtAngle', () => {
   })
 
   /**
-   * Continue au passage par zero, la ou l'enroulement fait sauter l'index de 63 a 0. Une
-   * simplification qui renverrait une valeur de repli — 1, typiquement — se verrait ici
-   * comme une marche de 0,22 sur ce profil.
+   * Continuous across zero, where wrapping makes the index jump from 63 to 0. A simplification that returned a
+   * fallback value (1, typically) would show here as a 0.22 step on this profile.
    *
-   * Huit decimales et pas neuf : l'ecart mesure vaut 7e-10, du bruit flottant sur des
-   * indices calcules par modulo. C'est trois ordres de grandeur sous ce qu'une vraie
-   * discontinuite produirait.
+   * Eight decimals and not nine: the measured gap is 7e-10, floating point noise on indices computed by modulo. That
+   * is three orders of magnitude below what a real discontinuity would give.
    */
-  it('est continue au passage par zero', () => {
+  it('is continuous across zero', () => {
     expect(radiusAtAngle(TRIANGLE, -1e-9)).toBeCloseTo(radiusAtAngle(TRIANGLE, 1e-9), 8)
-    // et la valeur y est bien celle du profil, pas un repli
+    // and the value there is the profile's, not a fallback
     expect(radiusAtAngle(TRIANGLE, 0)).toBeCloseTo(TRIANGLE[0]!, 12)
   })
 })
 
 /**
- * Les formes du personnalisateur sont baties analytiquement, sans passer par le generateur
- * qui produit `profiles.ts`. Rien ne verifiait leur echantillonnage.
+ * The customizer shapes are built analytically, without the generator that produces `profiles.ts`. Nothing checked
+ * their sampling.
  *
- * C'est ce qui rend le controle necessaire : `blend` interpole par INDEX et retombe sur
- * `?? 1` quand l'index manque, donc une forme construite avec un autre nombre
- * d'echantillons morphe silencieusement vers un cercle unite au lieu d'echouer. Elle serait
- * juste au repos et fausse dans toutes ses transitions — le pire des deux mondes, parce que
- * personne ne penserait a regarder un morph.
+ * That makes the check necessary: `blend` interpolates by INDEX and falls back on `?? 1` when the index is missing,
+ * so a shape built with another sample count silently morphs towards a unit circle instead of failing. It would be
+ * right at rest and wrong in all its transitions: the worst of both worlds, because nobody would think of looking at
+ * a morph.
  */
-describe('profils des shapes du personnalisateur', () => {
-  it('ont tous le meme echantillonnage angulaire, fini et positif', () => {
+describe('customizer shape profiles', () => {
+  it('all share the same angular sampling, finite and positive', () => {
     for (const shape of SHAPES) {
       expect(shape.radii, shape.id).toHaveLength(PROFILE_SAMPLES)
       for (const [i, r] of shape.radii.entries()) {
@@ -82,11 +77,11 @@ describe('profils des shapes du personnalisateur', () => {
   })
 
   /**
-   * Bornes larges, uniquement la pour attraper une forme aberrante : un rayon sous 0,3
-   * ferait sortir les yeux, un rayon au-dela de 1,6 sortirait du viewBox. Ce ne sont pas des
-   * mesures, c'est le domaine dans lequel le reste du dossier a du sens.
+   * Wide bounds, only there to catch an absurd shape: a radius under 0.3 would push the eyes out, a radius over 1.6
+   * would leave the viewBox. These are not measurements, it is the domain in which the rest of the folder makes
+   * sense.
    */
-  it('restent dans un domaine ou le reste du moteur tient', () => {
+  it('stay in a domain where the rest of the engine holds', () => {
     for (const shape of SHAPES) {
       const min = Math.min(...shape.radii)
       const max = Math.max(...shape.radii)

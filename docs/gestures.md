@@ -1,59 +1,44 @@
-# Gestes : animations variées (couche facultative)
+# Gestures: small extra moves (optional layer)
 
-`src/bot/gestes.ts` ajoute de petites animations PAR-DESSUS la pose du moteur, pour qu'un
-groupe d'avatars ne bouge pas d'un seul bloc. Ce sont des réglages choisis, pas des
-mesures : ils sont rangés à part et n'entrent en jeu que si on les passe à `sample()`.
+`src/bot/gestures.ts` adds small moves ON TOP of the engine's pose, so a group of avatars does not move as one block. These are chosen settings, not measurements: they live apart and only apply when you pass them to `sample()`.
 
 ```ts
 import { BotEngine } from './engine'
-import { gesteRepos, rebond, composer } from './gestes'
+import { idleGesture, bounce, compose } from './gestures'
 
 const bot = new BotEngine(100, 'idle')
-const image = bot.sample(t, composer(gesteRepos(t, graine), rebond(t - toucheA)))
+const frame = bot.sample(t, compose(idleGesture(t, seed), bounce(t - touchedAt)))
 ```
 
-Sans second argument (ou avec `GESTE_NEUTRE`), `sample(t)` rend exactement la même image
-qu'avant, octet pour octet (test dans `gestes.test.ts`). Tout reste pur : fonction du temps
-et d'une graine, aucune horloge, aucun état.
+Without a second argument (or with `NEUTRAL_GESTURE`), `sample(t)` gives exactly the same frame as before, byte for byte (tested in `gestures.test.ts`). Everything stays pure: a function of time and a seed, no clock, no state.
 
-Planche : `labo.html#moods` (humeurs et réactions, en 3D).
+To see them: `lab.html#moods` (moods and reactions, in 3D).
 
-## Ce qu'un geste peut changer
+## What a gesture can change
 
-`Geste = { dx, dy, sx, sy, yaw, pitch, roll, lid }` : déplacement du corps et des yeux (en
-rayons), échelles du corps, écarts de visée (degrés), paupière maximale. `composer(a, b)`
-additionne, multiplie et garde la paupière la plus fermée.
+`Gesture = { dx, dy, sx, sy, yaw, pitch, roll, lid }`: body and eye offset (in radii), body scale, aim offsets (degrees), and the maximum eyelid. `compose(a, b)` adds the offsets, multiplies the scales and keeps the most closed eyelid.
 
-## Attente (`gesteRepos(t, graine)`)
+## Waiting (`idleGesture(t, seed)`)
 
-Sept gestes courts : `cligne`, `respire`, `saut`, `balance`, `regard`, `hoche`, `etire`.
-Calendrier en O(1) : une fenêtre de 8 s, un geste à un décalage tiré dans [0, 4[ s, donc 4 à
-12 s entre deux gestes, jamais avant 4 s. La graine choisit 4 gestes préférés
-(`personnalite`) avec des poids 35, 30, 25 et 10 % : chaque avatar a sa façon d'attendre,
-et deux graines différentes ne gesticulent presque jamais en même temps.
+Seven short gestures: `blink`, `breathe`, `jump`, `balance`, `gaze`, `nod`, `stretch`. The schedule is O(1): an 8 s window with one gesture at an offset drawn in [0, 4[ s, so 4 to 12 s between two gestures, never before 4 s. The seed picks 4 favorite gestures (`personality`) with weights of 35, 30, 25 and 10 %: each avatar has its own way of waiting, and two different seeds almost never move at the same time.
 
-## Toucher (`rebond(u)`)
+## Touch (`bounce(u)`)
 
-Écrasement puis petit ressort amorti sur `REBOND_DUREE` (0,7 s). C'est le seul ressort du
-corps, et il n'existe que dans cette couche : les états mesurés gardent leurs ease-out.
+A squash, then a small damped spring over `BOUNCE_DURATION` (0.7 s). It is the only spring of the body, and it only exists in this layer: the measured states keep their ease-outs.
 
-## Sommeil et échec
+## Sleep and failure
 
-- `gesteSommeil(t)` : respiration lente (4,6 s), yeux fermés, corps un peu tassé ;
-  `zSommeil(t)` donne la position de petits « z » qui montent (à dessiner par l'application).
-- `gesteEchec(t)` : affaissement, tête basse, soupir lent. À combiner avec l'expression `triste`.
+- `sleepGesture(t)`: slow breathing (4.6 s), eyes closed, body a little squashed. `sleepZ(t)` gives the position of small rising "z".
+- `gestureFailure(t)`: slumped, head down, slow sigh. Combine it with the `sad` expression.
 
-## Au travail (`ACTIVITES`)
+## At work (`ACTIVITIES`)
 
-Chaque activité joue un état du moteur en boucle (`tempsActivite`) et ajoute un geste :
-`reflexion` (trois points qui pulsent), `frappe` (regard baissé, petites frappes) et
-`balayage` (le regard lit de gauche à droite). Elles passent toutes par le visage.
-L'application choisit l'activité de chaque rôle.
+Each activity plays an engine state on a loop (`timeActivity`) and adds a gesture: `reflection` (three pulsing dots), `typing` (eyes down, small taps) and `sweep` (the gaze reads from left to right). They all go through the face. The app picks the activity of each role.
 
-## Moteur seul pour une autre page
+## The engine alone, for another page
 
-`tools/moteur.ts` exporte le moteur, les teintes 3D et les gestes, sans framework :
+`tools/engine.ts` exports the engine, the 3D tints and the gestures, with no framework:
 
-    npx esbuild@0.24.0 tools/moteur.ts --bundle --format=esm --minify --outfile=mochi-engine.js
+    npx esbuild@0.24.0 tools/engine.ts --bundle --format=esm --minify --outfile=mochi-engine.js
 
-Recopier l'en-tête MIT de `LICENSE` en tête du fichier produit.
+Copy the MIT header of `LICENSE` at the top of the produced file.

@@ -7,12 +7,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed
 
-- **No 2D any more.** The old SVG drawings (`original`, `pixel`, `argile`, `bulle`, partly derived from bloub) are
+- **No 2D any more.** The old SVG drawings (`original`, `pixel`, `argile`, `bubble`, partly derived from bloub) are
   gone, with their pixel-art rasteriser, the 2D drawing of worn accessories and the 2D job accessories (the
-  `accessoire` prop). Mochi is always drawn in 3D (Soft, Flat, Pixel). An unknown `rendu` (old ids included) falls
-  back to the current style. Without WebGL, a short message takes the Mochi's place and the element fires `sans3d`.
+  `accessory` prop). Mochi is always drawn in 3D (Soft, Flat, Pixel). An unknown `renderStyle` (old ids included) falls
+  back to the current style. Without WebGL, a short message takes the Mochi's place and the element fires `no3d`.
 - The animated SVG export: it animated the 2D eyes, and the 3D has no vector drawing to animate.
-- The blush accessory (`visage: 'joues'`) and with it the face slot in pickers: 22 accessories, four slots
+- The blush accessory (`face: 'cheeks'`) and with it the face slot in pickers: 22 accessories, four slots
   (head, eyes, neck, back). Glasses and the monocle stay under eyes. Blushing on long press (an expression) stays.
 
 ### Changed
@@ -32,15 +32,15 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **No framework any more.** The avatar is now a native web component, `<mochi-bot>`, with no dependency:
   it works in plain HTML, React, Svelte, Angular or any other framework. Every option is an attribute
-  (kebab-case text, JSON for `accessoires` and `cycle`) and a property (camelCase, any value); methods
-  (`seek`, `rendAt`, `setMood`, `react`, `relacher`, `regarder`) are on the element; events are
-  `CustomEvent`s (`pret`, `statechange`, `blockchange`, `playingchange`, `elapsedchange`). The drawing is an
+  (kebab-case text, JSON for `accessories` and `cycle`) and a property (camelCase, any value); methods
+  (`seek`, `renderAt`, `setMood`, `react`, `release`, `lookAt`) are on the element; events are
+  `CustomEvent`s (`ready`, `statechange`, `blockchange`, `playingchange`, `elapsedchange`). The drawing is an
   `<svg>` in the light DOM, so exports serialise it as before. Removed from the page, it stops its loop,
   listeners and timers. The site, the app, the docs and the lab are plain TypeScript on a small in-house
   renderer (`src/ui/dom/`). Same pages, texts and URLs. The JavaScript loaded on first visit drops by about
   a third (site: 75 to 49 kB gzip, app: 92 to 65 kB gzip).
 - Pages that host a Mochi keep their own language and title: only the app follows its language setting.
-- The lab (`/labo`) fits a phone screen.
+- The lab (`/lab`) fits a phone screen.
 - Dev dependencies: Vite 8.3, Vitest 4.1.12, happy-dom 21.0.4 (security fixes).
 
 - The project is now called **Mochis** (the characters are still Mochi). The package name in
@@ -60,9 +60,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed (for now)
 
-- The two pairs of wings (angel, bat): out of `CATALOGUE` (23 accessories), kept in `RETIRES`.
+- The two pairs of wings (angel, bat): out of `ACCESSORIES` (23 accessories), kept in `REMOVED`.
 
-- Freckles, beauty mark, moustache and cat whiskers: out of `CATALOGUE` (29 to 25 accessories), kept in `RETIRES`.
+- Freckles, beauty mark, moustache and cat whiskers: out of `ACCESSORIES` (29 to 25 accessories), kept in `REMOVED`.
 - The jumping movement: the "Movement" section of the site, `src/bot/sauts.ts`, the isometric space `EspaceIso`
   and the lab's `#iso` view.
 
@@ -72,23 +72,23 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- The `dort` mood shows small rising Z marks (all renderers).
+- The `asleep` mood shows small rising Z marks (all renderers).
 
 ### Changed (site)
 
 - Landing page: seven moods demo, live interactions (hover, tap, double tap, long press, hello on arrival, which now
   grows the Mochi out of the floor), slot-based accessory picker with colours, and a light/dark/auto switch
-  (3D eyes turn black in dark). `MochiBot` gains the `accessoires` prop (slot selection) and follows the
-  site theme when `theme` is not set. The tie accessory is retired (kept in `RETIRES`).
+  (3D eyes turn black in dark). `MochiBot` gains the `accessories` prop (slot selection) and follows the
+  site theme when `theme` is not set. The tie accessory is retired (kept in `REMOVED`).
 
 ### Added (moods and interactions, proposal)
 
-- Seven looped moods (`repos`, `reflechit`, `travaille`, `attend`, `termine`, `bloque`, `dort`) and six
+- Seven looped moods (`idle`, `thinking`, `working`, `waiting`, `done`, `blocked`, `asleep`) and six
   interactions (hover follows the cursor, tap, double tap, long press blushes, shake or fast turn makes
-  it dizzy, a greeting on appearance), face and body only. API: `setMood(id)`, `react(id)`, `relacher()`,
-  `regarder()` on `MochiBot`; props `mood`, `interactions`, `coucou`, `fps`; `Humeurs` class in
-  `src/bot/humeurs.ts`. Respects `prefers-reduced-motion`. See `docs/moods.md`.
-- `Geste` gains optional face fields (crescent eyes, mirrored tilt, gaze offset, head tilt, cheek tint);
+  it dizzy, a greeting on appearance), face and body only. API: `setMood(id)`, `react(id)`, `release()`,
+  `lookAt()` on `MochiBot`; props `mood`, `interactions`, `wave`, `fps`; `Moods` class in
+  `src/bot/moods.ts`. Respects `prefers-reduced-motion`. See `docs/moods.md`.
+- `Gesture` gains optional face fields (crescent eyes, mirrored tilt, gaze offset, head tilt, cheek tint);
   without them `sample(t)` is unchanged byte for byte. In 3D the lid, slant and head tilt now apply to the
   front-facing eyes when the layer is on.
 
@@ -97,10 +97,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `theme: 'light' | 'dark'` (default `'light'`, rendering unchanged): in `'dark'` the eyes are black
   (`#0a0a0c`) in the three styles and the 11 shapes, all moods and blinks included. Lighting, rim glows
   and reflection are the same, but they no longer add light on the eyes. Available as the last arguments
-  of `rendreAvatar(..., theme, contrasteOeil)`, `Mochi3d.setTheme`, `EspaceIso` option `theme` and the
+  of `renderAvatar(..., theme, eyeContrast)`, `Mochi3d.setTheme`, `EspaceIso` option `theme` and the
   `theme` prop of `MochiBot`.
 - Dark theme only: a body whose contrast with the black eye is under 3:1 is lightened just enough to reach
-  3:1 (ink, dark navy and dark grey bodies); other colours are untouched. `contrasteOeil = 0` disables it.
+  3:1 (ink, dark navy and dark grey bodies); other colours are untouched. `eyeContrast = 0` disables it.
 - Dark theme only: the black lens of the sunglasses becomes slate so it stays distinct from black eyes.
 
 ### Changed (pillow shapes)
@@ -125,7 +125,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- **Worn accessories** (`src/bot/portes.ts`, `porte` prop): round glasses, sunglasses, mini top hat,
+- **Worn accessories** (`src/bot/worn.ts`, `worn` prop): round glasses, sunglasses, mini top hat,
   straw hat, beanie, bow, crown and headphones. Only glasses, a top hat and a bow are exposed on the site, in 3D; the 2D layer is kept in the engine but switched off (`PORTE_2D`). They are recomputed from every engine frame
   (body outline and eyes), so they follow squash, hops, shapes, gaze and blinks in flat, pixel
   art, clay, bubble and real 3D. Hats and headphones are real volumes in 3D and turn with the
@@ -154,31 +154,31 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the 2D gaze (2D unchanged). The soft highlight is bigger and more diffuse. The triangle is a
   real pyramid. The star has sharper points (inner radius 0.5, was 0.62). The heart shape is
   removed (a saved heart falls back to the circle).
-- **Real volumes for every 3D shape** (`src/ui/trois/volume.ts`, `docs/styles.md`): the body is
+- **Real volumes for every 3D shape** (`src/ui/3d/volume.ts`, `docs/styles.md`): the body is
   no longer a flat cushion seen from the side. Height now depends on the distance to the edge
   (flat front, constant-radius rounded edge, straight wall); each shape has a volume profile.
   The squircle is a true cube, triangle/hexagon/star are rounded prisms, flower/cloud are
   domed cushions, balls stay round (circle is still an exact sphere). Eyes are painted on the
-  front face only and kept off the rounded edge. Lab view `#tour` shows each shape from four
+  front face only and kept off the rounded edge. Lab view `#turn` shows each shape from four
   angles.
 
 ### Added
 
-- **Smooth 3D shading, now the default** (`src/ui/trois/rendu3d.ts`, `docs/styles.md`): new `doux`
+- **Smooth 3D shading, now the default** (`src/ui/3d/material.ts`, `docs/styles.md`): new `soft`
   material, a continuous matte falloff (no band, no specular, no rim light, low contrast) with a
-  `douceur` parameter (`leger` ~16 % darker at the lowest, `marque` ~24 %). The 3D style now
-  uses `doux` / `marque`; `aplat` stays in code only.
-- **Flat 3D for the real 3D** (`src/ui/trois/rendu3d.ts`, `docs/styles.md`): the default
-  material is now `aplat` (two flat tones, flat 2D colours, flat white eyes), with an optional
-  **cartoon outline** (`contour`, a "Cartoon outline" checkbox in the Customize view) and an
-  organic shadow edge. `toon`, `toon-contour` and `lowpoly` stay in code only; `realiste` is
-  internal. The 3D style is now labelled "3D". Lab view `#formes3d`.
-- **Optional gesture layer** (`src/bot/gestes.ts`, `docs/gestes.md`): seeded idle gestures
+  `softness` parameter (`light` ~16 % darker at the lowest, `strong` ~24 %). The 3D style now
+  uses `soft` / `strong`; `flat` stays in code only.
+- **Flat 3D for the real 3D** (`src/ui/3d/material.ts`, `docs/styles.md`): the default
+  material is now `flat` (two flat tones, flat 2D colours, flat white eyes), with an optional
+  **cartoon outline** (`outline`, a "Cartoon outline" checkbox in the Customize view) and an
+  organic shadow edge. `toon`, `toon-outline` and `lowpoly` stay in code only; `realistic` is
+  internal. The 3D style is now labelled "3D". Lab view `#shapes3d`.
+- **Optional gesture layer** (`src/bot/gestures.ts`, `docs/gestures.md`): seeded idle gestures
   every 4 to 12 s with a per-seed personality, a bounce on touch, sleep and failure
-  postures, seven working activities. `engine.sample(t, geste)` takes it as an optional
+  postures, seven working activities. `engine.sample(t, gesture)` takes it as an optional
   second argument; without it the frame is byte-identical (tested).
-- `tools/moteur.ts`: engine-only entry point (no framework) to bundle the engine for another page.
-- **Job accessories** (`src/bot/accessoires.ts`, `docs/accessoires.md`): nine animated props
+- `tools/engine.ts`: engine-only entry point (no framework) to bundle the engine for another page.
+- **Job accessories** (`src/bot/accessories.ts`, `docs/accessories.md`): nine animated props
   drawn in code (notebook, laptop, clapperboard, chart, paper plane, palette, clipboard,
   list, gear), each with its gesture, a job-to-prop map and a `simple` mode for tiny sizes.
   The hands are two detached capsules in the body colour.
@@ -212,7 +212,7 @@ fixed, and the measurement is in the commit that fixes it.
 
 ### Fixed
 
-- **Playback could never get past a repeated animation.** Writing `#etat=` fired a
+- **Playback could never get past a repeated animation.** Writing `#state=` fired a
   `hashchange` the listener read as an incoming navigation, and the lookup returns a
   state's *first* occurrence — so a montage holding the same animation twice looped
   forever on the first one. One click in the palette was enough to trigger it.
@@ -229,7 +229,7 @@ fixed, and the measurement is in the commit that fixes it.
   rendered in another view, so the progress bar vanished and nothing explained why.
 - **MP4 stayed selected on browsers that cannot encode it.** The option was hidden but
   the value still won, and the export failed on the spot.
-- **`versMp4` leaked its encoder on failure.** Chrome caps simultaneous hardware
+- **`toMp4` leaked its encoder on failure.** Chrome caps simultaneous hardware
   encoders, so after a few failures later exports died at startup for an unrelated
   reason.
 - **A forbidden `localStorage` made the page blank.** Reading the property throws a
@@ -258,7 +258,7 @@ fixed, and the measurement is in the commit that fixes it.
 
 ### Changed
 
-- `RAYON` and `DEMI_VIEWBOX` moved to `src/bot/repere.ts`. They define what the engine
+- `RADIUS` and `HALF_VIEWBOX` moved to `src/bot/frame.ts`. They define what the engine
   returns, so they could not stay in a `<script setup>` that exports nothing.
 - `MIN_BLOCK` is derived from the longest fade in the catalogue instead of written by
   hand — it only worked because the two happened to match.

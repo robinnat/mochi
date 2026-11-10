@@ -33,7 +33,7 @@ on a short window instead of landing on top of it.
 
 An animation replays on **every mount**: on reload, and on every view change. A
 transition doesn't run on an element's first computed style, so the bar is born
-visible and stays quiet. That is exactly how `.panneau` works.
+visible and stays quiet. That is exactly how `.panel` works.
 
 Corollary: the bar is **mounted during the arrival**, merely hidden (`--cachee` plus
 `inert`, because an `opacity: 0` element is still clickable and focusable). Without a
@@ -53,16 +53,16 @@ There is no 2D drawing any more (removed on 10/11/2026): the Mochi is a WebGL ca
 `<foreignObject>` of the element's `<svg>`, which also carries the small vector effects of the states
 (dots, rings, the "z" of sleep).
 
-**Still images (PNG, SVG, copy)** serialise the live `<svg>` and `figeToiles` swaps each canvas for an
+**Still images (PNG, SVG, copy)** serialise the live `<svg>` and `freezeCanvases` swaps each canvas for an
 `<image>` holding a `data:` PNG of what it shows. A `<foreignObject>` left in would taint the raster
 canvas (`toBlob` fails with `SecurityError`), and `cloneNode` does not copy a canvas's pixels. `width` and
 `height` are set explicitly, because without an intrinsic size Firefox refuses to rasterise an SVG loaded
 into an `<img>`. The SVG file is therefore a container around a bitmap of the 3D, not a scalable drawing.
 
 **Animations (GIF, MP4)** are rendered frame by frame on an off-screen `<mochi-bot>` in the screen's
-style: `attendre3d` waits for its first 3D frame (`pret`), then each `rendAt(t)` (montage) or `frozenAt`
+style: `wait3d` waits for its first 3D frame (`ready`), then each `renderAt(t)` (montage) or `frozenAt`
 (avatar GIF) is followed by two `nextTick`s, the engine's redraw then the 3D one (`post` queue), before the
-`<svg>` is rasterised. Without WebGL the element fires `sans3d` and the export fails cleanly: there is no 2D
+`<svg>` is rasterised. Without WebGL the element fires `no3d` and the export fails cleanly: there is no 2D
 fallback to export instead.
 
 ## The export frame is tighter than the screen's, and shared by all shapes
@@ -101,10 +101,10 @@ browser's downscale re-smooths it.
 
 **With a background, the eyes must take its exact colour.** They are holes filled with
 `paper`, so left at the site's off-white they show up as a slightly darker ring inside a white
-frame. `sequenceDuBot` therefore passes the matte through as `paper`, measured: eyes at
+frame. `sequenceOfBot` therefore passes the matte through as `paper`, measured: eyes at
 `255,255,255` on a white background against `249,249,249` on a transparent one.
 
-`gifAnime` **deduces** transparency from the pixels rather than being told: flattened frames
+`gifAnimate` **deduces** transparency from the pixels rather than being told: flattened frames
 must not declare a transparent index, and above all must not be disposed to background between
 frames, which would flash the background. Transparent frames dispose to background (2),
 opaque ones stay in place (1). Both cases are locked by a test.
@@ -112,7 +112,7 @@ opaque ones stay in place (1). Both cases are locked by a test.
 Its LZW encoder is hand-rolled (no dependency), and it holds **the one trap of the format**:
 the encoder writes its dictionary entry right after emitting a code, while the decoder only
 writes its own when it reads the *next* code. The decoder is therefore permanently one entry
-behind, so the encoder must widen its codes one step late: `suivant > (1 << taille)`, never
+behind, so the encoder must widen its codes one step late: `next > (1 << size)`, never
 `===`. Getting that wrong desynchronises the two and every reader rejects the file, with
 nothing in the structure to show why. There is a round-trip test decoding the stream back to
 its exact pixels, because structural assertions cannot catch this.
@@ -153,7 +153,7 @@ the relationship.
 **`frozenAt` does not walk the montage, and `seek` is not enough either.** `apply()` dates
 the engine with `clock`, which only advances in the rAF loop and therefore stays at 0 while
 frozen: every state change would register at t=0 and the cross-fades at block joints would
-be wrong. Hence `rendAt(t)` on `MochiBot`: it resolves the block with `blockAt` and calls
+be wrong. Hence `renderAt(t)` on `MochiBot`: it resolves the block with `blockAt` and calls
 `setState` with the block's **absolute** offset, reproducing `tick()` without a clock. Proven
 by measurement: across a joint the silhouette moves 17.6 → 7.0 → 2.1 → 0.36 → 0.02 over
 ~0.3 s, the decay of an exponential ease-out. A broken morph would show one single jump.

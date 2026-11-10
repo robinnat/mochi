@@ -1,24 +1,21 @@
 /**
- * Accessoires PORTES : lunettes rondes, lunettes de soleil, mini haut-de-forme, chapeau de
- * paille, bonnet, noeud, couronne et casque audio, en 3D. Ils sont poses SUR le corps et le
- * suivent : ils sont recalcules a chaque image du moteur, depuis le contour (`bodyPath`) et les
- * yeux de cette image. Un saut, un ecrasement, un changement de forme ou d'humeur les deplace
- * donc avec le corps, sans reglage a part.
+ * WORN accessories: round glasses, sunglasses, a mini top hat, a straw hat, a beanie, a bow, a crown and headphones,
+ * in 3D. They sit ON the body and follow it: they are computed again at every engine frame, from the outline
+ * (`bodyPath`) and the eyes of that frame. A jump, a squash, a change of shape or mood moves them with the body, with
+ * no extra setting.
  *
- * Meme principe que les gestes : un reglage choisi, pas une mesure, et une couche facultative.
- * Rien ne change dans `engine.sample(t)`.
+ * Same principle as gestures: a chosen setting, not a measurement, and an optional layer. Nothing changes in
+ * `engine.sample(t)`.
  *
- * Les COUPES (`Part`) sont donnees en unites du moteur (rayon 100, y vers le bas) ;
- * `trois/worn3d.ts` en fait des volumes (cylindres, calottes, tores) fixes au maillage, donc ils
- * tournent avec lui. Les lunettes, elles, sont PEINTES sur le visage 3D, a la place exacte des
- * yeux 3D (qui sont toujours de face).
+ * The PARTS (`Part`) are given in engine units (radius 100, y down); `3d/worn3d.ts` turns them into volumes
+ * (cylinders, domes, tori) attached to the mesh, so they turn with it. Glasses are PAINTED on the 3D face, exactly
+ * where the 3D eyes are (always facing front).
  *
- * Style commun : aplats pastel mats, meme trait fonce de la meme teinte, aucun reflet franc.
+ * Shared style: flat matte tints, the same dark stroke of the same hue, no sharp highlight.
  *
- * Coherence avec l'humeur : les verres sont transparents (lunettes) ou teintes a 55 % (soleil),
- * jamais opaques, donc un clin d'oeil ou des yeux ecarquilles se lisent a travers. Quand le
- * visage disparait (`thinking`, `sleep`), les lunettes disparaissent avec lui ; le chapeau, lui,
- * reste sur le corps, aussi petit soit-il.
+ * Consistent with the mood: lenses are clear (glasses) or 55 % tinted (sunglasses), never opaque, so a wink or wide
+ * eyes read through them. When the face disappears (`thinking`, `sleep`), the glasses disappear with it; the hat
+ * stays on the body, however small.
  */
 import { bodyOutline } from '@/ui/3d/volume'
 import type { BotFrame } from './engine'
@@ -28,7 +25,7 @@ export type WornId = 'glasses' | 'sunglasses' | 'top-hat' | 'straw' | 'beanie' |
 
 export const WORN_IDS: WornId[] = ['glasses', 'sunglasses', 'top-hat', 'straw', 'beanie', 'bow', 'crown', 'headphones']
 
-/** Teintes pastel des accessoires portes (aplat) ; le trait est la meme teinte, foncee. */
+/** Tints of the worn accessories (flat); the stroke is the same hue, darker. */
 export const WORN_TINTS: Record<WornId, { background: string; accent: string }> = {
   glasses: { background: '#ffffff', accent: '#4b5368' },
   sunglasses: { background: '#2c3040', accent: '#2c3040' },
@@ -43,23 +40,23 @@ export const WORN_TINTS: Record<WornId, { background: string; accent: string }> 
 export const stroke = (hex: string) => mixHex(hex, '#000000', 0.42)
 
 export interface Geo {
-  /** axe et sommet du corps */
+  /** axis and top of the body */
   cx: number
   top: number
   neck: number
-  /** ligne ou le chapeau s'appuie, et sa largeur de corps (chord) */
+  /** line where the hat rests, and the body width there (chord) */
   by: number
   rb: number
-  /** hauteur de la calotte entre la ligne d'appui et le sommet */
+  /** height of the dome between the resting line and the top */
   cap: number
-  /** hauteur et demi-largeur du corps au milieu (oreilles) */
+  /** height and half width of the body in the middle (ears) */
   mid: number
   hw: number
-  /** hauteur (y) du dessus du corps a l'abscisse x ; le bas du corps si la verticale le manque */
+  /** height (y) of the top of the body at abscissa x; the bottom of the body if the vertical misses it */
   topA: (x: number) => number
 }
 
-/** Largeur du corps a la hauteur `y` : [xmin, xmax] ou null si la ligne ne coupe pas le corps. */
+/** Width of the body at height `y`: [xmin, xmax], or null if the line does not cross the body. */
 function chord(pts: Array<{ x: number; y: number }>, y: number): [number, number] | null {
   let a = Infinity
   let b = -Infinity
@@ -75,7 +72,7 @@ function chord(pts: Array<{ x: number; y: number }>, y: number): [number, number
   return a === Infinity ? null : [a, b]
 }
 
-/** Mesures du corps de CETTE image ; null si le corps n'est pas la (fondu, vide). */
+/** Measurements of the body of THIS frame; null if the body is not there (fade, empty). */
 export function measuresWorn(frame: BotFrame): Geo | null {
   if (frame.bodyPath.length < 10 || frame.bodyAlpha < 0.05) return null
   const pts = bodyOutline(frame.bodyPath, 2)
@@ -101,7 +98,7 @@ export function measuresWorn(frame: BotFrame): Geo | null {
     top: y0,
     neck: y1,
     by,
-    // plancher : au sommet d'une pointe (etoile) la corde est etroite, le chapeau reste lisible
+    // floor: at the top of a tip (star) the chord is narrow, the hat stays readable
     rb: Math.max(2, (c[1] - c[0]) / 2, 0.17 * (x1 - x0)),
     cap: by - y0,
     mid: y0 + 0.5 * H,
@@ -131,9 +128,9 @@ export type Part =
   | { t: 'ear'; x: number; y: number; rx: number; ry: number; background: string }
 
 /**
- * Les parties d'un chapeau, du dessous au dessus. Tout est proportionnel au corps : `rb` (sa
- * largeur a la ligne d'appui) et `cap` (la hauteur entre cette ligne et le sommet), si bien
- * qu'une etoile, un cube ou une petite boule de sommeil portent le meme chapeau a leur echelle.
+ * The parts of a hat, from bottom to top. Everything is proportional to the body: `rb` (its width at the resting
+ * line) and `cap` (the height between that line and the top), so a star, a cube or a small sleeping ball wear the
+ * same hat at their own scale.
  */
 export function partsWorn(id: WornId, g: Geo): Part[] {
   const { cx, by, rb, cap, top } = g
@@ -180,7 +177,7 @@ export function partsWorn(id: WornId, g: Geo): Part[] {
   }
 }
 
-/** Une ombre douce posee sur le corps (ellipse, repere du moteur) : rx, ry, intensite 0..1. */
+/** A soft shadow on the body (ellipse, engine space): rx, ry, intensity 0..1. */
 export interface Shadow {
   x: number
   y: number
@@ -189,15 +186,15 @@ export interface Shadow {
   a: number
 }
 
-/** Rayon d'un verre rond d'apres les deux yeux (3D : yeux de face, centres, de meme taille). */
+/** Radius of a round lens from both eyes (3D: eyes facing front, centered, same size). */
 export function radiusLens(a: Eye, b: Eye): number {
   const gap = b.x - a.x
   return Math.max(Math.min(gap * 0.5 * 0.98, Math.max(a.r, b.r) * 1.3 + 6), 10)
 }
 
 /**
- * Ombres que l'accessoire projette sur le corps (lumiere en haut a gauche : l'ombre tombe vers
- * le bas et la droite). Douces, sans bord : elles ne servent qu'a poser l'objet sur la peau.
+ * Shadows the accessory casts on the body (light at the top left: the shadow falls down and right). Soft, with no
+ * edge: they only set the object on the skin.
  */
 export function shadowsWorn(id: WornId, frame: BotFrame, g: Geo | null): Shadow[] {
   if (id === 'glasses' || id === 'sunglasses') {
@@ -216,7 +213,7 @@ export function shadowsWorn(id: WornId, frame: BotFrame, g: Geo | null): Shadow[
 export interface Eye {
   x: number
   y: number
-  /** demi-etendue maximale de l'oeil a l'ecran */
+  /** maximum half extent of the eye on screen */
   r: number
   alpha: number
 }

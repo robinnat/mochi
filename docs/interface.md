@@ -10,7 +10,7 @@ packages (Solar, plus Remix for the palette). No dependency is installed, so
 To add or change one, take the `<symbol>` body from `@iconify-json/<package>`.
 Don't redraw by hand (tried, rejected) and don't "re-centre" their coordinates.
 
-## Truncating is `tronque`, not `truncate`
+## Truncating is `truncated`, not `truncate`
 
 The in-house utility (`styles.css`) cuts at the word and butts the ellipsis against
 the text; `truncate` cuts mid-word and leaves a space before the dots when the cut
@@ -38,7 +38,7 @@ for the transition to have something to interpolate. Don't try `order` or
 `flex-direction`, they don't animate.
 
 **Unmounting a panel does not remove its track**: the grid keeps its 20rem and the
-avatar stays centred 180 px too far left. Hence `.scene--seule`, which cancels both
+avatar stays centred 180 px too far left. Hence `.scene--alone`, which cancels both
 columns. The arrival and the preview both use it, so don't restrict it to one of
 them.
 
@@ -105,30 +105,30 @@ in `vw` alone its last character ended up off screen.
 
 ## The URL describes the player, not the views
 
-`#etat=` is only written from the Animations view. Writing it elsewhere fired a
+`#state=` is only written from the Animations view. Writing it elsewhere fired a
 `hashchange` that put the playhead back on the indices of the user's montage, while
 the settings view plays its own: the player stayed stuck on its entry state.
 
 Inside the view, the same `hashchange` had a second, worse effect. `locate()` looks
 the state up with a `findIndex`, so it returns its **first** occurrence. A montage
-with the same state twice — one click in the right-hand palette is enough — could
-therefore never get past the second one: reaching it wrote `#etat=idle`, the
+with the same state twice, one click in the right-hand palette is enough, could
+therefore never get past the second one: reaching it wrote `#state=idle`, the
 resulting `hashchange` read as an incoming navigation, and the playhead jumped back
 to the first `idle`. Pausing on the second occurrence did the same, through `&stop`.
 
-Hence `ecritParNous` in `App.ts`: the fragment we just wrote is remembered and its
-`hashchange` is ignored. It is **consumed** on that first read rather than kept —
+Hence `writtenByUs` in `App.ts`: the fragment we just wrote is remembered and its
+`hashchange` is ignored. It is **consumed** on that first read rather than kept , 
 one write fires at most one event, and a browser Back to that same state later is a
 real navigation that must still move the playhead.
 
 ## Every editing gesture has a keyboard route
 
-Drag-and-drop had no equivalent, so a block could be added, removed and resized — the
-resize handle already took arrow keys — but never **reordered**, and precise seeking existed
+Drag-and-drop had no equivalent, so a block could be added, removed and resized, the
+resize handle already took arrow keys, but never **reordered**, and precise seeking existed
 only on the ruler, pointer-only. It was the one gesture in the editor that was unreachable.
 
 `Alt` + left/right moves the focused card; bare arrows move the playhead by `STEP`. `Alt`
 rather than bare arrows for the move, because a card is a button inside a list and arrows
-there are expected to navigate. **The focus follows the card being moved** — otherwise the
-next press pushes a different one — which means waiting a tick, since the list is rebuilt
+there are expected to navigate. **The focus follows the card being moved**, otherwise the
+next press pushes a different one, which means waiting a tick, since the list is rebuilt
 and the destination button does not exist yet.

@@ -1,31 +1,25 @@
 /**
- * Le repere de tout ce que le moteur rend.
+ * The frame of everything the engine renders.
  *
- * `engine.sample()` sort des coordonnees en unites de viewBox, et ces deux nombres en sont
- * la definition : sans eux, une sortie du moteur ne veut rien dire. Ils vivaient dans
- * le composant, donc hors d'atteinte, et
- * `export.ts` en redisait un a la main avec le commentaire qui nommait le probleme.
+ * `engine.sample()` outputs coordinates in viewBox units, and these two numbers define them: without them an engine
+ * output means nothing. They used to live in the component, out of reach, and `export.ts` restated one by hand.
  *
- * Ils sont ici parce que `src/bot/` est ce qui se lit et se consomme du dehors : le
- * composant `<mochi-bot>` est UN client du moteur, pas sa definition.
+ * They live here because `src/bot/` is what is read and used from outside: the `<mochi-bot>` component is ONE client
+ * of the engine, not its definition.
  */
 
 /**
- * Rayon de la boule au repos, en unites de viewBox. C'est le `scale` que le composant
- * passe a `BotEngine`.
+ * Radius of the ball at rest, in viewBox units. It is the `scale` the component passes to `BotEngine`.
  *
- * Choisi et non mesure : c'est l'unite de travail. Tout le reste du dossier s'exprime en
- * fractions de ce rayon, ce qui rend les mesures relevees sur la video independantes de la
- * taille d'affichage.
+ * Chosen, not measured: it is the working unit. Everything else in the folder is a fraction of this radius, which
+ * makes the measurements taken off the video independent of the display size.
  */
 export const RADIUS = 100
 
 /**
- * Demi-cote du viewBox affiche. La marge au-dela du rayon loge les anneaux.
+ * Half side of the displayed viewBox. The margin beyond the radius holds the rings.
  *
- * Ce n'est pas une valeur libre : les anneaux de la transition d'entree montent
- * a 1,4 fois le rayon, soit 140. Rien ne les borne au runtime — c'est le reglage a la main
- * du tableau `RINGS` (`decor.ts`) qui les tient sous 158, et un test le
- * verrouille.
+ * Not a free value: the rings of the entry transition grow to 1.4 times the radius, so 140. Nothing bounds them at
+ * runtime: the hand-tuned `RINGS` table (`decor.ts`) keeps them under 158, and a test locks it.
  */
 export const HALF_VIEWBOX = 158

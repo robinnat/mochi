@@ -470,7 +470,7 @@ export class Mochi3d {
    * Les yeux de la 3D sont PILE EN FACE (`frontEyes`) : centres, symetriques, droits, un peu
    * au-dessus du centre de la face avant. Le regard, l'inclinaison et la deformation de
    * sphere du moteur ne comptent pas ici ; l'ecart au 2D est voulu. Chaque oeil garde sa forme
-   * (clignement, expression) et son opacite.
+   * (clignement, expression) et son opacity.
    */
   private eyesOnFace(frame: BotFrame, gaze = false): BotFrame {
     if (!frame.eyes.length) return frame

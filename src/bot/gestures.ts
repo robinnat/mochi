@@ -1,14 +1,12 @@
 /**
- * Couche de gestes : de petites animations AJOUTEES par-dessus la pose du moteur.
+ * Gesture layer: small animations ADDED on top of the engine's pose.
  *
- * Le moteur reproduit la video de reference : ses constantes sont des mesures. Les gestes,
- * eux, sont des REGLAGES choisis (pas des mesures), facultatifs, et rangés a part pour ne
- * rien changer au rendu d'origine : `engine.sample(t)` sans geste reste identique a l'octet
- * pres (un test le verrouille). Usage : `engine.sample(t, idleGesture(t, seed))`.
+ * The engine reproduces the reference video: its constants are measurements. Gestures are chosen SETTINGS (not
+ * measurements), optional, and kept apart so they change nothing in the original rendering: `engine.sample(t)`
+ * without a gesture stays identical to the byte (a test locks it). Usage: `engine.sample(t, idleGesture(t, seed))`.
  *
- * Tout est pur, fonction du temps et d'une graine : meme image a chaque lecture, aucun etat,
- * aucune horloge. Les amplitudes sont faibles (quelques pour cent du rayon) : un avatar qui
- * attend reste calme ; c'est la variete et le decalage dans le temps qui font la personnalite.
+ * Everything is pure, a function of time and a seed: same frame on every playback, no state, no clock. Amplitudes are
+ * small (a few percent of the radius): a waiting avatar stays calm; variety and timing offsets make the personality.
  */
 import { TAU, clamp, createRng, easings, loopNoise } from './math'
 import type { BotExpression } from './expressions'
@@ -16,37 +14,37 @@ import type { StateId } from './states'
 
 /** Ecarts appliques par `sample()` : deplacements en rayons de boule, echelles, angles en degres. */
 export interface Gesture {
-  /** deplacement du corps et des yeux, en rayons */
+  /** body and eye offset, in radii */
   dx: number
   dy: number
-  /** echelles du corps (1 = inchange) */
+  /** body scales (1 = unchanged) */
   sx: number
   sy: number
   /** ecarts de visee, en degres */
   yaw: number
   pitch: number
   roll: number
-  /** paupiere maximale : 1 = laisse faire le moteur, 0 = fermee */
+  /** maximum eyelid: 1 = leave it to the engine, 0 = closed */
   lid: number
   /*
-   * Couche VISAGE (humeurs, `moods.ts`). Tout est facultatif et ABSENT du geste neutre : un geste
-   * qui n'y touche pas rend la meme image qu'avant, a l'octet pres.
+   * FACE layer (moods, `moods.ts`). Everything is optional and ABSENT from the neutral gesture: a gesture that does
+   * not touch it gives the same frame as before, to the byte.
    */
-  /** visage absolu : remplace les yeux et leur ecart (la visee reste celle du moteur) */
+  /** absolute face: replaces the eyes and their gap (the aim stays the engine's) */
   exp?: BotExpression
-  /** multiplicateurs de largeur et de hauteur des yeux (1 = inchange) */
+  /** eye width and height multipliers (1 = unchanged) */
   ew?: number
   eh?: number
-  /** inclinaison ajoutee, en degres, EN MIROIR entre les deux yeux (positif = les hauts convergent) */
+  /** added tilt, in degrees, MIRRORED between both eyes (positive = the tops converge) */
   tilt?: number
-  /** 0 = gelule, 1 = croissant ouvert vers le bas (oeil content) */
+  /** 0 = capsule, 1 = crescent open downwards (happy eye) */
   arc?: number
-  /** decalage des yeux dans le plan du visage, en rayons (regard) */
+  /** eye offset in the face plane, in radii (gaze) */
   ex?: number
   ey?: number
-  /** teinte des joues, 0 a 1 */
+  /** cheek tint, 0 to 1 */
   cheeks?: number
-  /** inclinaison du corps ET du visage, en degres, positif = vers la droite (tete penchee) */
+  /** tilt of the body AND the face, in degrees, positive = to the right (head tilted) */
   rot?: number
 }
 
@@ -54,8 +52,8 @@ export const NEUTRAL_GESTURE: Readonly<Gesture> = Object.freeze({ dx: 0, dy: 0, 
 
 const g = (p: Partial<Gesture>): Gesture => ({ ...NEUTRAL_GESTURE, ...p })
 
-/** Compose deux gestes : deplacements et angles s'ajoutent, echelles se multiplient, paupiere au plus fermee. */
-export function composer(a: Gesture, b: Gesture): Gesture {
+/** Composes two gestures: offsets and angles add up, scales multiply, eyelid at its most closed. */
+export function compose(a: Gesture, b: Gesture): Gesture {
   const out: Gesture = {
     dx: a.dx + b.dx,
     dy: a.dy + b.dy,
@@ -66,7 +64,7 @@ export function composer(a: Gesture, b: Gesture): Gesture {
     roll: a.roll + b.roll,
     lid: Math.min(a.lid, b.lid)
   }
-  // couche visage : seulement si l'un des deux la porte
+  // face layer: only if one of the two carries it
   const exp = b.exp ?? a.exp
   if (exp) out.exp = exp
   for (const k of ['ew', 'eh'] as const) if (a[k] !== undefined || b[k] !== undefined) out[k] = (a[k] ?? 1) * (b[k] ?? 1)
@@ -75,37 +73,37 @@ export function composer(a: Gesture, b: Gesture): Gesture {
   return out
 }
 
-/** true si le geste porte une part de la couche visage. */
+/** true if the gesture carries part of the face layer. */
 export const hasFace = (g: Gesture) =>
   g.exp !== undefined || g.ew !== undefined || g.eh !== undefined || g.tilt !== undefined || g.arc !== undefined ||
   g.ex !== undefined || g.ey !== undefined || g.cheeks !== undefined || g.rot !== undefined
 
-/** Cloche 0 -> 1 -> 0 sur [0, 1], douce aux deux bouts. */
+/** Bell 0 -> 1 -> 0 on [0, 1], soft at both ends. */
 const cloche = (u: number) => (u <= 0 || u >= 1 ? 0 : Math.sin(Math.PI * u) ** 2)
 
-// ---------------------------------------------------------------- gestes d'attente
+// ---------------------------------------------------------------- waiting gestures
 
-export type IdleGestureId = 'blinks' | 'breathe' | 'jump' | 'balance' | 'gaze' | 'nod' | 'stretched'
+export type IdleGestureId = 'blink' | 'breathe' | 'jump' | 'balance' | 'gaze' | 'nod' | 'stretch'
 
 interface GestureDef {
   id: IdleGestureId
   /** duree en secondes */
   duration: number
-  /** pose a l'instant local u (secondes depuis le debut du geste) */
+  /** pose at local time u (seconds since the start of the gesture) */
   pose: (u: number) => Gesture
 }
 
 export const IDLE_GESTURES: GestureDef[] = [
   // double clignement appuye
   {
-    id: 'blinks',
+    id: 'blink',
     duration: 0.55,
     pose: (u) => {
       const k = (v: number) => (v < 0 || v > 0.18 ? 1 : Math.abs((v / 0.18) * 2 - 1))
       return g({ lid: Math.min(k(u), k(u - 0.3)) })
     }
   },
-  // grande inspiration : le corps gonfle un peu puis se relache
+  // deep breath: the body inflates a little, then relaxes
   { id: 'breathe', duration: 2.2, pose: (u) => { const c = cloche(u / 2.2); return g({ sx: 1 + 0.025 * c, sy: 1 + 0.04 * c, dy: -0.015 * c, pitch: -3 * c }) } },
   // petit saut : tassement, envol, reception
   {
@@ -130,19 +128,19 @@ export const IDLE_GESTURES: GestureDef[] = [
       return g({ yaw, dx: yaw * 0.0006 })
     }
   },
-  // hochement de tete
+  // head nod
   { id: 'nod', duration: 1.2, pose: (u) => { const e = cloche(u / 1.2); return g({ pitch: 9 * Math.sin((u / 0.4) * TAU) * e, dy: 0.01 * e }) } },
-  // etirement vers le haut
-  { id: 'stretched', duration: 1.6, pose: (u) => { const c = cloche(u / 1.6); return g({ sx: 1 - 0.035 * c, sy: 1 + 0.06 * c, dy: -0.03 * c, lid: 1 - 0.5 * c }) } }
+  // upward stretch
+  { id: 'stretch', duration: 1.6, pose: (u) => { const c = cloche(u / 1.6); return g({ sx: 1 - 0.035 * c, sy: 1 + 0.06 * c, dy: -0.03 * c, lid: 1 - 0.5 * c }) } }
 ]
 
 export const IDLE_GESTURE_BY_ID = new Map(IDLE_GESTURES.map((d) => [d.id, d]))
 
-/** Calendrier : un geste par fenetre de `WINDOW` s, a un decalage tire dans [0, JEU[ -> 4 a 12 s d'ecart. */
+/** Schedule: one gesture per `WINDOW` s window, at an offset drawn in [0, SET[ -> 4 to 12 s apart. */
 const WINDOW = 8
 const SET = 4
 
-/** Trois gestes preferes par graine (la personnalite), un quatrieme plus rare. */
+/** Three favorite gestures per seed (the personality), a fourth, rarer one. */
 export function personality(seed: number): IdleGestureId[] {
   const rng = createRng(seed ^ 0x9e3779b9)
   const ids = IDLE_GESTURES.map((d) => d.id)
@@ -153,17 +151,19 @@ export function personality(seed: number): IdleGestureId[] {
   return ids.slice(0, 4)
 }
 
-/** Geste de la fenetre `k` pour une graine : date de debut et identifiant. O(1), sans etat. */
+/** Gesture of window `k` for a seed: start time and id. O(1), stateless. */
 export function gestureOfWindow(seed: number, k: number): { start: number; id: IdleGestureId } {
   const rng = createRng(Math.imul(seed | 0, 0x85ebca6b) ^ Math.imul(k + 1, 0xc2b2ae35))
   const prefs = personality(seed)
   const r = rng()
-  // poids 0,35 / 0,3 / 0,25 / 0,1 : les gestes preferes reviennent plus souvent
+  // weights 0.35 / 0.3 / 0.25 / 0.1: favorite gestures come back more often
   const id = r < 0.35 ? prefs[0]! : r < 0.65 ? prefs[1]! : r < 0.9 ? prefs[2]! : prefs[3]!
   return { start: k * WINDOW + rng() * SET, id }
 }
 
-/** Geste d'attente a l'instant t : neutre entre deux gestes. Le premier geste arrive apres 4 s au moins. */
+/**
+ * Waiting gesture at time t: neutral between two gestures. The first gesture comes after 4 s at least.
+ */
 export function idleGesture(t: number, seed: number): Gesture {
   if (!(t >= 0)) return { ...NEUTRAL_GESTURE }
   const k = Math.floor(t / WINDOW)
@@ -178,12 +178,14 @@ export function idleGesture(t: number, seed: number): Gesture {
   return { ...NEUTRAL_GESTURE }
 }
 
-// ---------------------------------------------------------------- rebond au toucher
+// ---------------------------------------------------------------- touch bounce
 
-/** Duree du rebond au toucher. */
+/** Duration of the touch bounce. */
 export const BOUNCE_DURATION = 0.7
 
-/** Rebond quand on touche l'avatar : ecrasement puis petit ressort amorti (u : secondes depuis le toucher). */
+/**
+ * Bounce when the avatar is touched: a squash, then a small damped spring (u: seconds since the touch).
+ */
 export function bounce(u: number): Gesture {
   if (!(u >= 0) || u > BOUNCE_DURATION) return { ...NEUTRAL_GESTURE }
   const v = u / BOUNCE_DURATION
@@ -191,16 +193,16 @@ export function bounce(u: number): Gesture {
   return g({ sx: 1 + 0.07 * damped, sy: 1 - 0.09 * damped, dy: 0.02 * Math.max(0, damped) - 0.05 * cloche(v / 0.6) })
 }
 
-// ---------------------------------------------------------------- sommeil et echec
+// ---------------------------------------------------------------- sleep and failure
 
-/** Sommeil : respiration lente et profonde, yeux fermes, corps un peu tasse. */
+/** Sleep: slow, deep breathing, eyes closed, body a little squashed. */
 export function sleepGesture(t: number): Gesture {
   const breath = 0.5 - 0.5 * Math.cos((t / 4.6) * TAU)
   return g({ sx: 1 + 0.012 * breath, sy: 0.97 + 0.03 * breath, dy: 0.02 - 0.012 * breath, pitch: -6, roll: -4, lid: 0.04 })
 }
 
-/** Petits « z » du sommeil : positions en rayons (a dessiner par le client), qui montent et s'effacent. */
-export function sleepZ(t: number, n = 2): Array<{ x: number; y: number; size: number; opacite: number }> {
+/** Small sleep "z": positions in radii (drawn by the client), rising and fading. */
+export function sleepZ(t: number, n = 2): Array<{ x: number; y: number; size: number; opacity: number }> {
   const out = []
   const period = 3.2
   for (let i = 0; i < n; i++) {
@@ -209,7 +211,7 @@ export function sleepZ(t: number, n = 2): Array<{ x: number; y: number; size: nu
       x: 0.62 + 0.18 * v + 0.04 * Math.sin(v * TAU),
       y: -0.55 - 0.45 * v,
       size: 0.16 + 0.1 * v,
-      opacite: clamp(v / 0.2) * clamp((1 - v) / 0.35) * 0.8
+      opacity: clamp(v / 0.2) * clamp((1 - v) / 0.35) * 0.8
     })
   }
   return out
@@ -221,40 +223,39 @@ export function gestureFailure(t: number): Gesture {
   return g({ sx: 1.03 + 0.01 * sigh, sy: 0.94 - 0.015 * sigh, dy: 0.04 + 0.01 * sigh, pitch: -8 - 3 * sigh, roll: 3 })
 }
 
-// ---------------------------------------------------------------- activites (au travail)
+// ---------------------------------------------------------------- activities (at work)
 
-export type ActivityId = 'reflection' | 'frappe' | 'sweep'
+export type ActivityId = 'reflection' | 'typing' | 'sweep'
 
 export interface Activity {
   id: ActivityId
-  /** etat du moteur joue en boucle */
+  /** engine state played on a loop */
   state: StateId
-  /** duree de la boucle en secondes : on lit `sample(startPos + t % loop)` */
+  /** loop duration in seconds: we read `sample(startPos + t % loop)` */
   loop: number
-  /** geste ajoute, fonction du temps global */
+  /** added gesture, a function of global time */
   gesture: (t: number) => Gesture
 }
 
 /**
- * Activites « au travail » : chacune reste lisible comme un travail en cours (un etat du moteur
- * ou un regard occupe), mais se distingue des autres. L'application choisit laquelle
- * correspond a quel role.
+ * "At work" activities: each one reads as work in progress (an engine state or a busy gaze), but differs from the
+ * others. The app picks which one goes with which role.
  */
 export const ACTIVITIES: Activity[] = [
-  // trois points qui pulsent, avec un leger hochement : il ecrit ou il reflechit
+  // three pulsing dots, with a slight nod: writing or thinking
   { id: 'reflection', state: 'thinking', loop: 2.6, gesture: (t) => g({ dy: 0.012 * Math.sin((t / 1.3) * TAU) }) },
-  // petites frappes rapides, regard baisse vers le clavier
+  // small quick taps, gaze down to the keyboard
   {
-    id: 'frappe',
+    id: 'typing',
     state: 'idle',
     loop: 2.4,
     gesture: (t) => {
       const tap = Math.max(0, Math.sin((t / 0.22) * TAU)) * (0.6 + 0.4 * Math.sin((t / 1.7) * TAU) ** 2)
-      // amplitude choisie pour rester visible a 48 px (une frappe = 3 % du rayon)
+      // amplitude chosen to stay visible at 48 px (a tap = 3 % of the radius)
       return g({ pitch: 16, yaw: 7 * loopNoise(t, 3.1, 0.5), dy: 0.03 * tap, sx: 1 + 0.015 * tap, sy: 1 - 0.03 * tap })
     }
   },
-  // lecture : le regard balaie de gauche a droite, ligne apres ligne
+  // reading: the gaze sweeps from left to right, line after line
   {
     id: 'sweep',
     state: 'idle',
@@ -270,7 +271,7 @@ export const ACTIVITIES: Activity[] = [
 
 export const ACTIVITY_BY_ID = new Map(ACTIVITIES.map((a) => [a.id, a]))
 
-/** Instant a lire dans le moteur pour une activite : boucle sans couture, decalee par une graine. */
+/** Time to read in the engine for an activity: a seamless loop, offset by a seed. */
 export function timeActivity(a: Activity, t: number, startPos = 0.6): number {
   return startPos + (((t % a.loop) + a.loop) % a.loop)
 }

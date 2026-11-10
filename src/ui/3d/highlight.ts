@@ -24,8 +24,8 @@ export interface Highlight {
   ry: number
   /** inclinaison (radians) : la tache suit la diagonale de la lumiere */
   angle: number
-  /** opacite au centre (la tache s'estompe jusqu'a 0 au bord) */
-  opacite: number
+  /** opacity au centre (la tache s'estompe jusqu'a 0 au bord) */
+  opacity: number
 }
 
 /** Le reflet est actif par defaut ; `highlight: false` le coupe (option de MochiBot et de la 3D). */
@@ -123,7 +123,7 @@ export function positionHighlight(pts: Point[], eyes: Point[] = []): Highlight |
     }
   }
   c = best(end, true) ?? c
-  return { x: c.x, y: c.y, rx, ry, angle: ANGLE, opacite: OPACITE }
+  return { x: c.x, y: c.y, rx, ry, angle: ANGLE, opacity: OPACITE }
 }
 
 /** Le reflet d'une image, ou `null` s'il est coupe (`active` = false) ou s'il n'y a pas de place. */
@@ -144,8 +144,8 @@ export function paintHighlight(c: CanvasRenderingContext2D, r: Highlight, k: num
   c.rotate(r.angle)
   c.scale(k * r.rx, k * r.ry)
   const g = c.createRadialGradient(0, 0, 0, 0, 0, 1)
-  g.addColorStop(0, `rgba(255,255,255,${r.opacite})`)
-  g.addColorStop(0.45, `rgba(255,255,255,${(r.opacite * 0.62).toFixed(3)})`)
+  g.addColorStop(0, `rgba(255,255,255,${r.opacity})`)
+  g.addColorStop(0.45, `rgba(255,255,255,${(r.opacity * 0.62).toFixed(3)})`)
   g.addColorStop(1, 'rgba(255,255,255,0)')
   c.fillStyle = g
   c.fillRect(-1, -1, 2, 2)

@@ -5,7 +5,7 @@ import {
   ACTIVITIES,
   NEUTRAL_GESTURE,
   IDLE_GESTURES,
-  composer,
+  compose,
   gestureOfWindow,
   gestureFailure,
   idleGesture,
@@ -22,7 +22,7 @@ const gap = (g: typeof NEUTRAL_GESTURE) =>
   Math.max(Math.abs(g.dx), Math.abs(g.dy), Math.abs(g.sx - 1), Math.abs(g.sy - 1))
 
 describe('gestures', () => {
-  it('sans geste ou avec le geste neutre, le rendu est identique a l octet pres', () => {
+  it('without a gesture or with the neutral gesture, rendering is identical to the byte', () => {
     const a = new BotEngine(100, 'idle')
     const b = new BotEngine(100, 'idle')
     for (const t of [0, 0.37, 1.9, 4.2, 12.5]) {
@@ -31,7 +31,7 @@ describe('gestures', () => {
     }
   })
 
-  it('un geste change bien l image, sans muter le moteur', () => {
+  it('a gesture does change the frame, without mutating the engine', () => {
     const e = new BotEngine(100, 'idle')
     const before = JSON.stringify(e.sample(2))
     const moves = JSON.stringify(e.sample(2, { ...NEUTRAL_GESTURE, dy: -0.1, sy: 1.05, yaw: 20 }))
@@ -39,14 +39,14 @@ describe('gestures', () => {
     expect(JSON.stringify(e.sample(2))).toBe(before)
   })
 
-  it('la paupiere du geste ferme les yeux', () => {
+  it('the gesture\'s eyelid closes the eyes', () => {
     const e = new BotEngine(100, 'idle')
     const open = e.sample(0.5).eyes[0]!.matrix
     const closed = e.sample(0.5, { ...NEUTRAL_GESTURE, lid: 0 }).eyes[0]!.matrix
     expect(closed).not.toBe(open)
   })
 
-  it('calendrier d attente : deterministe, 4 a 12 s entre deux gestes, jamais avant 4 s', () => {
+  it('waiting schedule: deterministic, 4 to 12 s between two gestures, never before 4 s', () => {
     for (const seed of [1, 42, 0xdead, 987654]) {
       const debuts = Array.from({ length: 40 }, (_, k) => gestureOfWindow(seed, k).start)
       for (let k = 1; k < debuts.length; k++) {
@@ -59,7 +59,7 @@ describe('gestures', () => {
     }
   })
 
-  it('deux graines differentes ne gesticulent pas en meme temps (decalage)', () => {
+  it('two different seeds do not move at the same time (offset)', () => {
     const active = (seed: number, t: number) => gap(idleGesture(t, seed)) > 1e-4 || idleGesture(t, seed).yaw !== 0 || idleGesture(t, seed).lid < 1
     let ensemble = 0
     let total = 0
@@ -73,13 +73,13 @@ describe('gestures', () => {
     expect(ensemble / total).toBeLessThan(0.35)
   })
 
-  it('chaque graine a sa personnalite (gestes preferes)', () => {
+  it('each seed has its personality (favorite gestures)', () => {
     const p = new Set([1, 2, 3, 4, 5, 6, 7, 8].map((s) => personality(s).join(',')))
     expect(p.size).toBeGreaterThan(4)
     for (const s of [1, 2, 3]) expect(new Set(personality(s)).size).toBe(4)
   })
 
-  it('amplitudes sobres et retour au neutre en fin de geste', () => {
+  it('sober amplitudes and back to neutral at the end of the gesture', () => {
     for (const def of IDLE_GESTURES) {
       for (let u = 0; u <= def.duration; u += def.duration / 40) {
         const g = def.pose(u)
@@ -93,7 +93,7 @@ describe('gestures', () => {
     }
   })
 
-  it('rebond au toucher : amorti, neutre apres sa duree', () => {
+  it('touch bounce: damped, neutral after its duration', () => {
     expect(gap(bounce(0.05))).toBeGreaterThan(0.02)
     expect(bounce(BOUNCE_DURATION + 0.01)).toEqual({ ...NEUTRAL_GESTURE })
     expect(bounce(-1)).toEqual({ ...NEUTRAL_GESTURE })
@@ -106,17 +106,17 @@ describe('gestures', () => {
     expect(gestureFailure(1).dy).toBeGreaterThan(0)
     const z = sleepZ(1.2)
     expect(z).toHaveLength(2)
-    for (const p of z) expect(p.opacite).toBeGreaterThanOrEqual(0)
+    for (const p of z) expect(p.opacity).toBeGreaterThanOrEqual(0)
   })
 
-  it('composer additionne, multiplie et garde la paupiere la plus fermee', () => {
-    const c = composer({ ...NEUTRAL_GESTURE, dx: 0.1, sy: 1.1, lid: 0.5 }, { ...NEUTRAL_GESTURE, dx: 0.05, sy: 1.1, lid: 0.8 })
+  it('compose adds, multiplies and keeps the most closed eyelid', () => {
+    const c = compose({ ...NEUTRAL_GESTURE, dx: 0.1, sy: 1.1, lid: 0.5 }, { ...NEUTRAL_GESTURE, dx: 0.05, sy: 1.1, lid: 0.8 })
     expect(c.dx).toBeCloseTo(0.15)
     expect(c.sy).toBeCloseTo(1.21)
     expect(c.lid).toBe(0.5)
   })
 
-  it('activites : etats connus du moteur, boucles bornees, toutes differentes', () => {
+  it('activities: known engine states, bounded loops, all different', () => {
     expect(new Set(ACTIVITIES.map((a) => a.id)).size).toBe(ACTIVITIES.length)
     const e = new BotEngine(100, 'idle', null, EXPRESSION_BY_ID.get('attentive') ?? null)
     for (const a of ACTIVITIES) {

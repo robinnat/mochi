@@ -3,25 +3,25 @@ import { describe, expect, it } from 'vitest'
 import { sleepZ } from './gestures'
 import { HALF_VIEWBOX } from './frame'
 
-describe('les « z » de l humeur dort', () => {
-  it('montent, restent dans le cadre et s effacent', () => {
+describe('the "z" of the asleep mood', () => {
+  it('rise, stay in the frame and fade', () => {
     for (let t = 0; t < 7; t += 0.25) {
       for (const z of sleepZ(t)) {
-        // en rayons : x 100 = bord du corps ; le trait doit rester dans le viewBox
+        // in radii: x 100 = edge of the body; the stroke must stay in the viewBox
         expect(Math.abs(z.x * 100) + (z.size * 100) / 2 + 5).toBeLessThan(HALF_VIEWBOX)
         expect(Math.abs(z.y * 100) + (z.size * 100) / 2 + 5).toBeLessThan(HALF_VIEWBOX)
-        expect(z.opacite).toBeGreaterThanOrEqual(0)
-        expect(z.opacite).toBeLessThanOrEqual(0.8)
+        expect(z.opacity).toBeGreaterThanOrEqual(0)
+        expect(z.opacity).toBeLessThanOrEqual(0.8)
       }
     }
     const y0 = sleepZ(0.1)[0]!.y
-    expect(sleepZ(0.9)[0]!.y).toBeLessThan(y0) // ils montent (y vers le bas)
+    expect(sleepZ(0.9)[0]!.y).toBeLessThan(y0) // they rise (y down)
   })
 
-  it('<mochi-bot> les dessine par-dessus tous les rendus quand l humeur est dort, une image fixe en mouvement reduit', () => {
+  it('<mochi-bot> draws them over every style when the mood is asleep, a still image with reduced motion', () => {
     const src = readFileSync(new URL('../components/mochi-bot.ts', import.meta.url), 'utf8')
     expect(src).toContain("'data-zzz': '1'")
-    expect(src).toContain("moodDe(props.mood) !== 'dort'")
-    expect(src).toMatch(/reduit\.value \|\| props\.frozenAt !== undefined \? 1\.2/)
+    expect(src).toContain("resolveMood(props.mood) !== 'asleep'")
+    expect(src).toMatch(/reduced\.value \|\| props\.frozenAt !== undefined \? 1\.2/)
   })
 })

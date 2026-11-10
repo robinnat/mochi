@@ -1,11 +1,10 @@
 import { TAU, createRng, r2 } from './math'
 
-/* ------------------------------------------------------------------ couleurs */
+/* ------------------------------------------------------------------ colors */
 
 /**
- * Les anneaux ne sont pas des couleurs plates : la video montre une roue de
- * teintes complete a luminosite constante, avec un degrade le long de chaque
- * trace. Mesure : S 45-62 %, L 50-67 %.
+ * The rings are not flat colors: the video shows a full hue wheel at constant lightness, with a gradient along each
+ * trace. Measured: S 45-62 %, L 50-67 %.
  */
 function wheel(hue: number, s = 0.55, l = 0.62): string {
   const h = ((hue % 360) + 360) % 360
@@ -31,24 +30,23 @@ function wheel(hue: number, s = 0.55, l = 0.62): string {
   return `#${hex(r)}${hex(g)}${hex(b)}`
 }
 
-/* ------------------------------------------------------------- types de rendu */
+/* ------------------------------------------------------------- render types */
 
 export interface DotRender {
   x: number
   y: number
   r: number
   opacity: number
-  /** couleur explicite ; par defaut le rendu prend celle du corps */
+  /** explicit color; by default the renderer uses the body's */
   color?: string
   /**
-   * Brume de profondeur : 0 = fondu dans le fond, 1 = couleur du corps pleine.
-   * Le melange se fait au rendu, qui seul connait la couleur choisie.
+   * Depth haze: 0 = faded into the background, 1 = full body color. The mix happens in the renderer, the only one
+   * that knows the chosen color.
    */
   depth?: number
   /**
-   * Forme non circulaire, en unites de rayon de boule et centree sur l'origine
-   * (le point du "!" penche est une goutte, pas un disque). Quand elle est
-   * fournie, `r` n'est plus utilise pour le trace.
+   * Non circular shape, in ball radius units, centered on the origin (the dot of the tilted "!" is a drop, not a
+   * disc). When given, `r` is no longer used for drawing.
    */
   d?: string
   /** rotation appliquee a `d`, en degres */
@@ -56,9 +54,8 @@ export interface DotRender {
 }
 
 /**
- * Ce qu'un etat declare : la geometrie de l'arc reste en unites de rayon de
- * boule, c'est le moteur (seul a connaitre l'echelle du viewBox) qui la
- * rasterise. Sans ca les etats devraient connaitre le viewBox.
+ * What a state declares: the arc geometry stays in ball radius units, and the engine (the only one that knows the
+ * viewBox scale) rasterizes it. Otherwise states would have to know the viewBox.
  */
 export interface ArcSpec {
   id: string
@@ -69,24 +66,24 @@ export interface ArcSpec {
 
 export interface ArcRender {
   id: string
-  /** portion devant le corps */
+  /** part in front of the body */
   front: string
-  /** portion derriere le corps (dessinee avant, donc masquee par la silhouette) */
+  /** part behind the body (drawn first, so hidden by the silhouette) */
   back: string
   width: number
   opacity: number
-  /** degrade de teinte le long du trace */
+  /** hue gradient along the trace */
   grad: { x1: number; y1: number; x2: number; y2: number; stops: string[] }
 }
 
-/* --------------------------------------------------------- arc elliptique 3D */
+/* --------------------------------------------------------- 3D elliptic arc */
 
 export interface ArcSeed {
-  /** demi-grand axe, en unites de rayon de boule */
+  /** semi-major axis, in ball radius units */
   a: number
-  /** aplatissement b/a : mesure <= 0.45, les plans d'orbite sont vus par la tranche */
+  /** flattening b/a: measured <= 0.45, orbit planes are seen edge-on */
   k: number
-  /** inclinaison du grand axe a l'ecran, radians */
+  /** tilt of the major axis on screen, radians */
   tilt: number
   /** tours par seconde */
   speed: number
@@ -101,13 +98,11 @@ export interface ArcSeed {
 }
 
 /**
- * Projette un cercle 3D incline en orthographique.
+ * Projects a tilted 3D circle orthographically.
  *
- * Le cercle vit dans le plan engendre par u (dans l'ecran) et v (qui plonge
- * dans la profondeur). La composante z sert a couper l'arc en deux : la moitie
- * arriere est dessinee avant le corps, donc occultee par lui. C'est ce vrai tri
- * en profondeur qui fait lire les anneaux comme des orbites et pas comme un
- * dessin plat.
+ * The circle lives in the plane spanned by u (in the screen) and v (going into depth). The z component splits the arc
+ * in two: the back half is drawn before the body, so hidden by it. This real depth sort is what makes the rings read
+ * as orbits and not as a flat drawing.
  */
 export function arcRender(seed: ArcSeed, t: number, scale: number, id: string, opacity = 1): ArcRender {
   const spin = seed.phase + t * seed.speed * TAU
@@ -162,8 +157,8 @@ export function arcRender(seed: ArcSeed, t: number, scale: number, id: string, o
 const RING_RNG = createRng(0xa11ce)
 
 /**
- * 6 anneaux, demi-grand axe 1.30-1.40 (donc nettement plus grands que la
- * boule), aplatissement toujours <= 0.45, epaisseur 0.055, ~3.3 tours/s.
+ * 6 rings, semi-major axis 1.30-1.40 (so clearly bigger than the ball), flattening always <= 0.45, thickness 0.055,
+ * about 3.3 turns/s.
  */
 export const RINGS: ArcSeed[] = Array.from({ length: 6 }, (_, i) => ({
   a: 1.3 + RING_RNG() * 0.1,
@@ -181,7 +176,7 @@ export const RINGS: ArcSeed[] = Array.from({ length: 6 }, (_, i) => ({
 
 /* ------------------------------------------------------------- 3 points */
 
-/** x mesures : -0.557 / -0.013 / +0.532, y = 0. */
+/** measured x: -0.557 / -0.013 / +0.532, y = 0. */
 export const DOT_X = [-0.557, -0.013, 0.532] as const
 export const DOT_R = 0.165
 export const DOT_PEAK = 1.25

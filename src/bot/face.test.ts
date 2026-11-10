@@ -2,10 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { EYE_H, EYE_SPLIT, EYE_W, REST_GAZE, eyePoses, type HeadGaze } from './face'
 
 /**
- * Valeurs relevees image par image sur la video de reference (unites : rayon de
- * la boule au repos = 1, y vers le bas). Le modele de sphere doit les
- * reproduire : c'est lui qui garantit que l'oeil proche du bord se comprime
- * exactement comme dans l'original.
+ * Values measured frame by frame on the reference video (unit: radius of the ball at rest = 1, y down). The sphere
+ * model must reproduce them: it guarantees that the eye near the edge is compressed exactly as in the original.
  */
 const MEASURES: Array<{
   name: string
@@ -27,7 +25,7 @@ const MEASURES: Array<{
     ]
   },
   {
-    name: 'yeux ecarquilles',
+    name: 'wide eyes',
     gaze: { yaw: 6.92, pitch: -21.96, roll: 11.6 },
     split: 18.43,
     w: 0.356,
@@ -53,14 +51,14 @@ const MEASURES: Array<{
 const short = (e: ReturnType<typeof eyePoses>[number], w: number) => Math.hypot(e.a, e.b) * w
 const long = (e: ReturnType<typeof eyePoses>[number], h: number) => Math.hypot(e.c, e.d) * h
 
-describe('yeux poses sur une sphere', () => {
+describe('eyes set on a sphere', () => {
   for (const m of MEASURES) {
-    it(`reproduit la pose "${m.name}" mesuree sur la video`, () => {
+    it(`reproduces the pose "${m.name}" measured on the video`, () => {
       const poses = eyePoses(m.gaze, 1, m.split)
       for (let i = 0; i < 2; i++) {
         const p = poses[i]!
         const expected = m.eyes[i]!
-        // 0.04 rayon = ~7 px sur la boule de 190 px de la video
+        // 0.04 radius = about 7 px on the 190 px ball of the video
         expect(p.x).toBeCloseTo(expected.x, 1)
         expect(p.y).toBeCloseTo(expected.y, 1)
         expect(Math.abs(short(p, m.w) - expected.short)).toBeLessThan(0.04)
@@ -69,24 +67,24 @@ describe('yeux poses sur une sphere', () => {
     })
   }
 
-  it('comprime l oeil exactement du facteur de profondeur de la sphere', () => {
-    // Invariant exact : le determinant du repere tangent projete vaut z. C'est
-    // lui qui fait que l'aire de l'oeil suit la courbure (mesure : 0.663).
+  it('compresses the eye exactly by the sphere\'s depth factor', () => {
+    // Exact invariant: the determinant of the projected tangent frame equals z. That is
+    // what makes the eye's area follow the curvature (measured: 0.663).
     for (const e of eyePoses(REST_GAZE, 1)) {
       expect(e.a * e.d - e.b * e.c).toBeCloseTo(e.depth, 6)
     }
     const [near, far] = eyePoses(REST_GAZE, 1)
     expect(far.depth / near.depth).toBeCloseTo(0.663, 1)
-    // mesure video de la largeur : 0.120 / 0.178 = 0.674
+    // video measurement of the width: 0.120 / 0.178 = 0.674
     expect(short(far, EYE_W) / short(near, EYE_W)).toBeCloseTo(0.674, 1)
   })
 
-  it('garde la meme longueur pour les deux yeux (axe tangentiel non deforme)', () => {
+  it('keeps the same length for both eyes (tangential axis not distorted)', () => {
     const [a, b] = eyePoses(REST_GAZE, 1)
     expect(long(a, EYE_H)).toBeCloseTo(long(b, EYE_H), 3)
   })
 
-  it('conserve la separation angulaire de 31 degres quel que soit le regard', () => {
+  it('keeps the 31 degree angular separation whatever the gaze', () => {
     for (const gaze of [REST_GAZE, { yaw: -40, pitch: 10, roll: 5 }, { yaw: 0, pitch: 0, roll: 0 }]) {
       const [a, b] = eyePoses(gaze, 1)
       const dot = a.x * b.x + a.y * b.y + a.depth * b.depth
@@ -94,7 +92,7 @@ describe('yeux poses sur une sphere', () => {
     }
   })
 
-  it('fait passer un oeil derriere la sphere quand la tete tourne fort', () => {
+  it('puts an eye behind the sphere when the head turns hard', () => {
     const [, far] = eyePoses({ yaw: 80, pitch: 0, roll: 0 }, 1)
     expect(far.depth).toBeLessThan(0)
   })

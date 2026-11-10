@@ -208,7 +208,7 @@ export function withoutComments(markup: string) {
  *
  * Les ids sont filtres alors qu'ils viennent d'unions litterales, parce que
  * `App.ts` les relit du `localStorage` sans les valider : une valeur trafiquee
- * n'a pas a pouvoir composer le nom du fichier telecharge.
+ * n'a pas a pouvoir compose le nom du fichier telecharge.
  */
 export function nameFile(
   shape: string,

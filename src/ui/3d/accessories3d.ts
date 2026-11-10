@@ -69,7 +69,7 @@ interface Ctx {
   R: Landmarks
   c1: string
   c2: string
-  /** matiere (clonee du corps, meme eclairage) ; `o` = opacite, `d` = double face */
+  /** matiere (clonee du corps, meme eclairage) ; `o` = opacity, `d` = double face */
   mat: (hex: string, o?: number, d?: boolean) => MatDef
   geos: BufferGeometry[]
   /** yeux (toujours deux) et rayon de verre */
@@ -585,7 +585,7 @@ function radiusFrame(c: Ctx, k = 1.05): number {
 }
 
 /** Monture double (deux verres) : tube sur la forme, verre translucide, pont et branches rentrant dans la tete. */
-function glasses(c: Ctx, shape: ShapeKind, o: { lens: string; opacite: number; tube?: number; k?: number; full?: boolean }) {
+function glasses(c: Ctx, shape: ShapeKind, o: { lens: string; opacity: number; tube?: number; k?: number; full?: boolean }) {
   const r = radiusFrame(c, o.k ?? 1.25)
   const tu = (o.tube ?? 0.2) * r
   const z = Math.max(zLens(c, c.a, r), zLens(c, c.b, r)) + 0.14 * r
@@ -593,7 +593,7 @@ function glasses(c: Ctx, shape: ShapeKind, o: { lens: string; opacite: number; t
     const pts = curveShape(shape, r).map((p) => p.add(V(e.x, e.y, z)))
     tube(c, pts, tu, tu, c.c1, c.g, true, false)
     const sh = new Shape(curveShape(shape, r * 0.98).map((p) => new Vector2(p.x, p.y)))
-    const lens = add(c, new ShapeGeometry(sh, 24), o.lens, c.g, o.opacite, true)
+    const lens = add(c, new ShapeGeometry(sh, 24), o.lens, c.g, o.opacity, true)
     lens.position.set(e.x, e.y, z - tu * 0.3)
   }
   // pont
@@ -627,12 +627,12 @@ function glasses(c: Ctx, shape: ShapeKind, o: { lens: string; opacite: number; t
 }
 
 const EYES: Record<string, Gen> = {
-  round: (c) => glasses(c, SHAPE_LIST.round!, { lens: '#ffffff', opacite: 0.16 }),
-  square: (c) => glasses(c, SHAPE_LIST.square!, { lens: '#ffffff', opacite: 0.16, tube: 0.19 }),
+  round: (c) => glasses(c, SHAPE_LIST.round!, { lens: '#ffffff', opacity: 0.16 }),
+  square: (c) => glasses(c, SHAPE_LIST.square!, { lens: '#ffffff', opacity: 0.16, tube: 0.19 }),
   // verre noir par defaut ; une couleur d'appoint differente du catalogue le remplace (theme sombre : ardoise)
-  sunglasses: (c) => glasses(c, SHAPE_LIST.round!, { lens: c.c2, opacite: 0.9, tube: 0.2 }),
-  heart: (c) => glasses(c, SHAPE_LIST.heart!, { lens: c.c1, opacite: 0.3, tube: 0.16, k: 1.15 }),
-  star: (c) => glasses(c, SHAPE_LIST.star!, { lens: c.c1, opacite: 0.3, tube: 0.16, k: 1.15 }),
+  sunglasses: (c) => glasses(c, SHAPE_LIST.round!, { lens: c.c2, opacity: 0.9, tube: 0.2 }),
+  heart: (c) => glasses(c, SHAPE_LIST.heart!, { lens: c.c1, opacity: 0.3, tube: 0.16, k: 1.15 }),
+  star: (c) => glasses(c, SHAPE_LIST.star!, { lens: c.c1, opacity: 0.3, tube: 0.16, k: 1.15 }),
   monocle(c) {
     const r = radiusFrame(c, 1.2) * 1.1
     const e = c.b

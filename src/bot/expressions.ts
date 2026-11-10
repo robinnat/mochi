@@ -3,25 +3,20 @@ import { lerp } from './math'
 import type { EyeCfg } from './states'
 
 /**
- * Expression de repos du bot.
+ * Resting expression of the bot.
  *
- * Le visage ne tient qu'à deux gélules, donc tout se joue sur quatre leviers :
- * l'orientation de la tête, l'écart des yeux, leurs proportions, et
- * l'inclinaison propre de chaque œil. C'est ce dernier qui permet la colère et
- * la tristesse : elles demandent des inclinaisons EN MIROIR (les hauts qui
- * convergent ou divergent), impossible avec le seul roulis de tête qui incline
- * les deux yeux du même côté.
+ * The face is only two capsules, so everything rests on four levers: the head orientation, the gap between the eyes,
+ * their proportions, and the tilt of each eye. That last one makes anger and sadness possible: they need MIRRORED
+ * tilts (tops that converge or diverge), impossible with head roll alone, which tilts both eyes the same way.
  *
- * Seul l'état de repos porte cette expression. Les états expressifs de la vidéo
- * (clin d'œil, yeux écarquillés, notification) gardent la leur : c'est elle
- * qu'on est venu reproduire.
+ * Only the idle state carries this expression. The expressive states of the video (wink, wide eyes, notification)
+ * keep their own: they are what we came to reproduce.
  *
- * Les amplitudes s'appuient sur bible-strong-avatar-lab, qui expose le même
- * modèle (tête X/Y/Z, largeur et hauteur par œil, écart, angle par œil) : chez
- * eux la largeur va de 0,8 à 2,7 fois le neutre, la hauteur de 0,3 à 1,5, et
- * les angles jusqu'à ±80°. On reste dans cette enveloppe.
+ * The amplitudes follow bible-strong-avatar-lab, which exposes the same model (head X/Y/Z, width and height per eye,
+ * gap, angle per eye): there width goes from 0.8 to 2.7 times neutral, height from 0.3 to 1.5, and angles up to 80
+ * degrees either way. We stay inside that envelope.
  */
-/** Enumeres pour que la couche i18n verifie leurs traductions a la compilation. */
+/** Listed so the i18n layer checks their translations at compile time. */
 export type ExpressionId =
   | 'neutral'
   | 'attentive'
@@ -47,10 +42,10 @@ export interface BotExpression {
   eyes: [EyeCfg, EyeCfg]
 }
 
-/** `tilt` en degrés, positif = le haut de la gélule part vers la droite. */
+/** `tilt` in degrees, positive = the top of the capsule leans right. */
 const eye = (w: number, h: number, tilt = 0, open = 1): EyeCfg => ({ w, h, tilt, open })
 
-/** Les deux yeux identiques, inclinaisons en miroir si `tilt` est fourni. */
+/** Both eyes identical, mirrored tilts if `tilt` is given. */
 const pair = (w: number, h: number, tilt = 0, open = 1): [EyeCfg, EyeCfg] => [
   eye(w, h, tilt, open),
   eye(w, h, -tilt, open)
@@ -58,7 +53,7 @@ const pair = (w: number, h: number, tilt = 0, open = 1): [EyeCfg, EyeCfg] => [
 
 export const EXPRESSIONS: BotExpression[] = [
   {
-    // la pose relevée image par image sur la vidéo de référence
+    // the pose measured frame by frame on the reference video
     id: 'neutral',
     gaze: { ...REST_GAZE },
     split: EYE_SPLIT,
@@ -83,7 +78,7 @@ export const EXPRESSIONS: BotExpression[] = [
     eyes: pair(0.4, 0.56, -10)
   },
   {
-    // yeux plissés en arc : les hauts convergent légèrement
+    // eyes squinted in an arc: the tops converge slightly
     id: 'happy',
     gaze: { yaw: 5, pitch: 9, roll: 0 },
     split: 17,
@@ -96,14 +91,14 @@ export const EXPRESSIONS: BotExpression[] = [
     eyes: pair(0.34, 0.13, 20)
   },
   {
-    // hauts des yeux qui convergent fort vers le centre + yeux étrécis
+    // tops of the eyes converge hard towards the center + narrowed eyes
     id: 'angry',
     gaze: { yaw: 3, pitch: 7, roll: 0 },
     split: 17,
     eyes: pair(0.34, 0.15, 30)
   },
   {
-    // l'inverse : les hauts divergent, et le regard tombe
+    // the reverse: the tops diverge, and the gaze drops
     id: 'sad',
     gaze: { yaw: 3, pitch: -13, roll: 0 },
     split: 16,
@@ -116,23 +111,23 @@ export const EXPRESSIONS: BotExpression[] = [
     eyes: pair(0.4, 0.6)
   },
   {
-    // un œil franchement plus fermé que l'autre
+    // one eye clearly more closed than the other
     id: 'suspicious',
     gaze: { yaw: 12, pitch: 6, roll: -6 },
     split: 16,
     eyes: [eye(0.21, 0.4), eye(0.22, 0.15)]
   },
   {
-    // asymétrique sur les deux axes : tailles ET inclinaisons dépareillées.
-    // L'œil plissé est volontairement plat (rapport 1,6) : à un rapport proche
-    // de 1 il serait rond, et son inclinaison ne se verrait pas.
+    // asymmetric on both axes: mismatched sizes AND tilts.
+    // The squinted eye is flat on purpose (ratio 1.6): at a ratio close
+    // to 1 it would be round, and its tilt would not show.
     id: 'confused',
     gaze: { yaw: -14, pitch: 3, roll: 8 },
     split: 16.5,
     eyes: [eye(0.2, 0.44, -18), eye(0.28, 0.17, 14)]
   },
   {
-    // la tête penche : c'est le roulis qui porte la curiosité
+    // the head tilts: the roll carries the curiosity
     id: 'curious',
     gaze: { yaw: 16, pitch: -9, roll: -15 },
     split: 16.5,
@@ -151,15 +146,15 @@ export const EXPRESSIONS: BotExpression[] = [
     eyes: pair(0.17, 0.3)
   },
   {
-    // fentes horizontales et regard qui part sur le côté
+    // horizontal slits and a gaze that goes to the side
     id: 'unimpressed',
     gaze: { yaw: -22, pitch: 2, roll: 0 },
     split: 16,
     eyes: pair(0.3, 0.12)
   },
   {
-    // paupières à moitié tombées : on passe par `open`, donc l'écrasement
-    // vertical à l'écran, le même mécanisme que le clignement
+    // half-closed lids: goes through `open`, so the vertical squash
+    // on screen, the same mechanism as the blink
     id: 'sleepy',
     gaze: { yaw: 6, pitch: -9, roll: -3 },
     split: 16,
@@ -177,7 +172,7 @@ const lerpEyeCfg = (a: EyeCfg, b: EyeCfg, t: number): EyeCfg => ({
   open: lerp(a.open, b.open, t)
 })
 
-/** Interpolation de deux expressions : le changement se fait en glissant. */
+/** Interpolation between two expressions: the change glides. */
 export function blendExpression(a: BotExpression, b: BotExpression, t: number): BotExpression {
   return {
     id: b.id,

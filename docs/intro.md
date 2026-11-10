@@ -31,16 +31,16 @@ and hop, **up to 25 px of vertical deviation** from the circle's trajectory, and
 test measures it. This isn't fixable elsewhere: `radiusAtAngle` is doing exactly
 what it's there for.
 
-## `tourLook` is jerky crossing the limb, and that isn't tunable
+## `turnLook` is jerky crossing the limb, and that isn't tunable
 
 20 px between two frames: near the edge a small angle becomes a large on-screen
 displacement, and the eye disappears then reappears. Slowing it down changes
 nothing: the trajectory demands it. It's accepted, and it's what makes the effect.
 
-## `intro` and `nue` are not the same moment
+## `intro` and `bare` are not the same moment
 
-`intro` says the arrival montage is playing; `nue` (derived from the player's
-index) says the ball is still alone on stage. It's `nue` that drives both the
+`intro` says the arrival montage is playing; `bare` (derived from the player's
+index) says the ball is still alone on stage. It's `bare` that drives both the
 settling into place and the return to the chosen shape.
 
 ## Nothing goes to `localStorage`, deliberately
@@ -72,7 +72,7 @@ arrival with no state change in it.
 
 ## Where it doesn't play
 
-Not on `#planche`, not on an `#etat=` link (that one targets the player and already
-describes its playback), and not under `prefers-reduced-motion`. `#arrivee` replays
+Not on `#sheet`, not on an `#state=` link (that one targets the player and already
+describes its playback), and not under `prefers-reduced-motion`. `#arrival` replays
 it, and **reloads the page** to do so: replaying it warm would mean tearing down and
 rebuilding the whole set.

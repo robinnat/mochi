@@ -38,7 +38,7 @@ import { blockAt, defaultCycle, offsetOf, type Block } from '@/bot/cycles'
 import { HALF_VIEWBOX, RADIUS } from '@/bot/frame'
 import { STATE_BY_ID, type StateId } from '@/bot/states'
 import { WORN_IDS, type WornId } from '@/bot/worn'
-import { composer, sleepZ, type Gesture } from '@/bot/gestures'
+import { compose, sleepZ, type Gesture } from '@/bot/gestures'
 import { Moods, REACTION_FOR_EVENT, mustRedraw, resolveMood, type ReactionId } from '@/bot/moods'
 import { DEFAULT_SOFTNESS, DEFAULT_MATERIAL, type Softness, type Material } from '@/ui/3d/material'
 import { type Theme } from '@/ui/3d/theme'
@@ -441,7 +441,7 @@ function mountBot(host: MochiBotElement): Internal {
       return {
         i,
         d: `M${(x - k / 2).toFixed(1)} ${(y - k / 2).toFixed(1)}h${k.toFixed(1)}l${(-k).toFixed(1)} ${k.toFixed(1)}h${k.toFixed(1)}`,
-        op: reduced.value || props.frozenAt !== undefined ? 0.8 - 0.3 * i : z.opacite
+        op: reduced.value || props.frozenAt !== undefined ? 0.8 - 0.3 * i : z.opacity
       }
     })
   })
@@ -454,7 +454,7 @@ function mountBot(host: MochiBotElement): Internal {
   const gestureA = (t: number): Gesture | undefined => {
     const b = props.gesture ? props.gesture(t) : undefined
     const x = moods.sample(t)
-    return x ? (b ? composer(b, x) : x) : b
+    return x ? (b ? compose(b, x) : x) : b
   }
 
   let raf = 0

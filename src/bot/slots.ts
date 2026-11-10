@@ -1,29 +1,27 @@
 /**
- * Accessoires 3D par EMPLACEMENTS combinables. Un accessoire au plus par emplacement, tous les
- * emplacements se cumulent : un Mochi peut porter un chapeau, des lunettes, une moustache, un noeud
- * papillon et un sac en meme temps.
+ * 3D accessories by stackable SLOTS. One accessory per slot at most, and all slots stack: a Mochi can wear a hat,
+ * glasses, a bow tie and a backpack at the same time.
  *
- * Ce fichier ne contient que le catalogue (noms, couleurs) : aucune geometrie, aucun `three`.
+ * This file only holds the catalog (names, colors): no geometry, no `three`.
  *
- * REGLE DE ROBIN (05/11/2026) : chaque accessoire est tres simplifie, UNE couleur (`c1`), DEUX au
- * maximum (`c2`, par exemple fleur : petales + coeur). Les deux sont reglables par l'API
- * (`{ id, c1, c2 }`, voir `AccessoryChoice`) ; `c2` egal a `c1` veut dire « une seule couleur ».
- * Les volumes sont construits dans `ui/trois/accessoires3d.ts`, ancres sur le corps 3D.
+ * RULE (05/11/2026): each accessory is very simple, ONE color (`c1`), TWO at most (`c2`, for example a flower: petals
+ * + center). Both can be set through the API (`{ id, c1, c2 }`, see `AccessoryChoice`); `c2` equal to `c1` means "a
+ * single color". The volumes are built in `ui/3d/accessories3d.ts`, anchored on the 3D body.
  *
- * Emplacements, chacun sur sa propre zone du corps pour ne pas entrer en collision :
- *   tete   : au-dessus du sommet (chapeaux, coiffes, antenne, fleur)
- *   yeux   : a la hauteur des yeux (lunettes, masques)
- *   visage : joues et dessous des yeux (vide pour le moment : tous ses accessoires sont RETIRES)
- *   bas    : le « cou » du corps, vers 72 % de la hauteur (noeud papillon, cravate, moustache, echarpe, collier...)
- *   dos    : les cotes et le dos (sac, cape)
+ * Slots, each on its own area of the body so they do not collide:
+ *   head : above the top (hats, headwear, antenna, flower)
+ *   eyes : at eye height (glasses, masks)
+ *   face : cheeks and under the eyes (empty for now: all its accessories are REMOVED)
+ *   neck : the "neck" of the body, around 72 % of the height (bow tie, scarf, necklace...)
+ *   back : the sides and the back (backpack, cape)
  */
 
 export type Slot = 'head' | 'eyes' | 'face' | 'neck' | 'back'
 
-/** Tous les emplacements, y compris `face` (vide depuis le 10/11/2026, garde pour les accessoires RETIRES). */
+/** All slots, `face` included (empty since 10/11/2026, kept for the REMOVED accessories). */
 export const ALL_SLOTS: Slot[] = ['head', 'eyes', 'face', 'neck', 'back']
 
-/** Les emplacements PROPOSES : ceux qui ont au moins un accessoire au catalogue. */
+/** The OFFERED slots: those with at least one accessory in the catalog. */
 export const SLOTS: Slot[] = ['head', 'eyes', 'neck', 'back']
 
 export const SLOT_NAMES: Record<Slot, string> = {
@@ -39,12 +37,12 @@ export interface AccessoryDef {
   slot: Slot
   /** nom affiche en legende */
   name: string
-  /** couleur principale et couleur d'appoint (reglables a l'usage) */
+  /** main color and second color (can be changed when used) */
   c1: string
   c2: string
 }
 
-/** Palette vive et sobre, alignee sur P1 « Bonbons et jouets » (09/11/2026) pour les teintes vives. */
+/** Bright, sober palette, aligned on P1 "Candy and toys" (09/11/2026) for the bright tints. */
 export const ACCESSORY_PALETTE = {
   red: '#ff3b30',
   yellow: '#ffd60a',
@@ -66,7 +64,7 @@ const C = ACCESSORY_PALETTE
 const def = (slot: Slot, id: string, name: string, c1: string, c2: string): AccessoryDef => ({ id, slot, name, c1, c2 })
 
 export const ACCESSORIES: AccessoryDef[] = [
-  // tete
+  // head
   def('head', 'cap', 'Cap', C.red, C.red),
   def('head', 'beret', 'Beret', C.black, C.black),
   def('head', 'top-hat', 'Top hat', C.black, C.red),
@@ -77,7 +75,7 @@ export const ACCESSORIES: AccessoryDef[] = [
   def('head', 'ribbon', 'Ribbon bow', C.pink, C.pink),
   def('head', 'flower', 'Flower', C.pink, C.yellow),
   def('head', 'toque', 'Chef hat', C.cream, C.cream),
-  // yeux
+  // eyes
   def('eyes', 'round', 'Round glasses', C.black, C.black),
   def('eyes', 'square', 'Square glasses', C.navy, C.navy),
   def('eyes', 'sunglasses', 'Sunglasses', C.black, C.black),
@@ -96,18 +94,17 @@ export const ACCESSORIES: AccessoryDef[] = [
 
 
 /**
- * Accessoires RETIRES du catalogue (retours de Robin, 05/11/2026) : ils n'apparaissent plus ni dans le
- * catalogue ni sur les planches. Les definitions et les generateurs 3D restent dans le depot : pour en
- * remettre un, le recopier dans `ACCESSORIES`.
+ * Accessories REMOVED from the catalog (feedback of 05/11/2026): they no longer show in the catalog or on the sheets.
+ * The definitions and 3D builders stay in the repository: to bring one back, copy it into `ACCESSORIES`.
  */
 export const REMOVED: AccessoryDef[] = [
-  // v14 (10/11/2026, Robin) : joues roses retirees (la rougeur de l'appui long, une EXPRESSION, reste) ; plus
-  // aucun accessoire dans l'emplacement visage, qui n'est plus propose (lunettes et monocle restent dans « yeux »)
+  // v14 (10/11/2026): pink cheeks removed (the blush of the long press, an EXPRESSION, stays); no
+  // accessory left in the face slot, which is no longer offered (glasses and monocle stay in "eyes")
   def('face', 'cheeks', 'Pink cheeks', C.pink, C.pink),
-  // v13 (09/11/2026, Robin) : les deux paires d'ailes (ange et chauve-souris) sont retirees
+  // v13 (09/11/2026): both pairs of wings (angel and bat) removed
   def('back', 'wings', 'Angel wings', C.cream, C.cream),
   def('back', 'batwings', 'Bat wings', C.violet, C.violet),
-  // v12 (09/11/2026, Robin) : taches de rousseur, grain de beaute, moustache et moustaches de chat retires
+  // v12 (09/11/2026): freckles, beauty mark, mustache and cat whiskers removed
   def('face', 'whiskers', 'Cat whiskers', C.black, C.pink),
   def('face', 'freckles', 'Freckles', '#c8733a', '#c8733a'),
   def('face', 'mole', 'Beauty mark', C.black, C.black),
@@ -135,13 +132,13 @@ export const ACCESSORY_BY_KEY = new Map(ACCESSORIES.map((a) => [`${a.slot}:${a.i
 
 export const accessoriesInSlot = (e: Slot) => ACCESSORIES.filter((a) => a.slot === e)
 
-/** Un choix : l'id seul (couleurs du catalogue) ou l'id avec des couleurs imposees. */
+/** A choice: the id alone (catalog colors) or the id with forced colors. */
 export type AccessoryChoice = string | { id: string; c1?: string; c2?: string }
 
-/** Ce qui est porte : au plus un accessoire par emplacement. */
+/** What is worn: at most one accessory per slot. */
 export type AccessorySelection = Partial<Record<Slot, AccessoryChoice>>
 
-/** Choix normalise : definition du catalogue avec les couleurs finales ; `null` si inconnu. */
+/** Normalized choice: the catalog definition with the final colors; `null` if unknown. */
 export function resolveAccessories(e: Slot, choice: AccessoryChoice | undefined | null): AccessoryDef | null {
   if (!choice) return null
   const id = typeof choice === 'string' ? choice : choice.id
@@ -151,7 +148,7 @@ export function resolveAccessories(e: Slot, choice: AccessoryChoice | undefined 
   return { ...d, c1: choice.c1 ?? d.c1, c2: choice.c2 ?? d.c2 }
 }
 
-/** Toutes les couleurs d'une selection (palette du pixel art). */
+/** All the colors of a selection (pixel art palette). */
 export function colorsOf(sel: AccessorySelection): string[] {
   const out = new Set<string>()
   for (const e of SLOTS) {

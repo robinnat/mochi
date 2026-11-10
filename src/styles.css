@@ -287,10 +287,10 @@ body,
  * La TRANSITION de l'avatar est declaree ici, hors de la requete de largeur, la
  * ou ses positions sont dedans. Deux raisons : l'arrivee sur le site fait
  * apparaitre la boule a toutes les tailles, et une transition redeclaree plus bas
- * en chasserait l'opacite — une propriete absente de la liste ne transitionne
+ * en chasserait l'opacity — une propriete absente de la liste ne transitionne
  * plus du tout.
  *
- * L'opacite prend son temps (0,8 s) : c'est une boule qui parait, pas un element
+ * L'opacity prend son temps (0,8 s) : c'est une boule qui parait, pas un element
  * qui se charge. Elle reste plus courte que la bascule pour que la boule soit
  * entierement opaque avant d'avoir fini de s'installer — l'inverse donnerait un
  * fondu qui traine sur une forme deja immobile.
@@ -579,7 +579,7 @@ body,
    * Les boites modales manquaient a cette liste : `.dialogue` anime un
    * `translateY(8px) scale(0.98)`, donc elles glissaient encore sous « mouvement
    * reduit » alors que tout le reste etait neutralise. `.rail` et `.wordmark`, eux, ne
-   * jouent que sur l'opacite et n'ont rien a faire ici.
+   * jouent que sur l'opacity et n'ont rien a faire ici.
    */
   .dialog,
   .dialog::backdrop {

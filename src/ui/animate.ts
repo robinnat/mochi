@@ -187,7 +187,7 @@ export function indexed(palette: PaletteGif, px: Uint8ClampedArray): Uint8Array 
  *
  * La transparence du GIF est sur UN bit : un pixel est opaque ou invisible, rien
  * entre les deux. Sur un fond transparent, le bord antialiase de la boule est donc
- * tranche a 50 % d'opacite et ressort en marches d'escalier. Ce n'est pas un defaut
+ * tranche a 50 % d'opacity et ressort en marches d'escalier. Ce n'est pas un defaut
  * a corriger, c'est le format — d'ou le choix laisse a l'utilisateur entre ce bord
  * dur et un fond plein, ou le bord reste lisse parce qu'il a de quoi se fondre.
  *

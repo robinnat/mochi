@@ -1,23 +1,22 @@
 /**
- * Humeurs et interactions : une couche d'animation du VISAGE et du CORPS, ajoutee par-dessus le
- * moteur (comme `gestures.ts`, dont elle reprend le type `Gesture`).
+ * Moods and interactions: an animation layer for the FACE and the BODY, added on top of the engine (like
+ * `gestures.ts`, whose `Gesture` type it reuses).
  *
- * - une HUMEUR est un etat de travail joue en boucle : repos, reflechit, travaille, attend,
- *   termine, bloque, dort. Elle fixe un visage (une des expressions de `expressions.ts`, ou une
- *   variante proche) et des ecarts de corps et de regard qui bougent dans le temps ;
- * - une REACTION est declenchee par l'utilisateur (tap, double tap, appui long, secousse,
- *   arrivee), joue une fois par-dessus l'humeur, puis rend la main : l'humeur reprend sans saut ;
- * - le SURVOL n'est pas un evenement mais un suivi : les yeux regardent le pointeur.
+ * - a MOOD is a work state played on a loop: idle, thinking, working, waiting, done, blocked, asleep. It sets a face
+ *   (one
+ *   of the expressions of `expressions.ts`, or a close variant) and body and gaze offsets that move over time;
+ * - a REACTION is triggered by the user (tap, double tap, long press, shake, arrival), plays once over the mood, then
+ *   hands back: the mood resumes without a jump;
+ * - HOVER is not an event but tracking: the eyes look at the pointer.
  *
- * Seulement le visage et le corps : aucune etoile, point d'exclamation, orbite ou particule.
+ * Only the face and the body: no star, exclamation mark, orbit or particle.
  *
- * Ce module n'a ni framework ni horloge : toutes les dates entrent en parametre, et `sample(now)`
- * est une fonction de cet etat date, comme `BotEngine.setLook`. Les ecarts rendus (`Gesture`) sont
- * appliques par `engine.sample(t, gesture)`, donc les accessoires, qui lisent le corps rendu, suivent
- * toutes les deformations.
+ * This module has no framework and no clock: every time comes in as a parameter, and `sample(now)` is a function of
+ * this timed state, like `BotEngine.setLook`. The offsets it returns (`Gesture`) are applied by `engine.sample(t,
+ * gesture)`, so accessories, which read the rendered body, follow every deformation.
  */
 import { EXPRESSION_BY_ID, blendExpression, type BotExpression } from './expressions'
-import { composer, NEUTRAL_GESTURE, sleepGesture, type Gesture } from './gestures'
+import { compose, NEUTRAL_GESTURE, sleepGesture, type Gesture } from './gestures'
 import { TAU, clamp, easings, lerp, loopNoise } from './math'
 import type { EyeCfg } from './states'
 
@@ -28,7 +27,7 @@ const smooth = (u: number) => {
   return k * k * (3 - 2 * k)
 }
 
-/** Interpolation douce entre des cles `[date, ...values]` triees par date. */
+/** Smooth interpolation between keys `[time, ...values]` sorted by time. */
 function keys(u: number, K: number[][]): number[] {
   if (u <= K[0]![0]!) return K[0]!.slice(1)
   for (let i = 1; i < K.length; i++) {
@@ -44,12 +43,14 @@ function keys(u: number, K: number[][]): number[] {
 
 const g = (p: Partial<Gesture>): Gesture => ({ ...NEUTRAL_GESTURE, ...p })
 
-/** Le corps repose sur le sol : quand il s'ecrase, son centre descend d'autant. */
+/** The body rests on the ground: when it squashes, its center goes down by as much. */
 const ground = (sy: number) => (1 - sy) * 0.92
 
-/** Duree de la pousse du coucou, en secondes (le Mochi grandit depuis le sol avant de saluer). */
+/** Duration of the wave's growth, in seconds (the Mochi grows from the ground before saying hello). */
 export const WAVE_PUSH = 0.5
-/** Echelle de la pousse a la date `t` (secondes depuis le debut du coucou) : ~3 % -> ~107 % -> 100 %, ease-out avec rebond. */
+/**
+ * Growth scale at time `t` (seconds since the wave started): about 3 % -> 107 % -> 100 %, ease-out with a bounce.
+ */
 export function waveScale(t: number): number {
   const x = clamp(t / WAVE_PUSH)
   const c1 = 1.4
@@ -68,36 +69,36 @@ const face = (id: BotExpression['id'], yaw: number, pitch: number, roll: number,
 })
 const expr = (id: BotExpression['id']) => EXPRESSION_BY_ID.get(id)!
 
-/** Un clignement net a la date `d` (deux images a 12 i/s), 1 = ouvert. */
+/** A sharp blink at time `d` (two frames at 12 fps), 1 = open. */
 const blinks = (u: number, d: number, duration = 0.2) => {
   const k = (u - d) / duration
   return k < 0 || k > 1 ? 1 : k < 0.45 ? 1 - k / 0.45 : (k - 0.45) / 0.55
 }
 
-/* ------------------------------------------------------------------ humeurs */
+/* ------------------------------------------------------------------ moods */
 
 export type MoodId = 'idle' | 'thinking' | 'working' | 'waiting' | 'done' | 'blocked' | 'asleep'
 
 export interface MoodDef {
   id: MoodId
-  /** nom des etats existants dont elle prolonge le sens (`states.ts`) */
+  /** names of the existing states whose meaning it extends (`states.ts`) */
   state: string
-  /** duree de la boucle, en secondes : la fin retombe sur le debut */
+  /** loop duration, in seconds: the end falls back on the start */
   period: number
-  /** visage de base (une expression de `expressions.ts` ou une variante) */
+  /** base face (an expression of `expressions.ts` or a variant) */
   expression: BotExpression
-  /** ecarts a la date locale `u` (secondes depuis le debut de la boucle) */
+  /** offsets at local time `u` (seconds since the start of the loop) */
   pose: (u: number) => Gesture
-  /** date ou la pose est la plus lisible : image fixe sous `prefers-reduced-motion`, vignettes */
+  /** time at which the pose reads best: still image under `prefers-reduced-motion`, thumbnails */
   signature: number
 }
 
-/** Les yeux horizontaux d'un oeil content : le croissant vient de `arc`, pas de la forme. */
+/** The horizontal eyes of a happy eye: the crescent comes from `arc`, not from the shape. */
 const CRESCENT = face('happy', 5, 9, 0, 17, pair(0.42, 0.17, 0))
 
 export const MOODS: MoodDef[] = [
   {
-    // respiration douce, clignements, regard qui se promene
+    // soft breathing, blinks, a wandering gaze
     id: 'idle',
     state: 'idle',
     period: 4,
@@ -116,7 +117,7 @@ export const MOODS: MoodDef[] = [
     }
   },
   {
-    // regard en l'air, yeux plisses, un oeil plus ferme que l'autre
+    // looking up, squinting, one eye more closed than the other
     id: 'thinking',
     state: 'thinking',
     period: 4,
@@ -142,24 +143,24 @@ export const MOODS: MoodDef[] = [
     }
   },
   {
-    // concentre : le regard lit ligne apres ligne, petits rebonds reguliers
+    // focused: the gaze reads line after line, small regular bounces
     id: 'working',
     state: 'idle',
     period: 4,
     expression: face('attentive', 4, 5, 0, 16, [eye(0.22, 0.34, 5), eye(0.22, 0.34, -5)]),
     signature: 0.55,
     pose: (u) => {
-      // une ligne par seconde : balayage de gauche a droite, retour vif
+      // one line per second: sweep from left to right, quick return
       const v = u % 1
       const bal = v < 0.82 ? smooth(v / 0.82) : 1 - smooth((v - 0.82) / 0.18)
-      // la ligne descend puis remonte (0, 1, 2, 1) : la boucle se raccorde, sans retour brusque
+      // the line goes down then up (0, 1, 2, 1): the loop joins with no sudden return
       const rang = [0, 1, 2, 1]
       const k = Math.floor(u) % 4
       const row = lerp(rang[k]!, rang[(k + 1) % 4]!, smooth((v - 0.82) / 0.18))
-      // rebond toutes les 0,5 s : ecrasement bref puis petit saut
+      // a bounce every 0.5 s: a short squash, then a small jump
       const p = (u % 0.5) / 0.5
       const jump = Math.sin(Math.PI * p)
-      // l'impact tombe pile sur la jointure : le creux monte avant et redescend apres, sans marche
+      // the impact lands right on the joint: the dip rises before and falls after, with no step
       const hollow = p < 0.12 ? 1 - p / 0.12 : p > 0.88 ? (p - 0.88) / 0.12 : 0
       const sy = 1 + 0.03 * jump - 0.045 * hollow
       return g({
@@ -173,14 +174,14 @@ export const MOODS: MoodDef[] = [
     }
   },
   {
-    // attend Robin : regard droit devant, tete penchee, un peu impatient
+    // waiting: looking straight ahead, head tilted, a little impatient
     id: 'waiting',
     state: 'wide',
     period: 4,
     expression: face('attentive', 0, 0, 0, 16.5, [eye(0.25, 0.5, 0), eye(0.25, 0.5, 0)]),
     signature: 0.9,
     pose: (u) => {
-      // deux petits tapotements de pied, puis un coup d'oeil sur le cote et retour
+      // two small foot taps, then a glance to the side and back
       const tap = (d: number) => (u >= d && u < d + 0.3 ? Math.sin(Math.PI * ((u - d) / 0.3)) : 0)
       const t = Math.max(tap(1.2), tap(1.6))
       const [ex] = keys(u, [
@@ -205,7 +206,7 @@ export const MOODS: MoodDef[] = [
     }
   },
   {
-    // termine : yeux en croissant, deux petits sauts de joie
+    // done: crescent eyes, two small jumps of joy
     id: 'done',
     state: 'wink',
     period: 3,
@@ -276,7 +277,7 @@ export const MOODS: MoodDef[] = [
 export const MOOD_BY_ID = new Map<MoodId, MoodDef>(MOODS.map((m) => [m.id, m]))
 export const MOOD_IDS: MoodId[] = MOODS.map((m) => m.id)
 
-/** Noms des etats existants et noms anglais courants, acceptes par `resolveMood`. */
+/** Names of existing states and common synonyms, accepted by `resolveMood`. */
 const ALIAS: Record<string, MoodId> = {
   idle: 'idle',
   thinking: 'thinking',
@@ -288,7 +289,7 @@ const ALIAS: Record<string, MoodId> = {
   sleeping: 'asleep'
 }
 
-/** Resout un identifiant d'humeur (francais ou alias) ; `null` si inconnu. */
+/** Resolves a mood id (or one of its aliases); `null` if unknown. */
 export function resolveMood(id: string | null | undefined): MoodId | null {
   if (!id) return null
   if (MOOD_BY_ID.has(id as MoodId)) return id as MoodId
@@ -299,26 +300,26 @@ export function resolveMood(id: string | null | undefined): MoodId | null {
 
 export type ReactionId = 'startle' | 'laugh' | 'blush' | 'dizzy' | 'wave'
 
-/** Ce que rend une reaction a la date locale `u` : des ecarts, et eventuellement un visage. */
+/** What a reaction gives at local time `u`: offsets, and maybe a face. */
 export interface PoseReaction {
   gesture: Gesture
-  /** visage vers lequel glisser, et a quel point (0 a 1) */
+  /** face to glide towards, and how much (0 to 1) */
   exp?: BotExpression
   mix?: number
-  /** part du regard et du rire de l'humeur qu'elle masque (0 a 1) ; par defaut `mix` */
+  /** share of the mood's gaze and laugh that it hides (0 to 1); `mix` by default */
   masque?: number
 }
 
 export interface ReactionDef {
   id: ReactionId
-  /** evenement utilisateur qui la declenche */
+  /** user event that triggers it */
   trigger: 'tap' | 'double' | 'long' | 'shaken' | 'arrival'
-  /** duree totale, ou duree de la montee pour une reaction tenue */
+  /** total duration, or rise duration for a held reaction */
   duration: number
-  /** true = reste a son maximum tant qu'on tient (appui long), puis redescend en `exit` s */
+  /** true = stays at its peak while held (long press), then goes down in `exit` s */
   held?: boolean
   exit?: number
-  /** `u` : secondes depuis le declenchement ; `end` : secondes depuis le relachement (tenue), sinon -1 */
+  /** `u`: seconds since the trigger; `end`: seconds since the release (held), else -1 */
   pose: (u: number, end: number) => PoseReaction
 }
 
@@ -340,13 +341,13 @@ export const REACTIONS: ReactionDef[] = [
         [0.7, 1, 1, 0],
         [0.8, 1, 1, 0]
       ]) as [number, number, number]
-      // les yeux s'ecarquillent d'un coup, puis se reposent
+      // the eyes go wide at once, then settle
       const large = clamp(u / 0.04) * (1 - smooth((u - 0.3) / 0.4))
       return { gesture: g({ sy, sx, dy: dy + ground(sy), ew: 1 + 0.32 * large, eh: 1 + 0.26 * large }) }
     }
   },
   {
-    // double tap : il rigole, les yeux en croissant, le corps secoue
+    // double tap: it laughs, crescent eyes, the body shakes
     id: 'laugh',
     trigger: 'double',
     duration: 1.6,
@@ -369,7 +370,7 @@ export const REACTIONS: ReactionDef[] = [
     }
   },
   {
-    // appui long : il rougit et ferme les yeux, content (tient tant qu'on appuie)
+    // long press: it blushes and closes its eyes, happy (held while you press)
     id: 'blush',
     trigger: 'long',
     duration: 0.5,
@@ -394,16 +395,16 @@ export const REACTIONS: ReactionDef[] = [
     }
   },
   {
-    // secoue ou tourne vite : etourdi, les yeux tournent, le corps tangue
+    // shaken or spun fast: dizzy, the eyes spin, the body sways
     id: 'dizzy',
     trigger: 'shaken',
     duration: 2.3,
     pose: (u) => {
       const env = 1 - smooth((u - 1.1) / 1.2)
       const att = smooth(u / 0.12)
-      // vitesse angulaire qui retombe a zero a la fin
+      // angular speed that drops to zero at the end
       const theta = TAU * 2.7 * (u - (u * u) / (2 * 2.3))
-      // le tournis s'apaise puis s'eteint pile a la fin : le regard rend la main sans saut
+      // the spin calms down and stops right at the end: the gaze hands back without a jump
       const amp = 0.115 * att * (1 - 0.55 * smooth(u / 2.3)) * (1 - smooth((u - 1.5) / 0.8))
       const bal = Math.sin(u * TAU * 1.25)
       return {
@@ -420,8 +421,8 @@ export const REACTIONS: ReactionDef[] = [
     }
   },
   {
-    // coucou : le Mochi pousse depuis le sol (presque rien -> 100 %, ease-out avec un leger rebond a ~107 %),
-    // puis petit saut et salut de la tete
+    // wave: the Mochi grows from the ground (almost nothing -> 100 %, ease-out with a slight bounce at about 107 %),
+    // then a small jump and a hello with the head
     id: 'wave',
     trigger: 'arrival',
     duration: 1.8 + WAVE_PUSH,
@@ -444,11 +445,11 @@ export const REACTIONS: ReactionDef[] = [
         const w = clamp((v - 0.22) / 0.58)
         dy = -0.22 * 4 * w * (1 - w)
       }
-      // le salut : la tete part de cote deux fois, comme on salue de la main
+      // the hello: the head goes to the side twice, like waving a hand
       const fen = smooth((u - 0.7) / 0.15) * (1 - smooth((u - 1.45) / 0.3))
       const hello = Math.sin((u - 0.7) * TAU * 1.9) * fen
       const env = smooth(u / 0.2) * (1 - smooth((u - 1.3) / 0.45))
-      // l'echelle de pousse multiplie le corps entier ; le corps reste pose sur le sol (le bas ne bouge pas)
+      // the growth scale multiplies the whole body; the body stays on the ground (the bottom does not move)
       sx *= push
       sy *= push
       dy += ground(sy)
@@ -474,7 +475,7 @@ export const REACTION_FOR_EVENT: Record<ReactionDef['trigger'], ReactionId> = {
 const NEUTRAL_NUM = { dx: 0, dy: 0, sx: 1, sy: 1, yaw: 0, pitch: 0, roll: 0, lid: 1, ew: 1, eh: 1, tilt: 0, arc: 0, ex: 0, ey: 0, cheeks: 0, rot: 0 }
 const FIELDS = Object.keys(NEUTRAL_NUM) as Array<keyof typeof NEUTRAL_NUM>
 
-/** Interpolation de deux gestes champ par champ (les champs absents valent leur neutre). */
+/** Field by field interpolation of two gestures (missing fields count as neutral). */
 export function mix(a: Gesture, b: Gesture, k: number): Gesture {
   const out = { ...NEUTRAL_GESTURE } as Record<string, unknown>
   for (const c of FIELDS) {
@@ -489,25 +490,25 @@ export function mix(a: Gesture, b: Gesture, k: number): Gesture {
 
 /* ------------------------------------------------------------------ pilote */
 
-/** Duree du fondu d'une humeur a l'autre. */
+/** Duration of the fade from one mood to another. */
 export const MOOD_FADE = 0.45
-/** Duree du rattrapage du regard vers le pointeur (court : il doit paraitre attentif). */
+/** Duration of the gaze catching up with the pointer (short: it must look attentive). */
 export const GAZE_CATCH_UP = 0.2
-/** Debattement du regard sur le visage, en rayons. */
+/** Range of the gaze on the face, in radii. */
 export const GAZE_X = 0.15
 export const GAZE_Y = 0.125
 
 interface Active {
   def: ReactionDef
   start: number
-  /** date du relachement d'une reaction tenue */
+  /** release time of a held reaction */
   released: number | null
 }
 
 /**
- * Etat d'un avatar : son humeur, la reaction en cours, le regard qui suit. Chaque setter prend la
- * date, `sample(now)` rend les ecarts a appliquer a cet instant (ou `undefined` quand il n'y a rien
- * a ajouter : sans humeur, reaction ni suivi, le moteur tourne comme avant, a l'octet pres).
+ * State of an avatar: its mood, the current reaction, the tracking gaze. Each setter takes the time, `sample(now)`
+ * returns the offsets to apply at that instant (or `undefined` when there is nothing to add: with no mood, reaction
+ * or tracking, the engine runs as before, to the byte).
  */
 export class Moods {
   private cur: MoodId | null
@@ -516,15 +517,15 @@ export class Moods {
   private startPrev = 0
   private background = -10
   private active: Active | null = null
-  /** visage de repos de l'application (expression choisie), pour que la fin d'une reaction ne saute pas */
+  /** the app's resting face (chosen expression), so the end of a reaction does not jump */
   private base: BotExpression | null = null
-  /** regard : valeur a la date du dernier changement, cible, et date */
+  /** gaze: value at the last change, target, and time */
   private gazeOf = { x: 0, y: 0, w: 0 }
   private gazeA = { x: 0, y: 0, w: 0 }
   private gazeAt = -10
-  /** true = `prefers-reduced-motion` : image fixe, sans mouvement du corps */
+  /** true = `prefers-reduced-motion`: still image, no body motion */
   reduced: boolean
-  /** 0 a 1 : le regard de `working` se tourne vers l'ordinateur pose en bas a droite (le composant le pose) */
+  /** 0 to 1: the gaze of `working` turns to the laptop at the bottom right (set by the component) */
   gazeLaptop = 0
 
   constructor(mood: MoodId | null = null, opts: { reduced?: boolean; base?: BotExpression | null } = {}) {
@@ -537,7 +538,7 @@ export class Moods {
     return this.cur
   }
 
-  /** Reaction en cours (ou `null`), pour l'interface et les tests. */
+  /** Current reaction (or `null`), for the interface and tests. */
   reaction(now: number): ReactionId | null {
     const a = this.active
     return a && !this.finished(a, now) ? a.def.id : null
@@ -547,7 +548,7 @@ export class Moods {
     this.base = base
   }
 
-  /** Change d'humeur ; `null` coupe la couche. Le visage et le corps glissent sur `MOOD_FADE`. */
+  /** Changes the mood; `null` turns the layer off. Face and body glide over `MOOD_FADE`. */
   setMood(id: MoodId | string | null, now: number) {
     const m = typeof id === 'string' ? resolveMood(id) : id
     if (m === this.cur) return
@@ -558,23 +559,23 @@ export class Moods {
     this.background = now
   }
 
-  /** Declenche une reaction. Une reaction qui arrive sur une autre la remplace. `tenir` : attend `release`. */
+  /** Triggers a reaction. A reaction that comes over another replaces it. `hold`: waits for `release`. */
   react(id: ReactionId | string, now: number): boolean {
     const def = REACTION_BY_ID.get(id as ReactionId)
     if (!def) return false
-    // en mouvement reduit, seul l'etat de visage reste : pas de saut, de secousse ni de tournis
+    // with reduced motion, only the face state remains: no jump, shake or spin
     if (this.reduced && def.id !== 'blush') return false
     this.active = { def, start: now, released: null }
     return true
   }
 
-  /** Relache une reaction tenue (fin de l'appui long). */
+  /** Releases a held reaction (end of the long press). */
   release(now: number) {
     const a = this.active
     if (a?.def.held && a.released === null) a.released = now
   }
 
-  /** Pointeur au-dessus de l'avatar : `nx`, `ny` entre -1 et 1 (droite et bas positifs) ; `null` pour lacher. */
+  /** Pointer over the avatar: `nx`, `ny` between -1 and 1 (right and down positive); `null` to let go. */
   lookAt(target: { nx: number; ny: number } | null, now: number) {
     if (target && !Number.isFinite(target.nx + target.ny)) return
     this.gazeOf = this.gazeAtTime(now)
@@ -601,18 +602,18 @@ export class Moods {
     const def = MOOD_BY_ID.get(id)!
     const u = this.reduced ? def.signature : (((now - startPos) % def.period) + def.period) % def.period
     const p = def.pose(u)
-    // image fixe : le visage reste, le corps ne bouge plus
+    // still image: the face stays, the body no longer moves
     const fixed = this.reduced ? { ...p, dx: 0, dy: 0, sx: 1, sy: 1, rot: 0, ex: p.ex ? p.ex * 0.5 : p.ex } : p
     return { ...fixed, exp: def.expression }
   }
 
-  /** Geste de l'humeur a la date `now`, fondu depuis la precedente ; `null` sans humeur. */
+  /** Gesture of the mood at time `now`, faded from the previous one; `null` without a mood. */
   private moodGesture(now: number): Gesture | null {
     if (!this.cur) return null
     const a = this.pose(this.cur, this.startPos, now)
     const k = (now - this.background) / MOOD_FADE
     if (this.prev && k < 1 && !this.reduced) return mix(this.pose(this.prev, this.startPrev, now), a, easings.easeOutQuint(clamp(k)))
-    // une couche qui s'ouvre (venue de `null`) entre en fondu depuis le visage de base
+    // a layer that opens (coming from `null`) fades in from the base face
     if (!this.prev && k < 1 && !this.reduced && this.background > -5) {
       const since = g({ exp: this.base ?? expr('neutral') })
       return mix(since, a, easings.easeOutQuint(clamp(k)))
@@ -621,17 +622,17 @@ export class Moods {
   }
 
   /**
-   * Ecarts a la date `now`, a passer a `engine.sample(now, gesture)`. `undefined` = couche inactive :
-   * ne rien ajouter (et donc ne rien redessiner de plus qu'avant).
+   * Offsets at time `now`, to pass to `engine.sample(now, gesture)`. `undefined` = inactive layer: add nothing (and
+   * so redraw nothing more than before).
    */
   sample(now: number): Gesture | undefined {
     let base = this.moodGesture(now)
     const a = this.active && !this.finished(this.active, now) ? this.active : null
     const w = this.reduced ? { x: 0, y: 0, w: 0 } : this.gazeAtTime(now)
     if (!base && !a && w.w < 0.002) return undefined
-    // sans humeur, une reaction part du visage de repos de l'application, sans ecart de corps
+    // without a mood, a reaction starts from the app's resting face, with no body offset
     base ??= g({ exp: this.base ?? expr('neutral') })
-    // l'ordinateur est en bas a droite : le regard y va un peu, sans toucher a l'animation du corps
+    // the laptop is at the bottom right: the gaze goes there a little, without touching the body animation
     if (this.gazeLaptop > 0 && this.cur === 'working') base = { ...base, ex: (base.ex ?? 0) + 0.075 * this.gazeLaptop, ey: (base.ey ?? 0) + 0.04 * this.gazeLaptop }
     let out: Gesture = base
     if (a) {
@@ -639,17 +640,17 @@ export class Moods {
       const end = a.released === null ? -1 : now - a.released
       const r = a.def.pose(u, end)
       const masque = clamp(r.masque ?? r.mix ?? 0)
-      // la reaction masque le regard et le rire de l'humeur : un seul visage a la fois
+      // the reaction hides the mood's gaze and laugh: one face at a time
       const calm: Gesture = { ...base, ex: (base.ex ?? 0) * (1 - masque), ey: (base.ey ?? 0) * (1 - masque), arc: (base.arc ?? 0) * (1 - masque) }
-      out = composer(calm, r.gesture)
+      out = compose(calm, r.gesture)
       const target = r.exp
       if (target && base.exp) out.exp = blendExpression(base.exp, target, clamp(r.mix ?? 1))
       else out.exp = base.exp
     }
     if (w.w > 0.002) {
-      // le regard suit le pointeur et remplace la derive de l'humeur
+      // the gaze follows the pointer and replaces the mood's drift
       const fol = easings.easeOutQuint(w.w)
-      out = composer(
+      out = compose(
         { ...out, ex: (out.ex ?? 0) * (1 - 0.9 * fol), ey: (out.ey ?? 0) * (1 - 0.9 * fol) },
         g({ ex: GAZE_X * w.x * w.w, ey: GAZE_Y * w.y * w.w, dx: 0.018 * w.x * w.w, rot: 2.2 * w.x * w.w })
       )
@@ -659,12 +660,11 @@ export class Moods {
 }
 
 /**
- * Cadence : faut-il redessiner a `ms` ? Plafonne la boucle d'un avatar a `fps` images par seconde
- * (le tableau de bord en affiche jusqu'a 70 dans un seul contexte WebGL a 12 i/s). `fps` nul ou
- * absent = a chaque image du navigateur.
+ * Cadence: should we redraw at `ms`? Caps an avatar's loop at `fps` frames per second (the dashboard shows up to 70
+ * in a single WebGL context at 12 fps). `fps` zero or absent = every browser frame.
  */
 export function mustRedraw(ms: number, last: number, fps?: number): boolean {
   if (!fps || fps <= 0 || last <= 0) return true
-  // une demi-image de marge : rAF tombe rarement pile sur la periode
+  // half a frame of margin: rAF rarely lands exactly on the period
   return ms - last >= 1000 / fps - 1000 / 120
 }

@@ -15,7 +15,7 @@ export {
   NEUTRAL_GESTURE,
   IDLE_GESTURES,
   BOUNCE_DURATION,
-  composer,
+  compose,
   gestureFailure,
   idleGesture,
   sleepGesture,
