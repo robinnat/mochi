@@ -5,6 +5,58 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Removed (for now)
+
+- The two pairs of wings (angel, bat): out of `CATALOGUE` (23 accessories), kept in `RETIRES`.
+
+- Freckles, beauty mark, moustache and cat whiskers: out of `CATALOGUE` (29 to 25 accessories), kept in `RETIRES`.
+- The jumping movement: the "Movement" section of the site, `src/bot/sauts.ts`, the isometric space `EspaceIso`
+  and the lab's `#iso` view.
+
+### Fixed
+
+- Changing the shape left the accessories where they were laid out on the half-morphed body; they now re-seat once the morph ends.
+
+### Added
+
+- The `dort` mood shows small rising Z marks (all renderers).
+
+### Changed (site)
+
+- Landing page: seven moods demo, live interactions (hover, tap, double tap, long press, hello on arrival, which now
+  grows the Mochi out of the floor), slot-based accessory picker with colours, and a light/dark/auto switch
+  (3D eyes turn black in dark). `MochiBot` gains the `accessoires` prop (slot selection) and follows the
+  site theme when `theme` is not set. The tie accessory is retired (kept in `RETIRES`).
+
+### Added (moods and interactions, proposal)
+
+- Seven looped moods (`repos`, `reflechit`, `travaille`, `attend`, `termine`, `bloque`, `dort`) and six
+  interactions (hover follows the cursor, tap, double tap, long press blushes, shake or fast turn makes
+  it dizzy, a greeting on appearance), face and body only. API: `setMood(id)`, `react(id)`, `relacher()`,
+  `regarder()` on `MochiBot`; props `mood`, `interactions`, `coucou`, `fps`; `Humeurs` class in
+  `src/bot/humeurs.ts`. Respects `prefers-reduced-motion`. See `docs/moods.md`.
+- `Geste` gains optional face fields (crescent eyes, mirrored tilt, gaze offset, head tilt, cheek tint);
+  without them `sample(t)` is unchanged byte for byte. In 3D the lid, slant and head tilt now apply to the
+  front-facing eyes when the layer is on.
+
+### Added (dark theme, proposal)
+
+- `theme: 'light' | 'dark'` (default `'light'`, rendering unchanged): in `'dark'` the eyes are black
+  (`#0a0a0c`) in the three styles and the 11 shapes, all moods and blinks included. Lighting, rim glows
+  and reflection are the same, but they no longer add light on the eyes. Available as the last arguments
+  of `rendreAvatar(..., theme, contrasteOeil)`, `Mochi3d.setTheme`, `EspaceIso` option `theme` and the
+  `theme` prop of `MochiBot`.
+- Dark theme only: a body whose contrast with the black eye is under 3:1 is lightened just enough to reach
+  3:1 (ink, dark navy and dark grey bodies); other colours are untouched. `contrasteOeil = 0` disables it.
+- Dark theme only: the black lens of the sunglasses becomes slate so it stays distinct from black eyes.
+
+### Changed (pillow shapes)
+
+- Star, hexagon, cloud and flower are inflated like a cushion: the height is the solution of a Poisson
+  equation inside the outline, solved once per shape and cached. No ridge along the medial axis, no
+  crease between lobes, no groove on the edge; normals are smoothed. Silhouettes, sizes and ids are
+  unchanged.
+
 ### Changed (3D only)
 
 - **Three styles, all real 3D**: Soft (default), Flat (`toon`, optional outline) and Pixel (low

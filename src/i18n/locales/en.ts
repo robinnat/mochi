@@ -150,21 +150,28 @@ const en: typeof fr = {
     goutte: 'Droplet',
     etoile: 'Star',
     fleur: 'Flower',
-    oeuf: 'Egg'
+    oeuf: 'Egg',
+    coeur: 'Heart'
   },
 
   colors: {
     encre: 'Ink',
     creme: 'Cream',
     brun: 'Brown',
-    rouge: 'Red',
+    rouge: 'Tomato',
+    corail: 'Coral',
     orange: 'Orange',
-    ambre: 'Amber',
-    vert: 'Green',
+    ambre: 'Sunny yellow',
+    citron: 'Lime',
+    pomme: 'Apple green',
+    vert: 'Emerald',
     turquoise: 'Turquoise',
-    bleu: 'Blue',
-    violet: 'Purple',
+    ciel: 'Sky',
+    bleu: 'Royal blue',
+    violet: 'Violet',
+    magenta: 'Magenta',
     rose: 'Pink',
+    cerise: 'Cherry',
     gris: 'Grey'
   },
 

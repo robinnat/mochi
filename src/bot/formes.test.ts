@@ -4,7 +4,7 @@ import { radiusAtAngle } from './shape'
 import { SHAPE_BY_ID, SHAPES } from './skins'
 
 /**
- * Les formes ajoutees le 03/11/2026 (etoile, fleur, oeuf ; le coeur a ete retire le 03/11/2026). Ce qui est verrouille :
+ * Les formes ajoutees le 03/11/2026 (etoile, fleur, oeuf ; le coeur retire le 03/11 est revenu le 06/11/2026, forme neuve). Ce qui est verrouille :
  * leur silhouette se lit (branches, echancrure, petales), elles passent par le meme
  * echantillonnage angulaire que les autres, et elles pesent pareil a l'oeil. Le
  * debordement des yeux, lui, est deja couvert par `skins.test.ts`, qui balaye toutes les
@@ -29,7 +29,7 @@ function bosses(radii: number[]) {
 }
 
 describe('nouvelles formes', () => {
-  const nouvelles = ['etoile', 'fleur', 'oeuf']
+  const nouvelles = ['etoile', 'fleur', 'oeuf', 'coeur']
 
   it('sont au catalogue, echantillonnees comme les autres, sans rayon nul', () => {
     for (const id of nouvelles) {
@@ -39,7 +39,7 @@ describe('nouvelles formes', () => {
       expect(Math.max(...radii)).toBeGreaterThan(1)
       expect(Math.max(...radii)).toBeLessThan(1.15)
     }
-    expect(SHAPES.map((s) => s.id).slice(-3)).toEqual(nouvelles)
+    expect(SHAPES.map((s) => s.id).slice(-4)).toEqual(nouvelles)
   })
 
   it("l'etoile a cinq branches, une vers le haut", () => {
@@ -53,6 +53,19 @@ describe('nouvelles formes', () => {
   it('la fleur a cinq petales, un vers le haut', () => {
     expect(bosses(rayons('fleur'))).toBe(5)
     expect(r('fleur', -90)).toBeGreaterThan(r('fleur', -54))
+  })
+
+  it('le coeur a un creux en haut, deux lobes et une pointe en bas', () => {
+    const c = rayons('coeur')
+    expect(bosses(c)).toBe(3)
+    // creux : le rayon vers le haut est plus court que vers les lobes (-60 et -120 deg)
+    expect(r('coeur', -90)).toBeLessThan(r('coeur', -55) - 0.15)
+    expect(r('coeur', -90)).toBeLessThan(r('coeur', -125) - 0.15)
+    // pointe vers le bas, douce, et symetrique gauche droite
+    expect(r('coeur', 90)).toBeGreaterThan(0.7)
+    expect(r('coeur', 90)).toBeGreaterThan(r('coeur', 0) - 0.1)
+    expect(r('coeur', 90)).toBeLessThan(1.06)
+    expect(Math.abs(r('coeur', -55) - r('coeur', -125))).toBeLessThan(0.02)
   })
 
   it("l'oeuf est debout et plus large en bas qu'en haut", () => {

@@ -175,21 +175,28 @@ export default {
     goutte: 'Goutte',
     etoile: 'Étoile',
     fleur: 'Fleur',
-    oeuf: 'Œuf'
+    oeuf: 'Œuf',
+    coeur: 'Cœur'
   },
 
   colors: {
     encre: 'Encre',
     creme: 'Crème',
     brun: 'Brun',
-    rouge: 'Rouge',
+    rouge: 'Tomate',
+    corail: 'Corail',
     orange: 'Orange',
-    ambre: 'Ambre',
-    vert: 'Vert',
+    ambre: 'Jaune vif',
+    citron: 'Citron vert',
+    pomme: 'Pomme',
+    vert: 'Émeraude',
     turquoise: 'Turquoise',
-    bleu: 'Bleu',
+    ciel: 'Ciel',
+    bleu: 'Bleu roi',
     violet: 'Violet',
+    magenta: 'Magenta',
     rose: 'Rose',
+    cerise: 'Cerise',
     gris: 'Gris'
   },
 

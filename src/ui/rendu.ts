@@ -62,7 +62,8 @@ export const TAILLES_PIXEL: { id: TaillePixelId; diametre: number }[] = [
   { id: 'fin', diametre: 32 }
 ]
 
-export const PIXEL_DEFAUT: TaillePixelId = 'moyen'
+/** Pixel : la densite la plus fine (32 pixels de diametre) est le rendu par defaut ; les autres restent acceptees par la prop `pixel`, sans choix dans l'interface. */
+export const PIXEL_DEFAUT: TaillePixelId = 'fin'
 
 export const estTaillePixel = (v: string): v is TaillePixelId =>
   TAILLES_PIXEL.some((p) => p.id === v)

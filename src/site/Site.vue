@@ -1,40 +1,30 @@
 <script setup lang="ts">
+import Nav from './Nav.vue'
 import Hero from './Hero.vue'
-import Volumes3d from './Volumes3d.vue'
+import Styles from './Styles.vue'
+import Formes from './Formes.vue'
 import Moods from './Moods.vue'
-import Gestes from './Gestes.vue'
-import Sauts from './Sauts.vue'
-import Metiers from './Metiers.vue'
-import Playground from './Playground.vue'
-import Install from './Install.vue'
+import Interactions from './Interactions.vue'
+import Bento from './Bento.vue'
+import Personnalisation from './Personnalisation.vue'
+import DocsTeaser from './DocsTeaser.vue'
+import Pied from './Pied.vue'
+import { initTheme } from './theme'
+
+initTheme()
 </script>
 
 <template>
-  <nav class="nav" aria-label="Sections">
-    <div class="wrap">
-      <strong>Mochi</strong>
-      <div class="nav-liens">
-        <a href="#volumes">3D</a>
-        <a href="#moods">Moods</a>
-        <a href="#gestures">Gestures</a>
-        <a href="#jumps">Jumps</a>
-        <a href="#jobs">Accessories</a>
-        <a href="#playground">Playground</a>
-        <a href="#install">Install</a>
-      </div>
-    </div>
-  </nav>
+  <Nav />
   <main>
     <Hero />
-    <Volumes3d />
+    <Styles />
+    <Formes />
     <Moods />
-    <Gestes />
-    <Sauts />
-    <Metiers />
-    <Playground />
-    <Install />
+    <Interactions />
+    <Bento />
+    <Personnalisation />
+    <DocsTeaser />
   </main>
-  <footer class="pied">
-    <div class="wrap">Mochi, an animated avatar engine. MIT licensed. <a href="app.html">Open the app</a> · <a href="https://github.com/robinnat/mochi">GitHub</a></div>
-  </footer>
+  <Pied />
 </template>

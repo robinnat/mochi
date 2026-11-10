@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Mochi docs, add an animated avatar to your app</title>
+    <meta
+      name="description"
+      content="How to add Mochi to a Vue 3 app: installation from the repository, your first avatar in a few lines, shapes, colours, styles, moods, accessories, theme and every prop, with copyable examples."
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Mochi docs" />
+    <meta
+      property="og:description"
+      content="One soft shape, seven moods, and it reacts when you touch it. Real 3D in three styles, light and dark, with accessories you can mix."
+    />
+    <meta property="og:site_name" content="Mochi" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="https://mochi-red-phi.vercel.app/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mochi, animated avatars: two soft round characters on a pastel background" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://mochi-red-phi.vercel.app/og.png" />
+
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <meta name="theme-color" content="#fbfbf9" />
+  </head>
+  <body>
+    <script>
+      // pose le theme avant le premier dessin : pas de flash clair en mode sombre
+      try {
+        var c = localStorage.getItem('mochi-site-theme')
+        var d = c === 'dark' || (c !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = d ? 'dark' : 'light'
+      } catch (e) {}
+    </script>
+    <div id="site"></div>
+    <script type="module" src="/src/docs/main.ts"></script>
+  </body>
+</html>

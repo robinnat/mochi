@@ -1,65 +1,77 @@
 <script setup lang="ts">
-import MochiBot from '@/components/MochiBot.vue'
-import Lazy from './Lazy.vue'
-import { useReduit } from './reduced'
-import type { Block } from '@/bot/cycles'
+import { computed, ref } from 'vue'
+import Affiche from './Affiche.vue'
+import HeroChiffres from './HeroChiffres.vue'
+import { DEFILE } from './affiches'
+import { ACCESSOIRES_SITE } from './catalog'
+import type { Choix, Emplacement } from '@/bot/emplacements'
 
-const reduit = useReduit()
+/**
+ * Hero : « la foule » (choisi par Robin le 09/11/2026). Aucune 3D au premier ecran : une petite foule de Mochi tous differents (formes, couleurs,
+ * accessoires), en images pre-rendues qui flottent en CSS. Un tap sur l'un d'eux le fait sauter et dit ce qu'il porte ;
+ * « Shuffle » en appelle d'autres de la meme liste soignee que la carte des accessoires. Tres leger sur iPhone.
+ */
+const DE_FACE = DEFILE.filter((d) => !d.variante.dos)
+const NB = 12
+const labelDe = (i: number) =>
+  (Object.entries(DE_FACE[i]!.variante.acc) as [Emplacement, Choix][])
+    .map(([e, ch]) => ACCESSOIRES_SITE(e).find((a) => a.id === (typeof ch === 'string' ? ch : ch.id))?.label)
+    .filter(Boolean)
+    .join(', ')
 
-// un repos, un clin d'oeil, des yeux ecarquilles, une reflexion : le Mochi du haut de page
-const cycle: Block[] = [
-  { state: 'idle', duration: 3.2 },
-  { state: 'wink', duration: 1.6 },
-  { state: 'idle', duration: 2.6 },
-  { state: 'wide', duration: 1.8 },
-  { state: 'idle', duration: 2.6 },
-  { state: 'thinking', duration: 2.6 }
-]
+const ordre = ref<number[]>(Array.from({ length: NB }, (_, i) => i))
+const foule = computed(() => ordre.value.map((i) => ({ i, nom: DE_FACE[i]!.nom })))
+const actif = ref<number | null>(null)
+const saut = ref(0)
+
+function toucher(i: number) {
+  actif.value = i
+  saut.value++
+}
+function melanger() {
+  const tout = DE_FACE.map((_, i) => i)
+  for (let k = tout.length - 1; k > 0; k--) {
+    const j = Math.floor(Math.random() * (k + 1))
+    ;[tout[k], tout[j]] = [tout[j]!, tout[k]!]
+  }
+  ordre.value = tout.slice(0, NB)
+  actif.value = null
+}
+const legende = computed(() => (actif.value === null ? 'Tap a Mochi to see what it wears.' : `Wearing: ${labelDe(actif.value)}.`))
 </script>
 
 <template>
-  <header class="hero wrap">
-    <div class="hero-scene">
-      <Lazy :largeur="290" :hauteur="290">
-        <MochiBot
-          v-if="reduit"
-          :size="280"
-          shape="cercle"
-          color="violet"
-          rendu="3d"
-          :frozen-at="1"
-          label="A Mochi, a round purple animated avatar"
-        />
-        <MochiBot
-          v-else
-          :size="280"
-          shape="cercle"
-          color="violet"
-          rendu="3d"
-          :cycle="cycle"
-          :playing="true"
-          follow
-          label="A Mochi, a round purple animated avatar"
-        />
-      </Lazy>
-      <div class="satellites" aria-hidden="true">
-        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="etoile" color="ambre" rendu="3d" :frozen-at="1" label="" /></Lazy>
-        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="nuage" color="rose" rendu="3d" :frozen-at="1" label="" /></Lazy>
-        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="fleur" color="turquoise" rendu="3d" :frozen-at="1" label="" /></Lazy>
-        <Lazy garder :largeur="76" :hauteur="76"><MochiBot :size="72" shape="goutte" color="bleu" rendu="3d" :frozen-at="1" label="" /></Lazy>
-      </div>
-    </div>
-    <div>
-      <h1>Mochi</h1>
-      <p class="chapo">
-        A tiny animated avatar engine for the web. One soft shape that morphs through five face moods,
-        in real 3D, in three styles: Soft, Flat and Pixel. Drawn in code, no animation library.
+  <header id="top" class="hx hx-b">
+    <div class="hero-fond" aria-hidden="true" />
+    <div class="hx-in hx-centre">
+      <p class="hero-badge rv-load" style="--d: 0"><span class="point" aria-hidden="true" /> Open source, MIT</p>
+      <h1 class="hx-titre rv-load" style="--d: 1">A crowd of <span class="accent">tiny faces</span> for your app.</h1>
+      <p class="hx-chapo rv-load" style="--d: 2">
+        Mochi is a 3D avatar for the web: pick a shape, a colour and a few accessories. Each one breathes, blinks and reacts to touch.
       </p>
-      <div class="actions">
-        <a class="btn primaire" href="#playground">Try the playground</a>
-        <a class="btn" href="#install">Install</a>
-        <a class="btn" href="app.html">Open the app</a>
+      <div class="actions hx-actions rv-load" style="--d: 3">
+        <a class="btn primaire" href="/app">Try the app <span aria-hidden="true">→</span></a>
+        <a class="btn" href="/docs">Read the docs</a>
+      </div>
+
+      <ul class="hx-foule" aria-label="Some Mochi">
+        <li v-for="(m, k) in foule" :key="m.i + '-' + k" :style="{ '--k': k }">
+          <button
+            type="button"
+            class="hx-mochi"
+            :class="{ saute: actif === m.i }"
+            :aria-label="DE_FACE[m.i]!.variante.forme + ' Mochi wearing ' + labelDe(m.i)"
+            @click="toucher(m.i)"
+          >
+            <span :key="actif === m.i ? saut : 0" class="hx-mochi-i"><Affiche :nom="m.nom" :taille="166" :eager="k < 4" /></span>
+          </button>
+        </li>
+      </ul>
+      <div class="hx-pied">
+        <p class="hx-legende" aria-live="polite">{{ legende }}</p>
+        <button type="button" class="btn petit" @click="melanger">Shuffle</button>
       </div>
     </div>
+    <HeroChiffres />
   </header>
 </template>

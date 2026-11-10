@@ -5,12 +5,12 @@ import { useReduit } from './reduced'
 import { ACCESSOIRE_IDS, ACCESSOIRE_LABEL } from './catalog'
 
 const reduit = useReduit()
-const COULEURS = ['violet', 'rose', 'turquoise', 'ambre', 'bleu', 'vert', 'orange', 'violet', 'rose']
+const COULEURS = ['rouge', 'ciel', 'ambre', 'vert', 'magenta', 'orange', 'bleu', 'citron', 'turquoise']
 </script>
 
 <template>
   <section id="jobs" class="bloc wrap" aria-labelledby="t-metiers">
-    <span class="etiquette">Accessories</span>
+    <span class="etiquette">Tools</span>
     <h2 id="t-metiers">A tool for every trade</h2>
     <p class="chapo">
       Nine small animated objects drawn in code, each with the gesture that goes with it: the mochi looks at

@@ -1,14 +1,14 @@
 <!--
-  Le mochi au repos : un cercle violet et les deux matrices d'yeux produites par
+  Le mochi au repos : un cercle noir et les deux matrices d'yeux produites par
   `engine.sample(1)` sur l'etat `idle`. Les yeux sont des trous (le fond de l'onglet passe
   au travers), plus un reflet doux en haut a gauche.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-108 -108 216 216">
   <defs>
     <radialGradient id="degrade" cx="-0.35" cy="-0.4" r="1.15">
-      <stop offset="0" stop-color="#b79cff" />
-      <stop offset="0.55" stop-color="#8b5cf6" />
-      <stop offset="1" stop-color="#6d3fd6" />
+      <stop offset="0" stop-color="#46464d" />
+      <stop offset="0.55" stop-color="#18181b" />
+      <stop offset="1" stop-color="#0b0b0d" />
     </radialGradient>
     <mask id="yeux">
       <circle r="100" fill="#fff" />

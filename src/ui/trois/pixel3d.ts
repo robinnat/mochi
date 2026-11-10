@@ -53,10 +53,13 @@ export function tonsDe(hex: string, poids = 1): Rgb[] {
 }
 
 /** Palette d'une image : tons du corps, tons de chaque accessoire, blanc des yeux. */
-export function palettePixel(corps: string, accessoires: string[] = []): Rgb[] {
+export function palettePixel(corps: string, accessoires: string[] = [], oeil: [number, number, number] = [255, 255, 255]): Rgb[] {
   // les couleurs des accessoires pesent plus lourd : un pixel de bord (corps + blanc des yeux fondus) ne doit pas se changer en une teinte d'accessoire
-  return [...tonsDe(corps), ...accessoires.flatMap((a) => tonsDe(a, 1.9)), [255, 255, 255, 1]]
+  return [...tonsDe(corps), ...accessoires.flatMap((a) => tonsDe(a, 1.9)), [...oeil, 1]]
 }
+
+/** Au plus ce canal : un pixel est « noir » (oeil du theme sombre). */
+const SEUIL_NOIR = 44
 
 const dist = (a: Rgb, r: number, g: number, b: number) => ((a[0] - r) ** 2 + (a[1] - g) ** 2 + (a[2] - b) ** 2) * (a[3] ?? 1)
 
@@ -65,8 +68,8 @@ const dist = (a: Rgb, r: number, g: number, b: number) => ((a[0] - r) ** 2 + (a[
  * manquant, un pixel isole). Chaque amas de pixels blancs devient son rectangle englobant (si l'amas
  * en remplit au moins la moitie) ; un pixel blanc isole est efface, il reprend le ton de base du corps.
  */
-function nettoyerYeux(data: Uint8ClampedArray, w: number, h: number, plein: Uint8Array, palette: Rgb[]) {
-  const blanc = (i: number) => plein[i] === 1 && data[i * 4] === 255 && data[i * 4 + 1] === 255 && data[i * 4 + 2] === 255
+function nettoyerYeux(data: Uint8ClampedArray, w: number, h: number, plein: Uint8Array, palette: Rgb[], oeil: [number, number, number] = [255, 255, 255]) {
+  const blanc = (i: number) => plein[i] === 1 && data[i * 4] === oeil[0] && data[i * 4 + 1] === oeil[1] && data[i * 4 + 2] === oeil[2]
   const vu = new Uint8Array(w * h)
   const base = palette[1] ?? palette[0]!
   for (let s = 0; s < w * h; s++) {
@@ -112,7 +115,9 @@ function nettoyerYeux(data: Uint8ClampedArray, w: number, h: number, plein: Uint
           const i = y * w + x
           if (!plein[i]) continue
           vu[i] = 1
-          data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = 255
+          data[i * 4] = oeil[0]
+          data[i * 4 + 1] = oeil[1]
+          data[i * 4 + 2] = oeil[2]
           data[i * 4 + 3] = 255
         }
       }
@@ -124,7 +129,15 @@ function nettoyerYeux(data: Uint8ClampedArray, w: number, h: number, plein: Uint
  * Ramene chaque pixel a la couleur la plus proche de la palette, durcit le canal alpha (une case
  * est pleine ou vide), puis trace un contour de 1 px autour de la forme. Modifie `data` en place.
  */
-export function quantifier(data: Uint8ClampedArray, w: number, h: number, palette: Rgb[], blancPrioritaire = true) {
+export function quantifier(
+  data: Uint8ClampedArray,
+  w: number,
+  h: number,
+  palette: Rgb[],
+  blancPrioritaire = true,
+  /** theme sombre : couleur (noire) des yeux ; un pixel presque noir lui est rendu, a la place du blanc */
+  oeil?: [number, number, number]
+) {
   const plein = new Uint8Array(w * h)
   for (let i = 0; i < w * h; i++) {
     if (data[i * 4 + 3]! < 128) {
@@ -136,6 +149,13 @@ export function quantifier(data: Uint8ClampedArray, w: number, h: number, palett
     // gardent des blocs nets au lieu de pixels de la teinte du corps
     if (blancPrioritaire && Math.min(data[i * 4]!, data[i * 4 + 1]!, data[i * 4 + 2]!) >= 180) {
       data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = 255
+      data[i * 4 + 3] = 255
+      continue
+    }
+    if (oeil && Math.max(data[i * 4]!, data[i * 4 + 1]!, data[i * 4 + 2]!) <= SEUIL_NOIR) {
+      data[i * 4] = oeil[0]
+      data[i * 4 + 1] = oeil[1]
+      data[i * 4 + 2] = oeil[2]
       data[i * 4 + 3] = 255
       continue
     }
@@ -153,7 +173,7 @@ export function quantifier(data: Uint8ClampedArray, w: number, h: number, palett
     data[i * 4 + 2] = meilleur[2]
     data[i * 4 + 3] = 255
   }
-  nettoyerYeux(data, w, h, plein, palette)
+  nettoyerYeux(data, w, h, plein, palette, oeil)
   // contour : une case pleine qui touche le vide (ou le bord) prend un ton plus sombre d'elle-meme
   const bord: number[] = []
   for (let y = 0; y < h; y++) {

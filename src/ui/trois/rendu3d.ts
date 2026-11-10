@@ -243,3 +243,8 @@ export function couleurContour(hex: string): string {
  * s'epaissit pas sans fin en gros plan (plafond).
  */
 export const epaisseurContourPx = (diametrePx: number) => Math.min(3.4, Math.max(1.3, diametrePx * 0.02))
+
+/** Facteur d'epaisseur du contour : 1 = l'epaisseur de base (`epaisseurContourPx`), borne pour rester propre. */
+export const EPAISSEUR_CONTOUR_DEFAUT = 1
+export const EPAISSEUR_CONTOUR_MIN = 0.4
+export const EPAISSEUR_CONTOUR_MAX = 4

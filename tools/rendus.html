@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  Source des images de public/rendus/ (affiches et vignettes du site, en vraie 3D). Page de dev, hors build :
+  servie par `pnpm dev` a /tools/rendus.html ; Chrome headless (deviceScaleFactor 2) appelle `window.toutRendre()`
+  et ecrit chaque image recue dans public/rendus/. Voir CLAUDE.md, « Generated files ».
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mochi rendus</title>
+    <style>
+      html, body { margin: 0; background: transparent; }
+      #scene { position: absolute; left: 0; top: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="scene"></div>
+    <script type="module" src="./rendus.ts"></script>
+  </body>
+</html>

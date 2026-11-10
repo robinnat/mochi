@@ -46,7 +46,6 @@ import { INTRO, INTRO_GAZE, POSE_AT, introDue } from '@/ui/intro'
 import { ecris, lis, type NomStocke } from '@/ui/stockage'
 import {
   estRendu,
-  estTaillePixel,
   contourCourant,
   pixelCourant,
   PIXEL_DEFAUT,
@@ -467,7 +466,8 @@ watch(expression, (v) => ecris('expression', v))
  * vignettes, timeline, planche. Le moteur ne change pas, seul le dessin.
  */
 const rendu = ref<RenduId>(stored('style', RENDU_DEFAUT, estRendu) as RenduId)
-const pixel = ref<TaillePixelId>(stored('pixel', PIXEL_DEFAUT, estTaillePixel) as TaillePixelId)
+// densite des pixels : la plus fine, sans choix dans l'interface
+const pixel = ref<TaillePixelId>(PIXEL_DEFAUT)
 const contour = ref(stored('contour', '0', (v) => v === '0' || v === '1') === '1')
 renduCourant.value = rendu.value
 pixelCourant.value = pixel.value
@@ -479,10 +479,6 @@ watch(contour, (v) => {
 watch(rendu, (v) => {
   renduCourant.value = v
   ecris('style', v)
-})
-watch(pixel, (v) => {
-  pixelCourant.value = v
-  ecris('pixel', v)
 })
 
 /** Ce que porte un bot exporte : la meme chose qu'a l'ecran, style compris. */
@@ -1026,7 +1022,6 @@ watch(
             v-model:color="color"
             v-model:expression="expression"
             v-model:rendu="rendu"
-            v-model:pixel="pixel"
             v-model:contour="contour"
           />
         </template>

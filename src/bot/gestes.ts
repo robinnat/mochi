@@ -11,6 +11,7 @@
  * attend reste calme ; c'est la variete et le decalage dans le temps qui font la personnalite.
  */
 import { TAU, clamp, createRng, easings, loopNoise } from './math'
+import type { BotExpression } from './expressions'
 import type { StateId } from './states'
 
 /** Ecarts appliques par `sample()` : deplacements en rayons de boule, echelles, angles en degres. */
@@ -27,6 +28,26 @@ export interface Geste {
   roll: number
   /** paupiere maximale : 1 = laisse faire le moteur, 0 = fermee */
   lid: number
+  /*
+   * Couche VISAGE (humeurs, `humeurs.ts`). Tout est facultatif et ABSENT du geste neutre : un geste
+   * qui n'y touche pas rend la meme image qu'avant, a l'octet pres.
+   */
+  /** visage absolu : remplace les yeux et leur ecart (la visee reste celle du moteur) */
+  exp?: BotExpression
+  /** multiplicateurs de largeur et de hauteur des yeux (1 = inchange) */
+  ew?: number
+  eh?: number
+  /** inclinaison ajoutee, en degres, EN MIROIR entre les deux yeux (positif = les hauts convergent) */
+  tilt?: number
+  /** 0 = gelule, 1 = croissant ouvert vers le bas (oeil content) */
+  arc?: number
+  /** decalage des yeux dans le plan du visage, en rayons (regard) */
+  ex?: number
+  ey?: number
+  /** teinte des joues, 0 a 1 */
+  joues?: number
+  /** inclinaison du corps ET du visage, en degres, positif = vers la droite (tete penchee) */
+  rot?: number
 }
 
 export const GESTE_NEUTRE: Readonly<Geste> = Object.freeze({ dx: 0, dy: 0, sx: 1, sy: 1, yaw: 0, pitch: 0, roll: 0, lid: 1 })
@@ -35,7 +56,7 @@ const g = (p: Partial<Geste>): Geste => ({ ...GESTE_NEUTRE, ...p })
 
 /** Compose deux gestes : deplacements et angles s'ajoutent, echelles se multiplient, paupiere au plus fermee. */
 export function composer(a: Geste, b: Geste): Geste {
-  return {
+  const out: Geste = {
     dx: a.dx + b.dx,
     dy: a.dy + b.dy,
     sx: a.sx * b.sx,
@@ -45,7 +66,19 @@ export function composer(a: Geste, b: Geste): Geste {
     roll: a.roll + b.roll,
     lid: Math.min(a.lid, b.lid)
   }
+  // couche visage : seulement si l'un des deux la porte
+  const exp = b.exp ?? a.exp
+  if (exp) out.exp = exp
+  for (const k of ['ew', 'eh'] as const) if (a[k] !== undefined || b[k] !== undefined) out[k] = (a[k] ?? 1) * (b[k] ?? 1)
+  for (const k of ['tilt', 'ex', 'ey', 'rot'] as const) if (a[k] !== undefined || b[k] !== undefined) out[k] = (a[k] ?? 0) + (b[k] ?? 0)
+  for (const k of ['arc', 'joues'] as const) if (a[k] !== undefined || b[k] !== undefined) out[k] = Math.max(a[k] ?? 0, b[k] ?? 0)
+  return out
 }
+
+/** true si le geste porte une part de la couche visage. */
+export const aUnVisage = (g: Geste) =>
+  g.exp !== undefined || g.ew !== undefined || g.eh !== undefined || g.tilt !== undefined || g.arc !== undefined ||
+  g.ex !== undefined || g.ey !== undefined || g.joues !== undefined || g.rot !== undefined
 
 /** Cloche 0 -> 1 -> 0 sur [0, 1], douce aux deux bouts. */
 const cloche = (u: number) => (u <= 0 || u >= 1 ? 0 : Math.sin(Math.PI * u) ** 2)

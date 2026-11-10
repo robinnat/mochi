@@ -2,15 +2,14 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochi-red-phi.vercel.app)
 
-Mochi is a small animated avatar engine for the web. One solid shape morphs between five
-measured face moods, two eyes move on their own, and everything is drawn in real 3D, in three
-styles: Soft, Flat and Pixel. It comes with gestures, job
-accessories, jumping movement and exports (SVG, PNG, GIF, MP4). No animation library.
+Mochi is a small animated avatar engine for the web. One solid shape with seven moods, two eyes
+that move on their own, and reactions when you touch it (hover, tap, double tap, long press, shake,
+a hello on arrival). Everything is drawn in real 3D, in three styles (Soft, Flat and Pixel), in light
+and dark, with accessories you can stack by slot and colour, and exports
+(SVG, PNG, GIF, MP4). No animation library.
 
 **Site and playground: https://mochi-red-phi.vercel.app** (the app is at `/app`).  
 **Source: https://github.com/robinnat/mochi**
-
-![A mochi going through idle, wink, wide eyes and sleep](docs/demo.gif)
 
 ## Install
 
@@ -31,20 +30,18 @@ The component lives in `src/components/MochiBot.vue`.
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue'
 import MochiBot from './components/MochiBot.vue'
-
-const state = ref('idle')
 </script>
 
 <template>
-  <MochiBot v-model:state="state" shape="fleur" color="rose" rendu="flat3d" :size="160" follow />
+  <!-- a mood, light 3D, reacts to the pointer; says hello on arrival -->
+  <MochiBot mood="repos" shape="fleur" color="rose" rendu="3d" :size="160" follow coucou />
+  <!-- a mood with its own prop: types on a small 3D laptop (ordinateur="false" hides it) -->
+  <MochiBot mood="travaille" shape="squircle" :size="200" />
+  <!-- accessories by slot and colour, dark theme -->
+  <MochiBot :accessoires="{ tete: 'casquette', yeux: 'rondes' }" theme="dark" :size="200" />
   <!-- a frozen frame: no animation loop, the same image every time -->
-  <MochiBot state="wink" :frozen-at="1.2" :size="96" />
-  <!-- real 3D, with the cartoon outline; Three.js is loaded on demand -->
-  <MochiBot shape="etoile" color="ambre" rendu="3d" contour :size="200" />
-  <!-- a job accessory and the gesture that goes with it -->
-  <MochiBot accessoire="portable" :size="200" />
+  <MochiBot mood="termine" :frozen-at="1.2" :size="96" />
 </template>
 ```
 
@@ -114,19 +111,11 @@ solids of revolution, and star, flower, hexagon and cloud are thick, fully round
 **Colours** (12): `encre`, `brun`, `rouge`, `orange`, `ambre`, `vert`, `turquoise`, `bleu`,
 `violet`, `rose`, `gris`, `creme`.
 
-**Expressions** (16): `neutre`, `attentif`, `surpris`, `excite`, `heureux`, `hilare`,
-`colere`, `triste`, `effraye`, `mefiant`, `confus`, `curieux`, `fier`, `timide`, `blase`,
-`somnolent`.
-
-**States** (5 face moods, in the order of the reference sequence): `idle`, `thinking`, `wink`,
-`wide`, `sleep`. They all live on the face (eyes, lids, expression). (`swirl` also exists, as the
-app's view transition, outside the catalogue.)
-
-**Gestures** (`src/bot/gestes.ts`, optional and deterministic): seven idle gestures
-(`cligne`, `respire`, `saut`, `balance`, `regard`, `hoche`, `etire`) scheduled by a seed with
-`gesteRepos(t, seed)`, a tap `rebond(u)`, `gesteSommeil(t)`, `gesteEchec(t)`, and three
-activities (`reflexion`, `frappe`, `balayage`).
-Without a gesture the image is byte for byte the original. See [docs/gestes.md](docs/gestes.md).
+**Moods** (7, looped, face and body): `repos`, `reflechit`, `travaille` (types on a small 3D laptop seen
+from behind, `ordinateur` hides it), `attend`, `termine`, `bloque`, `dort`. Set one with
+`<MochiBot mood="travaille" />` or `setMood()`. **Interactions** (on by default, `interactions`): hover makes
+the gaze follow, tap startles, double tap laughs, long press blushes, a shake or fast spin makes it dizzy, and
+`coucou` plays a hello on arrival (it grows out of the floor). See [docs/moods.md](docs/moods.md).
 
 **Worn accessories** (`src/bot/portes.ts`, `porte` prop): `lunettes`, `soleil`, `haut-de-forme`,
 `paille`, `bonnet`, `noeud`, `couronne`, `casque`. Placed on the body again at every frame, in every
@@ -135,14 +124,10 @@ style including 3D (`<MochiBot porte="bonnet" />`). See [docs/accessoires.md](do
 **3D controls**: `<MochiBot rendu="3d" :yaw="angle" />` turns the model around its vertical axis
 (radians; the eyes are painted on the front face only). The site's 3D section drives it by drag.
 
-**Job accessories** (`src/bot/accessoires.ts`): `carnet`, `portable`, `clap`, `graphique`,
-`avion`, `palette`, `presse-papiers`, `liste`, `engrenage`, each with its gesture;
-`accessoireDuMetier('code')` maps a job name to one. See [docs/accessoires.md](docs/accessoires.md).
-
-**Jumps and movement** (`src/bot/sauts.ts`, `src/ui/trois/iso.ts`): `poseSaut` and
-`poseSurChemin` give squash, stretch, flight and landing with volume conserved;
-`EspaceIso` puts 3D mochis on an isometric grid and makes them hop tile to tile.
-See [docs/iso.md](docs/iso.md).
+**Accessories by slot** (`accessoires` prop, `src/bot/emplacements.ts`): head, eyes, face, neck and back, one per
+slot, all stackable, each a simple shape in one or two colours you choose:
+`<MochiBot :accessoires="{ tete: { id: 'casquette', c1: '#e8505b' }, yeux: 'rondes' }" />`.
+**Theme**: `theme="dark"` turns the eyes black (without it, the site's current theme).
 
 **Exports**: SVG, PNG, animated SVG, animated GIF, and a whole montage as GIF or MP4
 (the video encoder only loads on first use).
@@ -158,9 +143,10 @@ engine.setLook({ yaw, pitch, mix, wander }, t) // aim the eyes (null to release)
 const frame = engine.sample(t, geste?) // pure: bodyPath, eyes, arcs, dots, notif
 ```
 
-`<MochiBot>` props: `size`, `shape`, `color`, `expression`, `paper`, `frozenAt`, `cycle`,
-`follow`, `gaze`, `rendu`, `pixel`, `rendu3d`, `douceur`, `contour`, `reflet`, `geste`,
-`accessoire`, `label`. Models: `block`, `state`, `playing`, `elapsed`. See
+`<MochiBot>` props: `size`, `shape`, `color`, `paper`, `frozenAt`, `follow`, `rendu`, `pixel`,
+`rendu3d`, `douceur`, `contour`, `reflet`, `yaw`, `theme`, `mood`, `interactions`, `coucou`,
+`ordinateur`, `accessoires`, `fps`, `label`. `color` is a catalogue id (`violet`) or any hex
+(`#ff8800`, `#f80`). Twelve shapes, heart included. See
 [MochiBot.vue](src/components/MochiBot.vue).
 
 ## Why the numbers look arbitrary
@@ -179,8 +165,6 @@ them loses the accuracy of the motion.
 
 [docs/measurements.md](docs/measurements.md) has the rest.
 
-![The 5 face moods, frozen side by side](docs/states.png)
-
 ## Architecture
 
 | | |
@@ -188,9 +172,8 @@ them loses the accuracy of the motion.
 | [docs/architecture.md](docs/architecture.md) | The engine, radial-profile morphing, eyes as mask holes |
 | [docs/measurements.md](docs/measurements.md) | What was measured, regenerating `profiles.ts` |
 | [docs/styles.md](docs/styles.md) | Render styles: Soft, Flat, Pixel (real 3D) |
-| [docs/gestes.md](docs/gestes.md) | Gestures and activities |
 | [docs/accessoires.md](docs/accessoires.md) | Job accessories |
-| [docs/iso.md](docs/iso.md) | Jumps and the isometric space |
+| [docs/moods.md](docs/moods.md) | Work moods and reactions to the user (face and body only) |
 | [docs/intro.md](docs/intro.md) | The arrival sequence |
 | [docs/interface.md](docs/interface.md) | App layout and CSS traps |
 | [docs/export.md](docs/export.md) | SVG, PNG, GIF and MP4 export |

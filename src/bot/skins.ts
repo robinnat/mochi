@@ -36,6 +36,7 @@ export type ShapeId =
   | 'etoile'
   | 'fleur'
   | 'oeuf'
+  | 'coeur'
 
 export interface BotShape {
   id: ShapeId
@@ -139,6 +140,30 @@ const egg = normalize(
   1.06
 )
 
+/**
+ * Coeur : la courbe classique (16 sin^3 t, 13 cos t - 5 cos 2t - 2 cos 3t - cos 4t), retournee pour l'ecran
+ * (y vers le bas), vue depuis un centre un peu sous l'echancrure pour que chaque rayon ne croise le contour
+ * qu'une fois. Creux doux en haut, pointe en bas ARRONDIE (lissage), deux lobes bien pleins : les yeux
+ * tiennent dans la partie large. Volume gonfle comme les autres formes (`volume.ts`, profil coussin).
+ */
+const heart = normalize(
+  smooth(
+    profileFromPolygon(
+      Array.from({ length: 200 }, (_, i) => {
+        const t = (i / 200) * Math.PI * 2
+        return {
+          x: (16 * Math.sin(t) ** 3) / 17,
+          y: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 17
+        }
+      }),
+      0,
+      0.12
+    ),
+    1.6
+  ),
+  1.06
+)
+
 /** Capsule couchee : enveloppe de deux disques cote a cote. */
 const capsule = profileFromPolygon(hullOfCircles(-0.42, 0, 0.62, 0.42, 0, 0.62), 0, 0)
 
@@ -157,7 +182,8 @@ export const SHAPES: BotShape[] = [
   { id: 'goutte', radii: droplet },
   { id: 'etoile', radii: star },
   { id: 'fleur', radii: flower },
-  { id: 'oeuf', radii: egg }
+  { id: 'oeuf', radii: egg },
+  { id: 'coeur', radii: heart }
 ]
 
 // Map indexee par `string` et non par `ShapeId` : les appelants interrogent avec
@@ -170,13 +196,19 @@ export type ColorId =
   | 'creme'
   | 'brun'
   | 'rouge'
+  | 'corail'
   | 'orange'
   | 'ambre'
+  | 'citron'
+  | 'pomme'
   | 'vert'
   | 'turquoise'
+  | 'ciel'
   | 'bleu'
   | 'violet'
+  | 'magenta'
   | 'rose'
+  | 'cerise'
   | 'gris'
 
 export interface BotColor {
@@ -184,24 +216,44 @@ export interface BotColor {
   hex: string
 }
 
-/** Palette du personnalisateur d'origine. */
+/** Palette du personnalisateur : 14 couleurs vives « Bonbons et jouets » (P1, 09/11/2026) et quatre neutres. */
 export const COLORS: BotColor[] = [
   { id: 'encre', hex: '#0a0a0c' },
   { id: 'brun', hex: '#8b5e3c' },
-  { id: 'rouge', hex: '#e8483f' },
-  { id: 'orange', hex: '#f08a24' },
-  { id: 'ambre', hex: '#f0b429' },
-  { id: 'vert', hex: '#3ecf8e' },
-  { id: 'turquoise', hex: '#2fbfa0' },
-  { id: 'bleu', hex: '#3b93f0' },
-  { id: 'violet', hex: '#8b5cf6' },
-  { id: 'rose', hex: '#e152b0' },
+  { id: 'rouge', hex: '#ff3b30' },
+  { id: 'corail', hex: '#ff6a3d' },
+  { id: 'orange', hex: '#ff9500' },
+  { id: 'ambre', hex: '#ffd60a' },
+  { id: 'citron', hex: '#b6e800' },
+  { id: 'pomme', hex: '#6fd400' },
+  { id: 'vert', hex: '#00c46a' },
+  { id: 'turquoise', hex: '#00c7be' },
+  { id: 'ciel', hex: '#21b0ff' },
+  { id: 'bleu', hex: '#2d5bff' },
+  { id: 'violet', hex: '#8b3dff' },
+  { id: 'magenta', hex: '#d81bbd' },
+  { id: 'rose', hex: '#ff4d94' },
+  { id: 'cerise', hex: '#e6194b' },
   { id: 'gris', hex: '#a3a3a3' },
   { id: 'creme', hex: '#f1efe9' }
 ]
 
 export const COLOR_BY_ID = new Map<string, BotColor>(COLORS.map((c) => [c.id, c]))
 export const DEFAULT_COLOR = 'encre'
+
+/**
+ * Couleur libre : `#rgb` ou `#rrggbb` (casse libre, `#` facultatif a la saisie) -> `#rrggbb` en minuscules ;
+ * `null` si ce n'est pas une couleur. Sert a la prop `color` (id du catalogue OU hex) et au champ hex du site.
+ */
+export function hexValide(v: string | null | undefined): string | null {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((v ?? '').trim())
+  if (!m) return null
+  const h = m[1]!.toLowerCase()
+  return `#${h.length === 3 ? [...h].map((c) => c + c).join('') : h}`
+}
+
+/** Couleur du corps : un id du catalogue, sinon un hex libre, sinon l'encre. */
+export const couleurDe = (v: string): string => COLOR_BY_ID.get(v)?.hex ?? hexValide(v) ?? '#0a0a0c'
 
 /** Melange deux couleurs hex. Sert a la brume de profondeur des particules. */
 export function mixHex(from: string, to: string, t: number): string {

@@ -26,7 +26,11 @@ haut-gauche (10 h), reflet doux. La texture ne porte que la couleur et les yeux.
 
 Les 11 formes du catalogue ont un vrai volume sous tous les angles : sphère (cercle), galet
 (ellipsoïde), squircle (galet-cube très arrondi), capsule (tube couché), triangle (cône arrondi),
-hexagone (profond), nuage, goutte, étoile, fleur, œuf. Goutte, œuf, triangle et capsule sont des
+hexagone (profond), nuage, goutte, étoile, fleur, œuf. Étoile, hexagone, nuage et fleur sont gonflés en « coussin » (`ProfilVolume.coussin`) : la hauteur est
+la solution d'une équation de Poisson sur l'intérieur du contour (u = 0 au bord), calculée une fois par
+forme et mise en cache (`champCoussin`, `hauteurCoussin`), puis z = H·(u/umax)^0,45. Surface lisse partout,
+sans arête sur l'axe médian ni pli entre lobes, bord arrondi à tangente verticale, sans gorge sur la
+tranche ; les normales sont en plus lissées. Goutte, œuf, triangle et capsule sont des
 solides de révolution (`ProfilVolume.revolution`) : la profondeur d'un point est la demi-largeur
 du contour à sa hauteur.
 
@@ -173,7 +177,7 @@ reflet », `?f=cercle,etoile,nuage`), captures `docs/variantes/3d-doux-reflet-*.
 
 `labo.html` (entrée Vite séparée, l'application ne grossit pas) : `#formes` est la planche
 des formes dans les quatre styles (flat, pixel, pâte, 3D ; `?c=<couleur>`, `?s=<taille>`),
-`#gros` un gros plan en trois quarts, `#iso` la démo de saut ([iso.md](iso.md)).
+`#gros` un gros plan en trois quarts.
 
 ### Risques connus
 

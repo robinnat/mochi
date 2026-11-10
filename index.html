@@ -7,14 +7,14 @@
     <title>Mochi, animated avatars</title>
     <meta
       name="description"
-      content="Mochi is a tiny animated avatar engine: one soft shape, five face moods, in real 3D (Soft, Flat, Pixel), with gestures, jumps and job accessories. Try the playground."
+      content="Mochi is a tiny animated avatar engine: one soft shape, seven moods, reactions to touch, light and dark modes, mix-and-match accessories, in real 3D (Soft, Flat, Pixel). Try it in your browser."
     />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Mochi, animated avatars" />
     <meta
       property="og:description"
-      content="One soft shape, five face moods. Real 3D in three styles, with gestures, jumps and job accessories."
+      content="One soft shape, seven moods, and it reacts when you touch it. Real 3D in three styles, light and dark, with accessories you can mix."
     />
     <meta property="og:site_name" content="Mochi" />
     <meta property="og:locale" content="en_US" />
@@ -29,9 +29,17 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <meta name="theme-color" content="#fbfaf7" />
+    <meta name="theme-color" content="#fbfbf9" />
   </head>
   <body>
+    <script>
+      // pose le theme avant le premier dessin : pas de flash clair en mode sombre
+      try {
+        var c = localStorage.getItem('mochi-site-theme')
+        var d = c === 'dark' || (c !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = d ? 'dark' : 'light'
+      } catch (e) {}
+    </script>
     <div id="site"></div>
     <script type="module" src="/src/site/main.ts"></script>
   </body>

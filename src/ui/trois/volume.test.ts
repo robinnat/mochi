@@ -6,6 +6,10 @@ import {
   aireSignee,
   ANNEAUX,
   centreDe,
+  champCoussin,
+  champDeRepos,
+  hauteurNorm,
+  hauteurCoussin,
   contourDuCorps,
   yeuxDeFace,
   demiEtendueOeil,
@@ -170,7 +174,7 @@ describe('gonflage', () => {
       zmin = Math.min(zmin, v.positions[i + 2]!)
       zmax = Math.max(zmax, v.positions[i + 2]!)
     }
-    expect((zmax - zmin) / Math.min(x1 - x0, y1 - y0)).toBeGreaterThanOrEqual(['etoile', 'fleur', 'hexagone'].includes(id) ? 0.4 : 0.6)
+    expect((zmax - zmin) / Math.min(x1 - x0, y1 - y0)).toBeGreaterThanOrEqual(['etoile', 'fleur', 'hexagone', 'coeur'].includes(id) ? 0.4 : 0.6)
   })
 
   it('la hauteur ne depend que de la distance au bord : raccord au mur, plateau plat', () => {
@@ -285,5 +289,55 @@ describe('pyramide', () => {
     expect(haut).toBeLessThan(milieu)
     expect(milieu).toBeLessThan(bas)
     expect(bas).toBeGreaterThan(0.35 * (pts.reduce((m, p) => Math.max(m, p.x), 0) * 2))
+  })
+})
+
+describe('gonflage coussin', () => {
+  const contour = (id: string) => contourDuCorps(image(id).bodyPath)
+
+  it.each(['etoile', 'hexagone', 'nuage', 'fleur', 'coeur'])('%s : champ lisse, nul dehors, maximal a l interieur', (id) => {
+    const pts = contour(id)
+    const champ = champCoussin(pts, `test:${id}`)
+    let cx = 0
+    let cy = 0
+    for (const p of pts) {
+      cx += p.x / pts.length
+      cy += p.y / pts.length
+    }
+    expect(hauteurCoussin(champ, cx, cy)).toBeGreaterThan(0.6)
+    // loin du contour, la hauteur est nulle
+    expect(hauteurCoussin(champ, champ.x0 + 1, champ.y0 + 1)).toBe(0)
+    // pas de saut : deux points voisins different peu (surface continue, sans arete)
+    const pas = champ.pas
+    let pire = 0
+    for (let k = 0; k < 40; k++) {
+      const p = pts[(k * 7) % pts.length]!
+      const x = cx + (p.x - cx) * 0.5
+      const y = cy + (p.y - cy) * 0.5
+      pire = Math.max(pire, Math.abs(hauteurCoussin(champ, x + pas, y) - hauteurCoussin(champ, x, y)))
+    }
+    expect(pire).toBeLessThan(0.12)
+  })
+
+  it('le champ est calcule une fois sur le contour de repos, puis reutilise pour un contour ecrase ou decale', () => {
+    const repos = champDeRepos('etoile')!
+    expect(repos).toBe(champDeRepos('etoile'))
+    // un contour ecrase (gestes) et decale : aucun nouveau champ, memes valeurs normalisees
+    const pts = contour('etoile').map((p) => ({ x: p.x * 1.15 + 6, y: p.y * 0.8 - 4 }))
+    const t0 = performance.now()
+    for (let i = 0; i < 20; i++) gonfler(pts, DEMI_VIEWBOX, undefined, undefined, profilDe('etoile'))
+    expect((performance.now() - t0) / 20).toBeLessThan(15)
+    expect(champDeRepos('etoile')).toBe(repos)
+    expect(hauteurNorm(repos, 0.5, 0.55)).toBeGreaterThan(0.6)
+  })
+
+  it("le volume d'une forme coussin a le meme nombre de sommets et reste ferme", () => {
+    for (const id of ['etoile', 'hexagone', 'nuage', 'fleur', 'coeur']) {
+      const v = gonfler(contour(id), DEMI_VIEWBOX, undefined, undefined, profilDe(id))
+      expect(v.positions.every(Number.isFinite)).toBe(true)
+      let zmax = 0
+      for (let i = 2; i < v.positions.length; i += 3) zmax = Math.max(zmax, Math.abs(v.positions[i]!))
+      expect(zmax).toBeGreaterThan(20)
+    }
   })
 })

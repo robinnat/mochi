@@ -15,7 +15,10 @@
  * passage au repere Three (y vers le haut) se fait au remplissage des tampons.
  */
 
+import { BotEngine } from '@/bot/engine'
+import { RAYON } from '@/bot/repere'
 import type { Point } from '@/bot/shape'
+import { SHAPE_BY_ID } from '@/bot/skins'
 
 /** Points intermediaires evalues sur chaque cubique du contour. */
 export const SOUS_PAS = 3
@@ -138,6 +141,13 @@ export interface ProfilVolume {
    * credible sous tous les angles, sans mur ni extrusion plate.
    */
   revolution?: 'v' | 'h'
+  /**
+   * Gonflage « coussin » : la hauteur vient de la solution d'une equation de Poisson sur l'interieur
+   * du contour (u = 0 au bord), puis z = H * (u / umax) ^ 0,45. Surface lisse PARTOUT : pas d'arete
+   * le long de l'axe median (etoile, hexagone), lobes qui fondent l'un dans l'autre (nuage, fleur),
+   * bord arrondi a tangente verticale, sans gorge sur la tranche.
+   */
+  coussin?: boolean
 }
 
 /** Un coussin a plateau : sert aux formes sans profil connu (silhouettes relevees, etc.). */
@@ -156,14 +166,16 @@ export const PROFILS: Record<string, ProfilVolume> = {
   // pyramide a base carree vue par une face : la profondeur croit de la pointe a la base
   triangle: { profondeur: 1, arrondi: 1, arriere: 1, revolution: 'v' },
   // hexagone : ecrou doux, meme extrusion biseautee
-  hexagone: { profondeur: 0.8, arrondi: 0.82, arriere: 1 },
+  hexagone: { profondeur: 0.8, arrondi: 0.82, arriere: 1, coussin: true },
   // extrusion a gros biseau (reference : icones 3D epaisses et douces) : faces plates, bords
   // ENTIEREMENT arrondis comme un bonbon, epaisseur ~0,45 x la largeur
-  etoile: { profondeur: 0.85, arrondi: 0.98, arriere: 1 },
+  etoile: { profondeur: 0.85, arrondi: 0.98, arriere: 1, coussin: true },
   // fleur : cinq petales ronds extrudes, meme biseau
-  fleur: { profondeur: 0.85, arrondi: 0.98, arriere: 1 },
+  fleur: { profondeur: 0.85, arrondi: 0.98, arriere: 1, coussin: true },
+  // coeur : coussin bombe, creux en haut et pointe douce en bas
+  coeur: { profondeur: 0.85, arrondi: 0.98, arriere: 1, coussin: true },
   // nuage : coussin bombe, valide tel quel
-  nuage: { profondeur: 1, arrondi: 1, arriere: 1 }
+  nuage: { profondeur: 1, arrondi: 1, arriere: 1, coussin: true }
 }
 
 export const profilDe = (forme?: string | null): ProfilVolume =>
@@ -298,6 +310,134 @@ export function indexDuVolume(n: number, anneaux = ANNEAUX): Uint32Array {
   return out
 }
 
+/* --------------------------------------------------------------- gonflage coussin */
+
+const GRILLE = 112
+
+export interface ChampCoussin {
+  /** solution normalisee (0 au bord, 1 au maximum), GRILLE x GRILLE, lignes de haut en bas */
+  u: Float32Array
+  /** coin de la grille et taille d'une case, dans le repere du contour d'ou le champ a ete resolu */
+  x0: number
+  y0: number
+  pas: number
+  /** boite de ce contour : sert a normaliser n'importe quel contour de la meme forme (ecrase, decale) */
+  bx0: number
+  by0: number
+  bw: number
+  bh: number
+}
+
+const champs = new Map<string, ChampCoussin>()
+
+/** Point dans le polygone (lancer de rayon). */
+function dedans(pts: Point[], x: number, y: number): boolean {
+  let c = false
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const a = pts[i]!
+    const b = pts[j]!
+    if (a.y > y !== b.y > y && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) c = !c
+  }
+  return c
+}
+
+/**
+ * Resout \u2207\u00b2u = -1 dans le contour (u = 0 dehors) sur une grille, par surrelaxation, et garde le
+ * resultat sous `cle`. Le champ est calcule UNE fois, sur le contour de REPOS de la forme (voir
+ * `champDeRepos`) ; ensuite tout contour de la meme forme, ecrase ou decale par un geste, le reutilise
+ * en normalisant ses coordonnees par sa propre boite (`hauteurNorm`).
+ */
+export function champCoussin(pts: Point[], cle: string): ChampCoussin {
+  const deja = champs.get(cle)
+  if (deja) return deja
+  let mx0 = Infinity
+  let mx1 = -Infinity
+  let my0 = Infinity
+  let my1 = -Infinity
+  for (const p of pts) {
+    mx0 = Math.min(mx0, p.x)
+    mx1 = Math.max(mx1, p.x)
+    my0 = Math.min(my0, p.y)
+    my1 = Math.max(my1, p.y)
+  }
+  const w = Math.max(1e-6, mx1 - mx0)
+  const h = Math.max(1e-6, my1 - my0)
+  const pas = Math.max(w, h) / (GRILLE - 4)
+  const x0 = mx0 - pas * 2
+  const y0 = my0 - pas * 2
+  const N = GRILLE
+  const masque = new Uint8Array(N * N)
+  for (let j = 0; j < N; j++) {
+    for (let i = 0; i < N; i++) masque[j * N + i] = dedans(pts, x0 + (i + 0.5) * pas, y0 + (j + 0.5) * pas) ? 1 : 0
+  }
+  const u = new Float32Array(N * N)
+  const omega = 1.9
+  for (let it = 0; it < 160; it++) {
+    for (let j = 1; j < N - 1; j++) {
+      for (let i = 1; i < N - 1; i++) {
+        const k = j * N + i
+        if (!masque[k]) continue
+        const g = (u[k - 1]! + u[k + 1]! + u[k - N]! + u[k + N]! + pas * pas) / 4
+        u[k] = u[k]! + omega * (g - u[k]!)
+      }
+    }
+  }
+  let max = 1e-9
+  for (let k = 0; k < N * N; k++) if (u[k]! > max) max = u[k]!
+  for (let k = 0; k < N * N; k++) u[k] = u[k]! / max
+  const champ: ChampCoussin = { u, x0, y0, pas, bx0: mx0, by0: my0, bw: w, bh: h }
+  champs.set(cle, champ)
+  if (champs.size > 16) champs.delete(champs.keys().next().value!)
+  return champ
+}
+
+/** Champ du contour de REPOS d'une forme du catalogue (id), resolu une seule fois. */
+export function champDeRepos(forme: string): ChampCoussin | null {
+  const cle = `forme:${forme}`
+  const deja = champs.get(cle)
+  if (deja) return deja
+  const f = SHAPE_BY_ID.get(forme)
+  if (!f) return null
+  const repos = contourDuCorps(new BotEngine(RAYON, 'idle', f.radii, null).sample(1).bodyPath)
+  return repos.length > 8 ? champCoussin(repos, cle) : null
+}
+
+/** Id de forme d'un profil du catalogue (le profil est un objet partage), ou null s'il est personnalise. */
+export function formeDuProfil(profil: ProfilVolume): string | null {
+  for (const [id, p] of Object.entries(PROFILS)) if (p === profil) return id
+  return null
+}
+
+const EXPOSANT = 0.45
+
+function echantillon(c: ChampCoussin, x: number, y: number): number {
+  const N = GRILLE
+  const fx = (x - c.x0) / c.pas - 0.5
+  const fy = (y - c.y0) / c.pas - 0.5
+  const i = Math.max(0, Math.min(N - 2, Math.floor(fx)))
+  const j = Math.max(0, Math.min(N - 2, Math.floor(fy)))
+  const tx = Math.max(0, Math.min(1, fx - i))
+  const ty = Math.max(0, Math.min(1, fy - j))
+  const a = c.u[j * N + i]!
+  const b = c.u[j * N + i + 1]!
+  const d = c.u[(j + 1) * N + i]!
+  const e = c.u[(j + 1) * N + i + 1]!
+  const u = a * (1 - tx) * (1 - ty) + b * tx * (1 - ty) + d * (1 - tx) * ty + e * tx * ty
+  return Math.pow(Math.max(0, u), EXPOSANT)
+}
+
+/** Hauteur normalisee (0..1) du coussin au point (x, y) du repere dans lequel le champ a ete resolu. */
+export const hauteurCoussin = echantillon
+
+/**
+ * Hauteur normalisee en coordonnees NORMALISEES (a, b) de la boite d'un contour de la meme forme :
+ * un geste qui ecrase ou etire le corps ne fait que mettre cette boite a l'echelle, le champ ne
+ * change pas et n'est jamais recalcule.
+ */
+export function hauteurNorm(c: ChampCoussin, a: number, b: number): number {
+  return echantillon(c, c.bx0 + a * c.bw, c.by0 + b * c.bh)
+}
+
 /** Etendue du contour sur la droite `y = v` (axe `v`) ou `x = v` (axe `h`) : [min, max] ou null. */
 function corde(pts: Point[], v: number, axe: 'v' | 'h'): [number, number] | null {
   let a = Infinity
@@ -406,6 +546,46 @@ export function gonfler(
     v.bas = bas
     v.centre = c
     v.mesures = { ...mesures, H: rc, b: rc, zw: 0 }
+    return v
+  }
+  if (profil.coussin) {
+    // gonflage « coussin » : memes anneaux que la sphere, hauteur = champ de Poisson du contour de repos,
+    // normalise par la boite du contour courant (aucun recalcul pendant une animation)
+    const nom = formeDuProfil(profil)
+    let bx0 = Infinity
+    let bx1 = -Infinity
+    let by0 = Infinity
+    let by1 = -Infinity
+    for (const p of pts) {
+      bx0 = Math.min(bx0, p.x)
+      bx1 = Math.max(bx1, p.x)
+      by0 = Math.min(by0, p.y)
+      by1 = Math.max(by1, p.y)
+    }
+    const bw = Math.max(1e-6, bx1 - bx0)
+    const bh = Math.max(1e-6, by1 - by0)
+    const champ = (nom && champDeRepos(nom)) || champCoussin(pts, `contour:${pts.length}:${Math.round(bw)}x${Math.round(bh)}`)
+    const Hc = H
+    const zDe = (x: number, y: number) => Hc * hauteurNorm(champ, (x - bx0) / bw, (y - by0) / bh)
+    const z0 = zDe(c.x, c.y)
+    pose(0, c.x, c.y, z0, true)
+    pose(idx.centreArriere, c.x, c.y, -z0, false)
+    for (let k = 0; k < n; k++) {
+      const p = pts[k]!
+      for (let a = 1; a <= ANNEAUX_N; a++) {
+        // anneaux serres pres du bord (la surface y est la plus courbee), espaces au centre
+        const f = a === ANNEAUX_N ? 1 : 1 - (1 - a / ANNEAUX_N) ** 2
+        const x = c.x + (p.x - c.x) * f
+        const y = c.y + (p.y - c.y) * f
+        const z = a === ANNEAUX_N ? 0 : zDe(x, y)
+        pose(idx.avant(a, k), x, y, z, true)
+        pose(idx.arriere(a, k), x, y, -z, false)
+      }
+      pose(idx.mur(k), p.x, p.y, 0, false)
+    }
+    v.bas = bas
+    v.centre = c
+    v.mesures = { ...mesures, H: Hc, b: Hc, zw: 0 }
     return v
   }
   if (profil.revolution) {

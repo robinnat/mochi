@@ -9,7 +9,7 @@ import {
   EXPRESSION_BY_ID
 } from '@/bot/expressions'
 import {
-  COLOR_BY_ID,
+  couleurDe,
   DEFAULT_COLOR,
   DEFAULT_SHAPE,
   SHAPE_BY_ID,
@@ -20,9 +20,13 @@ import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
 import { STATE_BY_ID, type StateId } from '@/bot/states'
 import { dessinPorte, porteSvg, type PorteId } from '@/bot/portes'
 import { ACCESSOIRE_BY_ID, ancreDuCorps, type AccessoireId } from '@/bot/accessoires'
-import { composer, type Geste } from '@/bot/gestes'
+import { composer, zSommeil, type Geste } from '@/bot/gestes'
+import { Humeurs, REACTION_DE_EVENEMENT, doitRedessiner, moodDe, type ReactionId } from '@/bot/humeurs'
 import { pixellise, pixellisePrims } from '@/ui/pixel'
 import { DOUCEUR_DEFAUT, RENDU_3D_DEFAUT, type Douceur, type Rendu3d } from '@/ui/trois/rendu3d'
+import { type Theme } from '@/ui/trois/theme'
+import { themeCourant } from '@/ui/trois/themeCourant'
+import type { Selection } from '@/bot/emplacements'
 import {
   contourCourant,
   est3d,
@@ -41,12 +45,16 @@ const props = withDefaults(
     size?: number
     /** identifiant de forme du personnalisateur */
     shape?: string
-    /** identifiant de couleur du personnalisateur */
+    /** identifiant de couleur du personnalisateur, ou une couleur libre en hex (`#ff8800`, `#f80`) */
     color?: string
     /** identifiant d'expression de repos du personnalisateur */
     expression?: string
     /** couleur du fond, utilisee pour la brume de profondeur des particules */
     paper?: string
+    /** theme de la 3D : `light` ou `dark` (les yeux deviennent noirs) ; absent, le theme courant (`themeCourant`, clair par defaut) */
+    theme?: Theme
+    /** accessoires par emplacements (tete, yeux, visage, bas, dos), 3D seulement ; voir `src/bot/emplacements.ts` */
+    accessoires?: Selection | null
     /**
      * Fige le rendu a cette date (en secondes depuis le debut de l'etat).
      * Le moteur etant une fonction pure du temps, on obtient une image
@@ -89,8 +97,17 @@ const props = withDefaults(
     douceur?: Douceur
     /** Contour cartoon de la vraie 3D ; absent, le reglage courant (`contourCourant`). */
     contour?: boolean
+    /**
+     * Epaisseur du contour (facteur : 1 = l'epaisseur de base, 0,4 a 4). S'applique au corps ET aux
+     * accessoires ; sans effet tant que `contour` est faux.
+     */
+    epaisseurContour?: number
     /** Petit reflet doux en haut a gauche de la matiere 3D `doux` (defaut : oui). */
     reflet?: boolean
+    /** Ombre portee au sol sous le corps, en 3D (defaut : oui). */
+    ombre?: boolean
+    /** Ombrage du volume du corps, en 3D Soft, Flat et Pixel (defaut : oui). `false` : corps en aplat de couleur, yeux inchanges. */
+    ombrage?: boolean
     /**
      * Angle du corps autour de l'axe vertical, en radians (vraie 3D seulement). 0 = de face.
      * Les yeux sont peints sur la face avant : de dos, il n'y en a plus.
@@ -112,8 +129,38 @@ const props = withDefaults(
      * les rendus (en 3D : volumes fixes au maillage, lunettes peintes sur le visage).
      */
     porte?: PorteId | null
+    /**
+     * Humeur de travail jouee en boucle (`src/bot/humeurs.ts`) : `repos`, `reflechit`, `travaille`,
+     * `attend`, `termine`, `bloque`, `dort` (ou les noms d'etats `idle`, `thinking`, `sleep`...).
+     * Elle remplace le montage (`cycle`) : le bot reste sur son etat de repos et ne change que de
+     * visage et de corps. Absente, rien ne change. Se pilote aussi par `setMood(id)`.
+     */
+    mood?: string | null
+    /**
+     * Reactions a l'utilisateur, branchees sur les evenements pointeur de l'avatar : survol (le regard
+     * suit), tap (sursaut), double tap (rire), appui long (rougit), secousse ou tour rapide (etourdi).
+     * `false` les coupe. Sans effet sur une vignette figee (`frozenAt`).
+     */
+    interactions?: boolean
+    /** Salut a l'apparition (`coucou`), joue une fois au montage. */
+    coucou?: boolean
+    /**
+     * Ordinateur portable 3D du mood `travaille` (vu de dos, devant le corps) : affiche par defaut des que le mood est
+     * `travaille`, il pousse et rétrécit en douceur a l'entree et a la sortie. `false` le masque. 3D seulement.
+     */
+    ordinateur?: boolean
+    /**
+     * Plafond d'images par seconde de la boucle (tableau de bord : 12). Absent : une image par image du
+     * navigateur. L'horloge, elle, ne ralentit pas : seul le nombre de redessins baisse.
+     */
+    fps?: number
     /** Texte alternatif ; absent, le libelle traduit de l'application. */
     label?: string
+    /**
+     * Plafond de densite du canvas 3D (pixels physiques par pixel CSS). 2 par defaut ; 1,5 sur telephone divise
+     * presque par deux le travail de chaque image, sans perte visible a cette taille.
+     */
+    maxPixelRatio?: number
   }>(),
   {
     size: 320,
@@ -121,6 +168,8 @@ const props = withDefaults(
     color: DEFAULT_COLOR,
     expression: DEFAULT_EXPRESSION,
     paper: '#f9f9f9',
+    theme: undefined,
+    accessoires: null,
     frozenAt: undefined,
     cycle: () => defaultCycle().blocks,
     follow: false,
@@ -130,14 +179,30 @@ const props = withDefaults(
     rendu3d: RENDU_3D_DEFAUT,
     douceur: DOUCEUR_DEFAUT,
     contour: undefined,
+    epaisseurContour: 1,
     reflet: true,
+    ombre: true,
+    ombrage: true,
     yaw: 0,
     geste: null,
     accessoire: null,
     porte: null,
-    label: undefined
+    mood: null,
+    interactions: true,
+    coucou: false,
+    ordinateur: true,
+    fps: undefined,
+    label: undefined,
+    maxPixelRatio: 2
   }
 )
+
+/**
+ * `pret` : la premiere image en vraie 3D vient d'etre peinte. Une page peut garder une image pre-rendue (ou rien)
+ * a l'ecran jusque-la, puis montrer le Mochi en fondu : le repli SVG du chargement n'est alors jamais vu.
+ */
+const emit = defineEmits<{ pret: [] }>()
+let pretEmis = false
 
 /**
  * Le curseur de lecture est un **index de bloc**, pas un etat : un montage peut
@@ -158,7 +223,7 @@ const R = RAYON
 const VB = DEMI_VIEWBOX
 
 const shapeRadii = computed(() => SHAPE_BY_ID.get(props.shape)?.radii ?? null)
-const ink = computed(() => COLOR_BY_ID.get(props.color)?.hex ?? '#0a0a0c')
+const ink = computed(() => couleurDe(props.color))
 const expression = computed(() => EXPRESSION_BY_ID.get(props.expression) ?? null)
 
 /* ------------------------------------------------------------- style de rendu */
@@ -192,7 +257,35 @@ const acc = computed(() => (props.accessoire ? (ACCESSOIRE_BY_ID.get(props.acces
 const ancre = computed(() =>
   acc.value ? ancreDuCorps(new BotEngine(R, 'idle', shapeRadii.value, null).sample(1).bodyPath) : undefined
 )
-const gesteA = (t: number): Geste | undefined =>
+/* ------------------------------------------------- humeurs et reactions */
+
+/** Mouvement reduit : les humeurs deviennent des images fixes (le visage reste, le corps ne bouge plus). */
+const reduit = ref(false)
+const humeurs = new Humeurs(moodDe(props.mood), { base: expression.value })
+/**
+ * Petits « z » de l'humeur `dort` : deux traits en forme de z qui montent au-dessus du corps et s'effacent (positions
+ * de `zSommeil`, en rayons, comme dans le tableau de bord de l'entreprise). Traits dessines en SVG par-dessus tous les
+ * rendus (2D et 3D). Mouvement reduit ou image figee : une seule image, a un instant ou ils se lisent bien.
+ */
+const zMarques = computed(() => {
+  if (moodDe(props.mood) !== 'dort') return []
+  return zSommeil(reduit.value || props.frozenAt !== undefined ? 1.2 : temps.value).map((z, i) => {
+    // decales d'un cran vers l'exterieur par rapport au tableau de bord : en 3D le corps est plus large qu'une silhouette plate
+    const x = z.x * 100 + 18
+    const y = z.y * 100 - 10
+    const k = z.taille * 100
+    return {
+      i,
+      d: `M${(x - k / 2).toFixed(1)} ${(y - k / 2).toFixed(1)}h${k.toFixed(1)}l${(-k).toFixed(1)} ${k.toFixed(1)}h${k.toFixed(1)}`,
+      op: reduit.value || props.frozenAt !== undefined ? 0.8 - 0.3 * i : z.opacite
+    }
+  })
+})
+// plus foncee que le corps : le z se lit aussi quand il passe devant lui
+const couleurZ = computed(() => mixHex(ink.value, '#1a1630', 0.5))
+const humeurActive = computed(() => moodDe(props.mood) !== null)
+
+const gesteBase = (t: number): Geste | undefined =>
   // un geste choisi ET un accessoire de metier se composent : le corps fait les deux, l'objet le suit
   props.geste
     ? acc.value
@@ -201,6 +294,12 @@ const gesteA = (t: number): Geste | undefined =>
     : acc.value
       ? acc.value.geste(t, { ancre: ancre.value })
       : undefined
+/** Le geste du bot : celui d'avant, plus la couche des humeurs et des reactions quand elle est active. */
+const gesteA = (t: number): Geste | undefined => {
+  const b = gesteBase(t)
+  const h = humeurs.sample(t)
+  return h ? (b ? composer(b, h) : h) : b
+}
 /**
  * Quand un geste deplace le corps (saut, ecrasement), l'objet de metier le suit : on le decale
  * de l'ecart entre le point d'appui de l'image courante et celui de repos. Sans geste, le corps
@@ -268,9 +367,11 @@ function apply(i: number, from = 0) {
   }
   blockStart = clock - from
   elapsed.value = from
-  state.value = b.state
-  engine.setState(b.state, clock)
-  nextAt = playing.value ? blockStart + b.duration : Infinity
+  // une humeur remplace le montage : le bot reste sur son etat de repos, seuls visage et corps bougent
+  const etat = humeurActive.value ? 'idle' : b.state
+  state.value = etat
+  engine.setState(etat, clock)
+  nextAt = playing.value && !humeurActive.value ? blockStart + b.duration : Infinity
 }
 
 /** Deplace le curseur et recale le moteur dans la foulee, sans passer par le watcher. */
@@ -337,7 +438,29 @@ function rendAt(t: number) {
   triggerRef(frame)
 }
 
-defineExpose({ seek, rendAt })
+/** Change d'humeur (`null` coupe la couche). Glisse de l'une a l'autre sans saut. */
+function setMood(id: string | null) {
+  humeurs.setMood(id, clock)
+  // le montage reprend la main des qu'il n'y a plus d'humeur
+  apply(block.value, elapsed.value)
+  redrawFrozen()
+}
+/** Joue une reaction (`sursaut`, `rigole`, `rougit`, `etourdi`, `coucou`) puis rend la main a l'humeur. */
+function react(id: ReactionId | string) {
+  if (!humeurs.react(id, clock)) return false
+  redrawFrozen()
+  return true
+}
+/** Fin d'une reaction tenue (appui long). */
+function relacher() {
+  humeurs.relacher(clock)
+}
+/** Regard du survol, hors evenement : `nx`, `ny` de -1 a 1 (droite et bas positifs), `null` pour lacher. */
+function regarder(cible: { nx: number; ny: number } | null) {
+  humeurs.regarder(cible, clock)
+}
+
+defineExpose({ seek, rendAt, setMood, react, relacher, regarder })
 
 /* -------------------------------------------------------------- vraie 3D */
 
@@ -354,7 +477,7 @@ const vraie3d = computed(() => estVraie3d(rendu.value) && m3d.value !== null)
 const pxToile = computed(() =>
   rendu.value === 'pixel3d'
     ? grille.value
-    : Math.round(props.size * Math.min(2, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1))
+    : Math.round(props.size * Math.min(props.maxPixelRatio, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1))
 )
 
 watch(
@@ -375,16 +498,69 @@ watch(
 /** Les points de `thinking` restent a plat devant le corps : ils s'effacent quand il se tourne. */
 const decorAlpha = computed(() => (vraie3d.value && props.yaw ? Math.max(0, Math.cos(props.yaw)) ** 3 : 1))
 
+/* ------------------------------------------------- ordinateur du mood « travaille » */
+
+/** Progression de l'apparition de l'ordinateur (0 = absent, 1 = en place) et son sens. */
+let ordiK = 0
+let ordiVers = 0
+const ordiVoulu = () => props.ordinateur !== false && humeurs.mood === 'travaille'
+/** Fait avancer la progression de `dt` secondes (0,45 s pour un trajet complet) ; `net` : saute au but. */
+function avancerOrdi(dt: number, net = false) {
+  const cible = ordiVoulu() ? 1 : 0
+  if (cible !== ordiVers) ordiVers = cible
+  ordiK = net ? cible : Math.min(1, Math.max(0, ordiK + Math.sign(cible - ordiK) * Math.min(Math.abs(cible - ordiK), dt / 0.45)))
+  humeurs.regardOrdi = tourOrdi()
+}
+/** Tournee 3/4 vers l'ordinateur : le corps pivote d'un peu moins de 20 degres, le regard va vers lui. */
+function tourOrdi(): number {
+  return ordiVers >= 1 ? Math.min(1, ordiK * 1.2) : ordiK * ordiK * (3 - 2 * ordiK)
+}
+/** Echelle dessinee : pousse avec un leger rebond (~106 %), rétrécit en douceur. */
+function ordiEchelle(): number {
+  const k = ordiK
+  if (k <= 0) return 0
+  if (ordiVers >= 1 || k >= 1) {
+    const c1 = 1.2
+    return 1 + (c1 + 1) * (k - 1) ** 3 + c1 * (k - 1) ** 2
+  }
+  return k * k * (3 - 2 * k)
+}
+
+const themeEff = computed<Theme>(() => props.theme ?? themeCourant.value)
+
 const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3d))
 
 function dessiner3d() {
   const m = m3d.value
   if (!vraie3d.value || !m || !toile.value) return
-  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw, props.porte)
+  m.rendreAvatar(toile.value, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), props.porte, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle(), props.ombre, props.ombrage, props.epaisseurContour)
+  if (!pretEmis) {
+    pretEmis = true
+    emit('pret')
+  }
 }
 
+/**
+ * Changement de forme : le corps se transforme pendant `SHAPE_MORPH`, et les accessoires (en 3D) etaient poses sur la
+ * forme a mi-chemin, puis gardes en cache tant qu'on ne changeait pas d'accessoire. Une fois le morph fini, on oublie
+ * leur pose et on redessine : ils se recalent sur la forme finale.
+ */
+let minuteurForme = 0
+watch(
+  () => props.shape,
+  () => {
+    clearTimeout(minuteurForme)
+    minuteurForme = window.setTimeout(() => {
+      if (!vraie3d.value || !m3d.value) return
+      m3d.value.invaliderAccessoires3d()
+      dessiner3d()
+    }, BotEngine.SHAPE_MORPH * 1000 + 120)
+  }
+)
+onBeforeUnmount(() => clearTimeout(minuteurForme))
+
 // `frame` est un shallowRef relance par `triggerRef` : le watcher suit chaque image
-watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, () => contourEffectif.value], dessiner3d, { flush: 'post' })
+watch([frame, vraie3d, toile, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, () => props.porte, themeEff, () => props.accessoires, () => props.ombre, () => props.ombrage, () => contourEffectif.value, () => props.epaisseurContour], dessiner3d, { flush: 'post' })
 
 /* ------------------------------------------------------- regard qui suit */
 
@@ -517,6 +693,145 @@ watch(
   { immediate: true }
 )
 
+/* ------------------------------------------------- reactions a l'utilisateur */
+
+const TAP_MAX = 320 // ms : au-dela, ce n'est plus un tap
+const DOUBLE_MAX = 380 // ms entre deux taps
+const APPUI_LONG = 450 // ms avant que l'appui devienne « rougit »
+const DEPLACEMENT_MAX = 10 // px : au-dela on glisse (tourner la vue), ni tap ni appui long
+
+// seulement la vraie 3D (le composant 3D), jamais une vignette figee, et pas quand le suivi de la fenetre a deja la main
+const interactif = computed(() => props.interactions && props.frozenAt === undefined && estVraie3d(rendu.value) && !props.follow)
+let appui: { x: number; y: number; t: number; minuteur: number; long: boolean } | null = null
+let dernierTap = -1e9
+/** inversions de sens du glisse, pour reconnaitre une secousse */
+let secousse: { sens: number; t: number }[] = []
+let dernierDx = 0
+/** rotation cumulee recente de la vue 3D (`yaw`), pour reconnaitre « tourne vite » */
+let tours: { t: number; d: number }[] = []
+let yawPrec = props.yaw
+
+function normalise(e: PointerEvent): { nx: number; ny: number } | null {
+  const box = svg.value?.getBoundingClientRect()
+  if (!box || box.width === 0 || box.height === 0) return null
+  // le regard sature un peu au-dela de l'avatar : le curseur n'a pas besoin d'etre dessus pour etre suivi
+  return {
+    nx: clamp((e.clientX - (box.left + box.width / 2)) / (box.width * 0.6), -1, 1),
+    ny: clamp((e.clientY - (box.top + box.height / 2)) / (box.height * 0.6), -1, 1)
+  }
+}
+
+function onSurvol(e: PointerEvent) {
+  if (!interactif.value || reduit.value) return
+  const c = normalise(e)
+  if (c) humeurs.regarder(c, clock)
+}
+function onQuitte() {
+  if (!interactif.value) return
+  humeurs.regarder(null, clock)
+}
+
+function onAppui(e: PointerEvent) {
+  if (!interactif.value || (e.button !== undefined && e.button > 0)) return
+  onSurvol(e)
+  clearTimeout(appui?.minuteur)
+  appui = {
+    x: e.clientX,
+    y: e.clientY,
+    t: e.timeStamp,
+    long: false,
+    // appui long : « rougit » tient tant qu'on garde le doigt, et redescend au relachement
+    minuteur: window.setTimeout(() => {
+      if (!appui) return
+      appui.long = true
+      humeurs.react(REACTION_DE_EVENEMENT.longue, clock)
+    }, APPUI_LONG)
+  }
+  secousse = []
+  dernierDx = 0
+  // le parent peut capturer le pointeur (glisser pour tourner) : on suit alors la fin sur la fenetre
+  window.addEventListener('pointermove', onGlisse)
+  window.addEventListener('pointerup', onRelache)
+  window.addEventListener('pointercancel', onRelache)
+}
+
+function onGlisse(e: PointerEvent) {
+  if (!appui) return
+  const dx = e.clientX - appui.x
+  const dy = e.clientY - appui.y
+  if (!appui.long && Math.hypot(dx, dy) > DEPLACEMENT_MAX) {
+    // on glisse : ni tap ni appui long
+    clearTimeout(appui.minuteur)
+    appui.t = -1e9
+  }
+  // secousse : au moins quatre inversions de sens, vives, en moins d'une demi-seconde
+  const pas = e.movementX || e.clientX - dernierDx
+  if (Math.abs(pas) > 6) {
+    const sens = Math.sign(pas)
+    const dernier = secousse[secousse.length - 1]
+    if (!dernier || dernier.sens !== sens) {
+      secousse.push({ sens, t: e.timeStamp })
+      secousse = secousse.filter((s) => e.timeStamp - s.t < 600)
+      if (secousse.length >= 5 && interactif.value) {
+        secousse = []
+        humeurs.react(REACTION_DE_EVENEMENT.secoue, clock)
+      }
+    }
+  }
+  dernierDx = e.clientX
+}
+
+function onRelache(e: PointerEvent) {
+  window.removeEventListener('pointermove', onGlisse)
+  window.removeEventListener('pointerup', onRelache)
+  window.removeEventListener('pointercancel', onRelache)
+  const a = appui
+  appui = null
+  if (!a) return
+  clearTimeout(a.minuteur)
+  if (e.pointerType === 'touch') humeurs.regarder(null, clock)
+  if (a.long) {
+    humeurs.relacher(clock)
+    return
+  }
+  if (e.type === 'pointercancel' || e.timeStamp - a.t > TAP_MAX) return
+  // tap ou double tap
+  if (e.timeStamp - dernierTap < DOUBLE_MAX) {
+    dernierTap = -1e9
+    humeurs.react(REACTION_DE_EVENEMENT.double, clock)
+  } else {
+    dernierTap = e.timeStamp
+    humeurs.react(REACTION_DE_EVENEMENT.tap, clock)
+  }
+}
+
+/** Tourne vite : la vue 3D (`yaw`) fait plus d'un tour en moins d'une seconde. */
+watch(
+  () => props.yaw,
+  (v) => {
+    const now = typeof performance === 'undefined' ? 0 : performance.now()
+    if (!interactif.value) {
+      yawPrec = v
+      return
+    }
+    tours.push({ t: now, d: Math.abs(v - yawPrec) })
+    yawPrec = v
+    tours = tours.filter((x) => now - x.t < 900)
+    if (tours.reduce((n, x) => n + x.d, 0) >= Math.PI * 2 && humeurs.reaction(clock) !== 'etourdi') {
+      tours = []
+      humeurs.react(REACTION_DE_EVENEMENT.secoue, clock)
+    }
+  }
+)
+
+watch(
+  () => props.mood,
+  (id) => setMood(moodDe(id))
+)
+
+/** Redessin plafonne : date du dernier dessin, en ms navigateur. */
+let dernierDessin = 0
+
 function tick(ms: number) {
   raf = requestAnimationFrame(tick)
   // Horloge de scene a delta borne : un onglet masque puis reaffiche reprend
@@ -541,7 +856,11 @@ function tick(ms: number) {
   if (props.follow) aim()
   else if (props.gaze) scriptedGaze(props.gaze)
 
+  // cadence plafonnee (tableau de bord) : l'horloge a avance, on saute seulement le dessin
+  if (!doitRedessiner(ms, dernierDessin, props.fps)) return
+  dernierDessin = ms
   temps.value = clock
+  avancerOrdi(dt)
   frame.value = engine.sample(clock, gesteA(clock))
   triggerRef(frame)
 }
@@ -550,6 +869,7 @@ function tick(ms: number) {
 function redrawFrozen() {
   if (props.frozenAt === undefined) return
   temps.value = props.frozenAt
+  avancerOrdi(0, true)
   frame.value = engine.sample(props.frozenAt, gesteA(props.frozenAt))
   triggerRef(frame)
 }
@@ -615,6 +935,7 @@ watch(shapeRadii, (radii) => {
 })
 
 watch(expression, (expr) => {
+  humeurs.setBase(expr)
   engine.setExpression(expr, clock)
   redrawFrozen()
 })
@@ -654,10 +975,26 @@ function detach() {
 // geste ou accessoire change : une image figee se redessine (en lecture, la boucle s'en charge)
 watch([() => props.accessoire, () => props.geste, () => props.porte], redrawFrozen)
 
+let mqReduit: MediaQueryList | null = null
+const majReduit = () => {
+  reduit.value = !!mqReduit?.matches
+  humeurs.reduit = reduit.value
+}
+
 onMounted(() => {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    mqReduit = window.matchMedia('(prefers-reduced-motion: reduce)')
+    majReduit()
+    mqReduit.addEventListener?.('change', majReduit)
+  }
   if (props.frozenAt !== undefined) {
     redrawFrozen()
     return
+  }
+  if (props.coucou) {
+    // mouvement reduit : pas de pousse, un simple fondu a l'apparition ; sinon la reaction fait grandir le Mochi
+    if (reduit.value) svg.value?.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 400, easing: 'ease-out' })
+    else humeurs.react(REACTION_DE_EVENEMENT.arrivee, clock)
   }
   // le curseur peut arriver deja pose (URL, cycle relu du stockage)
   apply(block.value, elapsed.value)
@@ -666,6 +1003,11 @@ onMounted(() => {
 onBeforeUnmount(() => {
   cancelAnimationFrame(raf)
   detach()
+  clearTimeout(appui?.minuteur)
+  window.removeEventListener('pointermove', onGlisse)
+  window.removeEventListener('pointerup', onRelache)
+  window.removeEventListener('pointercancel', onRelache)
+  mqReduit?.removeEventListener?.('change', majReduit)
 })
 
 /**
@@ -698,7 +1040,11 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
     :viewBox="`${-VB} ${-VB} ${VB * 2} ${VB * 2}`"
     role="img"
     :aria-label="props.label ?? t('app.botAria')"
-    :style="acc || props.porte ? 'overflow: visible' : undefined"
+    :style="acc || props.porte || zMarques.length ? 'overflow: visible' : undefined"
+    @pointerenter="onSurvol"
+    @pointermove="onSurvol"
+    @pointerleave="onQuitte"
+    @pointerdown="onAppui"
   >
     <!--
       Pixel art : l'image du moteur rasterisee sur une grille basse resolution, un
@@ -933,6 +1279,9 @@ function dotAttrs(dot: BotFrame['dots'][number]) {
 
     <g v-if="objetSvg" :opacity="decorAlpha" :transform="objetDecalage || undefined" v-html="objetSvg" />
     </template>
+    <g v-if="zMarques.length" data-zzz="1" fill="none" :stroke="couleurZ" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+      <path v-for="z in zMarques" :key="z.i" :d="z.d" :opacity="z.op" />
+    </g>
     <!-- accessoire porte : meme description pour tous les rendus (`portes.ts`) -->
     <g v-if="porteTexte" data-porte="1" v-html="porteTexte" />
     <g v-if="portePixels" data-porte="1" shape-rendering="crispEdges">
