@@ -28,14 +28,14 @@ function footprint(d: string) {
 }
 
 /** Empreintes relevees sur la video (largeur x hauteur, en diametres de boule). */
-const EMPREINTES: Array<[StateId, number, number, number, number]> = [
+const FOOTPRINTS: Array<[StateId, number, number, number, number]> = [
   // etat,        date,  largeur, hauteur, tolerance
   ['idle', 0.5, 2.0, 2.0, 0.05],
   ['sleep', 0.6, 0.317, 0.317, 0.03]
 ]
 
 describe('silhouettes', () => {
-  for (const [id, t, w, h, tol] of EMPREINTES) {
+  for (const [id, t, w, h, tol] of FOOTPRINTS) {
     it(`"${id}" a l empreinte mesuree sur la video`, () => {
       const e = new BotEngine(100, id)
       const { w: gw, h: gh } = footprint(e.sample(t).bodyPath)
@@ -52,7 +52,7 @@ describe('silhouettes', () => {
 
 })
 
-describe('moteur', () => {
+describe('engine', () => {
   it('est une fonction pure du temps : deux lectures a la meme date sont identiques', () => {
     const a = new BotEngine(100, 'thinking')
     const b = new BotEngine(100, 'thinking')
@@ -68,17 +68,17 @@ describe('moteur', () => {
     // date irrecuperable, et le fondu disparait a la relecture
     const e = new BotEngine(100, 'idle')
     e.setState('sleep', 1)
-    const pendant = e.sample(1.2).bodyPath
+    const during = e.sample(1.2).bodyPath
     e.sample(3)
-    expect(e.sample(1.2).bodyPath).toBe(pendant)
+    expect(e.sample(1.2).bodyPath).toBe(during)
   })
 
   it('ne part pas dans le decor sur une date anterieure au changement d etat', () => {
     // avant le changement, il n'y a rien a fondre : on doit voir l'etat sortant
     const e = new BotEngine(100, 'idle')
-    const avant = e.sample(0.5).bodyPath
+    const before = e.sample(0.5).bodyPath
     e.setState('sleep', 1)
-    expect(e.sample(0.5).bodyPath).toBe(avant)
+    expect(e.sample(0.5).bodyPath).toBe(before)
   })
 
   it('anime vraiment : la forme evolue entre deux dates', () => {
@@ -90,12 +90,12 @@ describe('moteur', () => {
   it('interpole la silhouette pendant une transition, sans saut', () => {
     const e = new BotEngine(100, 'idle')
     e.setState('sleep', 1)
-    const largeurs = [1, 1.1, 1.2, 1.3, 1.4].map((t) => footprint(e.sample(t).bodyPath).w)
+    const widths = [1, 1.1, 1.2, 1.3, 1.4].map((t) => footprint(e.sample(t).bodyPath).w)
     // strictement decroissant : la boule se retrecit vers la petite boule du sommeil
-    for (let i = 1; i < largeurs.length; i++) {
-      expect(largeurs[i]!).toBeLessThan(largeurs[i - 1]!)
+    for (let i = 1; i < widths.length; i++) {
+      expect(widths[i]!).toBeLessThan(widths[i - 1]!)
     }
-    expect(largeurs[0]!).toBeCloseTo(2, 1)
+    expect(widths[0]!).toBeCloseTo(2, 1)
     expect(footprint(e.sample(2).bodyPath).w).toBeCloseTo(0.317, 1)
   })
 
@@ -113,68 +113,68 @@ describe('moteur', () => {
   })
 })
 
-describe('forme personnalisee', () => {
+describe('shape personnalisee', () => {
   const radii = (id: string) => SHAPE_BY_ID.get(id)!.radii
-  const hauteur = (e: BotEngine, t: number) => footprint(e.sample(t).bodyPath).h
+  const height = (e: BotEngine, t: number) => footprint(e.sample(t).bodyPath).h
 
   it('remplace la silhouette des etats au repos', () => {
-    const rond = new BotEngine(100, 'idle')
-    const goutte = new BotEngine(100, 'idle', radii('goutte'))
-    expect(goutte.sample(1).bodyPath).not.toBe(rond.sample(1).bodyPath)
+    const round = new BotEngine(100, 'idle')
+    const drop = new BotEngine(100, 'idle', radii('drop'))
+    expect(drop.sample(1).bodyPath).not.toBe(round.sample(1).bodyPath)
   })
 
-  it('laisse intacts les etats qui dessinent leur propre forme', () => {
+  it('laisse intacts les etats qui dessinent leur propre shape', () => {
     for (const id of ['thinking', 'sleep'] as const) {
-      const nu = new BotEngine(100, id)
-      const habille = new BotEngine(100, id, radii('goutte'))
-      expect(habille.sample(1).bodyPath).toBe(nu.sample(1).bodyPath)
+      const bare = new BotEngine(100, id)
+      const dressed = new BotEngine(100, id, radii('drop'))
+      expect(dressed.sample(1).bodyPath).toBe(bare.sample(1).bodyPath)
     }
   })
 
-  it('morphe vers la nouvelle forme au lieu de sauter', () => {
-    const e = new BotEngine(100, 'idle', radii('cercle'))
+  it('morphe vers la nouvelle shape au lieu de sauter', () => {
+    const e = new BotEngine(100, 'idle', radii('circle'))
     // le cercle fait 2.0 de haut, la capsule 1.24 : la hauteur est parlante
-    expect(hauteur(e, 1)).toBeCloseTo(2, 1)
+    expect(height(e, 1)).toBeCloseTo(2, 1)
     e.setShape(radii('capsule'), 1)
 
-    const etapes = [1.06, 1.14, 1.26].map((t) => hauteur(e, t))
+    const steps = [1.06, 1.14, 1.26].map((t) => height(e, t))
     // strictement decroissant, et jamais deja arrive
-    for (let i = 1; i < etapes.length; i++) {
-      expect(etapes[i]!).toBeLessThan(etapes[i - 1]!)
+    for (let i = 1; i < steps.length; i++) {
+      expect(steps[i]!).toBeLessThan(steps[i - 1]!)
     }
-    expect(etapes[0]!).toBeLessThan(2)
-    expect(etapes[etapes.length - 1]!).toBeGreaterThan(1.24)
+    expect(steps[0]!).toBeLessThan(2)
+    expect(steps[steps.length - 1]!).toBeGreaterThan(1.24)
 
     // arrive apres la duree du morph
-    expect(hauteur(e, 1 + BotEngine.SHAPE_MORPH + 0.05)).toBeCloseTo(1.24, 1)
+    expect(height(e, 1 + BotEngine.SHAPE_MORPH + 0.05)).toBeCloseTo(1.24, 1)
   })
 
-  it('reste une fonction pure du temps pendant un morph de forme', () => {
-    const e = new BotEngine(100, 'idle', radii('cercle'))
+  it('reste une fonction pure du temps pendant un morph de shape', () => {
+    const e = new BotEngine(100, 'idle', radii('circle'))
     e.setShape(radii('capsule'), 1)
-    const milieu = e.sample(1.1).bodyPath
+    const middle = e.sample(1.1).bodyPath
     // on depasse la fin du morph, puis on relit la date passee
     e.sample(3)
-    expect(e.sample(1.1).bodyPath).toBe(milieu)
+    expect(e.sample(1.1).bodyPath).toBe(middle)
   })
 
-  it('garde les yeux dans la silhouette sur une forme non circulaire', () => {
-    for (const id of ['nuage', 'capsule', 'goutte', 'triangle', 'squircle'] as const) {
+  it('garde les yeux dans la silhouette sur une shape non circulaire', () => {
+    for (const id of ['cloud', 'capsule', 'drop', 'triangle', 'squircle'] as const) {
       const f = new BotEngine(100, 'idle', radii(id)).sample(1)
       expect(f.eyes).toHaveLength(2)
       for (const eye of f.eyes) {
         const parts = /matrix\(([^)]+)\)/.exec(eye.matrix)![1]!.split(',').map(Number)
         const ex = parts[4]!
         const ey = parts[5]!
-        const bord = radiusAtAngle(radii(id), Math.atan2(ey, ex)) * 100
+        const edge = radiusAtAngle(radii(id), Math.atan2(ey, ex)) * 100
         // le centre de l'oeil doit rester franchement a l'interieur du contour
-        expect(Math.hypot(ex, ey)).toBeLessThan(bord)
+        expect(Math.hypot(ex, ey)).toBeLessThan(edge)
       }
     }
   })
 })
 
-describe('etats', () => {
+describe('states', () => {
   /**
    * La sequence est le CATALOGUE : les 5 etats a visage releves sur la video, ceux que
    * la palette propose et que la planche montre. Tout etat hors sequence est une
@@ -195,44 +195,44 @@ describe('etats', () => {
   })
 
   it('tient les transitions d interface hors du catalogue', () => {
-    const horsSequence = STATES.filter((s) => !SEQUENCE.includes(s.id)).map((s) => s.id)
-    expect(horsSequence).toEqual(['swirl'])
+    const outSequence = STATES.filter((s) => !SEQUENCE.includes(s.id)).map((s) => s.id)
+    expect(outSequence).toEqual(['swirl'])
   })
 
   it('montre le visage sur les etats a visage, le cache sur les autres', () => {
-    const avec: StateId[] = ['idle', 'wink', 'wide']
-    const sans: StateId[] = ['thinking', 'sleep']
-    for (const id of avec) expect(new BotEngine(100, id).sample(0.9).eyes.length).toBe(2)
-    for (const id of sans) expect(new BotEngine(100, id).sample(0.9).eyes.length).toBe(0)
+    const withIt: StateId[] = ['idle', 'wink', 'wide']
+    const without: StateId[] = ['thinking', 'sleep']
+    for (const id of withIt) expect(new BotEngine(100, id).sample(0.9).eyes.length).toBe(2)
+    for (const id of without) expect(new BotEngine(100, id).sample(0.9).eyes.length).toBe(0)
   })
 })
 
 describe('regard qui suit le pointeur', () => {
   /** Abscisse de l'oeil interieur, en px de viewBox. */
-  const oeilX = (e: BotEngine, t: number) => +/matrix\([^,]+,[^,]+,[^,]+,[^,]+,(-?[\d.]+)/
+  const eyeX = (e: BotEngine, t: number) => +/matrix\([^,]+,[^,]+,[^,]+,[^,]+,(-?[\d.]+)/
     .exec(e.sample(t).eyes[0]!.matrix)![1]!
 
   /** Amplitude de son deplacement sur une plage de temps. */
-  function amplitude(e: BotEngine, de: number, a: number) {
+  function amplitude(e: BotEngine, from: number, a: number) {
     const xs: number[] = []
-    for (let t = de; t <= a; t += 0.1) xs.push(oeilX(e, t))
+    for (let t = from; t <= a; t += 0.1) xs.push(eyeX(e, t))
     return Math.max(...xs) - Math.min(...xs)
   }
 
   it('ne touche pas au regard tant qu aucune cible n est posee', () => {
-    const nu = new BotEngine(100, 'idle')
-    const vise = new BotEngine(100, 'idle')
-    vise.setLook(null, 0)
-    expect(vise.sample(1).eyes[0]!.matrix).toBe(nu.sample(1).eyes[0]!.matrix)
+    const bare = new BotEngine(100, 'idle')
+    const aims = new BotEngine(100, 'idle')
+    aims.setLook(null, 0)
+    expect(aims.sample(1).eyes[0]!.matrix).toBe(bare.sample(1).eyes[0]!.matrix)
   })
 
   it('porte le regard vers le lacet vise, en absolu', () => {
-    const droite = new BotEngine(100, 'idle')
-    const gauche = new BotEngine(100, 'idle')
-    droite.setLook({ yaw: 45, pitch: 0, mix: 1, spin: 0, wander: 0 }, 0)
-    gauche.setLook({ yaw: -45, pitch: 0, mix: 1, spin: 0, wander: 0 }, 0)
+    const right = new BotEngine(100, 'idle')
+    const left = new BotEngine(100, 'idle')
+    right.setLook({ yaw: 45, pitch: 0, mix: 1, spin: 0, wander: 0 }, 0)
+    left.setLook({ yaw: -45, pitch: 0, mix: 1, spin: 0, wander: 0 }, 0)
     const t = 1 + BotEngine.LOOK_MORPH
-    expect(oeilX(droite, t)).toBeGreaterThan(oeilX(gauche, t) + 40)
+    expect(eyeX(right, t)).toBeGreaterThan(eyeX(left, t) + 40)
   })
 
   it('remplace le lacet de la pose au lieu de s y ajouter', () => {
@@ -242,31 +242,31 @@ describe('regard qui suit le pointeur', () => {
     // Deux expressions qui ne different QUE par leur lacet : l'abscisse d'un oeil
     // depend aussi du tangage et de l'ecart des yeux, donc les faire varier
     // ensemble ne prouverait rien.
-    const modele = EXPRESSION_BY_ID.get('neutre')!
-    const gauchier = { ...modele, gaze: { ...modele.gaze, yaw: -30 } }
-    const droitier = { ...modele, gaze: { ...modele.gaze, yaw: 60 } }
-    const cercle = SHAPE_BY_ID.get('cercle')!.radii
+    const model = EXPRESSION_BY_ID.get('neutral')!
+    const gauchier = { ...model, gaze: { ...model.gaze, yaw: -30 } }
+    const droitier = { ...model, gaze: { ...model.gaze, yaw: 60 } }
+    const circle = SHAPE_BY_ID.get('circle')!.radii
 
-    const a = new BotEngine(100, 'idle', cercle, gauchier)
-    const b = new BotEngine(100, 'idle', cercle, droitier)
+    const a = new BotEngine(100, 'idle', circle, gauchier)
+    const b = new BotEngine(100, 'idle', circle, droitier)
     // sans cible, les deux regardent franchement ailleurs l'un de l'autre
-    expect(Math.abs(oeilX(a, 1) - oeilX(b, 1))).toBeGreaterThan(40)
+    expect(Math.abs(eyeX(a, 1) - eyeX(b, 1))).toBeGreaterThan(40)
 
     a.setLook({ yaw: -26, pitch: 0, mix: 1, spin: 0, wander: 0 }, 1)
     b.setLook({ yaw: -26, pitch: 0, mix: 1, spin: 0, wander: 0 }, 1)
     // ...et le meme lacet vise les pose exactement au meme endroit
     const t = 1 + BotEngine.LOOK_MORPH
-    expect(oeilX(a, t)).toBeCloseTo(oeilX(b, t), 5)
+    expect(eyeX(a, t)).toBeCloseTo(eyeX(b, t), 5)
   })
 
   it('parcourt le tour demande sans changer le point d arrivee', () => {
     const direct = new BotEngine(100, 'idle')
-    const tourne = new BotEngine(100, 'idle')
+    const turns = new BotEngine(100, 'idle')
     direct.setLook({ yaw: -26, pitch: 0, mix: 1, spin: 0, wander: 0 }, 0)
-    tourne.setLook({ yaw: -26, pitch: 0, mix: 1, spin: 360, wander: 0 }, 0)
+    turns.setLook({ yaw: -26, pitch: 0, mix: 1, spin: 360, wander: 0 }, 0)
     const t = 1 + BotEngine.LOOK_MORPH
     // un tour complet est le meme angle : l image doit etre identique au pixel
-    expect(tourne.sample(t).eyes[0]!.matrix).toBe(direct.sample(t).eyes[0]!.matrix)
+    expect(turns.sample(t).eyes[0]!.matrix).toBe(direct.sample(t).eyes[0]!.matrix)
     // ...alors qu a mi-tour la face est a l oppose du spectateur
     const mi = new BotEngine(100, 'idle')
     mi.setLook({ yaw: -26, pitch: 0, mix: 1, spin: 180, wander: 0 }, 0)
@@ -286,36 +286,36 @@ describe('regard qui suit le pointeur', () => {
   })
 
   it('eteint la derive automatique quand le pointeur commande', () => {
-    const libre = new BotEngine(100, 'idle')
-    const tenu = new BotEngine(100, 'idle')
-    tenu.setLook({ yaw: REST_GAZE.yaw, pitch: 0, mix: 1, spin: 0, wander: 0 }, 0)
+    const free = new BotEngine(100, 'idle')
+    const held = new BotEngine(100, 'idle')
+    held.setLook({ yaw: REST_GAZE.yaw, pitch: 0, mix: 1, spin: 0, wander: 0 }, 0)
 
     // Meme cible que le regard de repos : ce qui reste de mouvement
     // n'est donc QUE la derive. Elle doit s'etre eteinte, a ceci pres que le
     // flottement du corps (±0,006 rayon, `float`) n'est pas concerne.
-    expect(amplitude(tenu, 1, 8)).toBeLessThan(2)
-    expect(amplitude(libre, 1, 8)).toBeGreaterThan(5 * amplitude(tenu, 1, 8))
+    expect(amplitude(held, 1, 8)).toBeLessThan(2)
+    expect(amplitude(free, 1, 8)).toBeGreaterThan(5 * amplitude(held, 1, 8))
   })
 
   it('revient au regard de l etat quand la cible est relachee', () => {
-    const nu = new BotEngine(100, 'idle')
+    const bare = new BotEngine(100, 'idle')
     const e = new BotEngine(100, 'idle')
     e.setLook({ yaw: -20, pitch: -10, mix: 1, spin: 0, wander: 0 }, 0)
     e.sample(1)
     e.setLook(null, 1)
     // le retour est progressif, puis complet
-    expect(oeilX(e, 1.05)).not.toBeCloseTo(oeilX(nu, 1.05), 1)
-    const fini = 1 + BotEngine.LOOK_MORPH
-    expect(oeilX(e, fini)).toBeCloseTo(oeilX(nu, fini), 5)
+    expect(eyeX(e, 1.05)).not.toBeCloseTo(eyeX(bare, 1.05), 1)
+    const finished = 1 + BotEngine.LOOK_MORPH
+    expect(eyeX(e, finished)).toBeCloseTo(eyeX(bare, finished), 5)
   })
 
   it('reste une fonction pure du temps pendant le rattrapage', () => {
     const e = new BotEngine(100, 'idle')
     e.setLook({ yaw: -18, pitch: -8, mix: 1, spin: 0, wander: 0 }, 1)
-    const milieu = e.sample(1.1).eyes[0]!.matrix
+    const middle = e.sample(1.1).eyes[0]!.matrix
     // relire une date passee doit redonner exactement la meme image
     e.sample(3)
-    expect(e.sample(1.1).eyes[0]!.matrix).toBe(milieu)
+    expect(e.sample(1.1).eyes[0]!.matrix).toBe(middle)
   })
 
   it('laisse la derive intacte sur les vignettes, qui ne visent jamais', () => {
@@ -345,31 +345,31 @@ describe('robustesse du regard', () => {
     )
   })
 
-  it('garde une tete tournee vivante quand aucun pointeur ne la commande', () => {
+  it('garde une tete tournee vivante quand none pointeur ne la commande', () => {
     /**
      * Regression corrigee : `mix` eteignait la derive en meme temps qu'il prenait
      * la direction. Arriver sur l'onglet au clavier ou au tactile donnait alors un
      * avatar completement fige, ce qui contredit la definition de l'etat de repos
      * (« derive du regard et clignements »).
      */
-    const oeilX = (e: BotEngine, t: number) => +/matrix\([^,]+,[^,]+,[^,]+,[^,]+,(-?[\d.]+)/
+    const eyeX = (e: BotEngine, t: number) => +/matrix\([^,]+,[^,]+,[^,]+,[^,]+,(-?[\d.]+)/
       .exec(e.sample(t).eyes[0]!.matrix)![1]!
     const amplitude = (e: BotEngine) => {
       const xs: number[] = []
-      for (let t = 1; t <= 8; t += 0.1) xs.push(oeilX(e, t))
+      for (let t = 1; t <= 8; t += 0.1) xs.push(eyeX(e, t))
       return Math.max(...xs) - Math.min(...xs)
     }
 
-    const sansPointeur = new BotEngine(100, 'idle')
-    sansPointeur.setLook({ yaw: -26, pitch: 10, mix: 1, spin: 0, wander: 1 }, 0)
-    const avecPointeur = new BotEngine(100, 'idle')
-    avecPointeur.setLook({ yaw: -26, pitch: 10, mix: 1, spin: 0, wander: 0 }, 0)
+    const withoutPointer = new BotEngine(100, 'idle')
+    withoutPointer.setLook({ yaw: -26, pitch: 10, mix: 1, spin: 0, wander: 1 }, 0)
+    const withPointer = new BotEngine(100, 'idle')
+    withPointer.setLook({ yaw: -26, pitch: 10, mix: 1, spin: 0, wander: 0 }, 0)
 
     // la tete est tournee dans les deux cas...
-    expect(oeilX(sansPointeur, 1)).toBeLessThan(0)
-    expect(oeilX(avecPointeur, 1)).toBeLessThan(0)
+    expect(eyeX(withoutPointer, 1)).toBeLessThan(0)
+    expect(eyeX(withPointer, 1)).toBeLessThan(0)
     // ...mais seule celle que personne ne commande continue de deriver
-    expect(amplitude(sansPointeur)).toBeGreaterThan(5 * amplitude(avecPointeur))
+    expect(amplitude(withoutPointer)).toBeGreaterThan(5 * amplitude(withPointer))
   })
 })
 
@@ -381,13 +381,13 @@ describe('robustesse du regard', () => {
  */
 describe('reset', () => {
   it('oublie l etat precedent, la ou setState le garde pour le fondre', () => {
-    const avecFondu = new BotEngine(100, 'idle')
-    avecFondu.setState('sleep', 0)
+    const withFade = new BotEngine(100, 'idle')
+    withFade.setState('sleep', 0)
     const remis = new BotEngine(100, 'idle')
     remis.reset('sleep', 0)
 
     // au debut du morph, l'un melange encore le repos, l'autre est deja la petite boule
-    expect(avecFondu.sample(0).bodyPath).not.toBe(remis.sample(0).bodyPath)
+    expect(withFade.sample(0).bodyPath).not.toBe(remis.sample(0).bodyPath)
     // et le sommeil seul est bien ce qu'un moteur neuf sur `sleep` rend
     expect(remis.sample(0).bodyPath).toBe(new BotEngine(100, 'sleep').sample(0).bodyPath)
   })
@@ -400,11 +400,11 @@ describe('reset', () => {
   it('date l etat ou on le lui dit', () => {
     const tot = new BotEngine(100, 'idle')
     tot.reset('sleep', 0)
-    const tard = new BotEngine(100, 'idle')
-    tard.reset('sleep', 5)
+    const late = new BotEngine(100, 'idle')
+    late.reset('sleep', 5)
     // le rebond du sommeil est periodique : a la meme date absolue, l'un en est a 5 s et l'autre au debut
-    expect(tot.sample(5).bodyPath).not.toBe(tard.sample(5).bodyPath)
-    expect(tard.state).toBe('sleep')
+    expect(tot.sample(5).bodyPath).not.toBe(late.sample(5).bodyPath)
+    expect(late.state).toBe('sleep')
   })
 
   it('laisse sample une fonction pure du temps', () => {
@@ -433,7 +433,7 @@ describe('changement d etat pendant un fondu', () => {
   const IMAGE = 1 / 60
 
   /** Deplacement max d'un oeil sur les deux images qui suivent `at`. */
-  function sautApres(changements: Array<[StateId, number]>, at: number) {
+  function jumpAfter(changements: Array<[StateId, number]>, at: number) {
     const e = new BotEngine(100, 'idle')
     const distances: Array<{ t: number; d: number[] }> = []
     let i = 0
@@ -450,25 +450,25 @@ describe('changement d etat pendant un fondu', () => {
         })
       })
     }
-    let pire = 0
+    let worst = 0
     for (let k = 1; k < distances.length; k++) {
       const a = distances[k - 1]!
       const b = distances[k]!
       if (a.d.length !== b.d.length || b.t <= at || b.t > at + 2.5 * IMAGE) continue
-      pire = Math.max(pire, ...a.d.map((v, j) => Math.abs(v - b.d[j]!)))
+      worst = Math.max(worst, ...a.d.map((v, j) => Math.abs(v - b.d[j]!)))
     }
-    return pire
+    return worst
   }
 
   /** Reference : le meme changement, mais espace. C'est le mouvement normal. */
   const NORMAL = 14
 
   it('ne saute pas plus qu un changement espace', () => {
-    const espace = sautApres([['wide', 0.5], ['idle', 2]], 2)
-    expect(espace).toBeLessThan(NORMAL)
+    const space = jumpAfter([['wide', 0.5], ['idle', 2]], 2)
+    expect(space).toBeLessThan(NORMAL)
 
     // 100 ms apres le premier, donc en plein fondu de 0,55 s
-    expect(sautApres([['wide', 0.5], ['idle', 0.6]], 0.6)).toBeLessThanOrEqual(espace)
+    expect(jumpAfter([['wide', 0.5], ['idle', 0.6]], 0.6)).toBeLessThanOrEqual(space)
   })
 
   it('tient sur des changements enchaines', () => {
@@ -480,7 +480,7 @@ describe('changement d etat pendant un fondu', () => {
       ['wink', 0.7]
     ]
     for (const [, at] of suite.slice(1)) {
-      expect(sautApres(suite, at), `changement a ${at}s`).toBeLessThan(NORMAL)
+      expect(jumpAfter(suite, at), `changement a ${at}s`).toBeLessThan(NORMAL)
     }
   })
 
@@ -495,15 +495,15 @@ describe('changement d etat pendant un fondu', () => {
       ['wink', 2],
       ['sleep', 3]
     ]
-    const avecHistorique = new BotEngine(100, 'idle')
+    const withHistory = new BotEngine(100, 'idle')
     let i = 0
     const images: string[] = []
     for (let t = 0; t < 4; t += IMAGE) {
       while (i < suite.length && suite[i]![1] <= t + 1e-9) {
-        avecHistorique.setState(suite[i]![0], suite[i]![1])
+        withHistory.setState(suite[i]![0], suite[i]![1])
         i++
       }
-      images.push(avecHistorique.sample(t).bodyPath)
+      images.push(withHistory.sample(t).bodyPath)
     }
     // aucune image vide, et le rebond de `sleep` bouge encore pendant qu'il se fond
     expect(images.every((p) => p.length > 0)).toBe(true)

@@ -1,11 +1,11 @@
-import { computed, lien, nextTick, ref, watch } from '@/ui/dom/reactif'
-import { c, h, surMontage, type Composant } from '@/ui/dom/h'
+import { computed, link, nextTick, ref, watch } from '@/ui/dom/reactive'
+import { c, h, onMount, type Component } from '@/ui/dom/h'
 import '@/components/mochi-bot'
 import { BlockPicker } from '@/components/BlockPicker'
 import { clampDuration, moveBlock, offsetOf, STEP, totalDuration, type Block } from '@/bot/cycles'
 import { POSES, type StateId } from '@/bot/states'
 import { BASE_SCALE, clampZoom, ticksFor } from '@/ui/timeline'
-import { secondes, secondesCourtes, t } from '@/i18n'
+import { seconds, secondsShort, t } from '@/i18n'
 
 /**
  * La piste : une regle graduee, les cartes du montage, et les gestes qui vont avec (deplacer, etirer, promener la
@@ -32,15 +32,15 @@ export interface TimelineTrackProps {
 type Drag = { from: number; to: number; startX: number; dx: number; moved: boolean }
 type Resize = { index: number; startX: number; startDuration: number }
 
-export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
-  const block = lien(() => props.block, (v) => props.onBlock(v))
-  const zoom = lien(() => props.zoom, (v) => props.onZoom(v))
+export const TimelineTrack: Component<TimelineTrackProps> = (props) => {
+  const block = link(() => props.block, (v) => props.onBlock(v))
+  const zoom = link(() => props.zoom, (v) => props.onZoom(v))
 
   const scale = computed(() => BASE_SCALE * zoom.value)
   const total = computed(() => totalDuration(props.blocks))
   const at = computed(() => offsetOf(props.blocks, block.value) + props.elapsed)
   const ticks = computed(() => ticksFor(total.value, scale.value))
-  const exact = computed(() => secondes(at.value))
+  const exact = computed(() => seconds(at.value))
 
   let track: HTMLElement | null = null
   /** Debordement de la piste, pour n'afficher les degrades que s'ils servent. */
@@ -71,10 +71,10 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
     const el = track
     if (!el || before === undefined) return
     const x = (anchorX ?? el.getBoundingClientRect().left + el.clientWidth / 2) - el.getBoundingClientRect().left
-    const seconde = (el.scrollLeft + x) / before
+    const second = (el.scrollLeft + x) / before
     anchorX = null
     nextTick(() => {
-      el.scrollLeft = seconde * now - x
+      el.scrollLeft = second * now - x
       onScroll()
     })
   })
@@ -99,7 +99,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
     el.scrollLeft += d * unit
   }
 
-  surMontage(onScroll)
+  onMount(onScroll)
   watch([total, () => props.blocks], () => nextTick(onScroll))
 
   // la carte courante reste visible quand la piste deborde
@@ -182,21 +182,21 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
     drag.value = { ...d, moved: true, dx: e.clientX - d.startX, to: Math.max(0, indexAt(pointerSeconds(e))) }
   }
   function onBlockUp(index: number, e?: PointerEvent) {
-    const fin = drag.value
+    const end = drag.value
     drag.value = null
-    if (!fin) return
+    if (!end) return
     // la carte tombe la ou le doigt se LEVE : au toucher, le dernier `pointermove` peut arriver en retard ou
     // avec une position perimee (vu en Chrome mobile emule), et la carte revenait a sa place
-    const d = e && (fin.moved || Math.abs(e.clientX - fin.startX) > 4) ? { ...fin, moved: true, to: Math.max(0, indexAt(pointerSeconds(e))) } : fin
+    const d = e && (end.moved || Math.abs(e.clientX - end.startX) > 4) ? { ...end, moved: true, to: Math.max(0, indexAt(pointerSeconds(e))) } : end
     // un clic sans deplacement, c'est un saut de la tete de lecture
     if (!d.moved) {
       block.value = index
       return
     }
     if (d.to === d.from) return
-    const suivi = block.value === d.from ? d.to : block.value
+    const tracking = block.value === d.from ? d.to : block.value
     props.onBlocks(moveBlock(props.blocks, d.from, d.to))
-    block.value = suivi
+    block.value = tracking
   }
 
   function onResizeDown(index: number, e: PointerEvent) {
@@ -217,19 +217,19 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
    * lecture de `STEP`. Le focus SUIT la carte deplacee (apres le rendu). La carte porte `aria-keyshortcuts`.
    */
   async function onCardKey(index: number, e: KeyboardEvent) {
-    const sens = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0
-    if (!sens) return
+    const direction = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0
+    if (!direction) return
     e.preventDefault()
     if (!e.altKey) {
-      props.onSeek(Math.max(0, Math.min(total.value - 0.001, at.value + sens * STEP)))
+      props.onSeek(Math.max(0, Math.min(total.value - 0.001, at.value + direction * STEP)))
       return
     }
-    const cible = index + sens
-    if (cible < 0 || cible >= props.blocks.length) return
-    props.onBlocks(moveBlock(props.blocks, index, cible))
-    block.value = cible
+    const target = index + direction
+    if (target < 0 || target >= props.blocks.length) return
+    props.onBlocks(moveBlock(props.blocks, index, target))
+    block.value = target
     await nextTick()
-    track?.querySelectorAll<HTMLButtonElement>('[data-carte]')[cible]?.focus()
+    track?.querySelectorAll<HTMLButtonElement>('[data-carte]')[target]?.focus()
   }
 
   /* ----------------------------------------------------------------- scrub */
@@ -278,7 +278,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                 { key: tick.t, class: 'absolute bottom-1.5 flex items-end gap-1', style: { transform: `translateX(${tick.t * scale.value}px)` } },
                 h('span', { class: ['block w-px bg-[var(--line)]', tick.major ? 'h-3' : 'h-1.5'] }),
                 tick.major
-                  ? h('span', { class: '-mb-0.5 text-xs leading-none text-[var(--muted)]' }, secondesCourtes(tick.t, Number.isInteger(tick.t) ? 0 : 1))
+                  ? h('span', { class: '-mb-0.5 text-xs leading-none text-[var(--muted)]' }, secondsShort(tick.t, Number.isInteger(tick.t) ? 0 : 1))
                   : null
               )
             )
@@ -306,13 +306,13 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                       i === block.value ? 'bg-white ring-2 ring-[var(--ink)] ring-inset' : 'bg-black/[0.045] hover:bg-black/[0.08]',
                       lifted(i) ? 'scale-[1.02] opacity-75 shadow-lg' : ''
                     ],
-                    'aria-label': t('timeline.blockAria', { state: label(i), duration: secondes(b.duration) }),
+                    'aria-label': t('timeline.blockAria', { state: label(i), duration: seconds(b.duration) }),
                     'aria-current': i === block.value ? 'true' : undefined,
                     onPointerdown: (e: PointerEvent) => onBlockDown(i, e),
                     onPointermove: onBlockMove,
                     onPointerup: (e: PointerEvent) => onBlockUp(i, e),
                     onPointercancel: () => (drag.value = null),
-                    'data-carte': '',
+                    'data-card': '',
                     'aria-keyshortcuts': 'Alt+ArrowLeft Alt+ArrowRight ArrowLeft ArrowRight',
                     onKeydown: (e: KeyboardEvent) => {
                       if (e.key === 'Enter' || e.key === ' ') {
@@ -344,7 +344,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                         {
                           class: ['tronque text-center text-xs leading-none font-semibold tabular-nums', i === block.value ? 'text-[var(--ink)]' : 'text-[var(--muted)]']
                         },
-                        secondes(b.duration)
+                        seconds(b.duration)
                       )
                     : null
                 ),
@@ -353,7 +353,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
                   type: 'button',
                   class:
                     'absolute inset-y-2 right-0.5 w-1 cursor-ew-resize touch-none rounded-full bg-[var(--muted)] opacity-0 transition group-hover:opacity-60 hover:opacity-100! focus-visible:opacity-100',
-                  'aria-label': t('timeline.blockDurationAria', { state: label(i), duration: secondes(b.duration) }),
+                  'aria-label': t('timeline.blockDurationAria', { state: label(i), duration: seconds(b.duration) }),
                   onPointerdown: (e: PointerEvent) => onResizeDown(i, e),
                   onPointermove: onResizeMove,
                   onPointerup: () => (resize.value = null),
@@ -390,7 +390,7 @@ export const TimelineTrack: Composant<TimelineTrackProps> = (props) => {
             ),
             h(
               'li',
-              { key: 'plus', class: 'w-[72px] shrink-0 pl-1' },
+              { key: 'most', class: 'w-[72px] shrink-0 pl-1' },
               c(BlockPicker, { shape: props.shape, color: props.color, expression: props.expression, onPick: (s) => props.onAdd(s) })
             )
           ),

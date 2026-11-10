@@ -1,70 +1,70 @@
-import { computed, ref } from '@/ui/dom/reactif'
-import { c, h, type Composant } from '@/ui/dom/h'
-import { Affiche } from './Affiche'
-import { HeroChiffres } from './HeroChiffres'
-import { DEFILE } from './affiches'
-import { ACCESSOIRES_SITE } from './catalog'
-import type { Choix, Emplacement } from 'mochi-world/catalogue'
+import { computed, ref } from '@/ui/dom/reactive'
+import { c, h, type Component } from '@/ui/dom/h'
+import { Poster } from './Poster'
+import { HeroFigures } from './HeroFigures'
+import { SCROLL } from './posters'
+import { SITE_ACCESSORIES } from './catalog'
+import type { AccessoryChoice, Slot } from 'mochi-world/catalogue'
 
 /**
  * Hero : « la foule » (choisi par Robin le 09/11/2026). Aucune 3D au premier ecran : une petite foule de Mochi tous
  * differents, en images pre-rendues qui flottent en CSS. Un tap sur l'un d'eux le fait sauter et dit ce qu'il porte ;
  * « Shuffle » en appelle d'autres de la meme liste soignee que la carte des accessoires. Tres leger sur iPhone.
  */
-const DE_FACE = DEFILE.filter((d) => !d.variante.dos)
-const NB = 12
-const labelDe = (i: number) =>
-  (Object.entries(DE_FACE[i]!.variante.acc) as [Emplacement, Choix][])
-    .map(([e, ch]) => ACCESSOIRES_SITE(e).find((a) => a.id === (typeof ch === 'string' ? ch : ch.id))?.label)
+const OF_FACE = SCROLL.filter((d) => !d.variant.back)
+const N = 12
+const labelOf = (i: number) =>
+  (Object.entries(OF_FACE[i]!.variant.acc) as [Slot, AccessoryChoice][])
+    .map(([e, ch]) => SITE_ACCESSORIES(e).find((a) => a.id === (typeof ch === 'string' ? ch : ch.id))?.label)
     .filter(Boolean)
     .join(', ')
 
-export const Hero: Composant<Record<string, never>> = () => {
-  const ordre = ref<number[]>(Array.from({ length: NB }, (_, i) => i))
-  const foule = computed(() => ordre.value.map((i) => ({ i, nom: DE_FACE[i]!.nom })))
-  const actif = ref<number | null>(null)
-  const saut = ref(0)
+export const Hero: Component<Record<string, never>> = () => {
+  const order = ref<number[]>(Array.from({ length: N }, (_, i) => i))
+  const crowd = computed(() => order.value.map((i) => ({ i, name: OF_FACE[i]!.name })))
+  const active = ref<number | null>(null)
+  const jump = ref(0)
 
   function toucher(i: number) {
-    actif.value = i
-    saut.value++
+    active.value = i
+    jump.value++
   }
-  function melanger() {
-    const tout = DE_FACE.map((_, i) => i)
-    for (let k = tout.length - 1; k > 0; k--) {
+  function mix() {
+    const everything = OF_FACE.map((_, i) => i)
+    for (let k = everything.length - 1; k > 0; k--) {
       const j = Math.floor(Math.random() * (k + 1))
-      ;[tout[k], tout[j]] = [tout[j]!, tout[k]!]
+      ;[everything[k], everything[j]] = [everything[j]!, everything[k]!]
     }
-    ordre.value = tout.slice(0, NB)
-    actif.value = null
+    order.value = everything.slice(0, N)
+    active.value = null
   }
-  const legende = computed(() => (actif.value === null ? 'Tap a Mochi to see what it wears.' : `Wearing: ${labelDe(actif.value)}.`))
+  const caption = computed(() => (active.value === null ? 'Tap a Mochi to see what it wears.' : `Wearing: ${labelOf(active.value)}.`))
 
   return () =>
     h(
       'header',
       { id: 'top', class: 'hx hx-b' },
-      h('div', { class: 'hero-fond', 'aria-hidden': 'true' }),
+      h('div', { class: 'hero-background', 'aria-hidden': 'true' }),
       h(
         'div',
-        { class: 'hx-in hx-centre' },
+        { class: 'hx-in hx-center' },
         h('p', { class: 'hero-badge rv-load', style: '--d: 0' }, h('span', { class: 'point', 'aria-hidden': 'true' }), ' Open source, MIT'),
-        h('h1', { class: 'hx-titre rv-load', style: '--d: 1' }, 'A crowd of ', h('span', { class: 'accent' }, 'tiny faces'), ' for your app.'),
+        h('h1', { class: 'hx-title rv-load', style: '--d: 1' }, 'A crowd of ', h('span', { class: 'accent' }, 'tiny faces'), ' for your app.'),
         h(
           'p',
-          { class: 'hx-chapo rv-load', style: '--d: 2' },
+          { class: 'hx-lede rv-load', style: '--d: 2' },
           'Mochi is a 3D avatar for the web: pick a shape, a colour and a few accessories. Each one breathes, blinks and reacts to touch.'
         ),
         h(
           'div',
           { class: 'actions hx-actions rv-load', style: '--d: 3' },
-          h('a', { class: 'btn primaire', href: '/app' }, 'Try the app ', h('span', { 'aria-hidden': 'true' }, '→')),
+          h('a', { class: 'btn primary', href: '/app' }, 'Try the app ', h('span', { 'aria-hidden': 'true' }, '→')),
           h('a', { class: 'btn', href: '/docs' }, 'Read the docs')
         ),
         h(
           'ul',
-          { class: 'hx-foule', 'aria-label': 'Some Mochi' },
-          foule.value.map((m, k) =>
+          { class: 'hx-crowd', 'aria-label': 'Some Mochi' },
+          crowd.value.map((m, k) =>
             h(
               'li',
               { key: m.i + '-' + k, style: { '--k': k } },
@@ -72,23 +72,23 @@ export const Hero: Composant<Record<string, never>> = () => {
                 'button',
                 {
                   type: 'button',
-                  class: ['hx-mochi', { saute: actif.value === m.i }],
-                  'aria-label': DE_FACE[m.i]!.variante.forme + ' Mochi wearing ' + labelDe(m.i),
+                  class: ['hx-mochi', { saute: active.value === m.i }],
+                  'aria-label': OF_FACE[m.i]!.variant.shape + ' Mochi wearing ' + labelOf(m.i),
                   onClick: () => toucher(m.i)
                 },
                 // la cle change a chaque tap : le saut repart du debut
-                h('span', { key: actif.value === m.i ? saut.value : 0, class: 'hx-mochi-i' }, c(Affiche, { nom: m.nom, taille: 166, eager: k < 4 }))
+                h('span', { key: active.value === m.i ? jump.value : 0, class: 'hx-mochi-i' }, c(Poster, { name: m.name, size: 166, eager: k < 4 }))
               )
             )
           )
         ),
         h(
           'div',
-          { class: 'hx-pied' },
-          h('p', { class: 'hx-legende', 'aria-live': 'polite' }, legende.value),
-          h('button', { type: 'button', class: 'btn petit', onClick: melanger }, 'Shuffle')
+          { class: 'hx-footer' },
+          h('p', { class: 'hx-caption', 'aria-live': 'polite' }, caption.value),
+          h('button', { type: 'button', class: 'btn small', onClick: mix }, 'Shuffle')
         )
       ),
-      c(HeroChiffres, {})
+      c(HeroFigures, {})
     )
 }

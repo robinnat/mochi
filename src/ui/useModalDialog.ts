@@ -1,5 +1,5 @@
-import { watch, type Ref } from '@/ui/dom/reactif'
-import { surDemontage } from '@/ui/dom/h'
+import { watch, type Ref } from '@/ui/dom/reactive'
+import { onUnmount } from '@/ui/dom/h'
 
 /**
  * Pilote un `<dialog>` natif ouvert en modal depuis un booleen.
@@ -22,7 +22,7 @@ export function useModalDialog(open: Ref<boolean>, el: Ref<HTMLDialogElement | n
 
   // le composant peut disparaitre alors que la boite est ouverte (changement
   // d'onglet) : un `<dialog>` laisse en modal bloquerait la page entiere
-  surDemontage(() => {
+  onUnmount(() => {
     if (el.value?.open) el.value.close()
   })
 }

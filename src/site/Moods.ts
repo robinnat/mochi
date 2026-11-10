@@ -1,40 +1,40 @@
-import { computed, ref, watch } from '@/ui/dom/reactif'
-import { c, h, surDemontage, type Composant } from '@/ui/dom/h'
-import { Vivant } from './Vivant'
-import { MOODS_BOT } from './affiches'
-import { useReduit } from './reduced'
+import { computed, ref, watch } from '@/ui/dom/reactive'
+import { c, h, onUnmount, type Component } from '@/ui/dom/h'
+import { Alive } from './Alive'
+import { MOODS_BOT } from './posters'
+import { useReduced } from './reduced'
 import { reveal, useVisible } from './motion'
-import { HUMEURS_SITE } from './catalog'
+import { SITE_MOODS } from './catalog'
 
 /**
  * Les sept humeurs. Elles defilent seules tant que la section est a l'ecran (une barre montre le temps qui reste) ;
  * un clic choisit une humeur et arrete le defilement. Le Mochi n'est pas remonte : `mood` change et le moteur glisse
  * d'une humeur a l'autre.
  */
-const DUREE = 4200
+const DURATION = 4200
 
-export const Moods: Composant<Record<string, never>> = () => {
-  const reduit = useReduit()
+export const Moods: Component<Record<string, never>> = () => {
+  const reduced = useReduced()
   const zone = ref<HTMLElement | null>(null)
   const visible = useVisible(zone)
-  const actif = ref(0)
+  const active = ref(0)
   const auto = ref(true)
-  const humeur = computed(() => HUMEURS_SITE[actif.value]!)
+  const mood = computed(() => SITE_MOODS[active.value]!)
 
-  let minuteur = 0
+  let timer = 0
   watch(
-    [visible, auto, actif, reduit],
+    [visible, auto, active, reduced],
     ([v, a, , r]) => {
-      clearTimeout(minuteur)
-      if (v && a && !r) minuteur = window.setTimeout(() => (actif.value = (actif.value + 1) % HUMEURS_SITE.length), DUREE)
+      clearTimeout(timer)
+      if (v && a && !r) timer = window.setTimeout(() => (active.value = (active.value + 1) % SITE_MOODS.length), DURATION)
     },
     { immediate: true }
   )
-  surDemontage(() => clearTimeout(minuteur))
+  onUnmount(() => clearTimeout(timer))
 
-  function choisir(i: number) {
+  function choose(i: number) {
     auto.value = false
-    actif.value = i
+    active.value = i
   }
   const rv = [reveal(), reveal(1), reveal(2), reveal(3), reveal(2)]
 
@@ -47,12 +47,12 @@ export const Moods: Composant<Record<string, never>> = () => {
         { class: 'wrap moods' },
         h(
           'div',
-          { class: 'moods-texte' },
-          h('p', { ref: rv[0], class: 'surtitre' }, 'Moods'),
-          h('h2', { id: 't-moods', ref: rv[1], class: 'titre-sec' }, 'Seven moods.', h('br'), 'One body.'),
+          { class: 'moods-text' },
+          h('p', { ref: rv[0], class: 'eyebrow' }, 'Moods'),
+          h('h2', { id: 't-moods', ref: rv[1], class: 'title-sec' }, 'Seven moods.', h('br'), 'One body.'),
           h(
             'p',
-            { ref: rv[2], class: 'chapo' },
+            { ref: rv[2], class: 'lede' },
             'A mood changes the face and the way the body moves, and loops until you change it. Set it with ',
             h('code', null, 'mood="travaille"'),
             ' or call ',
@@ -61,18 +61,18 @@ export const Moods: Composant<Record<string, never>> = () => {
           ),
           h(
             'ul',
-            { ref: rv[3], class: 'moods-liste', role: 'list' },
-            HUMEURS_SITE.map((hm, i) =>
+            { ref: rv[3], class: 'moods-list', role: 'list' },
+            SITE_MOODS.map((hm, i) =>
               h(
                 'li',
                 { key: hm.id },
                 h(
                   'button',
-                  { type: 'button', class: ['mood', { on: i === actif.value }], 'aria-pressed': i === actif.value, onClick: () => choisir(i) },
-                  h('span', { class: 'mood-nom' }, hm.label),
+                  { type: 'button', class: ['mood', { on: i === active.value }], 'aria-pressed': i === active.value, onClick: () => choose(i) },
+                  h('span', { class: 'mood-name' }, hm.label),
                   h('code', { class: 'mood-id' }, hm.id),
-                  i === actif.value && auto.value && visible.value && !reduit.value
-                    ? h('span', { key: 'barre' + actif.value, class: 'mood-barre', style: { '--duree': DUREE + 'ms' }, 'aria-hidden': 'true' })
+                  i === active.value && auto.value && visible.value && !reduced.value
+                    ? h('span', { key: 'bar' + active.value, class: 'mood-bar', style: { '--duree': DURATION + 'ms' }, 'aria-hidden': 'true' })
                     : null
                 )
               )
@@ -82,14 +82,14 @@ export const Moods: Composant<Record<string, never>> = () => {
         h(
           'div',
           { ref: rv[4], class: 'moods-scene' },
-          c(Vivant, {
-            key: 'm' + reduit.value,
-            taille: 320,
-            affiche: 'moods',
-            alt: 'A teal Mochi in the mood: ' + humeur.value.label,
-            bot: { ...MOODS_BOT, mood: humeur.value.id, frozenAt: reduit.value ? 0 : undefined, interactions: false }
+          c(Alive, {
+            key: 'm' + reduced.value,
+            size: 320,
+            poster: 'moods',
+            alt: 'A teal Mochi in the mood: ' + mood.value.label,
+            bot: { ...MOODS_BOT, mood: mood.value.id, frozenAt: reduced.value ? 0 : undefined, interactions: false }
           }),
-          h('p', { class: 'moods-legende', 'aria-live': 'polite' }, h('strong', null, `${humeur.value.label}.`), ` ${humeur.value.texte}`)
+          h('p', { class: 'moods-caption', 'aria-live': 'polite' }, h('strong', null, `${mood.value.label}.`), ` ${mood.value.text}`)
         )
       )
     )

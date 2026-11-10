@@ -20,8 +20,8 @@ const TRIANGLE = silhouette('triangle').radii
 
 describe('radiusAtAngle', () => {
   it('rend le rayon du profil, pas une constante', () => {
-    const vus = new Set(Array.from({ length: 16 }, (_, i) => radiusAtAngle(TRIANGLE, (i / 16) * TAU)))
-    expect(vus.size).toBeGreaterThan(8)
+    const seen = new Set(Array.from({ length: 16 }, (_, i) => radiusAtAngle(TRIANGLE, (i / 16) * TAU)))
+    expect(seen.size).toBeGreaterThan(8)
   })
 
   it('enroule les angles negatifs', () => {
@@ -35,11 +35,11 @@ describe('radiusAtAngle', () => {
    */
   it('enroule sur plusieurs tours, dans les deux sens', () => {
     for (const base of [-30, -12.5, 7.3]) {
-      for (const tours of [-3, -1, 1, 5]) {
+      for (const turns of [-3, -1, 1, 5]) {
         expect(
           radiusAtAngle(TRIANGLE, base),
-          `base=${base} tours=${tours}`
-        ).toBeCloseTo(radiusAtAngle(TRIANGLE, base + tours * TAU), 10)
+          `base=${base} turns=${turns}`
+        ).toBeCloseTo(radiusAtAngle(TRIANGLE, base + turns * TAU), 10)
       }
     }
   })
@@ -70,13 +70,13 @@ describe('radiusAtAngle', () => {
  * juste au repos et fausse dans toutes ses transitions — le pire des deux mondes, parce que
  * personne ne penserait a regarder un morph.
  */
-describe('profils des formes du personnalisateur', () => {
+describe('profils des shapes du personnalisateur', () => {
   it('ont tous le meme echantillonnage angulaire, fini et positif', () => {
-    for (const forme of SHAPES) {
-      expect(forme.radii, forme.id).toHaveLength(PROFILE_SAMPLES)
-      for (const [i, r] of forme.radii.entries()) {
-        expect(Number.isFinite(r), `${forme.id}[${i}] = ${r}`).toBe(true)
-        expect(r, `${forme.id}[${i}]`).toBeGreaterThan(0)
+    for (const shape of SHAPES) {
+      expect(shape.radii, shape.id).toHaveLength(PROFILE_SAMPLES)
+      for (const [i, r] of shape.radii.entries()) {
+        expect(Number.isFinite(r), `${shape.id}[${i}] = ${r}`).toBe(true)
+        expect(r, `${shape.id}[${i}]`).toBeGreaterThan(0)
       }
     }
   })
@@ -87,11 +87,11 @@ describe('profils des formes du personnalisateur', () => {
    * mesures, c'est le domaine dans lequel le reste du dossier a du sens.
    */
   it('restent dans un domaine ou le reste du moteur tient', () => {
-    for (const forme of SHAPES) {
-      const min = Math.min(...forme.radii)
-      const max = Math.max(...forme.radii)
-      expect(min, `${forme.id} min`).toBeGreaterThan(0.3)
-      expect(max, `${forme.id} max`).toBeLessThan(1.6)
+    for (const shape of SHAPES) {
+      const min = Math.min(...shape.radii)
+      const max = Math.max(...shape.radii)
+      expect(min, `${shape.id} min`).toBeGreaterThan(0.3)
+      expect(max, `${shape.id} max`).toBeLessThan(1.6)
     }
   })
 })

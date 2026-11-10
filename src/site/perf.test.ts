@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const lire = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8')
-const scene = lire('../ui/trois/scene3d.ts')
-const acc = lire('../ui/trois/accessoires3d.ts')
+const read = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8')
+const scene = read('../ui/3d/scene3d.ts')
+const acc = read('../ui/3d/accessories3d.ts')
 
 /** Garde-fous de la v12 (06/11/2026) : ce qui rendait la 3D lente sur iPhone ne doit pas revenir. */
 describe('performance de la 3D (v12)', () => {
@@ -29,20 +29,20 @@ describe('performance de la 3D (v12)', () => {
 
   it('les shaders des trois styles sont compiles a l avance, apres la premiere image', () => {
     expect(scene).toContain('export function prechauffer()')
-    expect(lire('./pret.ts')).toContain('m.prechauffer()')
-    expect(lire('./Vivant.ts')).toContain('prechaufferStyles()')
+    expect(read('./ready.ts')).toContain('m.prechauffer()')
+    expect(read('./Alive.ts')).toContain('prechaufferStyles()')
   })
 
   it('un Mochi vivant se tourne au doigt, et le defilement vertical reste a la page', () => {
-    const v = lire('./Vivant.ts')
+    const v = read('./Alive.ts')
     expect(v).toContain('yaw: (props.yaw ?? 0) + spin.value')
     expect(v).toContain('setPointerCapture')
     expect(v).toContain('onPointerdown: onDown')
-    expect(lire('./site.css')).toMatch(/\.vivant\.tournable \{\s*touch-action: pan-y;/)
+    expect(read('./site.css')).toMatch(/\.vivant\.tournable \{\s*touch-action: pan-y;/)
   })
 
   it('personnalisation : le bouton change tout de suite, le Mochi recoit le changement a l image suivante', () => {
-    const p = lire('./PersoCorps.ts')
+    const p = read('./BodyCustomizer.ts')
     expect(p).toContain('const bot = shallowRef(etatBot())')
     expect(p).toContain('rendu: b.rendu')
     expect(p).toContain('shape: b.forme')

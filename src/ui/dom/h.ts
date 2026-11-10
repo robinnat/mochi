@@ -2,48 +2,48 @@
  * Rendu de l'interface, sans dependance : une description de l'arbre (`h(...)`) et une mise a jour
  * qui ne touche que ce qui a change dans le DOM.
  *
- * - `h('div', { class, style, onClick, ref }, enfants)` decrit un element ; `h(Composant, props)`
+ * - `h('div', { class, style, onClick, ref }, children)` decrit un element ; `h(Component, props)`
  *   un composant. Un composant est une fonction de mise en place qui recoit ses props (lues en
  *   direct : elles suivent le parent) et rend une fonction de dessin. Sa fonction de dessin est un
  *   effet : elle se relance seule quand ce qu'elle lit change.
  * - Les enfants d'une liste se retrouvent par leur `key` (sinon par leur rang) : un element garde
  *   son noeud DOM, donc son focus, sa selection, son canvas.
  * - `ref` (fonction) recoit l'element une fois en place dans la page, puis `null` a son retrait.
- *   Les crochets `surMontage` d'un composant partent au meme moment.
+ *   Les crochets `onMount` d'un composant partent au meme moment.
  *
  * Utilise par le site, l'application, le labo et le dessin SVG de `<mochi-bot>`.
  */
 
-import { Effet, Portee, dans, planifierRendu, poserSansSignal, ref, sansSuivi, surNettoyage, type Ref } from './reactif'
+import { Effect, Scope, within, scheduleRender, setWithoutSignal, ref, untracked, onCleanup, type Ref } from './reactive'
 
 export type Props = Record<string, unknown>
-export type Enfant = VNode | string | number | boolean | null | undefined | Enfant[]
+export type Child = VNode | string | number | boolean | null | undefined | Child[]
 
 /** Un composant : met en place son etat a partir de ses props, puis rend une fonction de dessin. */
-export type Composant<P = Props> = (props: P) => () => Enfant
+export type Component<P = Props> = (props: P) => () => Child
 
-const TEXTE = Symbol('texte')
-const VIDE = Symbol('vide')
+const TEXT = Symbol('text')
+const EMPTY = Symbol('empty')
 
 export interface VNode {
-  type: string | Composant<never> | typeof TEXTE | typeof VIDE
+  type: string | Component<never> | typeof TEXT | typeof EMPTY
   props: Props
-  enfants: VNode[]
+  children: VNode[]
   key: unknown
   el: Node | null
   inst: Instance | null
-  texte?: string
+  text?: string
 }
 
 interface Instance {
   id: number
   props: Props
   refs: Map<string, Ref<unknown>>
-  arbre: VNode | null
-  effet: Effet
-  portee: Portee
+  tree: VNode | null
+  effect: Effect
+  scope: Scope
   sale: boolean
-  demonte: boolean
+  unmounted: boolean
   job: () => void
 }
 
@@ -51,41 +51,41 @@ let numero = 0
 
 /* ------------------------------------------------------------------ h */
 
-export function h(type: string | Composant<never>, props?: Props | null, ...enfants: Enfant[]): VNode {
+export function h(type: string | Component<never>, props?: Props | null, ...children: Child[]): VNode {
   const p = props ?? {}
-  return { type, props: p, enfants: normaliser(enfants), key: p.key, el: null, inst: null }
+  return { type, props: p, children: normalize(children), key: p.key, el: null, inst: null }
 }
 
 /** `h` d'un composant type : les props sont verifiees a la compilation. */
-export function c<P>(comp: Composant<P>, props: P & { key?: unknown }): VNode {
-  return h(comp as Composant<never>, props as unknown as Props)
+export function c<P>(comp: Component<P>, props: P & { key?: unknown }): VNode {
+  return h(comp as Component<never>, props as unknown as Props)
 }
 
-function normaliser(enfants: Enfant[], out: VNode[] = []): VNode[] {
-  for (const e of enfants) {
+function normalize(children: Child[], out: VNode[] = []): VNode[] {
+  for (const e of children) {
     if (e === null || e === undefined || e === false || e === true) continue
-    if (Array.isArray(e)) normaliser(e, out)
+    if (Array.isArray(e)) normalize(e, out)
     else if (typeof e === 'object') out.push(e)
-    else out.push({ type: TEXTE, props: {}, enfants: [], key: undefined, el: null, inst: null, texte: String(e) })
+    else out.push({ type: TEXT, props: {}, children: [], key: undefined, el: null, inst: null, text: String(e) })
   }
   return out
 }
 
 /* --------------------------------------------------- crochets de composant */
 
-let aAppeler: (() => void)[] = []
+let toCall: (() => void)[] = []
 
 /** Appelee une fois le composant en place dans la page. */
-export function surMontage(fn: () => void) {
-  aAppeler.push(fn)
+export function onMount(fn: () => void) {
+  toCall.push(fn)
 }
 /** Appelee juste avant le retrait du composant. */
-export const surDemontage = surNettoyage
+export const onUnmount = onCleanup
 
-function viderAppels() {
-  while (aAppeler.length) {
-    const l = aAppeler
-    aAppeler = []
+function clearCalls() {
+  while (toCall.length) {
+    const l = toCall
+    toCall = []
     for (const f of l) f()
   }
 }
@@ -94,45 +94,45 @@ function viderAppels() {
 
 const SVG = 'http://www.w3.org/2000/svg'
 
-function noeud(v: VNode): Node {
-  if (v.inst) return noeud(v.inst.arbre!)
+function bow(v: VNode): Node {
+  if (v.inst) return bow(v.inst.tree!)
   return v.el!
 }
 
-function monter(v: VNode, parent: Node, ancre: Node | null, svg: boolean) {
-  if (v.type === TEXTE) {
-    v.el = document.createTextNode(v.texte!)
-    parent.insertBefore(v.el, ancre)
+function mount(v: VNode, parent: Node, anchor: Node | null, svg: boolean) {
+  if (v.type === TEXT) {
+    v.el = document.createTextNode(v.text!)
+    parent.insertBefore(v.el, anchor)
     return
   }
-  if (v.type === VIDE) {
+  if (v.type === EMPTY) {
     v.el = document.createComment('')
-    parent.insertBefore(v.el, ancre)
+    parent.insertBefore(v.el, anchor)
     return
   }
-  if (typeof v.type === 'function') return monterComposant(v, parent, ancre, svg)
+  if (typeof v.type === 'function') return mountComponent(v, parent, anchor, svg)
   const tag = v.type as string
-  const enSvg = svg || tag === 'svg'
-  const el = enSvg ? document.createElementNS(SVG, tag) : document.createElement(tag)
+  const asSvg = svg || tag === 'svg'
+  const el = asSvg ? document.createElementNS(SVG, tag) : document.createElement(tag)
   v.el = el
   // un element personnalise doit etre defini pour recevoir ses proprietes
-  appliquerProps(el as HTMLElement, {}, v.props, enSvg)
-  const svgEnfants = enSvg && tag !== 'foreignObject'
-  if (!('innerHTML' in v.props)) for (const e of v.enfants) monter(e, el, null, svgEnfants)
-  parent.insertBefore(el, ancre)
+  applyProps(el as HTMLElement, {}, v.props, asSvg)
+  const svgChildren = asSvg && tag !== 'foreignObject'
+  if (!('innerHTML' in v.props)) for (const e of v.children) mount(e, el, null, svgChildren)
+  parent.insertBefore(el, anchor)
   const r = v.props.ref as ((e: Element | null) => void) | undefined
-  if (r) aAppeler.push(() => r(el))
+  if (r) toCall.push(() => r(el))
 }
 
-function monterComposant(v: VNode, parent: Node, ancre: Node | null, svg: boolean) {
+function mountComponent(v: VNode, parent: Node, anchor: Node | null, svg: boolean) {
   const refs = new Map<string, Ref<unknown>>()
-  const brutes = { ...v.props }
-  const props = new Proxy(brutes, {
-    get(cible, cle: string) {
-      let r = refs.get(cle)
+  const raw = { ...v.props }
+  const props = new Proxy(raw, {
+    get(target, key: string) {
+      let r = refs.get(key)
       if (!r) {
-        r = ref(cible[cle])
-        refs.set(cle, r)
+        r = ref(target[key])
+        refs.set(key, r)
       }
       return r.value
     },
@@ -140,67 +140,67 @@ function monterComposant(v: VNode, parent: Node, ancre: Node | null, svg: boolea
       return false
     }
   })
-  const portee = new Portee()
+  const scope = new Scope()
   const inst: Instance = {
     id: ++numero,
-    props: brutes,
+    props: raw,
     refs,
-    arbre: null,
-    portee,
+    tree: null,
+    scope,
     sale: false,
-    demonte: false,
-    effet: null as unknown as Effet,
+    unmounted: false,
+    effect: null as unknown as Effect,
     job: () => {}
   }
   v.inst = inst
-  // les crochets `surMontage` de la mise en place partent APRES les `ref` du dessin (les elements sont alors connus)
-  const avant = aAppeler.length
-  const dessin = dans(portee, () => sansSuivi(() => (v.type as Composant<Props>)(props)))
-  const crochets = aAppeler.splice(avant)
-  const rendre = () => {
-    const r = normaliser([dessin()])
-    return r[0] ?? { type: VIDE, props: {}, enfants: [], key: undefined, el: null, inst: null }
+  // les crochets `onMount` de la mise en place partent APRES les `ref` du dessin (les elements sont alors connus)
+  const before = toCall.length
+  const drawing = within(scope, () => untracked(() => (v.type as Component<Props>)(props)))
+  const crochets = toCall.splice(before)
+  const render = () => {
+    const r = normalize([drawing()])
+    return r[0] ?? { type: EMPTY, props: {}, children: [], key: undefined, el: null, inst: null }
   }
-  inst.effet = new Effet(
+  inst.effect = new Effect(
     () => {
-      const nouveau = dans(portee, rendre)
-      if (!inst.arbre) {
-        inst.arbre = nouveau
-        monter(nouveau, parent, ancre, svg)
+      const fresh = within(scope, render)
+      if (!inst.tree) {
+        inst.tree = fresh
+        mount(fresh, parent, anchor, svg)
       } else {
-        const ancien = inst.arbre
-        const p = noeud(ancien).parentNode!
-        inst.arbre = nouveau
-        patch(ancien, nouveau, p, svg)
+        const old = inst.tree
+        const p = bow(old).parentNode!
+        inst.tree = fresh
+        patch(old, fresh, p, svg)
       }
     },
     () => {
-      if (inst.demonte) return
+      if (inst.unmounted) return
       inst.sale = true
-      planifierRendu(inst.id, inst.job)
+      scheduleRender(inst.id, inst.job)
     }
   )
   inst.job = () => {
-    if (!inst.sale || inst.demonte) return
+    if (!inst.sale || inst.unmounted) return
     inst.sale = false
-    inst.effet.run()
-    viderAppels()
+    inst.effect.run()
+    clearCalls()
   }
-  inst.effet.run()
-  aAppeler.push(...crochets)
+  inst.effect.run()
+  toCall.push(...crochets)
 }
 
-function majProps(inst: Instance, nouv: Props): boolean {
+function updateProps(inst: Instance, next: Props): boolean {
   let change = false
-  for (const k of new Set([...Object.keys(inst.props), ...Object.keys(nouv)])) {
-    const v = nouv[k]
+  for (const k of new Set([...Object.keys(inst.props), ...Object.keys(next)])) {
+    const v = next[k]
     if (Object.is(inst.props[k], v)) continue
-    const avant = inst.props[k]
+    const before = inst.props[k]
     inst.props[k] = v
     const r = inst.refs.get(k)
     // un gestionnaire recree a chaque dessin du parent ne redessine pas l'enfant : il est seulement remplace
-    if (typeof v === 'function' && typeof avant === 'function') {
-      if (r) poserSansSignal(r, v)
+    if (typeof v === 'function' && typeof before === 'function') {
+      if (r) setWithoutSignal(r, v)
       continue
     }
     if (r) r.value = v
@@ -209,95 +209,95 @@ function majProps(inst: Instance, nouv: Props): boolean {
   return change
 }
 
-function demonter(v: VNode, retirer = true) {
+function unmount(v: VNode, remove = true) {
   if (v.inst) {
     const i = v.inst
-    i.demonte = true
-    i.portee.arreter()
-    i.effet.stop()
-    if (i.arbre) demonter(i.arbre, retirer)
+    i.unmounted = true
+    i.scope.stop()
+    i.effect.stop()
+    if (i.tree) unmount(i.tree, remove)
     return
   }
   const r = v.props.ref as ((e: Element | null) => void) | undefined
   if (r) r(null)
-  for (const e of v.enfants) demonter(e, false)
-  if (retirer && v.el?.parentNode) v.el.parentNode.removeChild(v.el)
+  for (const e of v.children) unmount(e, false)
+  if (remove && v.el?.parentNode) v.el.parentNode.removeChild(v.el)
 }
 
 /* --------------------------------------------------------------------- patch */
 
-const meme = (a: VNode, b: VNode) => a.type === b.type && a.key === b.key
+const same = (a: VNode, b: VNode) => a.type === b.type && a.key === b.key
 
 function patch(a: VNode, b: VNode, parent: Node, svg: boolean) {
-  if (!meme(a, b)) {
-    const ancre = noeud(a)
-    monter(b, parent, ancre, svg)
-    demonter(a)
+  if (!same(a, b)) {
+    const anchor = bow(a)
+    mount(b, parent, anchor, svg)
+    unmount(a)
     return
   }
-  if (a.type === TEXTE) {
+  if (a.type === TEXT) {
     b.el = a.el
-    if (a.texte !== b.texte) (b.el as Text).data = b.texte!
+    if (a.text !== b.text) (b.el as Text).data = b.text!
     return
   }
-  if (a.type === VIDE) {
+  if (a.type === EMPTY) {
     b.el = a.el
     return
   }
   if (typeof a.type === 'function') {
     const inst = a.inst!
     b.inst = inst
-    if (majProps(inst, b.props) && inst.sale) inst.job()
+    if (updateProps(inst, b.props) && inst.sale) inst.job()
     return
   }
   const el = (b.el = a.el) as HTMLElement
   const tag = b.type as string
-  const enSvg = svg || tag === 'svg'
-  appliquerProps(el, a.props, b.props, enSvg)
+  const asSvg = svg || tag === 'svg'
+  applyProps(el, a.props, b.props, asSvg)
   if ('innerHTML' in b.props) return
   if ('innerHTML' in a.props) {
     el.textContent = ''
-    for (const e of b.enfants) monter(e, el, null, enSvg && tag !== 'foreignObject')
+    for (const e of b.children) mount(e, el, null, asSvg && tag !== 'foreignObject')
     return
   }
-  patchEnfants(el, a.enfants, b.enfants, enSvg && tag !== 'foreignObject')
+  patchChildren(el, a.children, b.children, asSvg && tag !== 'foreignObject')
   const ra = a.props.ref
   const rb = b.props.ref as ((e: Element | null) => void) | undefined
   if (ra !== rb) {
     ;(ra as ((e: Element | null) => void) | undefined)?.(null)
-    if (rb) aAppeler.push(() => rb(el))
+    if (rb) toCall.push(() => rb(el))
   }
 }
 
-function patchEnfants(el: Node, anciens: VNode[], nouveaux: VNode[], svg: boolean) {
-  const parCle = new Map<unknown, VNode>()
-  for (const a of anciens) if (a.key !== undefined) parCle.set(a.key, a)
-  const pris = new Set<VNode>()
-  const paires: (VNode | null)[] = nouveaux.map((n, i) => {
+function patchChildren(el: Node, old: VNode[], freshOnes: VNode[], svg: boolean) {
+  const byKey = new Map<unknown, VNode>()
+  for (const a of old) if (a.key !== undefined) byKey.set(a.key, a)
+  const taken = new Set<VNode>()
+  const pairs: (VNode | null)[] = freshOnes.map((n, i) => {
     let a: VNode | undefined
-    if (n.key !== undefined) a = parCle.get(n.key)
+    if (n.key !== undefined) a = byKey.get(n.key)
     else {
-      const x = anciens[i]
+      const x = old[i]
       if (x && x.key === undefined && x.type === n.type) a = x
     }
-    if (a && !pris.has(a) && meme(a, n)) {
-      pris.add(a)
+    if (a && !taken.has(a) && same(a, n)) {
+      taken.add(a)
       return a
     }
     return null
   })
-  for (const a of anciens) if (!pris.has(a)) demonter(a)
+  for (const a of old) if (!taken.has(a)) unmount(a)
   // de la fin vers le debut : chaque noeud se place juste avant le suivant
-  let suivant: Node | null = null
-  for (let i = nouveaux.length - 1; i >= 0; i--) {
-    const n = nouveaux[i]!
-    const a = paires[i]
+  let next: Node | null = null
+  for (let i = freshOnes.length - 1; i >= 0; i--) {
+    const n = freshOnes[i]!
+    const a = pairs[i]
     if (a) {
       patch(a, n, el, svg)
-      const x = noeud(n)
-      if (x.nextSibling !== suivant || x.parentNode !== el) el.insertBefore(x, suivant)
-    } else monter(n, el, suivant, svg)
-    suivant = noeud(n)
+      const x = bow(n)
+      if (x.nextSibling !== next || x.parentNode !== el) el.insertBefore(x, next)
+    } else mount(n, el, next, svg)
+    next = bow(n)
   }
 }
 
@@ -306,7 +306,7 @@ function patchEnfants(el: Node, anciens: VNode[], nouveaux: VNode[], svg: boolea
 /** Proprietes posees comme proprietes DOM (et non comme attributs). */
 const PROP_DOM = new Set(['value', 'checked', 'selected', 'indeterminate', 'muted', 'innerHTML', 'textContent', 'scrollLeft'])
 /** Attributs booleens : presents ou absents. */
-const BOOLEENS = new Set([
+const BOOLEANS = new Set([
   'disabled',
   'hidden',
   'inert',
@@ -324,10 +324,10 @@ const BOOLEENS = new Set([
   'nomodule'
 ])
 
-export function classeDe(v: unknown): string {
+export function classOf(v: unknown): string {
   if (!v) return ''
   if (typeof v === 'string') return v
-  if (Array.isArray(v)) return v.map(classeDe).filter(Boolean).join(' ')
+  if (Array.isArray(v)) return v.map(classOf).filter(Boolean).join(' ')
   if (typeof v === 'object')
     return Object.entries(v as Record<string, unknown>)
       .filter(([, on]) => on)
@@ -336,7 +336,7 @@ export function classeDe(v: unknown): string {
   return ''
 }
 
-function styleObjet(v: unknown): Record<string, string> {
+function styleObject(v: unknown): Record<string, string> {
   if (!v) return {}
   if (typeof v === 'string') {
     const o: Record<string, string> = {}
@@ -346,7 +346,7 @@ function styleObjet(v: unknown): Record<string, string> {
     }
     return o
   }
-  if (Array.isArray(v)) return Object.assign({}, ...v.map(styleObjet))
+  if (Array.isArray(v)) return Object.assign({}, ...v.map(styleObject))
   const o: Record<string, string> = {}
   for (const [k, x] of Object.entries(v as Record<string, unknown>)) {
     if (x === undefined || x === null || x === false) continue
@@ -355,46 +355,46 @@ function styleObjet(v: unknown): Record<string, string> {
   return o
 }
 
-type Invocateur = ((e: Event) => void) & { fn?: (e: Event) => void }
+type Invoker = ((e: Event) => void) & { fn?: (e: Event) => void }
 
-function appliquerProps(el: HTMLElement, a: Props, b: Props, svg: boolean) {
+function applyProps(el: HTMLElement, a: Props, b: Props, svg: boolean) {
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
     if (k === 'key' || k === 'ref') continue
     const va = a[k]
     const vb = b[k]
     if (k === 'class') {
-      const ca = classeDe(va)
-      let cb = classeDe(vb)
+      const ca = classOf(va)
+      let cb = classOf(vb)
       if (ca === cb) continue
       // classes posees a la main sur l'element (apparition au defilement) : gardees
-      const garder = (el as unknown as { __garder?: string[] }).__garder
-      if (garder) cb = [cb, ...garder.filter((x) => el.classList.contains(x))].filter(Boolean).join(' ')
+      const keep = (el as unknown as { __keep?: string[] }).__keep
+      if (keep) cb = [cb, ...keep.filter((x) => el.classList.contains(x))].filter(Boolean).join(' ')
       if (cb) el.setAttribute('class', cb)
       else el.removeAttribute('class')
       continue
     }
     if (k === 'style') {
-      const sa = styleObjet(va)
-      const sb = styleObjet(vb)
-      for (const p of Object.keys(sa)) if (!(p in sb)) el.style.removeProperty(p)
-      for (const [p, x] of Object.entries(sb)) if (sa[p] !== x || el.style.getPropertyValue(p) !== x) el.style.setProperty(p, x)
+      const its = styleObject(va)
+      const sb = styleObject(vb)
+      for (const p of Object.keys(its)) if (!(p in sb)) el.style.removeProperty(p)
+      for (const [p, x] of Object.entries(sb)) if (its[p] !== x || el.style.getPropertyValue(p) !== x) el.style.setProperty(p, x)
       continue
     }
-    if (Object.is(va, vb) && va !== undefined && !(k in PROP_DOM_VERIF)) continue
+    if (Object.is(va, vb) && va !== undefined && !(k in PROP_DOM_CHECK)) continue
     if (k.startsWith('on') && k.length > 2 && (typeof vb === 'function' || typeof va === 'function')) {
-      const nom = k.slice(2).toLowerCase()
-      const store = ((el as unknown as { _ev?: Record<string, Invocateur> })._ev ??= {})
-      let inv = store[nom]
+      const name = k.slice(2).toLowerCase()
+      const store = ((el as unknown as { _ev?: Record<string, Invoker> })._ev ??= {})
+      let inv = store[name]
       if (typeof vb === 'function') {
         if (!inv) {
-          inv = ((e: Event) => inv!.fn?.(e)) as Invocateur
-          store[nom] = inv
-          el.addEventListener(nom, inv)
+          inv = ((e: Event) => inv!.fn?.(e)) as Invoker
+          store[name] = inv
+          el.addEventListener(name, inv)
         }
         inv.fn = vb as (e: Event) => void
       } else if (inv) {
-        el.removeEventListener(nom, inv)
-        delete store[nom]
+        el.removeEventListener(name, inv)
+        delete store[name]
       }
       continue
     }
@@ -408,42 +408,42 @@ function appliquerProps(el: HTMLElement, a: Props, b: Props, svg: boolean) {
       ;(el as unknown as Props)[k] = vb
       continue
     }
-    if (vb === null || vb === undefined || (BOOLEENS.has(k) && vb === false)) {
+    if (vb === null || vb === undefined || (BOOLEANS.has(k) && vb === false)) {
       el.removeAttribute(k)
       if (k === 'inert' && 'inert' in el) el.inert = false
       continue
     }
     if (k === 'inert' && 'inert' in el) el.inert = true
-    el.setAttribute(k, BOOLEENS.has(k) && vb === true ? '' : String(vb))
+    el.setAttribute(k, BOOLEANS.has(k) && vb === true ? '' : String(vb))
   }
 }
 
 /** Proprietes relues sur l'element a chaque passage : l'utilisateur peut les avoir changees (champ saisi). */
-const PROP_DOM_VERIF: Record<string, true> = { value: true, checked: true }
+const PROP_DOM_CHECK: Record<string, true> = { value: true, checked: true }
 
 /* ------------------------------------------------------------------- racine */
 
-const RACINES = new WeakMap<Node, VNode>()
+const ROOTS = new WeakMap<Node, VNode>()
 
-/** Dessine `v` dans `conteneur` (son unique enfant gere), en reprenant le dessin precedent s'il y en a un. */
-export function rendre(v: VNode | null, conteneur: Node, svg = false) {
-  const ancien = RACINES.get(conteneur)
+/** Dessine `v` dans `container` (son unique enfant gere), en reprenant le dessin precedent s'il y en a un. */
+export function render(v: VNode | null, container: Node, svg = false) {
+  const old = ROOTS.get(container)
   if (!v) {
-    if (ancien) demonter(ancien)
-    RACINES.delete(conteneur)
-    viderAppels()
+    if (old) unmount(old)
+    ROOTS.delete(container)
+    clearCalls()
     return
   }
-  if (ancien) patch(ancien, v, conteneur, svg)
-  else monter(v, conteneur, null, svg)
-  RACINES.set(conteneur, v)
-  viderAppels()
+  if (old) patch(old, v, container, svg)
+  else mount(v, container, null, svg)
+  ROOTS.set(container, v)
+  clearCalls()
 }
 
 /** Monte un composant dans un element de la page ; renvoie de quoi le retirer. */
-export function monterApp<P extends Props>(comp: Composant<P>, cible: Element | string, props?: P): () => void {
-  const el = typeof cible === 'string' ? document.querySelector(cible) : cible
-  if (!el) throw new Error(`mochi: cible introuvable ${String(cible)}`)
-  rendre(h(comp as unknown as Composant<never>, props ?? {}), el)
-  return () => rendre(null, el)
+export function mountApp<P extends Props>(comp: Component<P>, target: Element | string, props?: P): () => void {
+  const el = typeof target === 'string' ? document.querySelector(target) : target
+  if (!el) throw new Error(`mochi: target introuvable ${String(target)}`)
+  render(h(comp as unknown as Component<never>, props ?? {}), el)
+  return () => render(null, el)
 }

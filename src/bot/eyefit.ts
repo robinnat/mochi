@@ -6,7 +6,7 @@
  * la marge qui lui reste devant le bord est multipliee par le meme facteur, donc une
  * silhouette etroite dans sa direction le pousse contre le bord jusqu'a ce que le
  * masque l'ouvre vers l'exterieur. La gelule apparaissait comme une encoche dans le
- * corps sur `capsule`, `triangle`, `nuage` et `goutte`.
+ * corps sur `capsule`, `triangle`, `cloud` et `drop`.
  *
  * Ce module resout le probleme UNE FOIS, au chargement, et rend une table de decalages.
  * Ce choix est l'essentiel du correctif, bien plus que la geometrie qui suit :
@@ -54,17 +54,17 @@ const R = 100
  *
  * Il faut les couvrir, sinon la correction est juste sur la pose nominale et fausse une
  * seconde plus tard : 7 degres de lacet deplacent l'oeil d'une douzaine d'unites sur une
- * boule de rayon 100. C'est precisement ce qui faisait deborder `capsule` + `effraye`
+ * boule de rayon 100. C'est precisement ce qui faisait deborder `capsule` + `scared`
  * alors qu'une mesure a un seul instant le declarait bon.
  */
-const DERIVE_YAW = 5.5 + 1.6
-const DERIVE_PITCH = 4.2 + 1.3
+const DRIFT_YAW = 5.5 + 1.6
+const DRIFT_PITCH = 4.2 + 1.3
 /** Flottement du centre, en unites de rayon de boule. */
-const DERIVE_X = 0.006
-const DERIVE_Y = 0.007
+const DRIFT_X = 0.006
+const DRIFT_Y = 0.007
 
 /** Le visage d'une pose, ce dont le solveur a besoin pour placer ses gelules. */
-interface Visage {
+interface Face {
   gaze: Pose['gaze']
   split: number
   eyes: Pose['eyes']
@@ -83,7 +83,7 @@ interface Visage {
  * ressortait NEGATIVE, donc la demande devenait sans dents et 34 combinaisons
  * continuaient de deborder.
  */
-interface Empreinte {
+interface Footprint {
   /** centre, en unites de viewBox */
   x: number
   y: number
@@ -107,13 +107,13 @@ interface Empreinte {
  *
  * Le clignement n'y est pas : un oeil ferme n'a pas besoin qu'on lui fasse de la place.
  */
-function empreintes(visage: Visage, sil: Pose['sil'], radii: number[]): Empreinte[] {
-  const out: Empreinte[] = []
-  const poses = eyePoses(visage.gaze, R, visage.split)
+function footprints(face: Face, sil: Pose['sil'], radii: number[]): Footprint[] {
+  const out: Footprint[] = []
+  const poses = eyePoses(face.gaze, R, face.split)
   for (let i = 0; i < 2; i++) {
     const e = poses[i]!
     if (e.depth <= 0.02) continue
-    const cfg = visage.eyes[i]!
+    const cfg = face.eyes[i]!
     const phi = ((cfg.tilt ?? 0) * Math.PI) / 180
     const cp = Math.cos(phi)
     const sp = Math.sin(phi)
@@ -127,14 +127,14 @@ function empreintes(visage: Visage, sil: Pose['sil'], radii: number[]): Empreint
     const r = Math.min(hw, hh)
     // l'axe est celui de la plus grande dimension
     const long = hh > hw
-    const demi = long ? hh - r : hw - r
+    const half = long ? hh - r : hw - r
     // le prorata du rayon local, exactement comme le fait le moteur
     const fit = radiusAtAngle(radii, Math.atan2(e.y, e.x) - sil.rot)
     out.push({
       x: e.x * fit,
       y: e.y * fit,
-      ax: (long ? cx : ax) * demi,
-      ay: (long ? cy : ay) * demi,
+      ax: (long ? cx : ax) * half,
+      ay: (long ? cy : ay) * half,
       r,
       m: [ax, ay, cx, cy]
     })
@@ -149,7 +149,7 @@ function empreintes(visage: Visage, sil: Pose['sil'], radii: number[]): Empreint
  * Les deux sortent de la MEME passe. Les calculer separement doublait le seul vrai cout
  * de ce module, qui est ce balayage.
  */
-function approche(pts: Point[], x0: number, y0: number, x1: number, y1: number) {
+function approach(pts: Point[], x0: number, y0: number, x1: number, y1: number) {
   const sx = x1 - x0
   const sy = y1 - y0
   const len2 = sx * sx + sy * sy
@@ -174,11 +174,11 @@ function approche(pts: Point[], x0: number, y0: number, x1: number, y1: number) 
 }
 
 /** Une epreuve : des gelules a faire tenir dans un contour, et le contour de reference. */
-interface Epreuve {
-  empreintes: Empreinte[]
-  reference: Empreinte[]
-  contour: Point[]
-  calContour: Point[]
+interface Proof {
+  footprints: Footprint[]
+  reference: Footprint[]
+  outline: Point[]
+  calOutline: Point[]
 }
 
 /**
@@ -186,28 +186,28 @@ interface Epreuve {
  * gelule : moins d'une unite, donc l'absorber ainsi coute moins cher que de multiplier les
  * epreuves par ses quatre coins.
  */
-const FLOTTEMENT = Math.hypot(DERIVE_X, DERIVE_Y) * R
+const FLOAT = Math.hypot(DRIFT_X, DRIFT_Y) * R
 
 /** Marge de la gelule la plus serree, et le sens qui la degage. */
-function pire(pts: Point[], emps: Empreinte[], tx: number, ty: number) {
-  let marge = Infinity
+function worst(pts: Point[], emps: Footprint[], tx: number, ty: number) {
+  let margin = Infinity
   let ux = 0
   let uy = 0
   for (const e of emps) {
     const x = e.x + tx
     const y = e.y + ty
-    const a = approche(pts, x - e.ax, y - e.ay, x + e.ax, y + e.ay)
+    const a = approach(pts, x - e.ax, y - e.ay, x + e.ax, y + e.ay)
     // fonction d'appui de l'ellipse dans la direction de l'approche
     const [m0, m1, m2, m3] = e.m
-    const rayon =
-      e.r * Math.hypot(m0 * a.ux + m1 * a.uy, m2 * a.ux + m3 * a.uy) + FLOTTEMENT
-    if (a.d - rayon < marge) {
-      marge = a.d - rayon
+    const radius =
+      e.r * Math.hypot(m0 * a.ux + m1 * a.uy, m2 * a.ux + m3 * a.uy) + FLOAT
+    if (a.d - radius < margin) {
+      margin = a.d - radius
       ux = a.ux
       uy = a.uy
     }
   }
-  return { marge, ux, uy }
+  return { margin, ux, uy }
 }
 
 /**
@@ -215,7 +215,7 @@ function pire(pts: Point[], emps: Empreinte[], tx: number, ty: number) {
  * construction de la table, seul chiffre a surveiller ici.
  */
 const DIRECTIONS = 12
-const DICHOTOMIE = 8
+const BISECTION = 8
 
 /**
  * Le decalage a poser sur les deux yeux pour cette forme, cet etat et cette expression.
@@ -239,22 +239,22 @@ const DICHOTOMIE = 8
  * reapparaitre 34 debordements. Ici le resultat ne depend pas d'une convergence : chaque
  * direction est resolue exactement, au pas de dichotomie pres.
  */
-function resous(epreuves: Epreuve[]): { x: number; y: number } {
-  if (!epreuves.length) return { x: 0, y: 0 }
+function resous(proofs: Proof[]): { x: number; y: number } {
+  if (!proofs.length) return { x: 0, y: 0 }
 
   /** La marge la plus serree sur toutes les epreuves, pour une translation donnee. */
-  const marge = (tx: number, ty: number) => {
+  const margin = (tx: number, ty: number) => {
     let m = Infinity
-    for (const ep of epreuves) m = Math.min(m, pire(ep.contour, ep.empreintes, tx, ty).marge)
+    for (const th of proofs) m = Math.min(m, worst(th.outline, th.footprints, tx, ty).margin)
     return m
   }
 
   // Marge exigee : la plus serree que le profil d'origine tolere, sur toutes les
   // epreuves. Puis plafonnee par le plus degage que la forme puisse offrir a la paire,
   // son centre.
-  let requis = Infinity
-  for (const ep of epreuves) {
-    requis = Math.min(requis, pire(ep.calContour, ep.reference, 0, 0).marge)
+  let required = Infinity
+  for (const th of proofs) {
+    required = Math.min(required, worst(th.calOutline, th.reference, 0, 0).margin)
   }
   /*
    * La course doit pouvoir atteindre le centre du corps : `wide` a des gelules de 87
@@ -263,7 +263,7 @@ function resous(epreuves: Epreuve[]): { x: number; y: number } {
    */
   let mx = 0
   let my = 0
-  const emps = epreuves[0]!.empreintes
+  const emps = proofs[0]!.footprints
   for (const e of emps) {
     mx -= e.x / emps.length
     my -= e.y / emps.length
@@ -271,7 +271,7 @@ function resous(epreuves: Epreuve[]): { x: number; y: number } {
   const course = Math.max(0.35 * R, Math.hypot(mx, my) * 1.25)
 
   // Plafond de la demande : ce que la forme offre en son centre, toujours atteignable.
-  requis = Math.min(requis, marge(mx, my))
+  required = Math.min(required, margin(mx, my))
 
   /*
    * Deja bon : le cas du cercle, et de toute forme assez large. La gelule doit RENTRER
@@ -280,52 +280,52 @@ function resous(epreuves: Epreuve[]): { x: number; y: number } {
    * on abandonnait. `wide` a des gelules de 87 unites de long : sur un triangle ou une goutte elles debordent quoi qu'on fasse, et il
    * faut alors viser le moins pire, pas renoncer.
    */
-  const depart = marge(0, 0)
-  if (depart >= requis && depart >= 0) return { x: 0, y: 0 }
-  const cible = Math.max(requis, 0)
+  const startPos = margin(0, 0)
+  if (startPos >= required && startPos >= 0) return { x: 0, y: 0 }
+  const target = Math.max(required, 0)
 
-  let meilleurX = 0
-  let meilleurY = 0
-  let meilleureNorme = Infinity
+  let bestX = 0
+  let bestY = 0
+  let bestNorm = Infinity
   // repli quand rien ne rentre : la translation qui degage le plus, sondee au passage
-  let secoursX = 0
-  let secoursY = 0
-  let secours = depart
+  let fallbackX = 0
+  let fallbackY = 0
+  let fallback = startPos
 
   for (let d = 0; d < DIRECTIONS; d++) {
     const a = (d / DIRECTIONS) * Math.PI * 2
     const ux = Math.cos(a)
     const uy = Math.sin(a)
-    if (marge(ux * course, uy * course) < cible) {
+    if (margin(ux * course, uy * course) < target) {
       // cette direction ne mene nulle part ; on garde quand meme le meilleur degagement
       // pas de solution par la, mais peut-etre un meilleur degagement
       for (const k of [0.3, 0.6, 1]) {
-        const m = marge(ux * course * k, uy * course * k)
-        if (m > secours) {
-          secours = m
-          secoursX = ux * course * k
-          secoursY = uy * course * k
+        const m = margin(ux * course * k, uy * course * k)
+        if (m > fallback) {
+          fallback = m
+          fallbackX = ux * course * k
+          fallbackY = uy * course * k
         }
       }
       continue
     }
     // la plus courte distance qui tient, le long de cette direction
-    let bas = 0
-    let haut = course
-    for (let i = 0; i < DICHOTOMIE; i++) {
-      const mid = (bas + haut) / 2
-      if (marge(ux * mid, uy * mid) >= cible) haut = mid
-      else bas = mid
+    let neck = 0
+    let top = course
+    for (let i = 0; i < BISECTION; i++) {
+      const mid = (neck + top) / 2
+      if (margin(ux * mid, uy * mid) >= target) top = mid
+      else neck = mid
     }
-    if (haut < meilleureNorme) {
-      meilleureNorme = haut
-      meilleurX = ux * haut
-      meilleurY = uy * haut
+    if (top < bestNorm) {
+      bestNorm = top
+      bestX = ux * top
+      bestY = uy * top
     }
   }
 
-  const x = meilleureNorme === Infinity ? secoursX : meilleurX
-  const y = meilleureNorme === Infinity ? secoursY : meilleurY
+  const x = bestNorm === Infinity ? fallbackX : bestX
+  const y = bestNorm === Infinity ? fallbackY : bestY
   // rendu en unites de RAYON DE BOULE : le moteur le remet a son echelle
   return { x: +(x / R).toFixed(6), y: +(y / R).toFixed(6) }
 }
@@ -335,15 +335,15 @@ function resous(epreuves: Epreuve[]): { x: number; y: number } {
  *
  * UNE entree de table par expression, et non un pire cas commun a toutes. Un pire cas
  * paraissait plus sur — un decalage constant ne peut pas bouger quand l'expression change
- * — mais il est intenable : sur une capsule, `neutre` a les yeux hauts et demande a
- * descendre quand `effraye` les a bas et demande a monter. Aucune translation unique ne
+ * — mais il est intenable : sur une capsule, `neutral` a les yeux hauts et demande a
+ * descendre quand `scared` les a bas et demande a monter. Aucune translation unique ne
  * satisfait les deux, et la mesure le confirme (4 debordements de 4,8 unites).
  *
  * Une entree par expression n'est pas moins fluide pour autant : le moteur interpole
  * entre DEUX CONSTANTES, ce qui est monotone par construction. Ce qui tremblait, c'etait
  * de re-resoudre le probleme sur un regard en cours d'interpolation.
  */
-function visageDe(def: StateDef, pose: Pose, expr: BotExpression | null): Visage {
+function faceOf(def: StateDef, pose: Pose, expr: BotExpression | null): Face {
   if (def.baseFace && expr) return { gaze: expr.gaze, split: expr.split, eyes: expr.eyes }
   return { gaze: pose.gaze, split: pose.split, eyes: pose.eyes }
 }
@@ -359,45 +359,45 @@ function dates(def: StateDef): number[] {
 }
 
 /** Le decalage d'une forme sur un etat et une expression, derive comprise. */
-function decalagePour(
+function offsetFor(
   def: StateDef,
   radii: number[],
   expr: BotExpression | null
 ): { x: number; y: number } {
-  const epreuves: Epreuve[] = []
+  const proofs: Proof[] = []
   for (const t of dates(def)) {
     const pose = def.pose(t)
-    const contour = toPoints({ ...pose.sil, radii }, R)
-    const calContour = toPoints(pose.sil, R)
-    const v = visageDe(def, pose, expr)
+    const outline = toPoints({ ...pose.sil, radii }, R)
+    const calOutline = toPoints(pose.sil, R)
+    const v = faceOf(def, pose, expr)
     // Les quatre coins de la derive bornent la pose nominale, qui est leur centre : la
     // tester en plus ne changerait aucune marge et coute une epreuve sur cinq.
-    const coins: Visage[] = []
-    for (const dy of [-DERIVE_YAW, DERIVE_YAW]) {
-      for (const dp of [-DERIVE_PITCH, DERIVE_PITCH]) {
-        coins.push({
+    const corners: Face[] = []
+    for (const dy of [-DRIFT_YAW, DRIFT_YAW]) {
+      for (const dp of [-DRIFT_PITCH, DRIFT_PITCH]) {
+        corners.push({
           ...v,
           gaze: { yaw: v.gaze.yaw + dy, pitch: v.gaze.pitch + dp, roll: v.gaze.roll }
         })
       }
     }
-    for (const c of coins) {
-      epreuves.push({
-        empreintes: empreintes(c, pose.sil, radii),
-        reference: empreintes(c, pose.sil, pose.sil.radii),
-        contour,
-        calContour
+    for (const c of corners) {
+      proofs.push({
+        footprints: footprints(c, pose.sil, radii),
+        reference: footprints(c, pose.sil, pose.sil.radii),
+        outline,
+        calOutline
       })
     }
   }
-  return resous(epreuves)
+  return resous(proofs)
 }
 
 /** Zero, la valeur commune a tout ce qui n'a rien a corriger. */
-const NUL = { x: 0, y: 0 } as const
+const NULL = { x: 0, y: 0 } as const
 
 /** Clef d'une entree : l'etat, et l'expression quand l'etat l'accepte. */
-const clef = (state: StateId, expr: string | null) => `${state}|${expr ?? ''}`
+const key = (state: StateId, expr: string | null) => `${state}|${expr ?? ''}`
 
 /**
  * Table des decalages, batie a l'import : une entree par (forme, etat a corps de base,
@@ -412,21 +412,21 @@ const clef = (state: StateId, expr: string | null) => `${state}|${expr ?? ''}`
  */
 function batir(): Map<number[], Map<string, { x: number; y: number }>> {
   return new Map(
-  SHAPES.map((forme) => {
-    const par = new Map<string, { x: number; y: number }>()
+  SHAPES.map((shape) => {
+    const byKey = new Map<string, { x: number; y: number }>()
     for (const def of STATES) {
       if (!def.baseBody) continue
       const expressions = def.baseFace ? [null, ...EXPRESSIONS] : [null]
       for (const expr of expressions) {
-        par.set(clef(def.id, expr?.id ?? null), decalagePour(def, forme.radii, expr))
+        byKey.set(key(def.id, expr?.id ?? null), offsetFor(def, shape.radii, expr))
       }
     }
-    return [forme.radii, par]
+    return [shape.radii, byKey]
   })
   )
 }
 
-const DECALAGES = batir()
+const OFFSETS = batir()
 
 /**
  * Decalage a appliquer aux deux yeux pour cette forme sur cet etat, en unites de rayon
@@ -437,18 +437,18 @@ const DECALAGES = batir()
  * descente sort au premier tour. La forme relevee sur la video ne bouge donc pas, sans
  * cas particulier.
  */
-export function decalageDesYeux(
+export function eyeOffset(
   radii: number[] | null,
   state: StateId,
   expr: string | null
 ): { x: number; y: number } {
-  if (!radii) return NUL
-  const par = DECALAGES.get(radii)
-  if (!par) return NUL
+  if (!radii) return NULL
+  const byKey = OFFSETS.get(radii)
+  if (!byKey) return NULL
   // un etat sans visage de repos n'a qu'une entree, quelle que soit l'expression
-  return par.get(clef(state, expr)) ?? par.get(clef(state, null)) ?? NUL
+  return byKey.get(key(state, expr)) ?? byKey.get(key(state, null)) ?? NULL
 }
 
 /** Pour les tests : de quoi verifier la table sans refaire la geometrie. */
 /** Pour les tests : de quoi chronometrer la construction de la table. */
-export const POUR_TESTS = { batir }
+export const FOR_TESTS = { batir }

@@ -1,5 +1,5 @@
-import { ref } from '@/ui/dom/reactif'
-import { c, h, type Composant } from '@/ui/dom/h'
+import { ref } from '@/ui/dom/reactive'
+import { c, h, type Component } from '@/ui/dom/h'
 import { BotTile } from '@/components/BotTile'
 import { POSES, SEQUENCE, STATE_BY_ID, type StateId } from '@/bot/states'
 import { t } from '@/i18n'
@@ -17,12 +17,12 @@ const PALETTE = SEQUENCE.map((id) => STATE_BY_ID.get(id)!)
 /** Largeur de la palette, en pixels : elle sert aussi a la caler. */
 const WIDTH = 288
 
-export const BlockPicker: Composant<BlockPickerProps> = (props) => {
+export const BlockPicker: Component<BlockPickerProps> = (props) => {
   let trigger: HTMLButtonElement | null = null
   let panel: HTMLElement | null = null
   const position = ref<Record<string, string>>({})
   /** Suivi par l'evenement `toggle` du popover : la fermeture legere (clic a cote, Echap) est faite par le navigateur. */
-  const ouvert = ref(false)
+  const open = ref(false)
 
   /** Ouvre la palette au-dessus du « + », dans la couche superieure, bornee a la fenetre. */
   function toggle() {
@@ -65,7 +65,7 @@ export const BlockPicker: Composant<BlockPickerProps> = (props) => {
             'flex h-full w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-[var(--line)] text-lg leading-none text-[var(--muted)] transition hover:border-[var(--muted)] hover:text-[var(--ink)]',
           'aria-label': t('timeline.addAnimation'),
           'aria-haspopup': 'true',
-          'aria-expanded': ouvert.value,
+          'aria-expanded': open.value,
           onClick: toggle
         },
         '+'
@@ -76,7 +76,7 @@ export const BlockPicker: Composant<BlockPickerProps> = (props) => {
         {
           ref: (el: Element | null) => (panel = el as HTMLElement | null),
           popover: true,
-          onToggle: (e: Event) => (ouvert.value = (e as ToggleEvent).newState === 'open'),
+          onToggle: (e: Event) => (open.value = (e as ToggleEvent).newState === 'open'),
           class: 'm-0 w-72 rounded-xl bg-white p-2 shadow-lg ring-1 ring-black/5',
           style: position.value
         },

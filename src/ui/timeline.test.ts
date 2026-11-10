@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { BASE_SCALE, clampZoom, MAX_ZOOM, MIN_ZOOM, mmss, ticksFor } from './timeline'
 import * as timeline from './timeline'
 
-describe('mise en forme', () => {
+describe('mise en shape', () => {
   it('ecrit le temps en minutes et secondes', () => {
     expect(mmss(0)).toBe('0:00')
     expect(mmss(4.9)).toBe('0:04')
@@ -17,7 +17,7 @@ describe('mise en forme', () => {
    * qu'il pretendait — que ce module reste PUR, sans langue.
    *
    * Le separateur decimal change avec la langue et l'unite se traduit, donc les durees en
-   * secondes passent par `secondes` / `secondesCourtes` de `@/i18n`. `mmss` reste ici : le
+   * secondes passent par `seconds` / `secondsShort` de `@/i18n`. `mmss` reste ici : le
    * format mm:ss n'a ni unite ni separateur decimal.
    */
   it('ne met en forme aucune duree localisee : ca appartient a i18n', () => {
@@ -32,31 +32,31 @@ describe('graduation de la regle', () => {
     for (const zoom of [MIN_ZOOM, 1, MAX_ZOOM]) {
       const scale = BASE_SCALE * zoom
       const majeurs = ticksFor(60, scale).filter((t) => t.major)
-      const ecart = (majeurs[1]!.t - majeurs[0]!.t) * scale
-      expect(ecart).toBeGreaterThanOrEqual(52)
+      const gap = (majeurs[1]!.t - majeurs[0]!.t) * scale
+      expect(gap).toBeGreaterThanOrEqual(52)
     }
   })
 
   it('elargit le pas quand on dezoome', () => {
-    const pas = (scale: number) => {
+    const step = (scale: number) => {
       const majeurs = ticksFor(60, scale).filter((t) => t.major)
       return majeurs[1]!.t - majeurs[0]!.t
     }
-    expect(pas(BASE_SCALE * MIN_ZOOM)).toBeGreaterThan(pas(BASE_SCALE * MAX_ZOOM))
+    expect(step(BASE_SCALE * MIN_ZOOM)).toBeGreaterThan(step(BASE_SCALE * MAX_ZOOM))
   })
 
-  it('commence a zero et ne depasse pas la duree', () => {
-    const reperes = ticksFor(10, BASE_SCALE)
-    expect(reperes[0]).toEqual({ t: 0, major: true })
-    expect(reperes[reperes.length - 1]!.t).toBeLessThanOrEqual(10)
+  it('commence a zero et ne depasse pas la duration', () => {
+    const landmarks = ticksFor(10, BASE_SCALE)
+    expect(landmarks[0]).toEqual({ t: 0, major: true })
+    expect(landmarks[landmarks.length - 1]!.t).toBeLessThanOrEqual(10)
   })
 
   it('ne pose des reperes intermediaires que s ils sont lisibles', () => {
     // quelle que soit l echelle, deux reperes voisins gardent 7 px entre eux
     for (const scale of [0.5, 8, 20, BASE_SCALE, 106]) {
-      const reperes = ticksFor(60, scale)
-      const ecart = (reperes[1]!.t - reperes[0]!.t) * scale
-      expect(ecart).toBeGreaterThanOrEqual(7)
+      const landmarks = ticksFor(60, scale)
+      const gap = (landmarks[1]!.t - landmarks[0]!.t) * scale
+      expect(gap).toBeGreaterThanOrEqual(7)
     }
     // a l echelle normale, il y en a
     expect(ticksFor(10, BASE_SCALE).some((t) => !t.major)).toBe(true)

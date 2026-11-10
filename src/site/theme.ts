@@ -1,58 +1,58 @@
-import { computed, ref, watch } from '@/ui/dom/reactif'
-import { themeCourant } from 'mochi-world/catalogue'
+import { computed, ref, watch } from '@/ui/dom/reactive'
+import { currentTheme } from 'mochi-world/catalogue'
 
 /**
  * Clair, sombre ou celui de l'appareil. Le choix est range dans le navigateur (si possible) ; la page porte
  * `data-theme` et tous les Mochi du site passent en 3D sombre (yeux noirs) avec elle.
  */
-export type ChoixTheme = 'auto' | 'light' | 'dark'
-export const CHOIX_THEMES: { id: ChoixTheme; label: string }[] = [
+export type ChoiceTheme = 'auto' | 'light' | 'dark'
+export const CHOICE_THEMES: { id: ChoiceTheme; label: string }[] = [
   { id: 'auto', label: 'Auto' },
   { id: 'light', label: 'Light' },
   { id: 'dark', label: 'Dark' }
 ]
 
-const CLE = 'mochi-site-theme'
-const lire = (): ChoixTheme => {
+const KEY = 'mochi-site-theme'
+const read = (): ChoiceTheme => {
   try {
-    const v = localStorage.getItem(CLE)
+    const v = localStorage.getItem(KEY)
     return v === 'light' || v === 'dark' ? v : 'auto'
   } catch {
     return 'auto'
   }
 }
 
-export const choixTheme = ref<ChoixTheme>('auto')
-const appareilSombre = ref(false)
-export const themeEffectif = computed<'light' | 'dark'>(() => (choixTheme.value === 'auto' ? (appareilSombre.value ? 'dark' : 'light') : choixTheme.value))
+export const choiceTheme = ref<ChoiceTheme>('auto')
+const deviceDark = ref(false)
+export const effectiveTheme = computed<'light' | 'dark'>(() => (choiceTheme.value === 'auto' ? (deviceDark.value ? 'dark' : 'light') : choiceTheme.value))
 
-let pret = false
+let ready = false
 /** A appeler une fois, au montage de la page. */
 export function initTheme() {
-  if (pret || typeof window === 'undefined') return
-  pret = true
-  choixTheme.value = lire()
+  if (ready || typeof window === 'undefined') return
+  ready = true
+  choiceTheme.value = read()
   if (window.matchMedia) {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    appareilSombre.value = mq.matches
-    mq.addEventListener('change', () => (appareilSombre.value = mq.matches))
+    deviceDark.value = mq.matches
+    mq.addEventListener('change', () => (deviceDark.value = mq.matches))
   }
   watch(
-    themeEffectif,
+    effectiveTheme,
     (t) => {
       document.documentElement.dataset.theme = t
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#15141b' : '#fbfaf7')
-      themeCourant.value = t
+      currentTheme.value = t
     },
     { immediate: true }
   )
 }
 
-export function choisirTheme(c: ChoixTheme) {
-  choixTheme.value = c
+export function chooseTheme(c: ChoiceTheme) {
+  choiceTheme.value = c
   try {
-    if (c === 'auto') localStorage.removeItem(CLE)
-    else localStorage.setItem(CLE, c)
+    if (c === 'auto') localStorage.removeItem(KEY)
+    else localStorage.setItem(KEY, c)
   } catch {
     // stockage refuse : le choix vaut pour cette visite
   }

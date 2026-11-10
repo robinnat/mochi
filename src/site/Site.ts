@@ -1,24 +1,24 @@
-import { c, h, type Composant } from '@/ui/dom/h'
+import { c, h, type Component } from '@/ui/dom/h'
 import { Nav } from './Nav'
 import { Hero } from './Hero'
 import { Styles } from './Styles'
-import { Formes } from './Formes'
+import { Shapes } from './Shapes'
 import { Moods } from './Moods'
 import { Interactions } from './Interactions'
 import { Bento } from './Bento'
-import { Personnalisation } from './Personnalisation'
+import { Customization } from './Customization'
 import { DocsTeaser } from './DocsTeaser'
-import { Pied } from './Pied'
+import { Footer } from './Footer'
 import { initTheme } from './theme'
 
-export const Site: Composant<Record<string, never>> = () => {
+export const Site: Component<Record<string, never>> = () => {
   initTheme()
   return () =>
     h(
       'div',
       { style: 'display: contents' },
       c(Nav, {}),
-      h('main', null, c(Hero, {}), c(Styles, {}), c(Formes, {}), c(Moods, {}), c(Interactions, {}), c(Bento, {}), c(Personnalisation, {}), c(DocsTeaser, {})),
-      c(Pied, {})
+      h('main', null, c(Hero, {}), c(Styles, {}), c(Shapes, {}), c(Moods, {}), c(Interactions, {}), c(Bento, {}), c(Customization, {}), c(DocsTeaser, {})),
+      c(Footer, {})
     )
 }

@@ -16,7 +16,7 @@
  * un fond, la ou le GIF laisse le choix.
  */
 
-import { arrete } from './export'
+import { stops } from './export'
 
 /**
  * QUANTISEUR explicite, et pas un niveau `QUALITY_*`.
@@ -39,36 +39,36 @@ import { arrete } from './export'
  * megabits pour du 1024 a 30 images est genereux sur des aplats.
  */
 const QP = 12
-const DEBIT_REPLI = 6_000_000
+const BITRATE_FALLBACK = 6_000_000
 
 /**
  * Encode une suite d'images en MP4.
  *
- * `rend` dessine l'image `i` DANS le canvas fourni, puis rend la main. Les images
+ * `renders` dessine l'image `i` DANS le canvas fourni, puis rend la main. Les images
  * ne sont jamais accumulees : chacune est encodee et jetee avant la suivante,
  * sans quoi un cycle de trente secondes tiendrait 255 Mo de pixels bruts en
  * memoire.
  */
-export async function versMp4(
+export async function toMp4(
   canvas: HTMLCanvasElement,
   images: number,
   fps: number,
-  rend: (index: number) => void | Promise<void>,
-  avance?: (fait: number, total: number) => void,
-  /** Abandon demande par l'utilisateur. Cf. `arrete` ci-dessous. */
+  renders: (index: number) => void | Promise<void>,
+  advance?: (done: number, total: number) => void,
+  /** Abandon demande par l'utilisateur. Cf. `stops` ci-dessous. */
   signal?: AbortSignal
 ): Promise<Blob> {
   const { BufferTarget, CanvasSource, Mp4OutputFormat, Output, Quality } = await import(
     'mediabunny'
   )
 
-  const sortie = new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() })
+  const exit = new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() })
   const source = new CanvasSource(canvas, {
     codec: 'avc',
-    quality: new Quality({ quantizer: QP, bitrate: DEBIT_REPLI })
+    quality: new Quality({ quantizer: QP, bitrate: BITRATE_FALLBACK })
   })
-  sortie.addVideoTrack(source, { frameRate: fps })
-  await sortie.start()
+  exit.addVideoTrack(source, { frameRate: fps })
+  await exit.start()
 
   /*
    * A partir d'ici l'encodeur est OUVERT, donc tout chemin de sortie doit passer par
@@ -80,23 +80,23 @@ export async function versMp4(
    * son equivalent.
    */
   try {
-    const duree = 1 / fps
+    const duration = 1 / fps
     for (let i = 0; i < images; i++) {
-      arrete(signal)
-      await rend(i)
+      stops(signal)
+      await renders(i)
       // `await` sur chaque image et non en lot : c'est ce qui applique la
       // contre-pression de l'encodeur, donc ce qui borne la memoire.
-      await source.add(i * duree, duree)
-      avance?.(i + 1, images)
+      await source.add(i * duration, duration)
+      advance?.(i + 1, images)
     }
-    arrete(signal)
+    stops(signal)
 
-    await sortie.finalize()
-    const buffer = sortie.target.buffer
+    await exit.finalize()
+    const buffer = exit.target.buffer
     if (!buffer) throw new Error('encodage mp4 vide')
     return new Blob([buffer], { type: 'video/mp4' })
   } catch (e) {
-    await sortie.cancel()
+    await exit.cancel()
     throw e
   }
 }

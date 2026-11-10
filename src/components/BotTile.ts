@@ -1,9 +1,9 @@
-import { h, type Composant } from '@/ui/dom/h'
+import { h, type Component } from '@/ui/dom/h'
 import '@/components/mochi-bot'
 import { DEFAULT_EXPRESSION } from '@/bot/expressions'
 import { DEFAULT_COLOR, DEFAULT_SHAPE } from '@/bot/skins'
 import type { StateId } from '@/bot/states'
-import type { RenduId, TaillePixelId } from '@/ui/rendu'
+import type { RenderStyleId, PixelSizeId } from '@/ui/renderStyle'
 
 /**
  * Vignette cliquable de la barre de droite : un bot fige, son nom dessous, une
@@ -23,12 +23,12 @@ export interface BotTileProps {
   expression?: string
   size?: number
   /** absent : le style courant, comme toutes les vignettes */
-  rendu?: RenduId
-  pixel?: TaillePixelId
+  renderStyle?: RenderStyleId
+  pixel?: PixelSizeId
   onClick?: () => void
 }
 
-export const BotTile: Composant<BotTileProps> = (props) => () =>
+export const BotTile: Component<BotTileProps> = (props) => () =>
   h(
     'button',
     {
@@ -48,7 +48,7 @@ export const BotTile: Composant<BotTileProps> = (props) => () =>
       color: props.color ?? DEFAULT_COLOR,
       expression: props.expression ?? DEFAULT_EXPRESSION,
       frozenAt: props.frozenAt,
-      rendu: props.rendu,
+      renderStyle: props.renderStyle,
       pixel: props.pixel
     }),
     // 12 px : en dessous, une legende n'est plus lisible pour tout le monde

@@ -10,7 +10,7 @@ const en: typeof fr = {
     name: 'mochi world',
     title: 'Mochi World, animated avatar',
     botAria: 'Animated mochi avatar',
-    sans3d: '3D needs WebGL'
+    no3d: '3D needs WebGL'
   },
 
   gallery: {
@@ -31,7 +31,7 @@ const en: typeof fr = {
     color: 'Colour',
     style: 'Style',
     pixelSize: 'Pixel size',
-    contour: 'Cartoon outline'
+    outline: 'Cartoon outline'
   },
 
   export: {
@@ -43,22 +43,22 @@ const en: typeof fr = {
     cycleDetail: 'The video is lighter and smoother; the GIF plays anywhere.',
     cycleFormat: 'Format',
     cycle_mp4: 'MP4 video',
-    cycle_mp4_aide: 'Light and smooth, needs a background',
+    cycle_mp4_help: 'Light and smooth, needs a background',
     cycle_gif: 'Animated GIF',
-    cycle_gif_aide: 'Plays anywhere, heavier',
+    cycle_gif_help: 'Plays anywhere, heavier',
     cycleProgress: 'Exporting…',
-    cycleReessayer: 'Try again',
+    cycleRetry: 'Try again',
     gifTitle: 'Download animated GIF',
     gifDetail:
       'GIF transparency is all-or-nothing: with no background, the ball\u2019s edge comes out a little hard.',
     gifBackground: 'Background',
-    fond_blanc: 'White background',
-    fond_blanc_aide: 'Smooth edge, for light surfaces',
-    fond_transparent: 'Transparent background',
-    fond_transparent_aide: 'Fits any background, edge a little hard',
+    background_white: 'White background',
+    background_white_help: 'Smooth edge, for light surfaces',
+    background_transparent: 'Transparent background',
+    background_transparent_help: 'Fits any background, edge a little hard',
     gifConfirm: 'Download',
-    copie: 'Copy image',
-    copieSvg: 'Copy SVG',
+    copy: 'Copy image',
+    copySvg: 'Copy SVG',
     done: 'Exported',
     copied: 'Copied',
     failed: 'Export failed'
@@ -130,64 +130,64 @@ const en: typeof fr = {
   },
 
   pixelSizes: {
-    gros: 'Large',
-    moyen: 'Medium',
-    fin: 'Fine'
+    large: 'Large',
+    medium: 'Medium',
+    end: 'Fine'
   },
 
   shapes: {
-    cercle: 'Circle',
-    galet: 'Pebble',
+    circle: 'Circle',
+    pebble: 'Pebble',
     squircle: 'Squircle',
     capsule: 'Capsule',
     triangle: 'Triangle',
-    hexagone: 'Hexagon',
-    nuage: 'Cloud',
-    goutte: 'Droplet',
-    etoile: 'Star',
-    fleur: 'Flower',
-    oeuf: 'Egg',
-    coeur: 'Heart'
+    hexagon: 'Hexagon',
+    cloud: 'Cloud',
+    drop: 'Droplet',
+    star: 'Star',
+    flower: 'Flower',
+    egg: 'Egg',
+    heart: 'Heart'
   },
 
   colors: {
-    encre: 'Ink',
-    creme: 'Cream',
-    brun: 'Brown',
-    rouge: 'Tomato',
-    corail: 'Coral',
+    ink: 'Ink',
+    cream: 'Cream',
+    brown: 'Brown',
+    red: 'Tomato',
+    coral: 'Coral',
     orange: 'Orange',
-    ambre: 'Sunny yellow',
-    citron: 'Lime',
-    pomme: 'Apple green',
-    vert: 'Emerald',
+    amber: 'Sunny yellow',
+    lime: 'Lime',
+    apple: 'Apple green',
+    green: 'Emerald',
     turquoise: 'Turquoise',
-    ciel: 'Sky',
-    bleu: 'Royal blue',
+    sky: 'Sky',
+    blue: 'Royal blue',
     violet: 'Violet',
     magenta: 'Magenta',
-    rose: 'Pink',
-    cerise: 'Cherry',
-    gris: 'Grey'
+    pink: 'Pink',
+    cherry: 'Cherry',
+    grey: 'Grey'
   },
 
   expressions: {
-    neutre: 'Neutral',
-    attentif: 'Attentive',
-    surpris: 'Surprised',
-    excite: 'Excited',
-    heureux: 'Happy',
-    hilare: 'Laughing',
-    colere: 'Angry',
-    triste: 'Sad',
-    effraye: 'Scared',
-    mefiant: 'Suspicious',
-    confus: 'Confused',
-    curieux: 'Curious',
-    fier: 'Proud',
-    timide: 'Shy',
-    blase: 'Unimpressed',
-    somnolent: 'Sleepy'
+    neutral: 'Neutral',
+    attentive: 'Attentive',
+    surprised: 'Surprised',
+    excited: 'Excited',
+    happy: 'Happy',
+    laughing: 'Laughing',
+    angry: 'Angry',
+    sad: 'Sad',
+    scared: 'Scared',
+    suspicious: 'Suspicious',
+    confused: 'Confused',
+    curious: 'Curious',
+    proud: 'Proud',
+    shy: 'Shy',
+    unimpressed: 'Unimpressed',
+    sleepy: 'Sleepy'
   }
 }
 

@@ -1,8 +1,8 @@
-import { lien } from '@/ui/dom/reactif'
-import { h, type Composant } from '@/ui/dom/h'
+import { link } from '@/ui/dom/reactive'
+import { h, type Component } from '@/ui/dom/h'
 import { t } from '@/i18n'
-import { FONDS_GIF, type FondGif } from '@/ui/export'
-import { boiteModale, BOUTON_PRINCIPAL, BOUTON_SECONDAIRE } from './dialogue'
+import { BACKGROUNDS_GIF, type BackgroundGif } from '@/ui/export'
+import { boxModal, BUTTON_PRIMARY, BUTTON_SECONDARY } from './dialog'
 
 /**
  * Choix du fond avant de telecharger le GIF : sa transparence n'a qu'un bit, donc son bord est dur. De vrais
@@ -10,21 +10,21 @@ import { boiteModale, BOUTON_PRINCIPAL, BOUTON_SECONDAIRE } from './dialogue'
  */
 export interface GifDialogProps {
   open: boolean
-  fond: FondGif
+  background: BackgroundGif
   onOpen: (v: boolean) => void
-  onFond: (v: FondGif) => void
+  onBackground: (v: BackgroundGif) => void
   onConfirm: () => void
 }
 
-export const GifDialog: Composant<GifDialogProps> = (props) => {
-  const open = lien(() => props.open, (v) => props.onOpen(v))
-  const boite = boiteModale(open)
+export const GifDialog: Component<GifDialogProps> = (props) => {
+  const open = link(() => props.open, (v) => props.onOpen(v))
+  const box = boxModal(open)
   function confirm() {
     props.onConfirm()
     open.value = false
   }
   return () =>
-    boite.dessiner(
+    box.draw(
       { 'aria-label': t('export.gifTitle') },
       () => (open.value = false),
       h(
@@ -41,28 +41,28 @@ export const GifDialog: Composant<GifDialogProps> = (props) => {
           'fieldset',
           { class: 'flex flex-col gap-1' },
           h('legend', { class: 'sr-only' }, t('export.gifBackground')),
-          FONDS_GIF.map((choix, i) =>
+          BACKGROUNDS_GIF.map((choice, i) =>
             h(
               'label',
-              { key: choix, class: 'flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition hover:bg-black/5' },
+              { key: choice, class: 'flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition hover:bg-black/5' },
               h('input', {
                 type: 'radio',
-                name: 'fond',
-                value: choix,
-                checked: props.fond === choix,
+                name: 'background',
+                value: choice,
+                checked: props.background === choice,
                 autofocus: i === 0,
                 class: 'accent-[var(--ink)]',
-                onChange: () => props.onFond(choix)
+                onChange: () => props.onBackground(choice)
               }),
-              h('span', { class: 'flex flex-col' }, t(`export.fond_${choix}`), h('span', { class: 'text-xs text-[var(--muted)]' }, t(`export.fond_${choix}_aide`)))
+              h('span', { class: 'flex flex-col' }, t(`export.background_${choice}`), h('span', { class: 'text-xs text-[var(--muted)]' }, t(`export.background_${choice}_help`)))
             )
           )
         ),
         h(
           'div',
           { class: 'flex justify-end gap-2' },
-          h('button', { type: 'button', class: BOUTON_SECONDAIRE, onClick: () => (open.value = false) }, t('dialog.cancel')),
-          h('button', { type: 'submit', class: BOUTON_PRINCIPAL }, t('export.gifConfirm'))
+          h('button', { type: 'button', class: BUTTON_SECONDARY, onClick: () => (open.value = false) }, t('dialog.cancel')),
+          h('button', { type: 'submit', class: BUTTON_PRIMARY }, t('export.gifConfirm'))
         )
       )
     )

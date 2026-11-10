@@ -19,7 +19,7 @@ export default defineConfig({
         catalogue: fileURLToPath(new URL('./src/catalogue.ts', import.meta.url))
       },
       formats: ['es'],
-      fileName: (_format, nom) => `${nom}.js`
+      fileName: (_format, name) => `${name}.js`
     }
   },
   resolve: {

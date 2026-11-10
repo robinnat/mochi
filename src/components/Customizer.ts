@@ -1,21 +1,21 @@
-import { c, h, type Composant } from '@/ui/dom/h'
+import { c, h, type Component } from '@/ui/dom/h'
 import { BotTile } from '@/components/BotTile'
 import { EXPRESSIONS } from '@/bot/expressions'
 import { COLORS, SHAPES } from '@/bot/skins'
 import { t } from '@/i18n'
-import { RENDUS, type RenduId } from '@/ui/rendu'
+import { RENDER_STYLES, type RenderStyleId } from '@/ui/renderStyle'
 
 export interface CustomizerProps {
   shape: string
   color: string
   expression: string
-  rendu: RenduId
-  contour: boolean
+  renderStyle: RenderStyleId
+  outline: boolean
   onShape: (v: string) => void
   onColor: (v: string) => void
   onExpression: (v: string) => void
-  onRendu: (v: RenduId) => void
-  onContour: (v: boolean) => void
+  onRender: (v: RenderStyleId) => void
+  onOutline: (v: boolean) => void
 }
 
 /**
@@ -24,7 +24,7 @@ export interface CustomizerProps {
  */
 const PREVIEW_AT = 1
 
-export const Customizer: Composant<CustomizerProps> = (props) => () =>
+export const Customizer: Component<CustomizerProps> = (props) => () =>
   h(
     'div',
     null,
@@ -33,17 +33,17 @@ export const Customizer: Composant<CustomizerProps> = (props) => () =>
     h(
       'div',
       { class: 'mt-2 grid grid-cols-3 gap-1.5' },
-      RENDUS.map((r) =>
+      RENDER_STYLES.map((r) =>
         c(BotTile, {
           key: r,
           label: t(`styles.${r}`),
-          selected: r === props.rendu,
+          selected: r === props.renderStyle,
           shape: props.shape,
           color: props.color,
           expression: props.expression,
-          rendu: r,
+          renderStyle: r,
           frozenAt: PREVIEW_AT,
-          onClick: () => props.onRendu(r)
+          onClick: () => props.onRender(r)
         })
       )
     ),
@@ -54,10 +54,10 @@ export const Customizer: Composant<CustomizerProps> = (props) => () =>
       h('input', {
         type: 'checkbox',
         class: 'size-4 cursor-pointer accent-[var(--ink)]',
-        checked: props.contour,
-        onChange: (e: Event) => props.onContour((e.target as HTMLInputElement).checked)
+        checked: props.outline,
+        onChange: (e: Event) => props.onOutline((e.target as HTMLInputElement).checked)
       }),
-      t('panel.contour')
+      t('panel.outline')
     ),
     h('h2', { class: 'mt-5 text-sm font-semibold' }, t('panel.shape')),
     h(

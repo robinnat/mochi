@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { figeToiles, svgAutonome } from './capture'
+import { freezeCanvases, svgStandalone } from './capture'
 
 /**
  * Export d'une image fixe en vraie 3D (le style par defaut).
@@ -18,19 +18,19 @@ function svg3d(pixel = false) {
   const svg = document.createElementNS(NS, 'svg') as SVGSVGElement
   svg.setAttribute('viewBox', '-158 -158 316 316')
   svg.setAttribute('class', 'h-full w-full')
-  const anneau = document.createElementNS(NS, 'path')
-  anneau.setAttribute('d', 'M0 0L1 1')
-  svg.appendChild(anneau)
+  const ring = document.createElementNS(NS, 'path')
+  ring.setAttribute('d', 'M0 0L1 1')
+  svg.appendChild(ring)
   const fo = document.createElementNS(NS, 'foreignObject')
   for (const [k, v] of Object.entries({ x: '-158', y: '-158', width: '316', height: '316' })) fo.setAttribute(k, v)
-  const toile = document.createElement('canvas')
-  toile.width = 320
-  toile.height = 320
-  if (pixel) toile.style.imageRendering = 'pixelated'
-  fo.appendChild(toile)
+  const canvas = document.createElement('canvas')
+  canvas.width = 320
+  canvas.height = 320
+  if (pixel) canvas.style.imageRendering = 'pixelated'
+  fo.appendChild(canvas)
   svg.appendChild(fo)
   document.body.appendChild(svg)
-  return { svg, toile }
+  return { svg, canvas }
 }
 
 afterEach(() => {
@@ -40,9 +40,9 @@ afterEach(() => {
 
 describe('export fixe en vraie 3D', () => {
   it('le SVG exporte ne contient plus de foreignObject ni de canvas, mais une image data: du corps rendu', () => {
-    const { svg, toile } = svg3d()
-    const lu = vi.spyOn(toile, 'toDataURL').mockReturnValue(PIXELS)
-    const markup = svgAutonome(svg, 1024)
+    const { svg, canvas } = svg3d()
+    const lu = vi.spyOn(canvas, 'toDataURL').mockReturnValue(PIXELS)
+    const markup = svgStandalone(svg, 1024)
     expect(lu).toHaveBeenCalledWith('image/png')
     expect(markup).not.toContain('foreignObject')
     expect(markup).not.toContain('<canvas')
@@ -62,27 +62,27 @@ describe('export fixe en vraie 3D', () => {
   })
 
   it('le noeud affiche n est pas touche : seul le clone est fige', () => {
-    const { svg, toile } = svg3d()
-    vi.spyOn(toile, 'toDataURL').mockReturnValue(PIXELS)
-    svgAutonome(svg, 512)
-    expect(svg.querySelector('foreignObject canvas')).toBe(toile)
+    const { svg, canvas } = svg3d()
+    vi.spyOn(canvas, 'toDataURL').mockReturnValue(PIXELS)
+    svgStandalone(svg, 512)
+    expect(svg.querySelector('foreignObject canvas')).toBe(canvas)
     expect(svg.querySelector('image')).toBeNull()
   })
 
   it('pixel art : l image garde des cases nettes', () => {
-    const { svg, toile } = svg3d(true)
-    vi.spyOn(toile, 'toDataURL').mockReturnValue(PIXELS)
+    const { svg, canvas } = svg3d(true)
+    vi.spyOn(canvas, 'toDataURL').mockReturnValue(PIXELS)
     const clone = svg.cloneNode(true) as SVGSVGElement
-    figeToiles(svg, clone)
+    freezeCanvases(svg, clone)
     expect(clone.querySelector('image')!.getAttribute('style')).toContain('pixelated')
   })
 
   it('un canvas illisible ou vide retire le foreignObject plutot que de souiller l export', () => {
-    const { svg, toile } = svg3d()
-    vi.spyOn(toile, 'toDataURL').mockImplementation(() => {
+    const { svg, canvas } = svg3d()
+    vi.spyOn(canvas, 'toDataURL').mockImplementation(() => {
       throw new Error('SecurityError')
     })
-    const markup = svgAutonome(svg, 256)
+    const markup = svgStandalone(svg, 256)
     expect(markup).not.toContain('foreignObject')
     expect(markup).not.toContain('<image')
   })
@@ -90,7 +90,7 @@ describe('export fixe en vraie 3D', () => {
   it('un SVG sans 3D sort inchange (aucune image ajoutee)', () => {
     const svg = document.createElementNS(NS, 'svg') as SVGSVGElement
     svg.appendChild(document.createElementNS(NS, 'circle'))
-    const markup = svgAutonome(svg, 256)
+    const markup = svgStandalone(svg, 256)
     expect(markup).toContain('<circle')
     expect(markup).not.toContain('<image')
   })

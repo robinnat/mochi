@@ -15,14 +15,14 @@ export default {
   app: {
     /**
      * Nom du produit. En minuscules dans les trois langues, ce n'est pas une
-     * coquille : les capitales de `NOM` (App.ts) sont un logotype, pas le nom.
+     * coquille : les capitales de `NAME` (App.ts) sont un logotype, pas le nom.
      * Un nom propre ne se traduit pas non plus. `title` sert de `document.title`.
      * Voir aussi le <title> de index.html, qui est statique.
      */
     name: 'mochi world',
     title: 'Mochi World, avatar animé',
     botAria: 'Avatar mochi animé',
-    sans3d: 'La 3D demande WebGL'
+    no3d: 'La 3D demande WebGL'
   },
 
   gallery: {
@@ -48,7 +48,7 @@ export default {
     color: 'Couleur',
     style: 'Style',
     pixelSize: 'Taille des pixels',
-    contour: 'Contour cartoon'
+    outline: 'Contour cartoon'
   },
 
   /**
@@ -66,22 +66,22 @@ export default {
     cycleDetail: 'La vidéo est plus légère et plus fluide ; le GIF passe partout.',
     cycleFormat: 'Format',
     cycle_mp4: 'Vidéo MP4',
-    cycle_mp4_aide: 'Léger et fluide, fond obligatoire',
+    cycle_mp4_help: 'Léger et fluide, fond obligatoire',
     cycle_gif: 'GIF animé',
-    cycle_gif_aide: 'Lu partout, plus lourd',
+    cycle_gif_help: 'Lu partout, plus lourd',
     cycleProgress: 'Export en cours…',
-    cycleReessayer: 'Réessayer',
+    cycleRetry: 'Réessayer',
     gifTitle: 'Télécharger le GIF animé',
     gifDetail:
       "Le GIF ne gère la transparence qu'en tout ou rien : sans fond, le contour de la boule est un peu dur.",
     gifBackground: 'Fond',
-    fond_blanc: 'Fond blanc',
-    fond_blanc_aide: 'Contour lisse, à poser sur du clair',
-    fond_transparent: 'Fond transparent',
-    fond_transparent_aide: "S'adapte à tout fond, contour un peu dur",
+    background_white: 'Fond blanc',
+    background_white_help: 'Contour lisse, à poser sur du clair',
+    background_transparent: 'Fond transparent',
+    background_transparent_help: "S'adapte à tout fond, contour un peu dur",
     gifConfirm: 'Télécharger',
-    copie: "Copier l'image",
-    copieSvg: 'Copier le SVG',
+    copy: "Copier l'image",
+    copySvg: 'Copier le SVG',
     done: 'Exporté',
     copied: 'Copié',
     failed: "Échec de l'export"
@@ -155,63 +155,63 @@ export default {
   },
 
   pixelSizes: {
-    gros: 'Gros',
-    moyen: 'Moyens',
-    fin: 'Fins'
+    large: 'Gros',
+    medium: 'Moyens',
+    end: 'Fins'
   },
 
   shapes: {
-    cercle: 'Cercle',
-    galet: 'Galet',
+    circle: 'Cercle',
+    pebble: 'Galet',
     squircle: 'Squircle',
     capsule: 'Capsule',
     triangle: 'Triangle',
-    hexagone: 'Hexagone',
-    nuage: 'Nuage',
-    goutte: 'Goutte',
-    etoile: 'Étoile',
-    fleur: 'Fleur',
-    oeuf: 'Œuf',
-    coeur: 'Cœur'
+    hexagon: 'Hexagone',
+    cloud: 'Nuage',
+    drop: 'Goutte',
+    star: 'Étoile',
+    flower: 'Fleur',
+    egg: 'Œuf',
+    heart: 'Cœur'
   },
 
   colors: {
-    encre: 'Encre',
-    creme: 'Crème',
-    brun: 'Brun',
-    rouge: 'Tomate',
-    corail: 'Corail',
+    ink: 'Encre',
+    cream: 'Crème',
+    brown: 'Brun',
+    red: 'Tomate',
+    coral: 'Corail',
     orange: 'Orange',
-    ambre: 'Jaune vif',
-    citron: 'Citron vert',
-    pomme: 'Pomme',
-    vert: 'Émeraude',
+    amber: 'Jaune vif',
+    lime: 'Citron vert',
+    apple: 'Pomme',
+    green: 'Émeraude',
     turquoise: 'Turquoise',
-    ciel: 'Ciel',
-    bleu: 'Bleu roi',
+    sky: 'Ciel',
+    blue: 'Bleu roi',
     violet: 'Violet',
     magenta: 'Magenta',
-    rose: 'Rose',
-    cerise: 'Cerise',
-    gris: 'Gris'
+    pink: 'Rose',
+    cherry: 'Cerise',
+    grey: 'Gris'
   },
 
   expressions: {
-    neutre: 'Neutre',
-    attentif: 'Attentif',
-    surpris: 'Surpris',
-    excite: 'Excité',
-    heureux: 'Heureux',
-    hilare: 'Hilare',
-    colere: 'En colère',
-    triste: 'Triste',
-    effraye: 'Effrayé',
-    mefiant: 'Méfiant',
-    confus: 'Confus',
-    curieux: 'Curieux',
-    fier: 'Fier',
-    timide: 'Timide',
-    blase: 'Blasé',
-    somnolent: 'Somnolent'
+    neutral: 'Neutre',
+    attentive: 'Attentif',
+    surprised: 'Surpris',
+    excited: 'Excité',
+    happy: 'Heureux',
+    laughing: 'Hilare',
+    angry: 'En colère',
+    sad: 'Triste',
+    scared: 'Effrayé',
+    suspicious: 'Méfiant',
+    confused: 'Confus',
+    curious: 'Curieux',
+    proud: 'Fier',
+    shy: 'Timide',
+    unimpressed: 'Blasé',
+    sleepy: 'Somnolent'
   }
 }

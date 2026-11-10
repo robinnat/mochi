@@ -25,18 +25,18 @@ import {
  * rendrait `radii` en lecture seule, alors que le moteur le passe tel quel.
  */
 export type ShapeId =
-  | 'cercle'
-  | 'galet'
+  | 'circle'
+  | 'pebble'
   | 'squircle'
   | 'capsule'
   | 'triangle'
-  | 'hexagone'
-  | 'nuage'
-  | 'goutte'
-  | 'etoile'
-  | 'fleur'
-  | 'oeuf'
-  | 'coeur'
+  | 'hexagon'
+  | 'cloud'
+  | 'drop'
+  | 'star'
+  | 'flower'
+  | 'egg'
+  | 'heart'
 
 export interface BotShape {
   id: ShapeId
@@ -168,8 +168,8 @@ const heart = normalize(
 const capsule = profileFromPolygon(hullOfCircles(-0.42, 0, 0.62, 0.42, 0, 0.62), 0, 0)
 
 export const SHAPES: BotShape[] = [
-  { id: 'cercle', radii: new Array(PROFILE_SAMPLES).fill(1) },
-  { id: 'galet', radii: pebble },
+  { id: 'circle', radii: new Array(PROFILE_SAMPLES).fill(1) },
+  { id: 'pebble', radii: pebble },
   // 1.15 et pas 1.02 : sur une superellipse le rayon maximal est la diagonale,
   // donc normaliser dessus donne une forme qui parait plus petite que le cercle.
   { id: 'squircle', radii: normalize(superellipseProfile(3.3), 1.15) },
@@ -177,39 +177,39 @@ export const SHAPES: BotShape[] = [
   // -90deg : un sommet vers le haut de l'ecran (y est oriente vers le bas)
   { id: 'triangle', radii: regularPolygonProfile(3, 1.12, 0.34, -90) },
   // 0deg : sommets a gauche et a droite, donc aretes du haut et du bas plates
-  { id: 'hexagone', radii: regularPolygonProfile(6, 1.04, 0.26, 0) },
-  { id: 'nuage', radii: cloud },
-  { id: 'goutte', radii: droplet },
-  { id: 'etoile', radii: star },
-  { id: 'fleur', radii: flower },
-  { id: 'oeuf', radii: egg },
-  { id: 'coeur', radii: heart }
+  { id: 'hexagon', radii: regularPolygonProfile(6, 1.04, 0.26, 0) },
+  { id: 'cloud', radii: cloud },
+  { id: 'drop', radii: droplet },
+  { id: 'star', radii: star },
+  { id: 'flower', radii: flower },
+  { id: 'egg', radii: egg },
+  { id: 'heart', radii: heart }
 ]
 
 // Map indexee par `string` et non par `ShapeId` : les appelants interrogent avec
 // une valeur relue du localStorage ou d'une prop, donc non validee.
 export const SHAPE_BY_ID = new Map<string, BotShape>(SHAPES.map((s) => [s.id, s]))
-export const DEFAULT_SHAPE = 'cercle'
+export const DEFAULT_SHAPE = 'circle'
 
 export type ColorId =
-  | 'encre'
-  | 'creme'
-  | 'brun'
-  | 'rouge'
-  | 'corail'
+  | 'ink'
+  | 'cream'
+  | 'brown'
+  | 'red'
+  | 'coral'
   | 'orange'
-  | 'ambre'
-  | 'citron'
-  | 'pomme'
-  | 'vert'
+  | 'amber'
+  | 'lime'
+  | 'apple'
+  | 'green'
   | 'turquoise'
-  | 'ciel'
-  | 'bleu'
+  | 'sky'
+  | 'blue'
   | 'violet'
   | 'magenta'
-  | 'rose'
-  | 'cerise'
-  | 'gris'
+  | 'pink'
+  | 'cherry'
+  | 'grey'
 
 export interface BotColor {
   id: ColorId
@@ -218,34 +218,34 @@ export interface BotColor {
 
 /** Palette du personnalisateur : 14 couleurs vives « Bonbons et jouets » (P1, 09/11/2026) et quatre neutres. */
 export const COLORS: BotColor[] = [
-  { id: 'encre', hex: '#0a0a0c' },
-  { id: 'brun', hex: '#8b5e3c' },
-  { id: 'rouge', hex: '#ff3b30' },
-  { id: 'corail', hex: '#ff6a3d' },
+  { id: 'ink', hex: '#0a0a0c' },
+  { id: 'brown', hex: '#8b5e3c' },
+  { id: 'red', hex: '#ff3b30' },
+  { id: 'coral', hex: '#ff6a3d' },
   { id: 'orange', hex: '#ff9500' },
-  { id: 'ambre', hex: '#ffd60a' },
-  { id: 'citron', hex: '#b6e800' },
-  { id: 'pomme', hex: '#6fd400' },
-  { id: 'vert', hex: '#00c46a' },
+  { id: 'amber', hex: '#ffd60a' },
+  { id: 'lime', hex: '#b6e800' },
+  { id: 'apple', hex: '#6fd400' },
+  { id: 'green', hex: '#00c46a' },
   { id: 'turquoise', hex: '#00c7be' },
-  { id: 'ciel', hex: '#21b0ff' },
-  { id: 'bleu', hex: '#2d5bff' },
+  { id: 'sky', hex: '#21b0ff' },
+  { id: 'blue', hex: '#2d5bff' },
   { id: 'violet', hex: '#8b3dff' },
   { id: 'magenta', hex: '#d81bbd' },
-  { id: 'rose', hex: '#ff4d94' },
-  { id: 'cerise', hex: '#e6194b' },
-  { id: 'gris', hex: '#a3a3a3' },
-  { id: 'creme', hex: '#f1efe9' }
+  { id: 'pink', hex: '#ff4d94' },
+  { id: 'cherry', hex: '#e6194b' },
+  { id: 'grey', hex: '#a3a3a3' },
+  { id: 'cream', hex: '#f1efe9' }
 ]
 
 export const COLOR_BY_ID = new Map<string, BotColor>(COLORS.map((c) => [c.id, c]))
-export const DEFAULT_COLOR = 'encre'
+export const DEFAULT_COLOR = 'ink'
 
 /**
  * Couleur libre : `#rgb` ou `#rrggbb` (casse libre, `#` facultatif a la saisie) -> `#rrggbb` en minuscules ;
  * `null` si ce n'est pas une couleur. Sert a la prop `color` (id du catalogue OU hex) et au champ hex du site.
  */
-export function hexValide(v: string | null | undefined): string | null {
+export function isValidHex(v: string | null | undefined): string | null {
   const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((v ?? '').trim())
   if (!m) return null
   const h = m[1]!.toLowerCase()
@@ -253,7 +253,7 @@ export function hexValide(v: string | null | undefined): string | null {
 }
 
 /** Couleur du corps : un id du catalogue, sinon un hex libre, sinon l'encre. */
-export const couleurDe = (v: string): string => COLOR_BY_ID.get(v)?.hex ?? hexValide(v) ?? '#0a0a0c'
+export const colorOf = (v: string): string => COLOR_BY_ID.get(v)?.hex ?? isValidHex(v) ?? '#0a0a0c'
 
 /** Melange deux couleurs hex. Sert a la brume de profondeur des particules. */
 export function mixHex(from: string, to: string, t: number): string {

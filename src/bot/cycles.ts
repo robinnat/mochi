@@ -51,13 +51,13 @@ export const MAX_BLOCK = 10
  *
  * 200 blocs font une demi-heure de montage, largement au-dela de tout usage.
  */
-export const MAX_BLOCS = 200
+export const MAX_BLOCKS = 200
 export const MAX_CYCLES = 50
 
 /** Pas de la molette et du redimensionnement, en secondes. */
 export const STEP = 0.1
 
-const DEFAULT_CYCLE_ID = 'defaut'
+const DEFAULT_CYCLE_ID = 'initial'
 
 /** Duree minimale d'un bloc : le plancher moteur, ou la mesure de l'etat. */
 export function minDurationOf(state: StateId): number {
@@ -130,13 +130,13 @@ export function blockAt(blocks: Block[], t: number): { index: number; elapsed: n
 /**
  * Ajoute une animation a la fin du montage (palette de droite ou carte « + »).
  *
- * Plafonnee a `MAX_BLOCS`, comme la relecture. Sans ca l'editeur laissait construire un
+ * Plafonnee a `MAX_BLOCKS`, comme la relecture. Sans ca l'editeur laissait construire un
  * montage plus grand que ce que le stockage rend au rechargement, et le travail
  * disparaissait en silence — une borne de relecture qui n'est pas aussi une borne d'edition
  * est un piege, pas une protection.
  */
 export function blocksWith(blocks: Block[], state: StateId): Block[] {
-  if (blocks.length >= MAX_BLOCS) return blocks
+  if (blocks.length >= MAX_BLOCKS) return blocks
   return [...blocks, makeBlock(state)]
 }
 
@@ -194,7 +194,7 @@ function parseCycle(raw: unknown, seen: Cycle[]): Cycle | null {
   // on tronque AVANT de relire : valider 150 000 blocs pour n'en garder que 200 serait
   // faire le travail qu'on cherche justement a eviter
   const kept = blocks
-    .slice(0, MAX_BLOCS)
+    .slice(0, MAX_BLOCKS)
     .map(parseBlock)
     .filter((b): b is Block => b !== null)
   if (!kept.length) return null

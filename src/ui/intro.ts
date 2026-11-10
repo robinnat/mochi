@@ -1,5 +1,5 @@
 import { clampDuration, makeBlock, type Block } from '@/bot/cycles'
-import { TOUR_TIME, tourLook } from './gaze'
+import { SPIN_TIME, turnLook } from './gaze'
 
 /**
  * L'arrivee sur le site : la boule parait seule au centre de la page, les yeux
@@ -34,7 +34,7 @@ import { TOUR_TIME, tourLook } from './gaze'
  * terminer avant que la boule ne parte rejoindre sa place.
  */
 export const INTRO: Block[] = [
-  { state: 'idle', duration: clampDuration('idle', TOUR_TIME + 0.3) },
+  { state: 'idle', duration: clampDuration('idle', SPIN_TIME + 0.3) },
   makeBlock('idle')
 ]
 
@@ -44,39 +44,39 @@ export const INTRO: Block[] = [
  */
 export const POSE_AT = 1
 
-/** Ce que font les yeux pendant l'arrivee. Voir `tourLook` dans `./gaze`. */
-export const INTRO_GAZE = tourLook
+/** Ce que font les yeux pendant l'arrivee. Voir `turnLook` dans `./gaze`. */
+export const INTRO_GAZE = turnLook
 
 /** Ce que l'application sait de l'arrivee au moment de decider. */
-export interface Arrivee {
-  /** l'URL nomme un etat (`#etat=`) */
+export interface Arrival {
+  /** l'URL nomme un etat (`#state=`) */
   named: boolean
-  /** l'URL demande la planche (`#planche`) */
+  /** l'URL demande la planche (`#sheet`) */
   gallery: boolean
   /** on revient sur une page deja ouverte : rechargement, ou precedent/suivant */
-  rechargement: boolean
+  reload: boolean
   /** l'utilisateur a demande moins d'animation */
-  calme: boolean
+  calm: boolean
 }
 
 /**
  * L'arrivee se joue-t-elle ? Quatre refus, tous pour une raison differente :
  *
- * - `named` : un lien `#etat=` vise le LECTEUR et decrit deja sa lecture. Lui
+ * - `named` : un lien `#state=` vise le LECTEUR et decrit deja sa lecture. Lui
  *   imposer une mise en scene d'accueil, c'est ne pas ouvrir ce qu'il demande.
  * - `gallery` : la planche est un outil de verification visuelle, elle doit
  *   rester le chemin sur qui ne depend de rien.
- * - `rechargement` : c'est la demande meme — une introduction, pas une animation
+ * - `reload` : c'est la demande meme — une introduction, pas une animation
  *   de chargement. On la joue donc a chaque VENUE sur le site (URL saisie, lien
  *   suivi, nouvel onglet) mais jamais quand on retombe sur une page qu'on avait
  *   deja : rechargement, precedent, suivant. Rien n'est ecrit dans le stockage —
  *   la distinction est celle du navigateur, pas une memoire a nous, et c'est ce
  *   qui evite qu'une seule visite eteigne l'arrivee pour toujours.
- * - `calme` : `prefers-reduced-motion` demande explicitement de ne pas jouer une
+ * - `calm` : `prefers-reduced-motion` demande explicitement de ne pas jouer une
  *   animation decorative.
  *
- * `#arrivee` court-circuite le tout : c'est le lien qui sert a la revoir.
+ * `#arrival` court-circuite le tout : c'est le lien qui sert a la revoir.
  */
-export function introDue({ named, gallery, rechargement, calme }: Arrivee): boolean {
-  return !named && !gallery && !rechargement && !calme
+export function introDue({ named, gallery, reload, calm }: Arrival): boolean {
+  return !named && !gallery && !reload && !calm
 }

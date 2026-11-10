@@ -15,7 +15,7 @@ const zh: typeof fr = {
     name: 'mochi world',
     title: 'Mochi World, 动画头像',
     botAria: 'mochi 动画头像',
-    sans3d: '3D 需要 WebGL'
+    no3d: '3D 需要 WebGL'
   },
 
   gallery: {
@@ -36,7 +36,7 @@ const zh: typeof fr = {
     color: '颜色',
     style: '风格',
     pixelSize: '像素大小',
-    contour: '卡通轮廓'
+    outline: '卡通轮廓'
   },
 
   export: {
@@ -48,21 +48,21 @@ const zh: typeof fr = {
     cycleDetail: '视频更轻更流畅；GIF 到处都能播放。',
     cycleFormat: '格式',
     cycle_mp4: 'MP4 视频',
-    cycle_mp4_aide: '轻巧流畅，必须有背景',
+    cycle_mp4_help: '轻巧流畅，必须有背景',
     cycle_gif: 'GIF 动图',
-    cycle_gif_aide: '到处可播，体积更大',
+    cycle_gif_help: '到处可播，体积更大',
     cycleProgress: '正在导出…',
-    cycleReessayer: '重试',
+    cycleRetry: '重试',
     gifTitle: '下载 GIF 动图',
     gifDetail: 'GIF 的透明只有全有或全无：不加背景时，球体边缘会略显生硬。',
     gifBackground: '背景',
-    fond_blanc: '白色背景',
-    fond_blanc_aide: '边缘平滑，适合浅色底',
-    fond_transparent: '透明背景',
-    fond_transparent_aide: '适配任何背景，边缘略硬',
+    background_white: '白色背景',
+    background_white_help: '边缘平滑，适合浅色底',
+    background_transparent: '透明背景',
+    background_transparent_help: '适配任何背景，边缘略硬',
     gifConfirm: '下载',
-    copie: '复制图片',
-    copieSvg: '复制 SVG',
+    copy: '复制图片',
+    copySvg: '复制 SVG',
     done: '已导出',
     copied: '已复制',
     failed: '导出失败'
@@ -133,64 +133,64 @@ const zh: typeof fr = {
   },
 
   pixelSizes: {
-    gros: '大',
-    moyen: '中',
-    fin: '小'
+    large: '大',
+    medium: '中',
+    end: '小'
   },
 
   shapes: {
-    cercle: '圆形',
-    galet: '卵石',
+    circle: '圆形',
+    pebble: '卵石',
     squircle: '圆角方形',
     capsule: '胶囊',
     triangle: '三角形',
-    hexagone: '六边形',
-    nuage: '云朵',
-    goutte: '水滴',
-    etoile: '星星',
-    fleur: '花朵',
-    oeuf: '鸡蛋',
-    coeur: '爱心'
+    hexagon: '六边形',
+    cloud: '云朵',
+    drop: '水滴',
+    star: '星星',
+    flower: '花朵',
+    egg: '鸡蛋',
+    heart: '爱心'
   },
 
   colors: {
-    encre: '墨黑',
-    creme: '奶油白',
-    brun: '棕色',
-    rouge: '番茄红',
-    corail: '珊瑚色',
+    ink: '墨黑',
+    cream: '奶油白',
+    brown: '棕色',
+    red: '番茄红',
+    coral: '珊瑚色',
     orange: '橙色',
-    ambre: '亮黄色',
-    citron: '青柠绿',
-    pomme: '苹果绿',
-    vert: '翡翠绿',
+    amber: '亮黄色',
+    lime: '青柠绿',
+    apple: '苹果绿',
+    green: '翡翠绿',
     turquoise: '青绿色',
-    ciel: '天蓝色',
-    bleu: '宝蓝色',
+    sky: '天蓝色',
+    blue: '宝蓝色',
     violet: '紫色',
     magenta: '洋红色',
-    rose: '粉色',
-    cerise: '樱桃红',
-    gris: '灰色'
+    pink: '粉色',
+    cherry: '樱桃红',
+    grey: '灰色'
   },
 
   expressions: {
-    neutre: '平静',
-    attentif: '专注',
-    surpris: '惊讶',
-    excite: '兴奋',
-    heureux: '开心',
-    hilare: '大笑',
-    colere: '生气',
-    triste: '难过',
-    effraye: '害怕',
-    mefiant: '怀疑',
-    confus: '困惑',
-    curieux: '好奇',
-    fier: '得意',
-    timide: '羞怯',
-    blase: '无趣',
-    somnolent: '困倦'
+    neutral: '平静',
+    attentive: '专注',
+    surprised: '惊讶',
+    excited: '兴奋',
+    happy: '开心',
+    laughing: '大笑',
+    angry: '生气',
+    sad: '难过',
+    scared: '害怕',
+    suspicious: '怀疑',
+    confused: '困惑',
+    curious: '好奇',
+    proud: '得意',
+    shy: '羞怯',
+    unimpressed: '无趣',
+    sleepy: '困倦'
   }
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   MAX_BLOCK,
-  MAX_BLOCS,
+  MAX_BLOCKS,
   MAX_CYCLES,
   MIN_BLOCK,
   blockAt,
@@ -24,7 +24,7 @@ describe('cycle par defaut', () => {
     expect(defaultCycle().blocks.map((b) => b.state)).toEqual(SEQUENCE)
   })
 
-  it('tient chaque etat sa duree mesuree', () => {
+  it('tient chaque etat sa duration mesuree', () => {
     for (const block of defaultCycle().blocks) {
       expect(block.duration).toBe(STATE_BY_ID.get(block.state)!.duration)
     }
@@ -38,23 +38,23 @@ describe('cycle par defaut', () => {
 
   it('laisse toujours de la place pour un nouveau cycle, sans collision', () => {
     const reference = defaultCycle()
-    const un: Cycle = {
+    const one: Cycle = {
       id: nextCycleId([reference]),
       name: uniqueName('Mon cycle', [reference]),
       blocks: []
     }
-    const deux: Cycle = {
-      id: nextCycleId([reference, un]),
-      name: uniqueName('Mon cycle', [reference, un]),
+    const two: Cycle = {
+      id: nextCycleId([reference, one]),
+      name: uniqueName('Mon cycle', [reference, one]),
       blocks: []
     }
-    expect(un.id).not.toBe(reference.id)
-    expect(deux.id).not.toBe(un.id)
-    expect(deux.name).not.toBe(un.name)
+    expect(one.id).not.toBe(reference.id)
+    expect(two.id).not.toBe(one.id)
+    expect(two.name).not.toBe(one.name)
   })
 })
 
-describe('durees', () => {
+describe('durations', () => {
   it('ne descend pas sous le plancher du moteur', () => {
     // en dessous, le bloc est plus court que le fondu d entree du suivant
     expect(clampDuration('idle', 0.1)).toBe(MIN_BLOCK)
@@ -69,7 +69,7 @@ describe('durees', () => {
     expect(minDurationOf('idle')).toBe(MIN_BLOCK)
   })
 
-  it('n autorise aucun etat a descendre sous sa mesure', () => {
+  it('n autorise none etat a descendre sous sa mesure', () => {
     for (const state of SEQUENCE) {
       expect(clampDuration(state, 0)).toBeGreaterThanOrEqual(minDurationOf(state))
     }
@@ -146,9 +146,9 @@ describe('relecture du stockage', () => {
   it('jette un cycle vide, sans nom, ou en double', () => {
     expect(parseCycles('[{"id":"c1","name":"A","blocks":[]}]')).toEqual([])
     expect(parseCycles('[{"id":"c1","blocks":[{"state":"idle","duration":2}]}]')).toEqual([])
-    const doublon = '[{"id":"c1","name":"A","blocks":[{"state":"idle","duration":2}]},' +
+    const duplicate = '[{"id":"c1","name":"A","blocks":[{"state":"idle","duration":2}]},' +
       '{"id":"c1","name":"B","blocks":[{"state":"egg","duration":2}]}]'
-    expect(parseCycles(doublon).map((c) => c.name)).toEqual(['A'])
+    expect(parseCycles(duplicate).map((c) => c.name)).toEqual(['A'])
   })
 
   it('ne garde que les champs du modele, pas ce qu on lui glisse en plus', () => {
@@ -166,9 +166,9 @@ describe('relecture du stockage', () => {
    * de 29 700 000 px : l'onglet figeait en entrant dans l'onglet Animations.
    */
   it('borne la taille d un montage relu', () => {
-    const blocs = Array.from({ length: 200_000 }, () => ({ state: 'idle', duration: 10 }))
-    const raw = JSON.stringify([{ id: 'c1', name: 'A', blocks: blocs }])
-    expect(parseCycles(raw)[0]!.blocks).toHaveLength(MAX_BLOCS)
+    const blocks = Array.from({ length: 200_000 }, () => ({ state: 'idle', duration: 10 }))
+    const raw = JSON.stringify([{ id: 'c1', name: 'A', blocks: blocks }])
+    expect(parseCycles(raw)[0]!.blocks).toHaveLength(MAX_BLOCKS)
   })
 
   /*
@@ -177,18 +177,18 @@ describe('relecture du stockage', () => {
    * etait justement le plus long morph du catalogue. Un etat qui morphe plus lentement le suit.
    */
   it('le plancher de bloc couvre le plus long fondu du catalogue', () => {
-    const plusLong = Math.max(...STATES.map((s) => s.morph))
-    expect(MIN_BLOCK).toBeGreaterThanOrEqual(plusLong)
+    const longest = Math.max(...STATES.map((s) => s.morph))
+    expect(MIN_BLOCK).toBeGreaterThanOrEqual(longest)
     // et il n'est pas gratuitement plus grand : c'est exactement ce fondu
-    expect(MIN_BLOCK).toBe(plusLong)
+    expect(MIN_BLOCK).toBe(longest)
   })
 
   it('borne aussi l ajout depuis l editeur, pas seulement la relecture', () => {
-    let blocs = Array.from({ length: MAX_BLOCS }, () => makeBlock('idle'))
-    expect(blocksWith(blocs, 'sleep')).toHaveLength(MAX_BLOCS)
+    let blocks = Array.from({ length: MAX_BLOCKS }, () => makeBlock('idle'))
+    expect(blocksWith(blocks, 'sleep')).toHaveLength(MAX_BLOCKS)
     // et il reste possible d'ajouter juste en dessous de la borne
-    blocs = blocs.slice(0, MAX_BLOCS - 1)
-    expect(blocksWith(blocs, 'sleep')).toHaveLength(MAX_BLOCS)
+    blocks = blocks.slice(0, MAX_BLOCKS - 1)
+    expect(blocksWith(blocks, 'sleep')).toHaveLength(MAX_BLOCKS)
   })
 
   it('borne le nombre de montages relus', () => {

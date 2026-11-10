@@ -1,6 +1,6 @@
 import { arcRender, type ArcRender, type DotRender } from './decor'
 import { blendExpression, type BotExpression } from './expressions'
-import { decalageDesYeux } from './eyefit'
+import { eyeOffset } from './eyefit'
 import { blinkScale, eyePoses, liveliness } from './face'
 import { clamp, easings, lerp, r2 } from './math'
 import {
@@ -14,7 +14,7 @@ import {
   type Silhouette
 } from './shape'
 import { STATE_BY_ID, type Pose, type StateDef, type StateId } from './states'
-import { aUnVisage, type Geste } from './gestes'
+import { hasFace, type Gesture } from './gestures'
 
 export interface RenderedEye {
   d: string
@@ -38,11 +38,11 @@ export interface BotFrame {
   dots: DotRender[]
   arcs: ArcRender[]
   /** couche visage des humeurs, presente seulement si le geste la porte */
-  visage?: {
+  face?: {
     /** inclinaison de la tete, en degres */
     rot: number
     /** teinte des joues, 0 a 1 */
-    joues: number
+    cheeks: number
   }
 }
 
@@ -146,7 +146,7 @@ export class BotEngine {
    * Pose de depart FIGEE, posee seulement quand un changement d'etat arrive alors qu'un
    * fondu est deja en cours. Cf. `setState`.
    */
-  private departFige: Pose | null = null
+  private startFrozen: Pose | null = null
   private tCur = 0
   private tPrev = 0
   private blinkAt = -10
@@ -306,41 +306,41 @@ export class BotEngine {
    * profil que rend `shapeAtTime` : celui-la est un tableau neuf alloue a chaque image,
    * donc sans identite, et il n'existe dans aucune table.
    */
-  private decalageAtTime(now: number, state: StateId): { x: number; y: number } {
+  private offsetAtTime(now: number, state: StateId): { x: number; y: number } {
     /**
      * Un axe de morph : on lit la table sur ses deux BORNES et on interpole avec sa
      * courbe. Jamais sur la valeur interpolee — celle-la n'a pas d'identite et n'existe
      * dans aucune table, et c'est en la lui donnant a manger que les versions
      * precedentes tremblaient.
      */
-    const surAxe = (
-      debut: number,
-      duree: number,
+    const onAxis = (
+      start: number,
+      duration: number,
       a: { x: number; y: number },
       b: { x: number; y: number }
     ) => {
       if (a === b) return b
-      const k = (now - debut) / duree
+      const k = (now - start) / duration
       if (k >= 1) return b
       const t = easings.easeOutQuint(clamp(k))
       return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) }
     }
 
     // axe de l'expression, pour chacune des deux formes en presence
-    const parForme = (radii: number[] | null) =>
-      surAxe(
+    const byShape = (radii: number[] | null) =>
+      onAxis(
         this.exprAt,
         BotEngine.SHAPE_MORPH,
-        decalageDesYeux(radii, state, this.exprPrev?.id ?? null),
-        decalageDesYeux(radii, state, this.expr?.id ?? null)
+        eyeOffset(radii, state, this.exprPrev?.id ?? null),
+        eyeOffset(radii, state, this.expr?.id ?? null)
       )
 
     // puis axe de la forme
-    return surAxe(
+    return onAxis(
       this.shapeAt,
       BotEngine.SHAPE_MORPH,
-      parForme(this.shapePrev),
-      parForme(this.shape)
+      byShape(this.shapePrev),
+      byShape(this.shape)
     )
   }
 
@@ -363,7 +363,7 @@ export class BotEngine {
   reset(id: StateId, now: number) {
     this.cur = id
     this.prev = null
-    this.departFige = null
+    this.startFrozen = null
     this.tCur = now
     this.tPrev = now
     this.blinkAt = -10
@@ -373,12 +373,12 @@ export class BotEngine {
    * Origine du fondu en cours : la pose figee s'il y en a une, sinon l'etat quitte evalue
    * a son propre temps ecoule — donc encore en train de s'animer, ce qui est voulu.
    */
-  private origine(
+  private origin(
     now: number,
     shape: number[] | null,
     expr: BotExpression | null
   ): Pose | null {
-    if (this.departFige) return this.departFige
+    if (this.startFrozen) return this.startFrozen
     if (!this.prev) return null
     const prevDef = STATE_BY_ID.get(this.prev)!
     return this.posed(prevDef, Math.max(0, now - this.tPrev), shape, expr)
@@ -396,9 +396,9 @@ export class BotEngine {
     const pose = this.posed(def, Math.max(0, now - this.tCur), shape, expr)
     const since = now - this.tCur
     if (since >= def.morph) return pose
-    const origine = this.origine(now, shape, expr)
-    if (!origine) return pose
-    return blendPose(origine, pose, easings.easeOutQuint(clamp(since / def.morph)))
+    const origin = this.origin(now, shape, expr)
+    if (!origin) return pose
+    return blendPose(origin, pose, easings.easeOutQuint(clamp(since / def.morph)))
   }
 
   /**
@@ -422,8 +422,8 @@ export class BotEngine {
   setState(id: StateId, now: number) {
     if (id === this.cur) return
     const morph = STATE_BY_ID.get(this.cur)!.morph
-    const enPleinFondu = this.prev !== null && now - this.tCur < morph
-    this.departFige = enPleinFondu ? this.poseComposee(now) : null
+    const midFade = this.prev !== null && now - this.tCur < morph
+    this.startFrozen = midFade ? this.poseComposee(now) : null
     this.prev = this.cur
     this.tPrev = this.tCur
     this.cur = id
@@ -433,16 +433,16 @@ export class BotEngine {
   }
 
   /**
-   * `geste` (facultatif, `gestes.ts`) : petits ecarts AJOUTES apres la pose mesuree (deplacement,
+   * `gesture` (facultatif, `gestures.ts`) : petits ecarts AJOUTES apres la pose mesuree (deplacement,
    * echelles, visee, paupiere). Sans geste, l'image est identique a l'octet pres a celle d'avant.
    */
-  sample(now: number, geste?: Geste): BotFrame {
+  sample(now: number, gesture?: Gesture): BotFrame {
     const R = this.scale
     const def = STATE_BY_ID.get(this.cur)!
     const shape = this.shapeAtTime(now)
     const expr = this.exprAtTime(now)
     let pose = this.posed(def, Math.max(0, now - this.tCur), shape, expr)
-    let decalage = this.decalageAtTime(now, this.cur)
+    let offset = this.offsetAtTime(now, this.cur)
 
     // --- transition -------------------------------------------------------
     const since = now - this.tCur
@@ -450,24 +450,24 @@ export class BotEngine {
     // l'ignorer une fois le fondu passe, et l'oublier rendrait le moteur non
     // rejouable — relire une date d'avant la fin du fondu ne le retrouverait
     // plus. C'est l'optimisation qui parait innocente et qui casse tout.
-    const origine = since < def.morph ? this.origine(now, shape, expr) : null
-    if (origine) {
+    const origin = since < def.morph ? this.origin(now, shape, expr) : null
+    if (origin) {
       // Ease-out exponentiel : c'est la courbe mesuree sur la video. Le corps
       // n'a pas d'overshoot (seuls la pastille et l'ouverture des yeux en ont).
       // Le ratio est borne : relire une date ANTERIEURE au changement d'etat
       // donnerait un ratio negatif, que l'ease-out extrapole — la silhouette
       // part alors trente fois trop loin.
       const ratio = easings.easeOutQuint(clamp(since / def.morph))
-      pose = blendPose(origine, pose, ratio)
+      pose = blendPose(origin, pose, ratio)
       // Le decalage des yeux suit la MEME courbe que la silhouette qui le motive. Il vient
       // de l'etat quitte, que `setState` renseigne toujours en meme temps que l'origine —
       // le test est la pour le typage, pas pour un cas reel.
-      const quitte = this.prev
-      if (quitte) {
-        const avant = this.decalageAtTime(now, quitte)
-        decalage = {
-          x: lerp(avant.x, decalage.x, ratio),
-          y: lerp(avant.y, decalage.y, ratio)
+      const leaves = this.prev
+      if (leaves) {
+        const before = this.offsetAtTime(now, leaves)
+        offset = {
+          x: lerp(before.x, offset.x, ratio),
+          y: lerp(before.y, offset.y, ratio)
         }
       }
     }
@@ -477,7 +477,7 @@ export class BotEngine {
     const look = this.lookAtTime(now)
     const life = liveliness(now, { wander: alive ? look.wander : 0, blink: alive })
 
-    const vis = geste && aUnVisage(geste) ? geste : null
+    const vis = gesture && hasFace(gesture) ? gesture : null
     // une humeur impose aussi la tete de son visage (en 3D les yeux sont pile en face, sans regard)
     const g0 = vis?.exp ? vis.exp.gaze : pose.gaze
     const gaze = {
@@ -485,20 +485,20 @@ export class BotEngine {
       // `Look`), et le tour se retranche en chemin. La derive s'ajoute APRES le
       // melange, sinon la cible l'annulerait en meme temps que la pose — or elle
       // doit survivre a une tete tournee sans pointeur.
-      yaw: lerp(g0.yaw, look.yaw, look.mix) + life.dYaw - look.spin + (geste ? geste.yaw : 0),
-      pitch: lerp(g0.pitch, look.pitch, look.mix) + life.dPitch + (geste ? geste.pitch : 0),
+      yaw: lerp(g0.yaw, look.yaw, look.mix) + life.dYaw - look.spin + (gesture ? gesture.yaw : 0),
+      pitch: lerp(g0.pitch, look.pitch, look.mix) + life.dPitch + (gesture ? gesture.pitch : 0),
       // le roulis, lui, ne suit rien : la tete du bot est penchee de -13deg dans
       // la video, et la faire rouler avec le curseur casse cette signature
-      roll: g0.roll + life.dRoll + (geste ? geste.roll : 0)
+      roll: g0.roll + life.dRoll + (gesture ? gesture.roll : 0)
     }
 
     // clignement declenche par le changement d'etat, en plus du calendrier
     const forced = clamp((now - this.blinkAt) / 0.2)
     const forcedLid = forced < 1 ? Math.abs(forced * 2 - 1) : 1
-    const lid = geste ? Math.min(life.lid, forcedLid, geste.lid) : Math.min(life.lid, forcedLid)
+    const lid = gesture ? Math.min(life.lid, forcedLid, gesture.lid) : Math.min(life.lid, forcedLid)
 
-    const offX = pose.offX + life.driftX + (geste ? geste.dx : 0)
-    const offY = pose.offY + life.driftY + (geste ? geste.dy : 0)
+    const offX = pose.offX + life.driftX + (gesture ? gesture.dx : 0)
+    const offY = pose.offY + life.driftY + (gesture ? gesture.dy : 0)
 
     // --- corps ------------------------------------------------------------
     const sil: Silhouette = {
@@ -506,8 +506,8 @@ export class BotEngine {
       cx: pose.sil.cx + offX,
       cy: pose.sil.cy + offY,
       rot: vis?.rot ? pose.sil.rot + (vis.rot * Math.PI) / 180 : pose.sil.rot,
-      sx: geste ? pose.sil.sx * geste.sx : pose.sil.sx,
-      sy: geste ? pose.sil.sy * life.breath * geste.sy : pose.sil.sy * life.breath
+      sx: gesture ? pose.sil.sx * gesture.sx : pose.sil.sx,
+      sy: gesture ? pose.sil.sy * life.breath * gesture.sy : pose.sil.sy * life.breath
     }
     const bodyPath = closedPath(toPoints(sil, R, this.pts))
 
@@ -550,8 +550,8 @@ export class BotEngine {
         // Le clignement s'applique APRES tout ca : c'est un ecrasement vertical
         // a l'ecran, pas le long de l'axe de la gelule.
         const k = blinkScale(Math.min(lid, cfg.open))
-        let mx = e.x * fit + (offX + decalage.x) * R
-        let my = e.y * fit + (offY + decalage.y) * R
+        let mx = e.x * fit + (offX + offset.x) * R
+        let my = e.y * fit + (offY + offset.y) * R
         let [ma, mb, mc, md] = [ax, ay * k, cx2, cy2 * k]
         if (vis) {
           mx += (vis.ex ?? 0) * R
@@ -585,7 +585,7 @@ export class BotEngine {
       bodyPath,
       bodyAlpha: pose.bodyAlpha,
       eyes,
-      ...(vis ? { visage: { rot: vis.rot ?? 0, joues: vis.joues ?? 0 } } : null),
+      ...(vis ? { face: { rot: vis.rot ?? 0, cheeks: vis.cheeks ?? 0 } } : null),
       dots,
       // Les etats declarent des arcs en unites de rayon de boule ; le moteur
       // est le seul a connaitre l'echelle du viewBox, donc c'est lui qui trace.

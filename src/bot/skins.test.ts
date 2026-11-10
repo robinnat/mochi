@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { BotEngine, type RenderedEye } from './engine'
-import { decalageDesYeux, POUR_TESTS } from './eyefit'
+import { eyeOffset, FOR_TESTS } from './eyefit'
 import { EXPRESSIONS } from './expressions'
-import { DEFAULT_SHAPE, SHAPES, SHAPE_BY_ID, couleurDe, hexValide } from './skins'
+import { DEFAULT_SHAPE, SHAPES, SHAPE_BY_ID, colorOf, isValidHex } from './skins'
 import { STATES, type StateId } from './states'
 
 /**
@@ -30,7 +30,7 @@ const R = 100
  * Contour du corps, lu sur le `bodyPath`. `closedPath` emet `M x y` puis un `C` par point,
  * donc les points de la courbe sont la 3e paire de chaque `C`.
  */
-function contourDuCorps(d: string) {
+function bodyOutline(d: string) {
   const pts: Array<{ x: number; y: number }> = []
   for (const seg of d.slice(1).split('C')) {
     const n = seg.match(/-?\d+\.?\d*/g)?.map(Number) ?? []
@@ -59,7 +59,7 @@ function dedans(poly: Array<{ x: number; y: number }>, x: number, y: number) {
  * Trente-deux points suffisent : sur une gelule de 40 unites de long ils sont espaces de
  * moins de trois unites, la ou le plus petit debordement qu'on ait mesure en vaut trois.
  */
-function contourDeLOeil(eye: RenderedEye, N = 32) {
+function eyeOutline(eye: RenderedEye, N = 32) {
   const g = eye.d.match(/-?\d+\.?\d*/g)!.map(Number)
   const hw = Math.abs(g[0]!)
   const r = Math.abs(g[2]!)
@@ -93,56 +93,56 @@ function contourDeLOeil(eye: RenderedEye, N = 32) {
 
 /** Trois secondes a vingt images par seconde : assez pour plusieurs clignements. */
 const INSTANTS = 60
-const PAS = 1 / 20
+const STEP = 1 / 20
 
 /**
  * De combien la gelule la plus debordante sort du corps, en unites de viewBox.
  *
  * Balaye le TEMPS et pas seulement la combinaison. La derive du regard deplace l'oeil
  * d'une douzaine d'unites, donc une seule image ne prouve rien : c'est en ne mesurant qu'a
- * `POSES[state]` que `capsule` + `effraye` est passe inapercu, alors qu'il sortait de
+ * `POSES[state]` que `capsule` + `scared` est passe inapercu, alors qu'il sortait de
  * 4,4 unites une seconde plus tard.
  */
-function debordement(state: StateId, radii: number[], expr: (typeof EXPRESSIONS)[number] | null) {
+function overflow(state: StateId, radii: number[], expr: (typeof EXPRESSIONS)[number] | null) {
   const e = new BotEngine(R, state, radii, expr)
-  let pire = 0
+  let worst = 0
   for (let i = 0; i < INSTANTS; i++) {
-    const f = e.sample(i * PAS)
-    const corps = contourDuCorps(f.bodyPath)
+    const f = e.sample(i * STEP)
+    const body = bodyOutline(f.bodyPath)
     for (const eye of f.eyes) {
-      for (const p of contourDeLOeil(eye)) {
-        if (dedans(corps, p.x, p.y)) continue
-        pire = Math.max(pire, Math.min(...corps.map((q) => Math.hypot(q.x - p.x, q.y - p.y))))
+      for (const p of eyeOutline(eye)) {
+        if (dedans(body, p.x, p.y)) continue
+        worst = Math.max(worst, Math.min(...body.map((q) => Math.hypot(q.x - p.x, q.y - p.y))))
       }
     }
   }
-  return pire
+  return worst
 }
 
 /** Les etats dont le corps est remplacable par une forme du personnalisateur. */
-const CORPS_DE_BASE = STATES.filter((s) => s.baseBody).map((s) => s.id)
+const BODY_OF_BASE = STATES.filter((s) => s.baseBody).map((s) => s.id)
 /** Les autres : leur silhouette EST l'animation, relevee sur la video. */
-const SILHOUETTE_MESUREE = STATES.filter((s) => !s.baseBody).map((s) => s.id)
+const SILHOUETTE_MEASURED = STATES.filter((s) => !s.baseBody).map((s) => s.id)
 
-describe('formes du personnalisateur', () => {
+describe('shapes du personnalisateur', () => {
   // 680 combinaisons x 60 instants x deux contours : le test le plus lourd du depot, et le
   // seul qui prouve ce que l'oeil voit.
-  it("aucune forme ne laisse un oeil sortir de la silhouette", () => {
-    const fautifs: string[] = []
-    for (const state of CORPS_DE_BASE) {
-      for (const forme of SHAPES) {
+  it("aucune shape ne laisse un oeil sortir de la silhouette", () => {
+    const faulty: string[] = []
+    for (const state of BODY_OF_BASE) {
+      for (const shape of SHAPES) {
         for (const expr of [null, ...EXPRESSIONS]) {
-          const sortie = debordement(state, forme.radii, expr)
-          if (sortie > 0.05) {
-            fautifs.push(`${state}/${forme.id}/${expr?.id ?? 'pose'} ${sortie.toFixed(1)}`)
+          const exit = overflow(state, shape.radii, expr)
+          if (exit > 0.05) {
+            faulty.push(`${state}/${shape.id}/${expr?.id ?? 'pose'} ${exit.toFixed(1)}`)
           }
         }
       }
     }
     // Cinq couples etat x forme debordaient : `wide`+`capsule` de 14,5 unites sur une boule
     // de rayon 100, `wide`+`triangle` de 11,9, `idle`+`capsule` et `swirl`+`capsule` de 5,3,
-    // `notify`+`goutte` de 3,3.
-    expect(fautifs).toEqual([])
+    // `notify`+`drop` de 3,3.
+    expect(faulty).toEqual([])
   }, 30_000)
 
   /**
@@ -154,15 +154,15 @@ describe('formes du personnalisateur', () => {
    * `idle`, au byte.
    */
   it('choisir le cercle rend exactement la meme chose que ne rien choisir', () => {
-    expect(DEFAULT_SHAPE).toBe('cercle')
-    const cercle = SHAPE_BY_ID.get('cercle')!.radii
-    for (const state of CORPS_DE_BASE) {
+    expect(DEFAULT_SHAPE).toBe('circle')
+    const circle = SHAPE_BY_ID.get('circle')!.radii
+    for (const state of BODY_OF_BASE) {
       for (const expr of [null, ...EXPRESSIONS]) {
-        const avec = new BotEngine(R, state, cercle, expr).sample(1)
-        const sans = new BotEngine(R, state, null, expr).sample(1)
-        expect(avec.eyes, `${state}/${expr?.id ?? 'pose'}`).toEqual(sans.eyes)
+        const withIt = new BotEngine(R, state, circle, expr).sample(1)
+        const without = new BotEngine(R, state, null, expr).sample(1)
+        expect(withIt.eyes, `${state}/${expr?.id ?? 'pose'}`).toEqual(without.eyes)
       }
-      expect(decalageDesYeux(cercle, state, null)).toEqual({ x: 0, y: 0 })
+      expect(eyeOffset(circle, state, null)).toEqual({ x: 0, y: 0 })
     }
   })
 
@@ -173,13 +173,13 @@ describe('formes du personnalisateur', () => {
    * juste, puisque relevee ainsi. Une regle de marge appliquee sans distinction la
    * deplacerait.
    */
-  it("la forme choisie ne touche pas aux etats a silhouette mesuree", () => {
-    for (const state of SILHOUETTE_MESUREE) {
-      const nu = new BotEngine(R, state, null, null).sample(1)
-      for (const forme of SHAPES) {
-        const habille = new BotEngine(R, state, forme.radii, null).sample(1)
-        expect(habille.eyes, `${state}/${forme.id}`).toEqual(nu.eyes)
-        expect(habille.bodyPath).toBe(nu.bodyPath)
+  it("la shape choisie ne touche pas aux etats a silhouette mesuree", () => {
+    for (const state of SILHOUETTE_MEASURED) {
+      const bare = new BotEngine(R, state, null, null).sample(1)
+      for (const shape of SHAPES) {
+        const dressed = new BotEngine(R, state, shape.radii, null).sample(1)
+        expect(dressed.eyes, `${state}/${shape.id}`).toEqual(bare.eyes)
+        expect(dressed.bodyPath).toBe(bare.bodyPath)
       }
     }
   })
@@ -192,8 +192,8 @@ describe('formes du personnalisateur', () => {
    * petits sur un corps plat, et changer d'expression animait alors ce grossissement. Ca se
    * lisait comme un defaut.
    */
-  it('la taille des yeux ne depend pas de la forme', () => {
-    const tailles = new Set(
+  it('la taille des yeux ne depend pas de la shape', () => {
+    const sizes = new Set(
       SHAPES.map((f) =>
         new BotEngine(R, 'idle', f.radii, null)
           .sample(1)
@@ -201,7 +201,7 @@ describe('formes du personnalisateur', () => {
           .join('|')
       )
     )
-    expect(tailles.size).toBe(1)
+    expect(sizes.size).toBe(1)
   })
 
   /**
@@ -216,12 +216,12 @@ describe('formes du personnalisateur', () => {
    * avec des reculs jusqu'a 26 unites sur les versions qui tremblaient.
    */
   it('la correction ne fait pas osciller les yeux', () => {
-    const pas = 1 / 60
+    const step = 1 / 60
 
-    const trajectoire = (bâti: () => BotEngine, duree = BotEngine.SHAPE_MORPH) => {
+    const path = (bâti: () => BotEngine, duration = BotEngine.SHAPE_MORPH) => {
       const e = bâti()
       const out: Array<Array<{ x: number; y: number }>> = []
-      for (let t = 0; t <= duree + pas; t += pas) {
+      for (let t = 0; t <= duration + step; t += step) {
         out.push(
           e.sample(t).eyes.map((eye) => {
             const n = eye.matrix.match(/-?\d+\.?\d*/g)!.map(Number)
@@ -233,11 +233,11 @@ describe('formes du personnalisateur', () => {
     }
 
     /** Combien de fois un oeil repart en arriere, et de combien au plus. */
-    const allersRetours = (suite: Array<Array<{ x: number; y: number }>>) => {
+    const roundReturns = (suite: Array<Array<{ x: number; y: number }>>) => {
       let n = 0
       let amplitude = 0
-      const yeux = Math.min(...suite.map((f) => f.length))
-      for (let j = 0; j < yeux; j++) {
+      const eyes = Math.min(...suite.map((f) => f.length))
+      for (let j = 0; j < eyes; j++) {
         let px = 0
         let py = 0
         for (let i = 1; i < suite.length; i++) {
@@ -256,21 +256,21 @@ describe('formes du personnalisateur', () => {
       return { n, amplitude }
     }
 
-    const cercle = SHAPE_BY_ID.get('cercle')!.radii
-    const morphDeForme = (radii: number[]) =>
-      allersRetours(
-        trajectoire(() => {
-          const e = new BotEngine(R, 'idle', cercle, null)
+    const circle = SHAPE_BY_ID.get('circle')!.radii
+    const morphOfShape = (radii: number[]) =>
+      roundReturns(
+        path(() => {
+          const e = new BotEngine(R, 'idle', circle, null)
           e.setShape(radii, 0)
           return e
         })
       )
-    const auRepos = (radii: number[]) =>
-      allersRetours(trajectoire(() => new BotEngine(R, 'idle', radii, null), 3))
+    const atIdle = (radii: number[]) =>
+      roundReturns(path(() => new BotEngine(R, 'idle', radii, null), 3))
     const morphsDExpression = (radii: number[]) =>
       EXPRESSIONS.map((expr) =>
-        allersRetours(
-          trajectoire(() => {
+        roundReturns(
+          path(() => {
             const e = new BotEngine(R, 'idle', radii, EXPRESSIONS[0]!)
             e.setExpression(expr, 0)
             return e
@@ -285,29 +285,29 @@ describe('formes du personnalisateur', () => {
      * Sur le CERCLE, rien du tout : la correction y est nulle, donc elle ne peut ajouter
      * aucun mouvement, et c'est la reference des trois comparaisons.
      */
-    expect(morphsDExpression(cercle).n, 'cercle : morphs d expression').toBe(0)
+    expect(morphsDExpression(circle).n, 'cercle : morphs d expression').toBe(0)
 
-    for (const forme of SHAPES) {
+    for (const shape of SHAPES) {
       // Au repos, la seule chose qui bouge est la derive du regard. Une correction qui la
       // suivrait ferait trembler les yeux en permanence : c'est le defaut le plus visible
       // de tous, et le premier qu'on a eu.
-      expect(auRepos(forme.radii).n, `${forme.id} : derive au repos`).toBeLessThanOrEqual(
-        auRepos(cercle).n + 1
+      expect(atIdle(shape.radii).n, `${shape.id} : derive au idle`).toBeLessThanOrEqual(
+        atIdle(circle).n + 1
       )
       // Un changement de forme fait bouger le decalage, mais sur la meme courbe que la
       // silhouette : aucun aller-retour de plus que le cercle.
-      expect(morphDeForme(forme.radii).n, `morph de forme vers ${forme.id}`).toBeLessThanOrEqual(
-        morphDeForme(cercle).n + 1
+      expect(morphOfShape(shape.radii).n, `morph de shape to ${shape.id}`).toBeLessThanOrEqual(
+        morphOfShape(circle).n + 1
       )
       /*
        * Un changement d'expression fait passer le decalage d'une entree de table a l'autre.
-       * Sept formes sur huit n'y gagnent aucun aller-retour ; la `goutte` passe de un
+       * Sept formes sur huit n'y gagnent aucun aller-retour ; la `drop` passe de un
        * rebroussement de 6,3 unites — deja present sans correction — a deux de 11,1. La
        * borne laisse passer ca et rien de plus : les versions fautives etaient a 26.
        */
       expect(
-        morphsDExpression(forme.radii).amplitude,
-        `${forme.id} : morphs d expression`
+        morphsDExpression(shape.radii).amplitude,
+        `${shape.id} : morphs d expression`
       ).toBeLessThan(14)
     }
   })
@@ -319,22 +319,22 @@ describe('formes du personnalisateur', () => {
    */
   it('la table se batit en quelques millisecondes', () => {
     const t = performance.now()
-    POUR_TESTS.batir()
+    FOR_TESTS.batir()
     expect(performance.now() - t).toBeLessThan(200)
   })
 })
 
 describe('couleur libre (hex) du corps', () => {
   it('hexValide accepte #rgb et #rrggbb, avec ou sans diese, et normalise en minuscules', () => {
-    expect(hexValide('#FF8800')).toBe('#ff8800')
-    expect(hexValide('f80')).toBe('#ff8800')
-    expect(hexValide(' #AbC ')).toBe('#aabbcc')
-    for (const mauvais of ['', '#12', '#12345', '#1234567', 'rouge', '#ggg', null, undefined]) expect(hexValide(mauvais as string)).toBeNull()
+    expect(isValidHex('#FF8800')).toBe('#ff8800')
+    expect(isValidHex('f80')).toBe('#ff8800')
+    expect(isValidHex(' #AbC ')).toBe('#aabbcc')
+    for (const bad of ['', '#12', '#12345', '#1234567', 'red', '#ggg', null, undefined]) expect(isValidHex(bad as string)).toBeNull()
   })
   it('couleurDe : un id du catalogue, sinon un hex libre, sinon l encre', () => {
-    expect(couleurDe('violet')).toBe('#8b3dff')
-    expect(couleurDe('#ff8800')).toBe('#ff8800')
-    expect(couleurDe('#f80')).toBe('#ff8800')
-    expect(couleurDe('nimporte')).toBe('#0a0a0c')
+    expect(colorOf('violet')).toBe('#8b3dff')
+    expect(colorOf('#ff8800')).toBe('#ff8800')
+    expect(colorOf('#f80')).toBe('#ff8800')
+    expect(colorOf('nimporte')).toBe('#0a0a0c')
   })
 })

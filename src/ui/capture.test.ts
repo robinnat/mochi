@@ -2,11 +2,11 @@
 import { describe, expect, it, vi } from 'vitest'
 import { BotEngine, type BotFrame } from '@/bot/engine'
 import { blockAt, defaultCycle, offsetOf, type Block } from '@/bot/cycles'
-import { RAYON } from '@/bot/repere'
+import { RADIUS } from '@/bot/frame'
 import { SHAPE_BY_ID } from '@/bot/skins'
 import { EXPRESSION_BY_ID } from '@/bot/expressions'
-import { ouvreCycle } from './capture'
-import { DEMI_ECRAN, viewBoxExport } from './export'
+import { opensCycle } from './capture'
+import { HALF_SCREEN, viewBoxExport } from './export'
 
 /**
  * Le lecteur hors ecran, celui qui rend les images d'un export de montage.
@@ -22,39 +22,39 @@ import { DEMI_ECRAN, viewBoxExport } from './export'
  * happy-dom n'a pas de WebGL : la scene 3D est remplacee par un double qui retient l'image du moteur qu'on lui
  * demande de rendre. C'est exactement ce que la vraie 3D recevrait, donc ce que l'export capture.
  */
-const scene = vi.hoisted(() => ({ webgl: true, derniere: null as null | { bodyPath: string; eyes: { matrix: string }[] } }))
-vi.mock('@/ui/trois/scene3d', () => ({
-  webglDisponible: () => scene.webgl,
-  rendreAvatar: (_cible: unknown, frame: BotFrame) => {
-    scene.derniere = frame
+const scene = vi.hoisted(() => ({ webgl: true, last: null as null | { bodyPath: string; eyes: { matrix: string }[] } }))
+vi.mock('@/ui/3d/scene3d', () => ({
+  webglAvailable: () => scene.webgl,
+  renderAvatar: (_target: unknown, frame: BotFrame) => {
+    scene.last = frame
   },
-  invaliderAccessoires3d: () => {},
-  prechauffer: () => {}
+  invalidateAccessories3d: () => {},
+  warmUp: () => {}
 }))
 
-const REGLAGES = { shape: 'cercle', color: 'encre', expression: 'neutre' }
-const TAILLE = 128
+const SETTINGS = { shape: 'circle', color: 'ink', expression: 'neutral' }
+const SIZE = 128
 
 /** Le `d` du corps de la derniere image envoyee a la 3D. */
-function corpsDe(_svg: SVGSVGElement) {
-  return scene.derniere!.bodyPath
+function bodyOf(_svg: SVGSVGElement) {
+  return scene.last!.bodyPath
 }
 
 /** Les matrices des yeux de la derniere image envoyee a la 3D. */
-function yeuxDe(_svg: SVGSVGElement) {
-  return scene.derniere!.eyes.map((e) => e.matrix)
+function eyesOf(_svg: SVGSVGElement) {
+  return scene.last!.eyes.map((e) => e.matrix)
 }
 
-/** Le moteur seul, cale comme `rendAt` le fait : chaque etat date de son offset absolu. */
-function moteurAuMemeInstant(blocs: Block[], t: number) {
+/** Le moteur seul, cale comme `renderAt` le fait : chaque etat date de son offset absolu. */
+function engineAtSameInstant(blocks: Block[], t: number) {
   const e = new BotEngine(
-    RAYON,
-    blocs[0]!.state,
-    SHAPE_BY_ID.get(REGLAGES.shape)!.radii,
-    EXPRESSION_BY_ID.get(REGLAGES.expression)!
+    RADIUS,
+    blocks[0]!.state,
+    SHAPE_BY_ID.get(SETTINGS.shape)!.radii,
+    EXPRESSION_BY_ID.get(SETTINGS.expression)!
   )
-  const { index } = blockAt(blocs, t)
-  for (let i = 1; i <= index; i++) e.setState(blocs[i]!.state, offsetOf(blocs, i))
+  const { index } = blockAt(blocks, t)
+  for (let i = 1; i <= index; i++) e.setState(blocks[i]!.state, offsetOf(blocks, i))
   return e.sample(t)
 }
 
@@ -62,7 +62,7 @@ function moteurAuMemeInstant(blocs: Block[], t: number) {
  * Le cadre de l'export d'un CYCLE doit etre celui que le composant DESSINE, pas un nombre
  * qui lui ressemble.
  *
- * `DEMI_ECRAN` valait 158 en dur face a un `VB = 158` ecrit a la main dans le composant, et
+ * `HALF_SCREEN` valait 158 en dur face a un `VB = 158` ecrit a la main dans le composant, et
  * rien ne reliait les deux. La regression visee : quelqu'un elargit le viewBox pour un
  * nouvel etat aux anneaux plus grands, l'export continue au cadre precedent et ajoute des
  * bandes vides a chaque video, tous les tests au vert.
@@ -73,12 +73,12 @@ function moteurAuMemeInstant(blocs: Block[], t: number) {
  */
 describe('cadre de l export', () => {
   it('exporte le cycle sur le viewBox que le composant dessine', async () => {
-    const lecteur = await ouvreCycle(REGLAGES, defaultCycle().blocks, TAILLE)
+    const player = await opensCycle(SETTINGS, defaultCycle().blocks, SIZE)
     try {
-      const svg = await lecteur.rendre(0)
-      expect(svg.getAttribute('viewBox')).toBe(viewBoxExport(DEMI_ECRAN))
+      const svg = await player.render(0)
+      expect(svg.getAttribute('viewBox')).toBe(viewBoxExport(HALF_SCREEN))
     } finally {
-      lecteur.ferme()
+      player.closed()
     }
   })
 })
@@ -96,22 +96,22 @@ describe('lecteur hors ecran', () => {
    * `eyeAlpha` nul.
    */
   it('rejoue la sequence a l identique', async () => {
-    const blocs = defaultCycle().blocks
-    const neuf = await ouvreCycle(REGLAGES, blocs, TAILLE)
-    const reference = { corps: corpsDe(await neuf.rendre(0)), yeux: yeuxDe(await neuf.rendre(0)) }
-    neuf.ferme()
+    const blocks = defaultCycle().blocks
+    const fresh = await opensCycle(SETTINGS, blocks, SIZE)
+    const reference = { body: bodyOf(await fresh.render(0)), eyes: eyesOf(await fresh.render(0)) }
+    fresh.closed()
 
-    const rejoue = await ouvreCycle(REGLAGES, blocs, TAILLE)
+    const replays = await opensCycle(SETTINGS, blocks, SIZE)
     try {
       // une passe complete, grossierement echantillonnee : ce qui compte est d'avoir
       // traverse tous les blocs avant de revenir au debut
-      for (let t = 0; t < 30; t += 1.5) await rejoue.rendre(t)
-      const apres = await rejoue.rendre(0)
-      expect(corpsDe(apres)).toBe(reference.corps)
-      expect(yeuxDe(apres)).toEqual(reference.yeux)
-      expect(yeuxDe(apres)).toHaveLength(2)
+      for (let t = 0; t < 30; t += 1.5) await replays.render(t)
+      const after = await replays.render(0)
+      expect(bodyOf(after)).toBe(reference.body)
+      expect(eyesOf(after)).toEqual(reference.eyes)
+      expect(eyesOf(after)).toHaveLength(2)
     } finally {
-      rejoue.ferme()
+      replays.closed()
     }
   })
 
@@ -126,22 +126,22 @@ describe('lecteur hors ecran', () => {
    * jointure, treize fois dans le montage par defaut.
    */
   it('rend exactement ce que le moteur rend, jointures comprises', async () => {
-    const blocs = defaultCycle().blocks
-    const lecteur = await ouvreCycle(REGLAGES, blocs, TAILLE)
+    const blocks = defaultCycle().blocks
+    const player = await opensCycle(SETTINGS, blocks, SIZE)
     try {
       // les dates des jointures elles-memes, plus un point au milieu de chaque bloc
-      const dates = blocs.flatMap((b, i) => {
-        const debut = offsetOf(blocs, i)
-        return i === 0 ? [debut + b.duration / 2] : [debut, debut + b.duration / 2]
+      const dates = blocks.flatMap((b, i) => {
+        const start = offsetOf(blocks, i)
+        return i === 0 ? [start + b.duration / 2] : [start, start + b.duration / 2]
       })
       for (const t of dates) {
-        const svg = await lecteur.rendre(t)
-        const attendu = moteurAuMemeInstant(blocs, t)
-        expect(corpsDe(svg), `t=${t.toFixed(2)}`).toBe(attendu.bodyPath)
-        expect(yeuxDe(svg), `t=${t.toFixed(2)}`).toEqual(attendu.eyes.map((e) => e.matrix))
+        const svg = await player.render(t)
+        const expected = engineAtSameInstant(blocks, t)
+        expect(bodyOf(svg), `t=${t.toFixed(2)}`).toBe(expected.bodyPath)
+        expect(eyesOf(svg), `t=${t.toFixed(2)}`).toEqual(expected.eyes.map((e) => e.matrix))
       }
     } finally {
-      lecteur.ferme()
+      player.closed()
     }
   })
 
@@ -154,17 +154,17 @@ describe('lecteur hors ecran', () => {
    * fait pas ca, elle amorce l'etat sur le bloc courant.
    */
   it('ouvre sur le premier etat du montage, sans morpher depuis le repos', async () => {
-    for (const debut of ['sleep', 'thinking'] as const) {
-      const blocs = [
-        { state: debut, duration: 2 },
+    for (const start of ['sleep', 'thinking'] as const) {
+      const blocks = [
+        { state: start, duration: 2 },
         { state: 'idle' as const, duration: 2 }
       ]
-      const lecteur = await ouvreCycle(REGLAGES, blocs, TAILLE)
+      const player = await opensCycle(SETTINGS, blocks, SIZE)
       try {
-        const svg = await lecteur.rendre(0)
-        expect(corpsDe(svg), debut).toBe(moteurAuMemeInstant(blocs, 0).bodyPath)
+        const svg = await player.render(0)
+        expect(bodyOf(svg), start).toBe(engineAtSameInstant(blocks, 0).bodyPath)
       } finally {
-        lecteur.ferme()
+        player.closed()
       }
     }
   })
@@ -172,10 +172,10 @@ describe('lecteur hors ecran', () => {
 
 /** Sans WebGL, pas de dessin 2D de secours : l'export echoue proprement au lieu de sortir une autre image. */
 describe('export sans WebGL', () => {
-  it('le lecteur hors ecran refuse de demarrer', async () => {
+  it('le lecteur hors ecran refuse de begin', async () => {
     scene.webgl = false
     try {
-      await expect(ouvreCycle(REGLAGES, defaultCycle().blocks, TAILLE)).rejects.toThrow('3D indisponible')
+      await expect(opensCycle(SETTINGS, defaultCycle().blocks, SIZE)).rejects.toThrow('3D indisponible')
     } finally {
       scene.webgl = true
     }

@@ -7,17 +7,17 @@
  *
  *   <mochi-bot shape="etoile" color="#2d5bff" mood="repos" size="200" coucou></mochi-bot>
  *
- * - Chaque option existe en ATTRIBUT (kebab-case, texte : `frozen-at="1.2"`, `contour`,
- *   `reflet="false"`, `accessoires='{"tete":"casquette"}'`) et en PROPRIETE JavaScript (camelCase,
- *   n'importe quelle valeur : `el.accessoires = { tete: 'casquette' }`, `el.geste = (t) => ...`).
- * - Evenements (`CustomEvent`, sans propagation) : `pret` a la premiere image 3D peinte (ou `sans3d` si le
+ * - Chaque option existe en ATTRIBUT (kebab-case, texte : `frozen-at="1.2"`, `outline`,
+ *   `highlight="false"`, `accessories='{"head":"cap"}'`) et en PROPRIETE JavaScript (camelCase,
+ *   n'importe quelle valeur : `el.accessories = { head: 'cap' }`, `el.gesture = (t) => ...`).
+ * - Evenements (`CustomEvent`, sans propagation) : `ready` a la premiere image 3D peinte (ou `no3d` si le
  *   navigateur n'a pas WebGL), puis
  *   `statechange`, `blockchange`, `playingchange`, `elapsedchange` quand le lecteur avance
  *   (`event.detail` porte la nouvelle valeur).
- * - Methodes : `seek`, `rendAt`, `setMood`, `react`, `relacher`, `regarder`.
+ * - Methodes : `seek`, `renderAt`, `setMood`, `react`, `release`, `lookAt`.
  * - Le Mochi est TOUJOURS rendu en vraie 3D (WebGL) : un `<canvas>` pose dans un `<svg>` du DOM ordinaire (pas de
  *   shadow DOM), qui porte aussi les petits effets des etats (points, anneaux, « z »). `el.svg` le donne directement ;
- *   les exports le figent en image (`figeToiles`). Sans WebGL, un court message remplace le Mochi : il n'y a plus de
+ *   les exports le figent en image (`freezeCanvases`). Sans WebGL, un court message remplace le Mochi : il n'y a plus de
  *   dessin 2D de secours.
  * - Retire de la page, il arrete sa boucle d'animation, ses ecouteurs et ses minuteurs. Deplace
  *   dans la page (meme tache), il garde son etat.
@@ -33,20 +33,20 @@ import { clamp, easings } from '@/bot/math'
 import { t } from '@/i18n'
 import { lookTarget, TURN_TIME, type GazeScript } from '@/ui/gaze'
 import { DEFAULT_EXPRESSION, EXPRESSION_BY_ID } from '@/bot/expressions'
-import { couleurDe, DEFAULT_COLOR, DEFAULT_SHAPE, SHAPE_BY_ID, mixHex } from '@/bot/skins'
+import { colorOf, DEFAULT_COLOR, DEFAULT_SHAPE, SHAPE_BY_ID, mixHex } from '@/bot/skins'
 import { blockAt, defaultCycle, offsetOf, type Block } from '@/bot/cycles'
-import { DEMI_VIEWBOX, RAYON } from '@/bot/repere'
+import { HALF_VIEWBOX, RADIUS } from '@/bot/frame'
 import { STATE_BY_ID, type StateId } from '@/bot/states'
-import { PORTE_IDS, type PorteId } from '@/bot/portes'
-import { composer, zSommeil, type Geste } from '@/bot/gestes'
-import { Humeurs, REACTION_DE_EVENEMENT, doitRedessiner, moodDe, type ReactionId } from '@/bot/humeurs'
-import { DOUCEUR_DEFAUT, RENDU_3D_DEFAUT, type Douceur, type Rendu3d } from '@/ui/trois/rendu3d'
-import { type Theme } from '@/ui/trois/theme'
-import { themeCourant } from '@/ui/trois/themeCourant'
-import type { Selection } from '@/bot/emplacements'
-import { contourCourant, matiere3dDe, grillePixel, pixelEffectif, renduEffectif, type RenduId, type TaillePixelId } from '@/ui/rendu'
-import { computed, dans, Portee, ref, sansSuivi, shallowRef, surNettoyage, triggerRef, watch, type Ref } from '@/ui/dom/reactif'
-import { h, rendre, type Enfant, type VNode } from '@/ui/dom/h'
+import { WORN_IDS, type WornId } from '@/bot/worn'
+import { composer, sleepZ, type Gesture } from '@/bot/gestures'
+import { Moods, REACTION_FOR_EVENT, mustRedraw, resolveMood, type ReactionId } from '@/bot/moods'
+import { DEFAULT_SOFTNESS, DEFAULT_MATERIAL, type Softness, type Material } from '@/ui/3d/material'
+import { type Theme } from '@/ui/3d/theme'
+import { currentTheme } from '@/ui/3d/currentTheme'
+import type { AccessorySelection } from '@/bot/slots'
+import { currentOutline, materialFor, pixelGrid, effectivePixel, effectiveRenderStyle, type RenderStyleId, type PixelSizeId } from '@/ui/renderStyle'
+import { computed, within, Scope, ref, untracked, shallowRef, onCleanup, triggerRef, watch, type Ref } from '@/ui/dom/reactive'
+import { h, render, type Child, type VNode } from '@/ui/dom/h'
 
 /* ------------------------------------------------------------------ options */
 
@@ -62,10 +62,10 @@ export interface MochiBotProps {
   expression: string
   /** couleur du fond, utilisee pour la brume de profondeur des particules */
   paper: string
-  /** theme de la 3D : `light` ou `dark` (les yeux deviennent noirs) ; absent, le theme courant (`themeCourant`, clair par defaut) */
+  /** theme de la 3D : `light` ou `dark` (les yeux deviennent noirs) ; absent, le theme courant (`currentTheme`, clair par defaut) */
   theme: Theme | undefined
   /** accessoires par emplacements (tete, yeux, visage, bas, dos), 3D seulement ; voir `src/bot/emplacements.ts` */
-  accessoires: Selection | null
+  accessories: AccessorySelection | null
   /**
    * Fige le rendu a cette date (en secondes depuis le debut de l'etat). Le moteur etant une fonction pure du temps,
    * on obtient une image reproductible au pixel pres, sans boucle d'animation.
@@ -77,38 +77,38 @@ export interface MochiBotProps {
   follow: boolean
   /** Regard scripte de l'arrivee : evalue a chaque image avec le temps ecoule depuis qu'il a ete pose. */
   gaze: GazeScript | null
-  /** Style de rendu (`3d` Soft, `flat3d` Flat, `pixel3d` Pixel) ; absent ou inconnu, le reglage courant (`renduCourant`). */
-  rendu: RenduId | undefined
-  /** Taille des pixels du style Pixel (`gros`, `moyen`, `fin`) : resolution de sa toile ; absente, le reglage courant. */
-  pixel: TaillePixelId | undefined
-  /** Matiere de la vraie 3D (`rendu` = 3d seulement). Absente : le defaut (`doux`). */
-  rendu3d: Rendu3d
-  /** Reglage de la matiere `doux` : `leger` ou `marque`. Ignore par les autres matieres. */
-  douceur: Douceur
-  /** Contour cartoon de la vraie 3D ; absent, le reglage courant (`contourCourant`). */
-  contour: boolean | undefined
+  /** Style de rendu (`3d` Soft, `flat3d` Flat, `pixel3d` Pixel) ; absent ou inconnu, le reglage courant (`currentRenderStyle`). */
+  renderStyle: RenderStyleId | undefined
+  /** Taille des pixels du style Pixel (`large`, `medium`, `end`) : resolution de sa toile ; absente, le reglage courant. */
+  pixel: PixelSizeId | undefined
+  /** Matiere de la vraie 3D (`renderStyle` = 3d seulement). Absente : le defaut (`soft`). */
+  material: Material
+  /** Reglage de la matiere `soft` : `light` ou `strong`. Ignore par les autres matieres. */
+  softness: Softness
+  /** Contour cartoon de la vraie 3D ; absent, le reglage courant (`currentOutline`). */
+  outline: boolean | undefined
   /** Epaisseur du contour (facteur : 1 = l'epaisseur de base, 0,4 a 4). */
-  epaisseurContour: number
-  /** Petit reflet doux en haut a gauche de la matiere 3D `doux` (defaut : oui). */
-  reflet: boolean
+  outlineWidth: number
+  /** Petit reflet doux en haut a gauche de la matiere 3D `soft` (defaut : oui). */
+  highlight: boolean
   /** Ombre portee au sol sous le corps, en 3D (defaut : oui). */
-  ombre: boolean
+  shadow: boolean
   /** Ombrage du volume du corps, en 3D (defaut : oui). `false` : corps en aplat de couleur, yeux inchanges. */
-  ombrage: boolean
+  shading: boolean
   /** Angle du corps autour de l'axe vertical, en radians (vraie 3D seulement). 0 = de face. */
   yaw: number
-  /** Geste (`src/bot/gestes.ts`) : petits ecarts ajoutes a la pose, fonction du temps de la scene. */
-  geste: ((t: number) => Geste) | null
+  /** Geste (`src/bot/gestures.ts`) : petits ecarts ajoutes a la pose, fonction du temps de la scene. */
+  gesture: ((t: number) => Gesture) | null
   /** Accessoire PORTE en 3D (`src/bot/portes.ts`, ancien jeu) : lunettes, chapeau, noeud, couronne, casque. */
-  porte: PorteId | null
-  /** Humeur de travail jouee en boucle (`repos`, `reflechit`, `travaille`, `attend`, `termine`, `bloque`, `dort`, ou les alias anglais). */
+  worn: WornId | null
+  /** Humeur de travail jouee en boucle (`idle`, `thinking`, `working`, `waiting`, `done`, `blocked`, `asleep`, ou les alias anglais). */
   mood: string | null
   /** Reactions a l'utilisateur (survol, tap, double tap, appui long, secousse). `false` les coupe. */
   interactions: boolean
-  /** Salut a l'apparition (`coucou`), joue une fois au montage. */
-  coucou: boolean
-  /** Ordinateur portable 3D du mood `travaille`. `false` le masque. */
-  ordinateur: boolean
+  /** Salut a l'apparition (`wave`), joue une fois au montage. */
+  wave: boolean
+  /** Ordinateur portable 3D du mood `working`. `false` le masque. */
+  laptop: boolean
   /** Plafond d'images par seconde de la boucle. Absent : une image par image du navigateur. */
   fps: number | undefined
   /** Texte alternatif ; absent, le libelle traduit. */
@@ -125,71 +125,71 @@ export interface MochiBotProps {
   elapsed: number
 }
 
-type Genre = 'nombre' | 'texte' | 'booleen' | 'json' | 'fonction'
+type Kind = 'number' | 'text' | 'boolean' | 'json' | 'function'
 
 interface DefProp {
-  nom: keyof MochiBotProps
-  genre: Genre
+  name: keyof MochiBotProps
+  kind: Kind
   /** valeur par defaut (une fabrique pour un tableau) */
-  defaut: () => unknown
+  initial: () => unknown
   /** pas d'attribut (fonction) */
-  sansAttribut?: boolean
+  withoutAttribute?: boolean
 }
 
 const d = <T>(v: T) => () => v
 
 /** Toutes les options, leur type d'attribut et leur valeur par defaut. */
-export const PROPRIETES: DefProp[] = [
-  { nom: 'size', genre: 'nombre', defaut: d(320) },
-  { nom: 'shape', genre: 'texte', defaut: d(DEFAULT_SHAPE) },
-  { nom: 'color', genre: 'texte', defaut: d(DEFAULT_COLOR) },
-  { nom: 'expression', genre: 'texte', defaut: d(DEFAULT_EXPRESSION) },
-  { nom: 'paper', genre: 'texte', defaut: d('#f9f9f9') },
-  { nom: 'theme', genre: 'texte', defaut: d(undefined) },
-  { nom: 'accessoires', genre: 'json', defaut: d(null) },
-  { nom: 'frozenAt', genre: 'nombre', defaut: d(undefined) },
-  { nom: 'cycle', genre: 'json', defaut: () => defaultCycle().blocks },
-  { nom: 'follow', genre: 'booleen', defaut: d(false) },
-  { nom: 'gaze', genre: 'fonction', defaut: d(null), sansAttribut: true },
-  { nom: 'rendu', genre: 'texte', defaut: d(undefined) },
-  { nom: 'pixel', genre: 'texte', defaut: d(undefined) },
-  { nom: 'rendu3d', genre: 'texte', defaut: d(RENDU_3D_DEFAUT) },
-  { nom: 'douceur', genre: 'texte', defaut: d(DOUCEUR_DEFAUT) },
-  { nom: 'contour', genre: 'booleen', defaut: d(undefined) },
-  { nom: 'epaisseurContour', genre: 'nombre', defaut: d(1) },
-  { nom: 'reflet', genre: 'booleen', defaut: d(true) },
-  { nom: 'ombre', genre: 'booleen', defaut: d(true) },
-  { nom: 'ombrage', genre: 'booleen', defaut: d(true) },
-  { nom: 'yaw', genre: 'nombre', defaut: d(0) },
-  { nom: 'geste', genre: 'fonction', defaut: d(null), sansAttribut: true },
-  { nom: 'porte', genre: 'texte', defaut: d(null) },
-  { nom: 'mood', genre: 'texte', defaut: d(null) },
-  { nom: 'interactions', genre: 'booleen', defaut: d(true) },
-  { nom: 'coucou', genre: 'booleen', defaut: d(false) },
-  { nom: 'ordinateur', genre: 'booleen', defaut: d(true) },
-  { nom: 'fps', genre: 'nombre', defaut: d(undefined) },
-  { nom: 'label', genre: 'texte', defaut: d(undefined) },
-  { nom: 'maxPixelRatio', genre: 'nombre', defaut: d(2) },
-  { nom: 'block', genre: 'nombre', defaut: d(0) },
-  { nom: 'state', genre: 'texte', defaut: d('idle') },
-  { nom: 'playing', genre: 'booleen', defaut: d(false) },
-  { nom: 'elapsed', genre: 'nombre', defaut: d(0) }
+export const PROPERTIES: DefProp[] = [
+  { name: 'size', kind: 'number', initial: d(320) },
+  { name: 'shape', kind: 'text', initial: d(DEFAULT_SHAPE) },
+  { name: 'color', kind: 'text', initial: d(DEFAULT_COLOR) },
+  { name: 'expression', kind: 'text', initial: d(DEFAULT_EXPRESSION) },
+  { name: 'paper', kind: 'text', initial: d('#f9f9f9') },
+  { name: 'theme', kind: 'text', initial: d(undefined) },
+  { name: 'accessories', kind: 'json', initial: d(null) },
+  { name: 'frozenAt', kind: 'number', initial: d(undefined) },
+  { name: 'cycle', kind: 'json', initial: () => defaultCycle().blocks },
+  { name: 'follow', kind: 'boolean', initial: d(false) },
+  { name: 'gaze', kind: 'function', initial: d(null), withoutAttribute: true },
+  { name: 'renderStyle', kind: 'text', initial: d(undefined) },
+  { name: 'pixel', kind: 'text', initial: d(undefined) },
+  { name: 'material', kind: 'text', initial: d(DEFAULT_MATERIAL) },
+  { name: 'softness', kind: 'text', initial: d(DEFAULT_SOFTNESS) },
+  { name: 'outline', kind: 'boolean', initial: d(undefined) },
+  { name: 'outlineWidth', kind: 'number', initial: d(1) },
+  { name: 'highlight', kind: 'boolean', initial: d(true) },
+  { name: 'shadow', kind: 'boolean', initial: d(true) },
+  { name: 'shading', kind: 'boolean', initial: d(true) },
+  { name: 'yaw', kind: 'number', initial: d(0) },
+  { name: 'gesture', kind: 'function', initial: d(null), withoutAttribute: true },
+  { name: 'worn', kind: 'text', initial: d(null) },
+  { name: 'mood', kind: 'text', initial: d(null) },
+  { name: 'interactions', kind: 'boolean', initial: d(true) },
+  { name: 'wave', kind: 'boolean', initial: d(false) },
+  { name: 'laptop', kind: 'boolean', initial: d(true) },
+  { name: 'fps', kind: 'number', initial: d(undefined) },
+  { name: 'label', kind: 'text', initial: d(undefined) },
+  { name: 'maxPixelRatio', kind: 'number', initial: d(2) },
+  { name: 'block', kind: 'number', initial: d(0) },
+  { name: 'state', kind: 'text', initial: d('idle') },
+  { name: 'playing', kind: 'boolean', initial: d(false) },
+  { name: 'elapsed', kind: 'number', initial: d(0) }
 ]
 
 /** `frozenAt` -> `frozen-at` */
-export const attributDe = (nom: string) => nom.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())
+export const attributeOf = (name: string) => name.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())
 
-const PAR_ATTRIBUT = new Map(PROPRIETES.filter((p) => !p.sansAttribut).map((p) => [attributDe(p.nom), p]))
+const BY_ATTRIBUTE = new Map(PROPERTIES.filter((p) => !p.withoutAttribute).map((p) => [attributeOf(p.name), p]))
 
 /** Lit un attribut selon le type de l'option. Attribut retire : `undefined`, donc la valeur par defaut. */
-export function lireAttribut(genre: Genre, v: string | null): unknown {
+export function readAttribute(kind: Kind, v: string | null): unknown {
   if (v === null) return undefined
-  switch (genre) {
-    case 'nombre': {
+  switch (kind) {
+    case 'number': {
       const n = Number(v)
       return v.trim() === '' || !Number.isFinite(n) ? undefined : n
     }
-    case 'booleen':
+    case 'boolean':
       return v !== 'false' && v !== '0'
     case 'json':
       try {
@@ -203,7 +203,7 @@ export function lireAttribut(genre: Genre, v: string | null): unknown {
 }
 
 /** Evenements du lecteur, par option. */
-const EVENEMENT_MODELE: Partial<Record<keyof MochiBotProps, string>> = {
+const EVENT_FOR_PROP: Partial<Record<keyof MochiBotProps, string>> = {
   block: 'blockchange',
   state: 'statechange',
   playing: 'playingchange',
@@ -212,14 +212,14 @@ const EVENEMENT_MODELE: Partial<Record<keyof MochiBotProps, string>> = {
 
 /* ------------------------------------------------------------------ style */
 
-let styleAjoute = false
+let styleAdds = false
 /**
  * Une seule regle, sans specificite (`:where`) : une classe posee par la page l'emporte toujours. Le Mochi se
  * comporte comme une image : en ligne, sa boite est celle de son dessin, et il se reduit avec son conteneur.
  */
-function ajouterStyle() {
-  if (styleAjoute || typeof document === 'undefined') return
-  styleAjoute = true
+function addStyle() {
+  if (styleAdds || typeof document === 'undefined') return
+  styleAdds = true
   const s = document.createElement('style')
   s.dataset.mochiBot = ''
   s.textContent =
@@ -232,31 +232,31 @@ function ajouterStyle() {
 const BaseElement: typeof HTMLElement =
   typeof HTMLElement === 'undefined' ? (class {} as unknown as typeof HTMLElement) : HTMLElement
 
-interface Interne {
+interface Internal {
   seek: (index: number, offset?: number) => void
-  rendAt: (t: number) => void
+  renderAt: (t: number) => void
   setMood: (id: string | null) => void
   react: (id: ReactionId | string) => boolean
-  relacher: () => void
-  regarder: (cible: { nx: number; ny: number } | null) => void
+  release: () => void
+  lookAt: (target: { nx: number; ny: number } | null) => void
 }
 
 export class MochiBotElement extends BaseElement {
   static get observedAttributes() {
-    return [...PAR_ATTRIBUT.keys()]
+    return [...BY_ATTRIBUTE.keys()]
   }
 
   /** une ref par option : le dessin suit chacune */
   private _refs = new Map<string, Ref<unknown>>()
   /** valeur explicitement donnee (propriete ou attribut) ; absente, le defaut */
   private _poses = new Map<string, unknown>()
-  private _portee: Portee | null = null
-  private _interne: Interne | null = null
+  private _scope: Scope | null = null
+  private _internal: Internal | null = null
   private _svg: SVGSVGElement | null = null
 
   constructor() {
     super()
-    for (const p of PROPRIETES) this._refs.set(p.nom, ref(p.defaut()))
+    for (const p of PROPERTIES) this._refs.set(p.name, ref(p.initial()))
   }
 
   /** Le `<svg>` dessine (pour l'exporter ou le mesurer). */
@@ -265,99 +265,99 @@ export class MochiBotElement extends BaseElement {
   }
 
   /** Pose une option. `undefined` remet la valeur par defaut. */
-  _poser(nom: string, v: unknown) {
-    const def = PROPRIETES.find((p) => p.nom === nom)!
-    if (v === undefined) this._poses.delete(nom)
-    else this._poses.set(nom, v)
-    this._refs.get(nom)!.value = v === undefined ? def.defaut() : v
+  _set(name: string, v: unknown) {
+    const def = PROPERTIES.find((p) => p.name === name)!
+    if (v === undefined) this._poses.delete(name)
+    else this._poses.set(name, v)
+    this._refs.get(name)!.value = v === undefined ? def.initial() : v
   }
 
-  _lire(nom: string): unknown {
-    return this._refs.get(nom)!.value
+  _read(name: string): unknown {
+    return this._refs.get(name)!.value
   }
 
   /** Ecrit une sortie du lecteur et la signale. */
-  _emettre(nom: keyof MochiBotProps, v: unknown) {
-    const r = this._refs.get(nom)!
+  _emit(name: keyof MochiBotProps, v: unknown) {
+    const r = this._refs.get(name)!
     if (Object.is(r.value, v)) return
-    this._poses.set(nom, v)
+    this._poses.set(name, v)
     r.value = v
-    this.dispatchEvent(new CustomEvent(EVENEMENT_MODELE[nom]!, { detail: v }))
+    this.dispatchEvent(new CustomEvent(EVENT_FOR_PROP[name]!, { detail: v }))
   }
 
-  attributeChangedCallback(nom: string, _avant: string | null, v: string | null) {
-    const p = PAR_ATTRIBUT.get(nom)
-    if (p) this._poser(p.nom, lireAttribut(p.genre, v))
+  attributeChangedCallback(name: string, _before: string | null, v: string | null) {
+    const p = BY_ATTRIBUTE.get(name)
+    if (p) this._set(p.name, readAttribute(p.kind, v))
   }
 
   connectedCallback() {
     // une propriete posee avant la declaration de la balise est une propriete propre : on la reprend
-    for (const p of PROPRIETES) {
-      if (Object.prototype.hasOwnProperty.call(this, p.nom)) {
-        const v = (this as unknown as Record<string, unknown>)[p.nom]
-        delete (this as unknown as Record<string, unknown>)[p.nom]
-        this._poser(p.nom, v)
+    for (const p of PROPERTIES) {
+      if (Object.prototype.hasOwnProperty.call(this, p.name)) {
+        const v = (this as unknown as Record<string, unknown>)[p.name]
+        delete (this as unknown as Record<string, unknown>)[p.name]
+        this._set(p.name, v)
       }
     }
-    if (this._portee) return
-    ajouterStyle()
-    const portee = new Portee()
-    this._portee = portee
+    if (this._scope) return
+    addStyle()
+    const scope = new Scope()
+    this._scope = scope
     // sans suivi : l'element peut etre insere pendant le dessin d'une page, qui ne doit pas dependre de lui
-    this._interne = dans(portee, () => sansSuivi(() => monterBot(this)))
+    this._internal = within(scope, () => untracked(() => mountBot(this)))
   }
 
   disconnectedCallback() {
     // un deplacement dans la page (retire puis remis dans la meme tache) ne doit rien perdre
     queueMicrotask(() => {
-      if (this.isConnected || !this._portee) return
-      this._portee.arreter()
-      this._portee = null
-      this._interne = null
-      rendre(null, this)
+      if (this.isConnected || !this._scope) return
+      this._scope.stop()
+      this._scope = null
+      this._internal = null
+      render(null, this)
       this._svg = null
     })
   }
 
   /** Deplace la tete de lecture : bloc `index`, `offset` secondes dans ce bloc. */
   seek(index: number, offset = 0) {
-    this._interne?.seek(index, offset)
+    this._internal?.seek(index, offset)
   }
   /** Rend le MONTAGE a la date absolue `t`, sans horloge (exports image par image). */
-  rendAt(t: number) {
-    this._interne?.rendAt(t)
+  renderAt(t: number) {
+    this._internal?.renderAt(t)
   }
   /** Change d'humeur (`null` coupe la couche). Glisse de l'une a l'autre sans saut. */
   setMood(id: string | null) {
-    this._interne?.setMood(id)
+    this._internal?.setMood(id)
   }
-  /** Joue une reaction (`sursaut`, `rigole`, `rougit`, `etourdi`, `coucou`) puis rend la main a l'humeur. */
+  /** Joue une reaction (`startle`, `laugh`, `blush`, `dizzy`, `wave`) puis rend la main a l'humeur. */
   react(id: ReactionId | string): boolean {
-    return this._interne?.react(id) ?? false
+    return this._internal?.react(id) ?? false
   }
   /** Fin d'une reaction tenue (appui long). */
-  relacher() {
-    this._interne?.relacher()
+  release() {
+    this._internal?.release()
   }
   /** Regard du survol, hors evenement : `nx`, `ny` de -1 a 1 (droite et bas positifs), `null` pour lacher. */
-  regarder(cible: { nx: number; ny: number } | null) {
-    this._interne?.regarder(cible)
+  lookAt(target: { nx: number; ny: number } | null) {
+    this._internal?.lookAt(target)
   }
 
   /** @internal le dessin vient d'etre pose */
-  _majSvg(s: SVGSVGElement | null) {
+  _updateSvg(s: SVGSVGElement | null) {
     this._svg = s
   }
 }
 
 // une propriete JavaScript par option
-for (const p of PROPRIETES) {
-  Object.defineProperty(MochiBotElement.prototype, p.nom, {
+for (const p of PROPERTIES) {
+  Object.defineProperty(MochiBotElement.prototype, p.name, {
     get(this: MochiBotElement) {
-      return this._lire(p.nom)
+      return this._read(p.name)
     },
     set(this: MochiBotElement, v: unknown) {
-      this._poser(p.nom, v)
+      this._set(p.name, v)
     },
     configurable: true,
     enumerable: true
@@ -373,13 +373,13 @@ declare global {
   }
 }
 
-export const NOM_BALISE = 'mochi-bot'
+export const TAG_NAME = 'mochi-bot'
 
 /** Declare la balise (sans effet si elle l'est deja). Appele a l'import de ce module. */
-export function definirMochiBot() {
-  if (typeof customElements !== 'undefined' && !customElements.get(NOM_BALISE)) customElements.define(NOM_BALISE, MochiBotElement)
+export function defineMochiBot() {
+  if (typeof customElements !== 'undefined' && !customElements.get(TAG_NAME)) customElements.define(TAG_NAME, MochiBotElement)
 }
-definirMochiBot()
+defineMochiBot()
 
 /* ------------------------------------------------------------------ logique */
 
@@ -387,73 +387,73 @@ definirMochiBot()
  * Met en place un Mochi sur l'element : horloge, moteur, humeurs, regard, reactions et dessin.
  * Tout ce qui est cree ici s'arrete avec la portee de l'element.
  */
-function monterBot(hote: MochiBotElement): Interne {
-  const r = <K extends keyof MochiBotProps>(k: K) => (hote as unknown as { _refs: Map<string, Ref<MochiBotProps[K]>> })._refs.get(k)!
+function mountBot(host: MochiBotElement): Internal {
+  const r = <K extends keyof MochiBotProps>(k: K) => (host as unknown as { _refs: Map<string, Ref<MochiBotProps[K]>> })._refs.get(k)!
   // lecture suivie des options : `props.x` dans un calcul ou un dessin se relance quand `x` change
   const props = new Proxy({} as MochiBotProps, {
     get: (_, k: string) => r(k as keyof MochiBotProps).value
   })
   // sorties du lecteur : lues comme des refs, ecrites avec signalement
-  const modele = <K extends 'block' | 'state' | 'playing' | 'elapsed'>(k: K): Ref<MochiBotProps[K]> => ({
+  const model = <K extends 'block' | 'state' | 'playing' | 'elapsed'>(k: K): Ref<MochiBotProps[K]> => ({
     get value() {
       return r(k).value
     },
     set value(v) {
-      hote._emettre(k, v)
+      host._emit(k, v)
     }
   })
-  const block = modele('block')
-  const state = modele('state')
-  const playing = modele('playing')
-  const elapsed = modele('elapsed')
+  const block = model('block')
+  const state = model('state')
+  const playing = model('playing')
+  const elapsed = model('elapsed')
 
-  let pretEmis = false
-  const R = RAYON
-  const VB = DEMI_VIEWBOX
+  let readyEmitted = false
+  const R = RADIUS
+  const VB = HALF_VIEWBOX
 
   const shapeRadii = computed(() => SHAPE_BY_ID.get(props.shape)?.radii ?? null)
-  const ink = computed(() => couleurDe(props.color))
+  const ink = computed(() => colorOf(props.color))
   const expression = computed(() => EXPRESSION_BY_ID.get(props.expression) ?? null)
 
   /* --------------------------------------------------------- style de rendu */
 
-  const rendu = computed(() => renduEffectif(props.rendu))
-  const contourEffectif = computed(() => props.contour ?? contourCourant.value)
-  const grille = computed(() => grillePixel(pixelEffectif(props.pixel)))
+  const renderStyle = computed(() => effectiveRenderStyle(props.renderStyle))
+  const effectiveOutline = computed(() => props.outline ?? currentOutline.value)
+  const grid = computed(() => pixelGrid(effectivePixel(props.pixel)))
 
   const engine = new BotEngine(R, state.value, shapeRadii.value, expression.value)
   const frame = shallowRef<BotFrame>(engine.sample(props.frozenAt ?? 0))
   const uid = Math.random().toString(36).slice(2, 8)
 
-  const temps = ref(props.frozenAt ?? 0)
+  const time = ref(props.frozenAt ?? 0)
 
   /* ------------------------------------------------- humeurs et reactions */
 
-  const reduit = ref(false)
-  const humeurs = new Humeurs(moodDe(props.mood), { base: expression.value })
-  /** Petits « z » de l'humeur `dort`, dessines en SVG par-dessus tous les rendus. */
+  const reduced = ref(false)
+  const moods = new Moods(resolveMood(props.mood), { base: expression.value })
+  /** Petits « z » de l'humeur `asleep`, dessines en SVG par-dessus tous les rendus. */
   const zMarques = computed(() => {
-    if (moodDe(props.mood) !== 'dort') return []
-    return zSommeil(reduit.value || props.frozenAt !== undefined ? 1.2 : temps.value).map((z, i) => {
+    if (resolveMood(props.mood) !== 'asleep') return []
+    return sleepZ(reduced.value || props.frozenAt !== undefined ? 1.2 : time.value).map((z, i) => {
       const x = z.x * 100 + 18
       const y = z.y * 100 - 10
-      const k = z.taille * 100
+      const k = z.size * 100
       return {
         i,
         d: `M${(x - k / 2).toFixed(1)} ${(y - k / 2).toFixed(1)}h${k.toFixed(1)}l${(-k).toFixed(1)} ${k.toFixed(1)}h${k.toFixed(1)}`,
-        op: reduit.value || props.frozenAt !== undefined ? 0.8 - 0.3 * i : z.opacite
+        op: reduced.value || props.frozenAt !== undefined ? 0.8 - 0.3 * i : z.opacite
       }
     })
   })
-  const couleurZ = computed(() => mixHex(ink.value, '#1a1630', 0.5))
-  const humeurActive = computed(() => moodDe(props.mood) !== null)
+  const colorZ = computed(() => mixHex(ink.value, '#1a1630', 0.5))
+  const moodActive = computed(() => resolveMood(props.mood) !== null)
 
   /** Accessoire porte connu, ou rien. */
-  const porte = computed<PorteId | null>(() => (props.porte && (PORTE_IDS as string[]).includes(props.porte) ? props.porte : null))
+  const worn = computed<WornId | null>(() => (props.worn && (WORN_IDS as string[]).includes(props.worn) ? props.worn : null))
 
-  const gesteA = (t: number): Geste | undefined => {
-    const b = props.geste ? props.geste(t) : undefined
-    const x = humeurs.sample(t)
+  const gestureA = (t: number): Gesture | undefined => {
+    const b = props.gesture ? props.gesture(t) : undefined
+    const x = moods.sample(t)
     return x ? (b ? composer(b, x) : x) : b
   }
 
@@ -472,10 +472,10 @@ function monterBot(hote: MochiBotElement): Interne {
     }
     blockStart = clock - from
     elapsed.value = from
-    const etat = humeurActive.value ? 'idle' : b.state
-    state.value = etat
-    engine.setState(etat, clock)
-    nextAt = playing.value && !humeurActive.value ? blockStart + b.duration : Infinity
+    const next = moodActive.value ? 'idle' : b.state
+    state.value = next
+    engine.setState(next, clock)
+    nextAt = playing.value && !moodActive.value ? blockStart + b.duration : Infinity
   }
 
   function goToBlock(i: number) {
@@ -497,126 +497,126 @@ function monterBot(hote: MochiBotElement): Interne {
    * Rend le MONTAGE a la date absolue `t`, sans horloge : capture d'un cycle entier hors ecran, image par image.
    * Chaque changement d'etat est date a l'offset ABSOLU de son bloc ; un retour en arriere repart sans historique.
    */
-  let dernierBloc = -1
-  function rendAt(t: number) {
-    const blocs = props.cycle
-    if (!blocs.length) return
-    const { index } = blockAt(blocs, t)
-    if (index !== dernierBloc) {
-      const b = blocs[index]!
+  let lastBlock = -1
+  function renderAt(t: number) {
+    const blocks = props.cycle
+    if (!blocks.length) return
+    const { index } = blockAt(blocks, t)
+    if (index !== lastBlock) {
+      const b = blocks[index]!
       state.value = b.state
-      if (index < dernierBloc) engine.reset(b.state, offsetOf(blocs, index))
-      else engine.setState(b.state, offsetOf(blocs, index))
-      dernierBloc = index
+      if (index < lastBlock) engine.reset(b.state, offsetOf(blocks, index))
+      else engine.setState(b.state, offsetOf(blocks, index))
+      lastBlock = index
     }
-    temps.value = t
-    frame.value = engine.sample(t, gesteA(t))
+    time.value = t
+    frame.value = engine.sample(t, gestureA(t))
     triggerRef(frame)
   }
 
   function setMood(id: string | null) {
-    humeurs.setMood(id, clock)
+    moods.setMood(id, clock)
     apply(block.value, elapsed.value)
     redrawFrozen()
   }
   function react(id: ReactionId | string) {
-    if (!humeurs.react(id, clock)) return false
+    if (!moods.react(id, clock)) return false
     redrawFrozen()
     return true
   }
-  function relacher() {
-    humeurs.relacher(clock)
+  function release() {
+    moods.release(clock)
   }
-  function regarder(cible: { nx: number; ny: number } | null) {
-    humeurs.regarder(cible, clock)
+  function lookAt(target: { nx: number; ny: number } | null) {
+    moods.lookAt(target, clock)
   }
 
   /* -------------------------------------------------------------- vraie 3D */
 
-  type Module3d = typeof import('@/ui/trois/scene3d')
+  type Module3d = typeof import('@/ui/3d/scene3d')
   const m3d = shallowRef<Module3d | null>(null)
   /** Le navigateur n'a pas de WebGL (ou le module 3D n'a pas pu se charger) : un message remplace le Mochi. */
-  const sans3d = ref(false)
-  let toile: HTMLCanvasElement | null = null
-  const toileRef = ref(0)
-  const vraie3d = computed(() => m3d.value !== null)
-  const pxToile = computed(() =>
-    rendu.value === 'pixel3d'
-      ? grille.value
+  const no3d = ref(false)
+  let canvas: HTMLCanvasElement | null = null
+  const canvasRef = ref(0)
+  const real3d = computed(() => m3d.value !== null)
+  const pxCanvas = computed(() =>
+    renderStyle.value === 'pixel3d'
+      ? grid.value
       : Math.round(props.size * Math.min(props.maxPixelRatio, typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1))
   )
 
   // la 3D (Three.js) est chargee au montage, une fois pour tous les Mochi de la page
-  import('@/ui/trois/scene3d')
+  import('@/ui/3d/scene3d')
     .then((m) => {
-      if (m.webglDisponible()) m3d.value = m
-      else signalerSans3d()
+      if (m.webglAvailable()) m3d.value = m
+      else signalNo3d()
     })
     // module introuvable : meme repli que sans WebGL
-    .catch(signalerSans3d)
-  function signalerSans3d() {
-    sans3d.value = true
-    hote.dispatchEvent(new CustomEvent('sans3d'))
+    .catch(signalNo3d)
+  function signalNo3d() {
+    no3d.value = true
+    host.dispatchEvent(new CustomEvent('no3d'))
   }
 
-  const decorAlpha = computed(() => (vraie3d.value && props.yaw ? Math.max(0, Math.cos(props.yaw)) ** 3 : 1))
+  const decorAlpha = computed(() => (real3d.value && props.yaw ? Math.max(0, Math.cos(props.yaw)) ** 3 : 1))
 
   /* ------------------------------------------------- ordinateur du mood « travaille » */
 
-  let ordiK = 0
-  let ordiVers = 0
-  const ordiVoulu = () => props.ordinateur !== false && humeurs.mood === 'travaille'
-  function avancerOrdi(dt: number, net = false) {
-    const cible = ordiVoulu() ? 1 : 0
-    if (cible !== ordiVers) ordiVers = cible
-    ordiK = net ? cible : Math.min(1, Math.max(0, ordiK + Math.sign(cible - ordiK) * Math.min(Math.abs(cible - ordiK), dt / 0.45)))
-    humeurs.regardOrdi = tourOrdi()
+  let laptopK = 0
+  let laptopTo = 0
+  const laptopWanted = () => props.laptop !== false && moods.mood === 'working'
+  function advanceLaptop(dt: number, net = false) {
+    const target = laptopWanted() ? 1 : 0
+    if (target !== laptopTo) laptopTo = target
+    laptopK = net ? target : Math.min(1, Math.max(0, laptopK + Math.sign(target - laptopK) * Math.min(Math.abs(target - laptopK), dt / 0.45)))
+    moods.gazeLaptop = turnLaptop()
   }
-  function tourOrdi(): number {
-    return ordiVers >= 1 ? Math.min(1, ordiK * 1.2) : ordiK * ordiK * (3 - 2 * ordiK)
+  function turnLaptop(): number {
+    return laptopTo >= 1 ? Math.min(1, laptopK * 1.2) : laptopK * laptopK * (3 - 2 * laptopK)
   }
-  function ordiEchelle(): number {
-    const k = ordiK
+  function laptopScale(): number {
+    const k = laptopK
     if (k <= 0) return 0
-    if (ordiVers >= 1 || k >= 1) {
+    if (laptopTo >= 1 || k >= 1) {
       const c1 = 1.2
       return 1 + (c1 + 1) * (k - 1) ** 3 + c1 * (k - 1) ** 2
     }
     return k * k * (3 - 2 * k)
   }
 
-  const themeEff = computed<Theme>(() => props.theme ?? themeCourant.value)
-  const rendu3dEff = computed<Rendu3d>(() => matiere3dDe(rendu.value, props.rendu3d))
+  const themeEff = computed<Theme>(() => props.theme ?? currentTheme.value)
+  const render3dEff = computed<Material>(() => materialFor(renderStyle.value, props.material))
 
-  function dessiner3d() {
+  function draw3d() {
     const m = m3d.value
-    if (!vraie3d.value || !m || !toile) return
-    m.rendreAvatar(toile, frame.value, ink.value, props.paper, rendu3dEff.value, contourEffectif.value, props.douceur, props.reflet, props.shape, props.yaw + 0.3 * tourOrdi(), porte.value, props.accessoires ?? {}, undefined, themeEff.value, undefined, ordiEchelle(), props.ombre, props.ombrage, props.epaisseurContour)
-    if (!pretEmis) {
-      pretEmis = true
-      hote.dataset.pret = '1'
-      hote.dispatchEvent(new CustomEvent('pret'))
+    if (!real3d.value || !m || !canvas) return
+    m.renderAvatar(canvas, frame.value, ink.value, props.paper, render3dEff.value, effectiveOutline.value, props.softness, props.highlight, props.shape, props.yaw + 0.3 * turnLaptop(), worn.value, props.accessories ?? {}, undefined, themeEff.value, undefined, laptopScale(), props.shadow, props.shading, props.outlineWidth)
+    if (!readyEmitted) {
+      readyEmitted = true
+      host.dataset.ready = '1'
+      host.dispatchEvent(new CustomEvent('ready'))
     }
   }
 
   /** Changement de forme : une fois le morph fini, les accessoires 3D se recalent sur la forme finale. */
-  let minuteurForme = 0
+  let timerShape = 0
   watch(
     () => props.shape,
     () => {
-      clearTimeout(minuteurForme)
-      minuteurForme = window.setTimeout(() => {
-        if (!vraie3d.value || !m3d.value) return
-        m3d.value.invaliderAccessoires3d()
-        dessiner3d()
+      clearTimeout(timerShape)
+      timerShape = window.setTimeout(() => {
+        if (!real3d.value || !m3d.value) return
+        m3d.value.invalidateAccessories3d()
+        draw3d()
       }, BotEngine.SHAPE_MORPH * 1000 + 120)
     }
   )
-  surNettoyage(() => clearTimeout(minuteurForme))
+  onCleanup(() => clearTimeout(timerShape))
 
   watch(
-    [frame, vraie3d, toileRef, ink, pxToile, rendu3dEff, () => props.douceur, () => props.reflet, () => props.yaw, porte, themeEff, () => props.accessoires, () => props.ombre, () => props.ombrage, () => contourEffectif.value, () => props.epaisseurContour],
-    dessiner3d,
+    [frame, real3d, canvasRef, ink, pxCanvas, render3dEff, () => props.softness, () => props.highlight, () => props.yaw, worn, themeEff, () => props.accessories, () => props.shadow, () => props.shading, () => effectiveOutline.value, () => props.outlineWidth],
+    draw3d,
     { flush: 'post' }
   )
 
@@ -635,7 +635,7 @@ function monterBot(hote: MochiBotElement): Interne {
   function onPointerLeave() {
     pointer = null
   }
-  function release() {
+  function endAim() {
     if (!aiming) return
     engine.setLook(null, clock, TURN_TIME)
     aiming = false
@@ -643,20 +643,20 @@ function monterBot(hote: MochiBotElement): Interne {
   /** Vise le pointeur ; le rectangle est relu a chaque image (l'avatar peut bouger). */
   function aim() {
     if (!STATE_BY_ID.get(state.value)?.baseFace) {
-      release()
+      endAim()
       return
     }
     const box = svg?.getBoundingClientRect()
     // boite sans surface (volet masque) : rien a viser, et surtout pas de NaN dans le moteur
     if (!box || box.width === 0 || box.height === 0) return
     if (!aiming) turnSince = clock
-    const demiLargeur = Math.max(1, window.innerWidth / 2)
-    const demiHauteur = Math.max(1, window.innerHeight / 2)
+    const halfWidth = Math.max(1, window.innerWidth / 2)
+    const halfHeight = Math.max(1, window.innerHeight / 2)
     engine.setLook(
       lookTarget({
-        nx: pointer ? clamp((pointer.x - (box.left + box.width / 2)) / demiLargeur, -1, 1) : 0,
-        ny: pointer ? clamp((pointer.y - (box.top + box.height / 2)) / demiHauteur, -1, 1) : 0,
-        tour: easings.easeOutQuint(clamp((clock - turnSince) / TURN_TIME)),
+        nx: pointer ? clamp((pointer.x - (box.left + box.width / 2)) / halfWidth, -1, 1) : 0,
+        ny: pointer ? clamp((pointer.y - (box.top + box.height / 2)) / halfHeight, -1, 1) : 0,
+        turn: easings.easeOutQuint(clamp((clock - turnSince) / TURN_TIME)),
         pointer: pointer !== null
       }),
       clock
@@ -694,18 +694,18 @@ function monterBot(hote: MochiBotElement): Interne {
 
   const TAP_MAX = 320
   const DOUBLE_MAX = 380
-  const APPUI_LONG = 450
-  const DEPLACEMENT_MAX = 10
+  const LONG_PRESS = 450
+  const MOVE_MAX = 10
 
-  const interactif = computed(() => props.interactions && props.frozenAt === undefined && !props.follow)
-  let appui: { x: number; y: number; t: number; minuteur: number; long: boolean } | null = null
-  let dernierTap = -1e9
-  let secousse: { sens: number; t: number }[] = []
-  let dernierDx = 0
-  let tours: { t: number; d: number }[] = []
-  let yawPrec = props.yaw
+  const interactive = computed(() => props.interactions && props.frozenAt === undefined && !props.follow)
+  let press: { x: number; y: number; t: number; timer: number; long: boolean } | null = null
+  let lastTap = -1e9
+  let shake: { direction: number; t: number }[] = []
+  let lastDx = 0
+  let turns: { t: number; d: number }[] = []
+  let yawPrev = props.yaw
 
-  function normalise(e: PointerEvent): { nx: number; ny: number } | null {
+  function normalized(e: PointerEvent): { nx: number; ny: number } | null {
     const box = svg?.getBoundingClientRect()
     if (!box || box.width === 0 || box.height === 0) return null
     return {
@@ -713,81 +713,81 @@ function monterBot(hote: MochiBotElement): Interne {
       ny: clamp((e.clientY - (box.top + box.height / 2)) / (box.height * 0.6), -1, 1)
     }
   }
-  function onSurvol(e: PointerEvent) {
-    if (!interactif.value || reduit.value) return
-    const c = normalise(e)
-    if (c) humeurs.regarder(c, clock)
+  function onHover(e: PointerEvent) {
+    if (!interactive.value || reduced.value) return
+    const c = normalized(e)
+    if (c) moods.lookAt(c, clock)
   }
-  function onQuitte() {
-    if (!interactif.value) return
-    humeurs.regarder(null, clock)
+  function onLeaves() {
+    if (!interactive.value) return
+    moods.lookAt(null, clock)
   }
-  function onAppui(e: PointerEvent) {
-    if (!interactif.value || (e.button !== undefined && e.button > 0)) return
-    onSurvol(e)
-    clearTimeout(appui?.minuteur)
-    appui = {
+  function onPress(e: PointerEvent) {
+    if (!interactive.value || (e.button !== undefined && e.button > 0)) return
+    onHover(e)
+    clearTimeout(press?.timer)
+    press = {
       x: e.clientX,
       y: e.clientY,
       t: e.timeStamp,
       long: false,
-      minuteur: window.setTimeout(() => {
-        if (!appui) return
-        appui.long = true
-        humeurs.react(REACTION_DE_EVENEMENT.longue, clock)
-      }, APPUI_LONG)
+      timer: window.setTimeout(() => {
+        if (!press) return
+        press.long = true
+        moods.react(REACTION_FOR_EVENT.long, clock)
+      }, LONG_PRESS)
     }
-    secousse = []
-    dernierDx = 0
+    shake = []
+    lastDx = 0
     // le parent peut capturer le pointeur (glisser pour tourner) : on suit la fin sur la fenetre
-    window.addEventListener('pointermove', onGlisse)
-    window.addEventListener('pointerup', onRelache)
-    window.addEventListener('pointercancel', onRelache)
+    window.addEventListener('pointermove', onDrag)
+    window.addEventListener('pointerup', onReleased)
+    window.addEventListener('pointercancel', onReleased)
   }
-  function onGlisse(e: PointerEvent) {
-    if (!appui) return
-    const dx = e.clientX - appui.x
-    const dy = e.clientY - appui.y
-    if (!appui.long && Math.hypot(dx, dy) > DEPLACEMENT_MAX) {
-      clearTimeout(appui.minuteur)
-      appui.t = -1e9
+  function onDrag(e: PointerEvent) {
+    if (!press) return
+    const dx = e.clientX - press.x
+    const dy = e.clientY - press.y
+    if (!press.long && Math.hypot(dx, dy) > MOVE_MAX) {
+      clearTimeout(press.timer)
+      press.t = -1e9
     }
     // secousse : au moins quatre inversions de sens, vives, en moins d'une demi-seconde
-    const pas = e.movementX || e.clientX - dernierDx
-    if (Math.abs(pas) > 6) {
-      const sens = Math.sign(pas)
-      const dernier = secousse[secousse.length - 1]
-      if (!dernier || dernier.sens !== sens) {
-        secousse.push({ sens, t: e.timeStamp })
-        secousse = secousse.filter((s) => e.timeStamp - s.t < 600)
-        if (secousse.length >= 5 && interactif.value) {
-          secousse = []
-          humeurs.react(REACTION_DE_EVENEMENT.secoue, clock)
+    const step = e.movementX || e.clientX - lastDx
+    if (Math.abs(step) > 6) {
+      const direction = Math.sign(step)
+      const lastShake = shake[shake.length - 1]
+      if (!lastShake || lastShake.direction !== direction) {
+        shake.push({ direction, t: e.timeStamp })
+        shake = shake.filter((s) => e.timeStamp - s.t < 600)
+        if (shake.length >= 5 && interactive.value) {
+          shake = []
+          moods.react(REACTION_FOR_EVENT.shaken, clock)
         }
       }
     }
-    dernierDx = e.clientX
+    lastDx = e.clientX
   }
-  function onRelache(e: PointerEvent) {
-    window.removeEventListener('pointermove', onGlisse)
-    window.removeEventListener('pointerup', onRelache)
-    window.removeEventListener('pointercancel', onRelache)
-    const a = appui
-    appui = null
+  function onReleased(e: PointerEvent) {
+    window.removeEventListener('pointermove', onDrag)
+    window.removeEventListener('pointerup', onReleased)
+    window.removeEventListener('pointercancel', onReleased)
+    const a = press
+    press = null
     if (!a) return
-    clearTimeout(a.minuteur)
-    if (e.pointerType === 'touch') humeurs.regarder(null, clock)
+    clearTimeout(a.timer)
+    if (e.pointerType === 'touch') moods.lookAt(null, clock)
     if (a.long) {
-      humeurs.relacher(clock)
+      moods.release(clock)
       return
     }
     if (e.type === 'pointercancel' || e.timeStamp - a.t > TAP_MAX) return
-    if (e.timeStamp - dernierTap < DOUBLE_MAX) {
-      dernierTap = -1e9
-      humeurs.react(REACTION_DE_EVENEMENT.double, clock)
+    if (e.timeStamp - lastTap < DOUBLE_MAX) {
+      lastTap = -1e9
+      moods.react(REACTION_FOR_EVENT.double, clock)
     } else {
-      dernierTap = e.timeStamp
-      humeurs.react(REACTION_DE_EVENEMENT.tap, clock)
+      lastTap = e.timeStamp
+      moods.react(REACTION_FOR_EVENT.tap, clock)
     }
   }
 
@@ -796,26 +796,26 @@ function monterBot(hote: MochiBotElement): Interne {
     () => props.yaw,
     (v) => {
       const now = typeof performance === 'undefined' ? 0 : performance.now()
-      if (!interactif.value) {
-        yawPrec = v
+      if (!interactive.value) {
+        yawPrev = v
         return
       }
-      tours.push({ t: now, d: Math.abs(v - yawPrec) })
-      yawPrec = v
-      tours = tours.filter((x) => now - x.t < 900)
-      if (tours.reduce((n, x) => n + x.d, 0) >= Math.PI * 2 && humeurs.reaction(clock) !== 'etourdi') {
-        tours = []
-        humeurs.react(REACTION_DE_EVENEMENT.secoue, clock)
+      turns.push({ t: now, d: Math.abs(v - yawPrev) })
+      yawPrev = v
+      turns = turns.filter((x) => now - x.t < 900)
+      if (turns.reduce((n, x) => n + x.d, 0) >= Math.PI * 2 && moods.reaction(clock) !== 'dizzy') {
+        turns = []
+        moods.react(REACTION_FOR_EVENT.shaken, clock)
       }
     }
   )
 
   watch(
     () => props.mood,
-    (id) => setMood(moodDe(id))
+    (id) => setMood(resolveMood(id))
   )
 
-  let dernierDessin = 0
+  let lastDrawing = 0
   function tick(ms: number) {
     raf = requestAnimationFrame(tick)
     // horloge de scene a delta borne : un onglet masque puis reaffiche reprend sans sauter
@@ -829,20 +829,20 @@ function monterBot(hote: MochiBotElement): Interne {
     }
     if (props.follow) aim()
     else if (props.gaze) scriptedGaze(props.gaze)
-    if (!doitRedessiner(ms, dernierDessin, props.fps)) return
-    dernierDessin = ms
-    temps.value = clock
-    avancerOrdi(dt)
-    frame.value = engine.sample(clock, gesteA(clock))
+    if (!mustRedraw(ms, lastDrawing, props.fps)) return
+    lastDrawing = ms
+    time.value = clock
+    advanceLaptop(dt)
+    frame.value = engine.sample(clock, gestureA(clock))
     triggerRef(frame)
   }
 
   /** Redessine sans la boucle : sert aux images figees quand une option change. */
   function redrawFrozen() {
     if (props.frozenAt === undefined) return
-    temps.value = props.frozenAt
-    avancerOrdi(0, true)
-    frame.value = engine.sample(props.frozenAt, gesteA(props.frozenAt))
+    time.value = props.frozenAt
+    advanceLaptop(0, true)
+    frame.value = engine.sample(props.frozenAt, gestureA(props.frozenAt))
     triggerRef(frame)
   }
 
@@ -853,7 +853,7 @@ function monterBot(hote: MochiBotElement): Interne {
       pendingOffset = 0
     }
   )
-  // changement d'etat venu de l'exterieur (images figees) ; deja applique par `rendAt` ou `apply` sinon
+  // changement d'etat venu de l'exterieur (images figees) ; deja applique par `renderAt` ou `apply` sinon
   watch(
     () => state.value,
     (id) => {
@@ -890,7 +890,7 @@ function monterBot(hote: MochiBotElement): Interne {
     redrawFrozen()
   })
   watch(expression, (expr) => {
-    humeurs.setBase(expr)
+    moods.setBase(expr)
     engine.setExpression(expr, clock)
     redrawFrozen()
   })
@@ -909,11 +909,11 @@ function monterBot(hote: MochiBotElement): Interne {
         return
       }
       detach()
-      release()
+      endAim()
     },
     { immediate: true }
   )
-  watch([() => props.geste, () => props.porte], redrawFrozen)
+  watch([() => props.gesture, () => props.worn], redrawFrozen)
 
   /* ------------------------------------------------------------------ dessin */
 
@@ -925,10 +925,10 @@ function monterBot(hote: MochiBotElement): Interne {
       : { ...common, cx: dot.x, cy: dot.y, r: dot.r }
   }
 
-  function dessin(): VNode {
+  function drawing(): VNode {
     const f = frame.value
-    const enfants: Enfant[] = []
-    enfants.push(
+    const children: Child[] = []
+    children.push(
       h(
         'defs',
         null,
@@ -942,44 +942,44 @@ function monterBot(hote: MochiBotElement): Interne {
       )
     )
     // moitie arriere des orbites : posee avant le corps 3D, donc cachee par lui
-    enfants.push(
+    children.push(
       h(
         'g',
         { fill: 'none', 'stroke-linecap': 'round' },
         f.arcs.map((arc) => h('path', { key: `b${arc.id}`, d: arc.back, stroke: `url(#${uid}-${arc.id})`, 'stroke-width': arc.width, opacity: arc.opacity }))
       )
     )
-    if (vraie3d.value) {
+    if (real3d.value) {
       // le corps, les yeux et les accessoires sont rendus par WebGL dans ce canvas, cale sur le viewBox
-      enfants.push(
+      children.push(
         h(
           'foreignObject',
           { key: 'fo', x: -VB, y: -VB, width: VB * 2, height: VB * 2 },
           h('canvas', {
-            width: pxToile.value,
-            height: pxToile.value,
-            'data-vraie3d': '1',
-            style: rendu.value === 'pixel3d' ? 'image-rendering: pixelated; display: block; width: 100%; height: 100%' : 'display: block; width: 100%; height: 100%',
+            width: pxCanvas.value,
+            height: pxCanvas.value,
+            'data-real3d': '1',
+            style: renderStyle.value === 'pixel3d' ? 'image-rendering: pixelated; display: block; width: 100%; height: 100%' : 'display: block; width: 100%; height: 100%',
             ref: (el: Element | null) => {
-              toile = el as HTMLCanvasElement | null
-              toileRef.value++
+              canvas = el as HTMLCanvasElement | null
+              canvasRef.value++
             }
           })
         )
       )
-    } else if (sans3d.value) {
+    } else if (no3d.value) {
       // pas de WebGL : pas de dessin 2D de secours, un message court a la place du Mochi
-      enfants.push(
+      children.push(
         h(
           'text',
-          { key: 'sans3d', 'data-sans3d': '1', x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': 18, 'font-family': 'system-ui, sans-serif', fill: '#8a8a8a' },
-          t('app.sans3d')
+          { key: 'no3d', 'data-no3d': '1', x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': 18, 'font-family': 'system-ui, sans-serif', fill: '#8a8a8a' },
+          t('app.no3d')
         )
       )
     }
-    enfants.push(h('g', { opacity: decorAlpha.value }, f.dots.map((dot, i) => h(dot.d ? 'path' : 'circle', { key: `pf${i}`, ...dotAttrs(dot) }))))
+    children.push(h('g', { opacity: decorAlpha.value }, f.dots.map((dot, i) => h(dot.d ? 'path' : 'circle', { key: `pf${i}`, ...dotAttrs(dot) }))))
     // moitie avant des orbites
-    enfants.push(
+    children.push(
       h(
         'g',
         { fill: 'none', 'stroke-linecap': 'round' },
@@ -988,10 +988,10 @@ function monterBot(hote: MochiBotElement): Interne {
     )
     const z = zMarques.value
     if (z.length)
-      enfants.push(
+      children.push(
         h(
           'g',
-          { key: 'zzz', 'data-zzz': '1', fill: 'none', stroke: couleurZ.value, 'stroke-width': '10', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+          { key: 'zzz', 'data-zzz': '1', fill: 'none', stroke: colorZ.value, 'stroke-width': '10', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
           z.map((m) => h('path', { key: m.i, d: m.d, opacity: m.op }))
         )
       )
@@ -1003,58 +1003,58 @@ function monterBot(hote: MochiBotElement): Interne {
         viewBox: `${-VB} ${-VB} ${VB * 2} ${VB * 2}`,
         role: 'img',
         'aria-label': props.label ?? t('app.botAria'),
-        style: porte.value || z.length ? 'overflow: visible' : undefined,
-        onPointerenter: onSurvol,
-        onPointermove: onSurvol,
-        onPointerleave: onQuitte,
-        onPointerdown: onAppui,
+        style: worn.value || z.length ? 'overflow: visible' : undefined,
+        onPointerenter: onHover,
+        onPointermove: onHover,
+        onPointerleave: onLeaves,
+        onPointerdown: onPress,
         ref: (el: Element | null) => {
           svg = el as SVGSVGElement | null
-          hote._majSvg(svg)
+          host._updateSvg(svg)
         }
       },
-      enfants
+      children
     )
   }
 
   // le dessin est un effet : il se refait (en file, une fois par tache, avant le dessin 3D) quand ce qu'il lit change
-  watch(dessin, (v) => rendre(v, hote))
+  watch(drawing, (v) => render(v, host))
 
   /* ------------------------------------------------------------------ montage */
 
-  let mqReduit: MediaQueryList | null = null
-  const majReduit = () => {
-    reduit.value = !!mqReduit?.matches
-    humeurs.reduit = reduit.value
+  let mqReduced: MediaQueryList | null = null
+  const updateReduced = () => {
+    reduced.value = !!mqReduced?.matches
+    moods.reduced = reduced.value
   }
   if (typeof window !== 'undefined' && window.matchMedia) {
-    mqReduit = window.matchMedia('(prefers-reduced-motion: reduce)')
-    majReduit()
-    mqReduit.addEventListener?.('change', majReduit)
+    mqReduced = window.matchMedia('(prefers-reduced-motion: reduce)')
+    updateReduced()
+    mqReduced.addEventListener?.('change', updateReduced)
   }
-  rendre(dessin(), hote)
+  render(drawing(), host)
 
   if (props.frozenAt !== undefined) redrawFrozen()
   else {
-    if (props.coucou) {
+    if (props.wave) {
       // mouvement reduit : un simple fondu ; sinon la reaction fait grandir le Mochi
-      if (reduit.value) (svg as SVGSVGElement | null)?.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 400, easing: 'ease-out' })
-      else humeurs.react(REACTION_DE_EVENEMENT.arrivee, clock)
+      if (reduced.value) (svg as SVGSVGElement | null)?.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 400, easing: 'ease-out' })
+      else moods.react(REACTION_FOR_EVENT.arrival, clock)
     }
     // le curseur peut arriver deja pose
     apply(block.value, elapsed.value)
     raf = requestAnimationFrame(tick)
   }
 
-  surNettoyage(() => {
+  onCleanup(() => {
     cancelAnimationFrame(raf)
     detach()
-    clearTimeout(appui?.minuteur)
-    window.removeEventListener('pointermove', onGlisse)
-    window.removeEventListener('pointerup', onRelache)
-    window.removeEventListener('pointercancel', onRelache)
-    mqReduit?.removeEventListener?.('change', majReduit)
+    clearTimeout(press?.timer)
+    window.removeEventListener('pointermove', onDrag)
+    window.removeEventListener('pointerup', onReleased)
+    window.removeEventListener('pointercancel', onReleased)
+    mqReduced?.removeEventListener?.('change', updateReduced)
   })
 
-  return { seek, rendAt, setMood, react, relacher, regarder }
+  return { seek, renderAt, setMood, react, release, lookAt }
 }

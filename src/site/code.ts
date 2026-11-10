@@ -4,33 +4,33 @@
  * TOUJOURS echappe avant d'etre enveloppe, le resultat peut donc aller dans `innerHTML` sans risque.
  */
 
-const echapper = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-const MOTS = 'import|from|export|const|let|new|function|return|await|async|type|interface|if|else|true|false|null|undefined'
+const WORDS = 'import|from|export|const|let|new|function|return|await|async|type|interface|if|else|true|false|null|undefined'
 
-const JETON = new RegExp(
+const TOKEN = new RegExp(
   [
     '(?<com><!--[\\s\\S]*?-->|\\/\\/[^\\n]*|^#[^\\n]*)',
     '(?<str>"(?:[^"\\\\\\n]|\\\\.)*"|\'(?:[^\'\\\\\\n]|\\\\.)*\'|`(?:[^`\\\\]|\\\\.)*`)',
     '(?<tag><\\/?[A-Za-z][\\w-]*|\\/?>)',
     '(?<attr>[:@]?[A-Za-z][\\w-]*(?==))',
-    `(?<mot>\\b(?:${MOTS})\\b)`,
+    `(?<word>\\b(?:${WORDS})\\b)`,
     '(?<num>\\b\\d+(?:\\.\\d+)?\\b)',
     '(?<cmd>^\\$ )'
   ].join('|'),
   'gm'
 )
 
-export function surligner(code: string): string {
+export function highlight(code: string): string {
   let out = ''
-  let dernier = 0
-  for (const m of code.matchAll(JETON)) {
+  let last = 0
+  for (const m of code.matchAll(TOKEN)) {
     const i = m.index ?? 0
-    out += echapper(code.slice(dernier, i))
+    out += escape(code.slice(last, i))
     const g = m.groups ?? {}
-    const classe = g.com ? 'c-com' : g.str ? 'c-str' : g.tag ? 'c-tag' : g.attr ? 'c-attr' : g.mot ? 'c-mot' : g.num ? 'c-num' : 'c-cmd'
-    out += `<span class="${classe}">${echapper(m[0])}</span>`
-    dernier = i + m[0].length
+    const cls = g.com ? 'c-com' : g.str ? 'c-str' : g.tag ? 'c-tag' : g.attr ? 'c-attr' : g.word ? 'c-word' : g.num ? 'c-num' : 'c-cmd'
+    out += `<span class="${cls}">${escape(m[0])}</span>`
+    last = i + m[0].length
   }
-  return out + echapper(code.slice(dernier))
+  return out + escape(code.slice(last))
 }

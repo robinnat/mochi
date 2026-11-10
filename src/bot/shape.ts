@@ -238,8 +238,8 @@ export function unionOfCirclesProfile(circles: Array<{ x: number; y: number; r: 
  * rayon `rc`. Les sommets sont donc a poser au rayon voulu MOINS rc.
  * Attend un polygone en sens horaire (repere ecran, y vers le bas).
  */
-function roundedPolygon(verts: Point[], rc: number, arcSteps = 10): Point[] {
-  const n = verts.length
+function roundedPolygon(green: Point[], rc: number, arcSteps = 10): Point[] {
+  const n = green.length
   const out: Point[] = []
   const normal = (a: Point, b: Point) => {
     const dx = b.x - a.x
@@ -249,9 +249,9 @@ function roundedPolygon(verts: Point[], rc: number, arcSteps = 10): Point[] {
     return Math.atan2(-dx / len, dy / len)
   }
   for (let i = 0; i < n; i++) {
-    const prev = verts[(i - 1 + n) % n]!
-    const cur = verts[i]!
-    const next = verts[(i + 1) % n]!
+    const prev = green[(i - 1 + n) % n]!
+    const cur = green[i]!
+    const next = green[(i + 1) % n]!
     const a0 = normal(prev, cur)
     const a1 = normal(cur, next)
     let d = a1 - a0
@@ -273,12 +273,12 @@ export function regularPolygonProfile(
   rotationDeg = 0
 ): number[] {
   const rot = (rotationDeg * Math.PI) / 180
-  const verts = Array.from({ length: sides }, (_, i) => {
+  const green = Array.from({ length: sides }, (_, i) => {
     // sens horaire a l'ecran : theta croissant avec y vers le bas
     const a = rot + (i / sides) * TAU
     return { x: Math.cos(a) * (radius - rc), y: Math.sin(a) * (radius - rc) }
   })
-  return profileFromPolygon(roundedPolygon(verts, rc), 0, 0)
+  return profileFromPolygon(roundedPolygon(green, rc), 0, 0)
 }
 
 /** Polyligne fermee exacte : garde les segments droits (contrairement a closedPath). */
@@ -313,7 +313,7 @@ export function capsulePath(w: number, h: number): string {
  * Oeil « croissant » : la gelule couchee (largeur >= hauteur) cintree en arche, les bouts vers le
  * bas (^ ^), pour l'oeil content, le rire, les yeux fermes de plaisir. `arc` va de 0 (gelule
  * droite) a 1 (arche pleine) : c'est ce qui permet de glisser d'une expression a l'autre sans
- * saut. Meme boite que `capsulePath`, donc les memes mesures (`demiEtendueOeil`) valent.
+ * saut. Meme boite que `capsulePath`, donc les memes mesures (`halfExtentEye`) valent.
  */
 export function arcPath(w: number, h: number, arc: number): string {
   const hw = Math.max(w, 0.01) / 2
@@ -321,16 +321,16 @@ export function arcPath(w: number, h: number, arc: number): string {
   const r = Math.min(hw, hh)
   const bend = arc * 0.7 * Math.max(hw, hh)
   const N = 20
-  const haut: string[] = []
-  const bas: string[] = []
+  const top: string[] = []
+  const neck: string[] = []
   for (let i = 0; i <= N; i++) {
     // les points se resserrent aux bouts, la ou la courbure est la plus forte
     const x = hw * Math.sin(Math.PI * (i / N - 0.5))
     const dx = Math.max(0, Math.abs(x) - (hw - r))
-    const demi = hh - r + Math.sqrt(Math.max(0, r * r - dx * dx))
-    const cintre = bend * (x / hw) ** 2 - bend * 0.5
-    haut.push(`${r2(x)} ${r2(-demi + cintre)}`)
-    bas.unshift(`${r2(x)} ${r2(demi + cintre)}`)
+    const half = hh - r + Math.sqrt(Math.max(0, r * r - dx * dx))
+    const waisted = bend * (x / hw) ** 2 - bend * 0.5
+    top.push(`${r2(x)} ${r2(-half + waisted)}`)
+    neck.unshift(`${r2(x)} ${r2(half + waisted)}`)
   }
-  return `M${haut.join('L')}L${bas.join('L')}Z`
+  return `M${top.join('L')}L${neck.join('L')}Z`
 }

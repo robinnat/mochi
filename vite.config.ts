@@ -15,7 +15,7 @@ export default defineConfig({
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         docs: fileURLToPath(new URL('./docs.html', import.meta.url)),
         app: fileURLToPath(new URL('./app.html', import.meta.url)),
-        labo: fileURLToPath(new URL('./labo.html', import.meta.url))
+        lab: fileURLToPath(new URL('./lab.html', import.meta.url))
       },
       output: {
         // mediabunny (export video) et three dans leurs propres morceaux : sinon l'outil de decoupage range ses petites

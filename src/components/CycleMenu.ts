@@ -1,7 +1,7 @@
-import { ref, watch } from '@/ui/dom/reactif'
-import { h, surDemontage, type Composant } from '@/ui/dom/h'
+import { ref, watch } from '@/ui/dom/reactive'
+import { h, onUnmount, type Component } from '@/ui/dom/h'
 import type { Cycle } from '@/bot/cycles'
-import { nomDeCycle, t } from '@/i18n'
+import { nameOfCycle, t } from '@/i18n'
 
 /**
  * Choix du montage. Un `<select>` natif ne peut pas porter la ligne « Nouveau » ni la suppression d'une entree,
@@ -17,7 +17,7 @@ export interface CycleMenuProps {
   onRename: (id: string) => void
 }
 
-export const CycleMenu: Composant<CycleMenuProps> = (props) => {
+export const CycleMenu: Component<CycleMenuProps> = (props) => {
   const open = ref(false)
   let root: HTMLElement | null = null
 
@@ -36,7 +36,7 @@ export const CycleMenu: Composant<CycleMenuProps> = (props) => {
     if (on) window.addEventListener('pointerdown', onOutside)
     else window.removeEventListener('pointerdown', onOutside)
   })
-  surDemontage(() => window.removeEventListener('pointerdown', onOutside))
+  onUnmount(() => window.removeEventListener('pointerdown', onOutside))
 
   return () =>
     h(
@@ -56,10 +56,10 @@ export const CycleMenu: Composant<CycleMenuProps> = (props) => {
           class: 'flex max-w-56 cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-left text-sm font-medium transition hover:bg-black/5',
           'aria-haspopup': 'true',
           'aria-expanded': open.value,
-          title: nomDeCycle(props.current),
+          title: nameOfCycle(props.current),
           onClick: () => (open.value = !open.value)
         },
-        h('span', { class: 'tronque' }, nomDeCycle(props.current)),
+        h('span', { class: 'truncated' }, nameOfCycle(props.current)),
         h(
           'svg',
           { width: '10', height: '10', viewBox: '0 0 10 10', 'aria-hidden': 'true', class: 'shrink-0 text-[var(--muted)]' },
@@ -80,11 +80,11 @@ export const CycleMenu: Composant<CycleMenuProps> = (props) => {
                   {
                     type: 'button',
                     class: 'flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition hover:bg-black/5',
-                    title: nomDeCycle(cy),
+                    title: nameOfCycle(cy),
                     onClick: () => choose(cy.id)
                   },
                   h('span', { class: 'w-3 shrink-0 text-[var(--ink)]' }, cy.id === props.activeId ? '✓' : ''),
-                  h('span', { class: 'tronque' }, nomDeCycle(cy))
+                  h('span', { class: 'truncated' }, nameOfCycle(cy))
                 ),
                 h(
                   'button',
@@ -92,7 +92,7 @@ export const CycleMenu: Composant<CycleMenuProps> = (props) => {
                     type: 'button',
                     class:
                       'flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--muted)] opacity-0 transition group-hover/row:opacity-100 hover:bg-black/5 hover:text-[var(--ink)] focus-visible:opacity-100',
-                    'aria-label': t('cycles.menuRenameAria', { name: nomDeCycle(cy) }),
+                    'aria-label': t('cycles.menuRenameAria', { name: nameOfCycle(cy) }),
                     onClick: () => {
                       open.value = false
                       props.onRename(cy.id)
@@ -112,7 +112,7 @@ export const CycleMenu: Composant<CycleMenuProps> = (props) => {
                         type: 'button',
                         class:
                           'mr-1 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--muted)] opacity-0 transition group-hover/row:opacity-100 hover:bg-black/5 hover:text-[var(--danger)] focus-visible:opacity-100',
-                        'aria-label': t('cycles.menuRemoveAria', { name: nomDeCycle(cy) }),
+                        'aria-label': t('cycles.menuRemoveAria', { name: nameOfCycle(cy) }),
                         onClick: () => {
                           open.value = false
                           props.onRemove(cy.id)

@@ -73,13 +73,13 @@ export const TURN_TIME = 1.1
  * Ce n'est donc pas une liste de gouts : y ajouter « curieux » (roulis -15deg)
  * ramenerait le saut.
  */
-export const HUMEURS: readonly ExpressionId[] = [
-  'surpris',
-  'heureux',
-  'hilare',
-  'excite',
-  'fier',
-  'blase'
+export const MOODS: readonly ExpressionId[] = [
+  'surprised',
+  'happy',
+  'laughing',
+  'excited',
+  'proud',
+  'unimpressed'
 ]
 
 /* ------------------------------------------------ regards de l'arrivee */
@@ -120,15 +120,15 @@ export type GazeScript = (t: number) => Look
  *
  * Corollaire indispensable : ce tour ne se joue que sur un CERCLE. Les yeux sont
  * recolles au contour reel (`radiusAtAngle`), donc sur une forme non circulaire
- * ils suivent le profil en tournant et sautillent. Voir `forme` dans `App.ts`.
+ * ils suivent le profil en tournant et sautillent. Voir `shape` dans `App.ts`.
  */
-export const TOUR_TIME = 1.5
+export const SPIN_TIME = 1.5
 
-export const tourLook: GazeScript = (t) => ({
+export const turnLook: GazeScript = (t) => ({
   yaw: 0,
   pitch: 0,
   mix: 0,
-  spin: SPIN * (1 - easings.easeInOutCubic(clamp(t / TOUR_TIME))),
+  spin: SPIN * (1 - easings.easeInOutCubic(clamp(t / SPIN_TIME))),
   wander: 1
 })
 
@@ -138,7 +138,7 @@ export interface Aim {
   /** ecart vertical, -1 a 1, dans le sens de l'ecran (bas positif) */
   ny: number
   /** avancement de l'arrivee, 0 a 1 */
-  tour: number
+  turn: number
   /** false = aucun pointeur connu : la tete reste tournee, mais elle revit */
   pointer: boolean
 }
@@ -146,7 +146,7 @@ export interface Aim {
 /**
  * Cible de regard.
  *
- * `tour` mene tout : il fait monter l'emprise sur la pose (`mix`) et fondre le
+ * `turn` mene tout : il fait monter l'emprise sur la pose (`mix`) et fondre le
  * tour parcouru (`spin`) en meme temps. A 0 la pose de l'etat commande seule ; a
  * 1 la tete est posee a gauche et suit le curseur.
  *
@@ -155,13 +155,13 @@ export interface Aim {
  * lire le lacet d'ARRIVEE de l'expression pendant que le moteur, lui, morphe
  * encore — et les yeux sautaient a chaque changement d'humeur.
  */
-export function lookTarget({ nx, ny, tour, pointer }: Aim): Look {
+export function lookTarget({ nx, ny, turn, pointer }: Aim): Look {
   return {
     yaw: -TURN + nx * YAW_MAX,
     // tangage positif = regard vers le haut, alors que le y de l'ecran descend
     pitch: PITCH - ny * PITCH_MAX,
-    mix: tour,
-    spin: SPIN * (1 - tour),
+    mix: turn,
+    spin: SPIN * (1 - turn),
     // Sans pointeur la tete reste tournee vers le panneau, mais on lui rend sa
     // derive : sinon le bot fixe un point mort, et arriver au clavier ou au
     // tactile donnait un avatar completement immobile.

@@ -1,32 +1,32 @@
-import { computed, ref, watchEffect } from '@/ui/dom/reactif'
-import { ecris, lis } from '@/ui/stockage'
-import { formePlurielle, interpoler } from './format'
-import { choisirLangue, estLangue, type Langue, tagDe } from './langues'
+import { computed, ref, watchEffect } from '@/ui/dom/reactive'
+import { write, read } from '@/ui/storage'
+import { pluralForm, interpolate } from './format'
+import { pickLanguage, isLanguage, type Language, tagOf } from './languages'
 import fr from './locales/fr'
 import en from './locales/en'
 import zh from './locales/zh'
 
-export { LANGUES, type Langue } from './langues'
+export { LANGUAGES, type Language } from './languages'
 
 /**
- * `Record<Langue, typeof fr>` et pas un objet libre : ajouter une langue a
- * `LANGUES` sans ecrire son dictionnaire devient une erreur de compilation.
+ * `Record<Language, typeof fr>` et pas un objet libre : ajouter une langue a
+ * `LANGUAGES` sans ecrire son dictionnaire devient une erreur de compilation.
  */
-const dictionnaires: Record<Langue, typeof fr> = { fr, en, zh }
+const dictionaries: Record<Language, typeof fr> = { fr, en, zh }
 
 /**
  * Chemins pointes du dictionnaire. C'est ce type qui fait que `t('reglage.x')`
  * ne compile pas : la signature de `t` n'accepte rien d'autre qu'une cle qui
  * existe vraiment dans `fr.ts`.
  */
-type Chemins<T, P extends string = ''> = {
-  [K in keyof T & string]: T[K] extends string ? `${P}${K}` : Chemins<T[K], `${P}${K}.`>
+type Paths<T, P extends string = ''> = {
+  [K in keyof T & string]: T[K] extends string ? `${P}${K}` : Paths<T[K], `${P}${K}.`>
 }[keyof T & string]
 
-export type Cle = Chemins<typeof fr>
+export type Key = Paths<typeof fr>
 
-const courante = ref<Langue>(
-  choisirLangue(lis('langue'), navigator.languages ?? [navigator.language])
+const current = ref<Language>(
+  pickLanguage(read('language'), navigator.languages ?? [navigator.language])
 )
 
 /**
@@ -37,34 +37,34 @@ const courante = ref<Langue>(
  * l'anglais pour toujours, alors que la detection doit rester une hypothese
  * qu'on refait a chaque visite tant que l'utilisateur n'a pas tranche.
  */
-export const langue = computed<Langue>({
-  get: () => courante.value,
-  set: (valeur) => {
-    if (!estLangue(valeur)) return
-    courante.value = valeur
-    ecris('langue', valeur)
+export const language = computed<Language>({
+  get: () => current.value,
+  set: (value) => {
+    if (!isLanguage(value)) return
+    current.value = value
+    write('language', value)
   }
 })
 
-const dictionnaire = computed(() => dictionnaires[courante.value])
+const dictionary = computed(() => dictionaries[current.value])
 
 /** Etiquette BCP 47 de la langue courante, pour `Intl` et l'attribut `lang`. */
-const tag = computed(() => tagDe(courante.value))
+const tag = computed(() => tagOf(current.value))
 
 /**
  * L'attribut `lang` du document suit la langue : c'est lui qui fait choisir la
  * bonne voix au lecteur d'ecran et les bonnes regles de cesure. Le titre de
  * l'onglet suit aussi — `index.html` ne peut en porter qu'un, statique.
  */
-let documentSuivi = false
+let documentTracking = false
 /**
  * L'APPLICATION (et elle seule) suit sa langue sur la page : attribut `lang` et titre. Ce n'est pas fait a
  * l'import : le composant `<mochi-bot>` importe ce module pour son texte alternatif, et une page hote (le site,
  * les docs, l'app d'un utilisateur) ne doit jamais voir sa langue ni son titre reecrits par lui.
  */
-export function suivreLangueDocument() {
-  if (documentSuivi) return
-  documentSuivi = true
+export function followLanguageDocument() {
+  if (documentTracking) return
+  documentTracking = true
   watchEffect(() => {
     document.documentElement.lang = tag.value
     document.title = t('app.title')
@@ -72,14 +72,14 @@ export function suivreLangueDocument() {
 }
 
 /** Les formateurs sont chers a construire et relus a chaque image de la piste. */
-const formateurs = new Map<string, Intl.NumberFormat>()
+const formatters = new Map<string, Intl.NumberFormat>()
 
-function formateur(cle: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
-  const memo = `${tag.value}:${cle}`
-  let f = formateurs.get(memo)
+function formatter(key: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
+  const memo = `${tag.value}:${key}`
+  let f = formatters.get(memo)
   if (!f) {
     f = new Intl.NumberFormat(tag.value, options)
-    formateurs.set(memo, f)
+    formatters.set(memo, f)
   }
   return f
 }
@@ -90,11 +90,11 @@ function formateur(cle: string, options: Intl.NumberFormatOptions): Intl.NumberF
  * `.replace('.', ',')` qui tenait lieu de formatage etait donc faux des qu'on
  * quittait le francais.
  */
-export function nombre(valeur: number, decimales = 0): string {
-  return formateur(`n${decimales}`, {
-    minimumFractionDigits: decimales,
-    maximumFractionDigits: decimales
-  }).format(valeur)
+export function number(value: number, decimals = 0): string {
+  return formatter(`n${decimals}`, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(value)
 }
 
 /**
@@ -102,25 +102,25 @@ export function nombre(valeur: number, decimales = 0): string {
  * avant le signe, l'anglais et le chinois le collent — `Intl` connait la regle,
  * la concatenation non.
  */
-export function pourcentage(fraction: number): string {
-  return formateur('%', { style: 'percent', maximumFractionDigits: 0 }).format(fraction)
+export function percentage(fraction: number): string {
+  return formatter('%', { style: 'percent', maximumFractionDigits: 0 }).format(fraction)
 }
 
-function brut(cle: Cle): string {
-  const noeud = cle
+function raw(key: Key): string {
+  const bow = key
     .split('.')
-    .reduce<unknown>((n, k) => (n as Record<string, unknown>)[k], dictionnaire.value)
-  return noeud as string
+    .reduce<unknown>((n, k) => (n as Record<string, unknown>)[k], dictionary.value)
+  return bow as string
 }
 
 /** `t('panel.shape')`, `t('cycles.menuRenameAria', { name })`. */
-export function t(cle: Cle, valeurs?: Record<string, string | number>): string {
-  return interpoler(brut(cle), valeurs)
+export function t(key: Key, values?: Record<string, string | number>): string {
+  return interpolate(raw(key), values)
 }
 
 /** Pluriel : `n` est toujours disponible comme `{n}` dans le gabarit. */
-export function pluriel(cle: Cle, n: number, valeurs?: Record<string, string | number>): string {
-  return interpoler(formePlurielle(brut(cle), n, tag.value), { n, ...valeurs })
+export function plural(key: Key, n: number, values?: Record<string, string | number>): string {
+  return interpolate(pluralForm(raw(key), n, tag.value), { n, ...values })
 }
 
 /**
@@ -128,19 +128,19 @@ export function pluriel(cle: Cle, n: number, valeurs?: Record<string, string | n
  * n'a jamais nomme : il suit donc la langue. Type structurel plutot que `Cycle`
  * importe, pour que la couche i18n ne depende pas de `src/bot/`.
  */
-export function nomDeCycle(cycle: { name: string }): string {
+export function nameOfCycle(cycle: { name: string }): string {
   return cycle.name || t('cycles.defaultName')
 }
 
 /** Duree lisible : `2,4 s`, `2.4 s`, `2.4 秒`. */
-export function secondes(valeur: number): string {
-  return t('units.seconds', { n: nombre(valeur, 1) })
+export function seconds(value: number): string {
+  return t('units.seconds', { n: number(value, 1) })
 }
 
 /**
  * Meme duree, serree, pour la graduation de la regle : elle est chiffree tous
  * les 52 px et une espace de plus y ferait chevaucher les etiquettes.
  */
-export function secondesCourtes(valeur: number, decimales: number): string {
-  return t('units.secondsShort', { n: nombre(valeur, decimales) })
+export function secondsShort(value: number, decimals: number): string {
+  return t('units.secondsShort', { n: number(value, decimals) })
 }

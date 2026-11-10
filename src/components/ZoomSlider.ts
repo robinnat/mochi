@@ -1,6 +1,6 @@
-import { computed } from '@/ui/dom/reactif'
-import { h, type Composant } from '@/ui/dom/h'
-import { pourcentage, t } from '@/i18n'
+import { computed } from '@/ui/dom/reactive'
+import { h, type Component } from '@/ui/dom/h'
+import { percentage, t } from '@/i18n'
 
 /**
  * Reglage de la loupe de la piste. Un `<input type="range">` natif plutot qu'un curseur maison : il apporte le
@@ -13,8 +13,8 @@ export interface ZoomSliderProps {
   onZoom: (v: number) => void
 }
 
-export const ZoomSlider: Composant<ZoomSliderProps> = (props) => {
-  const percent = computed(() => pourcentage(props.zoom))
+export const ZoomSlider: Component<ZoomSliderProps> = (props) => {
+  const percent = computed(() => percentage(props.zoom))
   return () =>
     h(
       'div',
