@@ -1,5 +1,17 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
+
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
+/**
+ * License notice at the top of every built file (minification removes comments, so it is added after it). The MIT
+ * license asks for the notice in every copy, and the docs tell users to ship it: the files must carry it.
+ */
+export function licenseNotice(standalone: boolean): string {
+  const own = `Mochiz ${version} | MIT License | Copyright (c) 2026 SYGEN SAS, Copyright (c) 2026 Jérémy Perret | https://github.com/robinnat/mochiz`
+  const three = standalone ? ' | Includes Three.js, MIT License, Copyright (c) 2010-2026 three.js authors | https://threejs.org' : ''
+  return `/*! ${own}${three} */`
+}
 
 /**
  * Library only (`pnpm build:lib`). Two builds of the same two public entries, `mochiz` (the `<mochi-bot>` Web
@@ -24,7 +36,7 @@ export default defineConfig(({ mode }) => {
       rolldownOptions: {
         // minified like the site (v13): the files are often served as is (`<script type="module">`). Vite leaves the
         // whitespace of ES libraries by default, so the output asks for it.
-        output: { minify: true },
+        output: { minify: true, postBanner: licenseNotice(standalone) },
         // the npm build leaves Three.js to the project (peer dependency); the add-ons we use stay inside, pointed at
         // the same `three/src` files, so there is still one copy of each class
         external: standalone ? [] : [/^three\/src\//]
