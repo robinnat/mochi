@@ -1,7 +1,7 @@
 {
   "name": "mochis",
   "version": "0.2.0",
-  "description": "Mochis: animated avatars for the web. A <mochi-bot> Web Component that draws a Mochi in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch and 23 accessories. No framework needed.",
+  "description": "Mochis: animated avatars for the web. A <mochi-bot> Web Component that draws a Mochi in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch and 22 accessories. No framework needed.",
   "license": "MIT",
   "author": "SYGEN SAS",
   "repository": {
@@ -57,7 +57,13 @@
     "./dist-lib/standalone/mochis.js"
   ],
   "peerDependencies": {
+    "@types/three": "^0.187.0",
     "three": "^0.187.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/three": {
+      "optional": true
+    }
   },
   "packageManager": "pnpm@11.17.0",
   "engines": {

@@ -22,7 +22,7 @@ Three.js is a peer dependency: your project installs it once, and Mochis uses th
 import 'mochis'
 ```
 
-That is all. TypeScript types come with the package: `document.querySelector('mochi-bot')` is typed, and so are the catalogs. The 3D part loads by itself, only when a Mochi is shown.
+That is all. TypeScript types come with the package: `document.querySelector('mochi-bot')` is typed, and so are the catalogs. If your `tsconfig.json` sets `skipLibCheck` to `false`, also install the Three.js types: `npm install -D @types/three`. The 3D part loads by itself, only when a Mochi is shown.
 
 To build a picker without loading the tag, import the catalogs alone:
 
