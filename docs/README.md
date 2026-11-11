@@ -1,6 +1,6 @@
 # Mochis documentation
 
-These pages are the documentation of Mochis. The website shows exactly the same pages at [/docs](https://mochi-red-phi.vercel.app/docs): it is built from these files.
+These pages are the documentation of Mochis. The website shows exactly the same pages at [/docs](https://mochiz.vercel.app/docs): it is built from these files.
 
 ## Use Mochis
 

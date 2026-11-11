@@ -12,7 +12,7 @@ import { closedPath, toPoints } from './bot/shape'
 /* --------------------------------------------------------- shared settings */
 export { currentTheme, type ThemeSetting } from './ui/3d/currentTheme'
 export { contrast, THEMES, type Theme } from './ui/3d/theme'
-export { currentRenderStyle, currentOutline, RENDER_STYLES, DEFAULT_RENDER_STYLE, PIXEL_SIZES, type RenderStyleId, type PixelSizeId } from './ui/renderStyle'
+export { currentRenderStyle, RENDER_STYLES, DEFAULT_RENDER_STYLE, PIXEL_SIZES, type RenderStyleId, type PixelSizeId } from './ui/renderStyle'
 export type { Softness } from './ui/3d/material'
 
 /* --------------------------------------------------------------- catalogs */

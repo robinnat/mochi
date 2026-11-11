@@ -48,9 +48,6 @@ import {
   colorOutline,
   lightingFlat,
   outlineWidthPx,
-  DEFAULT_OUTLINE_WIDTH,
-  MAX_OUTLINE_WIDTH,
-  MIN_OUTLINE_WIDTH,
   finesseOf,
   gradientMap,
   meshOf,
@@ -60,7 +57,6 @@ import {
   type Material,
   DEFAULT_MATERIAL
 } from './material'
-import { paintHighlight, DEFAULT_HIGHLIGHT, type Highlight } from './highlight'
 import { accessoriesDark, MIN_EYE_CONTRAST, bodyForTheme, eyeColor, EYE_RGB, DEFAULT_THEME, type Theme } from './theme'
 import {
   centerOf,
@@ -151,15 +147,10 @@ export class Mochi3d {
   private readonly shell: Mesh<BufferGeometry, MeshBasicMaterial>
   private renderStyle: Material = DEFAULT_MATERIAL
   private softness: Softness = DEFAULT_SOFTNESS
-  /** small soft highlight at the top left (`soft` material only) */
-  /** soft highlight in the shader: 1 = on (uniform shared by this body's materials) */
-  private readonly uHighlight = { value: 1 }
   /** black eyes (dark theme): 1 = no emission, no glow added on the eyes */
   private readonly uEye = { value: 0 }
   /** half thickness of the outline, in engine units (shell uniform) */
   private readonly thickness = { value: 4.5 }
-  /** outline thickness factor (1 = the base thickness) */
-  private factorOutline = 1
   /** last painted outline and face: unchanged from one frame to the next, nothing is redone */
   private keyFace = ''
   /** Bottom of the body, Three space (y up): where it touches the ground. */
@@ -229,8 +220,8 @@ export class Mochi3d {
       // the toon shader can derive a normal per facet; only the typing does not declare it
       if (flat.facets) (m as unknown as { flatShading: boolean }).flatShading = true
     }
-    // continuous shading (AO, rims, highlight) only makes sense for the soft material: flat styles keep their clean tones
-    if (!flat || flat.smooth) rim(m, flat ? 0.7 : 0.5, flat ? 0.32 : 0.22, { highlight: this.uHighlight, ao: 1, eye: this.uEye })
+    // continuous shading (AO, rims) only makes sense for the soft material: flat styles keep their clean tones
+    if (!flat || flat.smooth) rim(m, flat ? 0.7 : 0.5, flat ? 0.32 : 0.22, { ao: 1, eye: this.uEye })
     m.emissiveIntensity = this.emission(m)
     this.materials.set(key, m)
     return m
@@ -247,14 +238,16 @@ export class Mochi3d {
     this.shading = yes
   }
 
-  /** Chooses the material: material, mesh and outline. Called before `update`. */
-  setRenderStyle(r: Material, outline = false, softness: Softness = DEFAULT_SOFTNESS, highlight = DEFAULT_HIGHLIGHT) {
+  /**
+   * Chooses the material. Called after `setShading` and before `update`. `shading` on = relief, off = one flat
+   * color. There is no highlight spot (removed on 11/11/2026).
+   */
+  setRenderStyle(r: Material, softness: Softness = DEFAULT_SOFTNESS) {
     this.renderStyle = r
     this.softness = softness
-    this.uHighlight.value = highlight && settingFlat(r, softness)?.smooth ? 1 : 0
     this.mesh.material = this.shading ? this.mat(r, softness) : this.flat()
-    // the cartoon outline is an option of the flat variants (never of realistic)
-    this.shell.visible = !!settingFlat(r, softness) && (outline || !!settingFlat(r, softness)?.outline)
+    // the inverted shell only belongs to the internal `toon-outline` material (out of the public styles)
+    this.shell.visible = !!settingFlat(r, softness)?.outline
   }
 
   /**
@@ -263,12 +256,7 @@ export class Mochi3d {
    */
   fitOutline(pxByUnit: number) {
     const diameter = 2 * 100 * pxByUnit
-    this.thickness.value = (outlineWidthPx(diameter) * this.factorOutline) / Math.max(1e-6, pxByUnit)
-  }
-
-  /** Outline thickness factor (1 = the base thickness). Called before `fitOutline`. */
-  setOutlineWidth(k: number) {
-    this.factorOutline = Number.isFinite(k) ? Math.min(MAX_OUTLINE_WIDTH, Math.max(MIN_OUTLINE_WIDTH, k)) : DEFAULT_OUTLINE_WIDTH
+    this.thickness.value = outlineWidthPx(diameter) / Math.max(1e-6, pxByUnit)
   }
 
   /** Forces a volume profile (trying an alternative profile); `null` goes back to the shape's. */
@@ -373,7 +361,7 @@ export class Mochi3d {
     frame = this.eyesOnFace(frame)
     const flat0 = settingFlat(this.renderStyle, this.softness)
     // accessories by slot: anchored on the volume of THIS body, recomputed when the body changes
-    this.acc3d.settings = flat0?.smooth ? { force: 0.7, top: 0.32, ao: 1, highlight: this.uHighlight } : null
+    this.acc3d.settings = flat0?.smooth ? { force: 0.7, top: 0.32, ao: 1 } : null
     this.acc3d.body = color
     // v12: pieces are no longer rebuilt every frame (the body outline changes on every breath:
     // ray casting and geometries redone 60 times per second). They are built for the shape and style, on the
@@ -388,17 +376,14 @@ export class Mochi3d {
     // the accessory outline follows the body's (same visibility, same thickness)
     this.acc3d.outline(this.shell.visible, this.thickness.value)
     const shadows: Shadow[] = this.acc3d.shadows
-    // the soft highlight is a material effect (shader, camera space): nothing is painted in the
-    // texture outside the eyes any more, so the back and sides get the same shading as the face
-    const highlight = null as Highlight | null
-    const keyHighlight = highlight ? [highlight.x, highlight.y, highlight.rx].map((v) => Math.round(v * 2)).join(',') : '-'
+    // nothing but the eyes is painted in the texture, so the back and sides get the same shading as the face
     const eyesPainted = frameFace ?? frame
     const cheeks = frameFace?.face?.cheeks ?? 0
-    const keyFace = `${this.renderStyle}|${this.softness}|${this.shading}|${this.theme}|${color}|${paper}|${JSON.stringify(eyesPainted.eyes)}|${cheeks.toFixed(2)}|${keyHighlight}|${shadows.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
+    const keyFace = `${this.renderStyle}|${this.softness}|${this.shading}|${this.theme}|${color}|${paper}|${JSON.stringify(eyesPainted.eyes)}|${cheeks.toFixed(2)}|${shadows.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
     if (keyFace !== this.keyFace) {
       this.keyFace = keyFace
       // flat keeps the chosen color as is (no pastel), with no eye hollow
-      this.paint(eyesPainted, flat ? color : m.base, paper, m.hollow, !flat && this.theme === 'light' && this.shading, highlight, shadows, cheeks)
+      this.paint(eyesPainted, flat ? color : m.base, paper, m.hollow, !flat && this.theme === 'light' && this.shading, shadows, cheeks)
     }
   }
 
@@ -508,7 +493,7 @@ export class Mochi3d {
   /**
    * The face: the body color, and the eyes in the background color (holes), with an inner shadow on the top-left rim.
    */
-  private paint(frame: BotFrame, base: string, paper: string, hollow: string, carve = true, highlight: Highlight | null = null, shadows: Shadow[] = [], cheeks = 0) {
+  private paint(frame: BotFrame, base: string, paper: string, hollow: string, carve = true, shadows: Shadow[] = [], cheeks = 0) {
     const c = this.ctx
     const T = this.canvas.width
     const k = T / (2 * VB)
@@ -516,8 +501,6 @@ export class Mochi3d {
     c.globalAlpha = 1
     c.fillStyle = base
     c.fillRect(0, 0, T, T)
-    // the highlight is painted BEFORE the eyes: they cover it, it never touches them
-    if (highlight) paintHighlight(c, highlight, k, VB)
     const holes: Array<{ path: Path2D; m: number[]; alpha: number }> = frame.eyes.map((e) => ({
       path: new Path2D(e.d),
       m: readMatrix(e.matrix),
@@ -932,7 +915,7 @@ export function warmUp() {
     ctx3.lights = l.all
     ctx3.renderStyle = r
     ctx3.softness = d
-    mochi.setRenderStyle(r, false, d)
+    mochi.setRenderStyle(r, d)
     renderer.compile(scene, camera)
   }
   // back to the previous state: the next rendered avatar sets its own settings anyway
@@ -972,9 +955,7 @@ export function renderAvatar(
   color: string,
   paper: string,
   material: Material = DEFAULT_MATERIAL,
-  outline = false,
   softness: Softness = DEFAULT_SOFTNESS,
-  highlight = DEFAULT_HIGHLIGHT,
   shape = '',
   yaw = 0,
   accessories: AccessorySelection = {},
@@ -992,8 +973,6 @@ export function renderAvatar(
   shadow = true,
   /** volume model (body shading): on by default; off = flat color */
   shading = true,
-  /** outline thickness factor (1 = the base thickness) */
-  outlineWidth = DEFAULT_OUTLINE_WIDTH,
   /**
  * true: the body is not drawn, only the accessories are (anchored on this invisible body); no shadow or outline
  */
@@ -1034,8 +1013,7 @@ export function renderAvatar(
   }
   mochi.setWithoutBody(withoutBody)
   mochi.setShading(shading)
-  mochi.setRenderStyle(material, outline, softness, highlight)
-  mochi.setOutlineWidth(outlineWidth)
+  mochi.setRenderStyle(material, softness)
   mochi.setShape(shape)
   mochi.setTheme(theme, eyeContrast)
   mochi.setAccessories(accessories)

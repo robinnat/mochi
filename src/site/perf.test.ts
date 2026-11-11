@@ -58,7 +58,7 @@ describe('3D performance (v13)', () => {
     expect(scene).toContain('export function releaseSlot(slot: AvatarSlot)')
     expect(bot).toContain('slot = m.avatarSlot()')
     expect(bot).toContain('m3d.value?.releaseSlot(slot)')
-    expect(bot).toMatch(/props\.outlineWidth, false, undefined, slot \?\? undefined\)/)
+    expect(bot).toMatch(/props\.shading, false, undefined, slot \?\? undefined\)/)
   })
 
   it('a Mochi off screen does not sample nor draw (IntersectionObserver)', () => {

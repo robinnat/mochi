@@ -97,13 +97,24 @@ describe('migration of settings saved with the old French ids', () => {
     expect(read('shape')).toBe('star')
     expect(read('color')).toBe('amber')
     expect(read('language')).toBe('fr')
-    expect(read('outline')).toBe('1')
     expect(read('expression')).toBe('happy')
     expect(read('pixel')).toBe('medium')
+    // the removed outline setting is dropped, under its old and new names
+    expect(heap.has('mochi:outline')).toBe(false)
     // montages are kept untouched (their state ids were already English)
     expect(read('cycles')).toContain('Mon cycle')
     // the old keys are gone: the migration runs once
     expect([...heap.keys()].filter((k) => /forme|couleur|langue|contour/.test(k))).toEqual([])
+  })
+
+  it('drops the removed outline setting and moves the removed large pixel size to medium (11/11/2026)', () => {
+    const heap = memory({ 'mochi:outline': '1', 'mochi:pixel': 'large' })
+    expect(read('pixel')).toBe('medium')
+    expect(heap.has('mochi:outline')).toBe(false)
+    resetMigrationForTests()
+    const heap2 = memory({ 'mochi:pixel': 'gros' })
+    expect(read('pixel')).toBe('medium')
+    expect(heap2.get('mochi:pixel')).toBe('medium')
   })
 
   it('never overwrites a value already saved under the new name', () => {

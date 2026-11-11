@@ -6,7 +6,7 @@
  *
  *   <mochi-bot shape="star" color="#2d5bff" mood="idle" size="200" wave></mochi-bot>
  *
- * - Every option exists as an ATTRIBUTE (kebab-case, text: `frozen-at="1.2"`, `outline`, `highlight="false"`,
+ * - Every option exists as an ATTRIBUTE (kebab-case, text: `frozen-at="1.2"`, `shading="false"`,
  *   `accessories='{"head":"cap"}'`) and as a JavaScript PROPERTY (camelCase, any value:
  *   `el.accessories = { head: 'cap' }`, `el.gesture = (t) => ...`).
  * - Events (`CustomEvent`, no bubbling): `ready` on the first painted 3D frame (or `no3d` if the browser has no
@@ -43,7 +43,7 @@ import { DEFAULT_SOFTNESS, DEFAULT_MATERIAL, type Softness, type Material } from
 import { type Theme } from '@/ui/3d/theme'
 import { resolveTheme } from '@/ui/3d/currentTheme'
 import type { AccessorySelection } from '@/bot/slots'
-import { currentOutline, materialFor, pixelGrid, effectivePixel, effectiveRenderStyle, type RenderStyleId, type PixelSizeId } from '@/ui/renderStyle'
+import { materialFor, pixelGrid, effectivePixel, effectiveRenderStyle, type RenderStyleId, type PixelSizeId } from '@/ui/renderStyle'
 import { computed, within, Scope, ref, untracked, shallowRef, onCleanup, triggerRef, watch, type Ref } from '@/ui/dom/reactive'
 import { h, render, type Child, type VNode } from '@/ui/dom/h'
 
@@ -88,20 +88,17 @@ export interface MochiBotProps {
  */
   renderStyle: RenderStyleId | undefined
   /**
- * Pixel size of the Pixel style (`large`, `medium`, `fine`): resolution of its canvas; absent, the current setting.
+ * Pixel size of the Pixel style (`medium`, `fine`): resolution of its canvas; absent or unknown, the current
+ * setting. The old `large` falls back to `medium`.
  */
   pixel: PixelSizeId | undefined
   /** Shading of the Soft style (`renderStyle` = `3d`): `light` or `strong`. Ignored by Flat and Pixel. */
   softness: Softness
-  /** Cartoon outline of the real 3D; absent, the current setting (`currentOutline`). */
-  outline: boolean | undefined
-  /** Outline thickness (factor: 1 = the base thickness, 0.4 to 4). */
-  outlineWidth: number
-  /** Small soft highlight at the top left of the `soft` 3D material (default: yes). */
-  highlight: boolean
   /** Ground shadow under the body, in 3D (default: yes). */
   shadow: boolean
-  /** Shading of the body volume, in 3D (default: yes). `false`: flat body color, eyes unchanged. */
+  /**
+   * Shading of the body volume, in 3D (default: yes): the relief. `false`: one flat body color, eyes unchanged.
+   */
   shading: boolean
   /** Angle of the body around the vertical axis, in radians (real 3D only). 0 = facing front. */
   yaw: number
@@ -171,9 +168,6 @@ export const PROPERTIES: DefProp[] = [
   { name: 'renderStyle', kind: 'text', initial: d(undefined) },
   { name: 'pixel', kind: 'text', initial: d(undefined) },
   { name: 'softness', kind: 'text', initial: d(DEFAULT_SOFTNESS) },
-  { name: 'outline', kind: 'boolean', initial: d(undefined) },
-  { name: 'outlineWidth', kind: 'number', initial: d(1) },
-  { name: 'highlight', kind: 'boolean', initial: d(true) },
   { name: 'shadow', kind: 'boolean', initial: d(true) },
   { name: 'shading', kind: 'boolean', initial: d(true) },
   { name: 'yaw', kind: 'number', initial: d(0) },
@@ -472,7 +466,6 @@ function mountBot(host: MochiBotElement): Internal {
   /* --------------------------------------------------------- render style */
 
   const renderStyle = computed(() => effectiveRenderStyle(props.renderStyle))
-  const effectiveOutline = computed(() => props.outline ?? currentOutline.value)
   const grid = computed(() => pixelGrid(effectivePixel(props.pixel)))
 
   const engine = new BotEngine(R, state.value, shapeRadii.value, expression.value)
@@ -656,7 +649,7 @@ function mountBot(host: MochiBotElement): Internal {
     if (props.frozenAt === undefined && !driven && readyEmitted && drawnFrame === cadence.frame) return
     drawnFrame = cadence.frame
     const t0 = performance.now()
-    m.renderAvatar(canvas, frame.value, ink.value, props.paper, render3dEff.value, effectiveOutline.value, props.softness, props.highlight, props.shape, props.yaw + 0.3 * turnLaptop(), props.accessories ?? {}, undefined, themeEff.value, undefined, laptopScale(), props.shadow, props.shading, props.outlineWidth, false, undefined, slot ?? undefined)
+    m.renderAvatar(canvas, frame.value, ink.value, props.paper, render3dEff.value, props.softness, props.shape, props.yaw + 0.3 * turnLaptop(), props.accessories ?? {}, undefined, themeEff.value, undefined, laptopScale(), props.shadow, props.shading, false, undefined, slot ?? undefined)
     cadence.cost += performance.now() - t0
     if (!readyEmitted) {
       readyEmitted = true
@@ -684,7 +677,7 @@ function mountBot(host: MochiBotElement): Internal {
   })
 
   watch(
-    [frame, real3d, canvasRef, ink, pxCanvas, render3dEff, () => props.softness, () => props.highlight, () => props.yaw, themeEff, () => props.accessories, () => props.shadow, () => props.shading, () => effectiveOutline.value, () => props.outlineWidth],
+    [frame, real3d, canvasRef, ink, pxCanvas, render3dEff, () => props.softness, () => props.yaw, themeEff, () => props.accessories, () => props.shadow, () => props.shading],
     draw3d,
     { flush: 'post' }
   )

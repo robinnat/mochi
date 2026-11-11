@@ -67,7 +67,7 @@ function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, px: numbe
   // pixel: the app's real grid ("medium" size), scaled up without smoothing
   const pixel = c.renderStyle === 'pixel'
   t.width = t.height = pixel ? Math.round((pixelGrid('medium') * frame) / HALF_VIEWBOX) : px
-  renderAvatar(t, image(c.shape, c.mood, c.state), c.color, PAPER, c.renderStyle ?? 'soft', false, 'strong', true, c.shape, c.yaw ?? 0, c.sel ?? {}, frame, c.theme, c.min)
+  renderAvatar(t, image(c.shape, c.mood, c.state), c.color, PAPER, c.renderStyle ?? 'soft', 'strong', c.shape, c.yaw ?? 0, c.sel ?? {}, frame, c.theme, c.min)
   ctx.imageSmoothingEnabled = !pixel
   ctx.drawImage(t, x, y, px, px)
   ctx.imageSmoothingEnabled = true

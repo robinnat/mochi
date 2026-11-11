@@ -5,6 +5,40 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-11
+
+First version ready for npm (`npm install mochis three`). Not published yet.
+
+### Added (package)
+
+- **npm package `mochis`**: `exports` for `mochis` and `mochis/catalog`, with real TypeScript declarations
+  (`dist-lib/types/`, generated from the sources); `document.querySelector('mochi-bot')` is typed.
+- **Three.js is a peer dependency** (`three` `^0.187.0`): the package build imports it from your project
+  (`three/src/...`, one file per class), so your bundler keeps one copy and only the classes Mochis draws with.
+- **Standalone build** (`mochis/standalone`, `dist-lib/standalone/`): the same two entries with Three.js included, for a
+  plain HTML page (a `<script type="module">` from a CDN or a copied folder).
+- The package only ships `dist-lib/`, the READMEs, the license and this changelog; `sideEffects` names the two files
+  that declare the tag.
+- The website moved to https://mochiz.vercel.app (canonical and `og:url` tags added).
+
+### Removed (breaking)
+
+- **`outline` and `outline-width`** (cartoon outline) and the shared `currentOutline` setting, with the checkbox of
+  `/app`. The thin outline of the Pixel style stays: it is part of the Pixel drawing, not an option.
+- **`highlight`**: the soft shine spot at the top left of the Soft style is gone, always. `shading` only means the
+  relief (`shading="false"`: one flat color).
+- **Pixel size `large`**: `pixel` takes `medium` or `fine` (default `fine`).
+- An old attribute (`outline`, `outline-width`, `highlight`) on a page is simply ignored; an old `pixel="large"` falls
+  back to `medium`. Settings saved in the browser by older versions of `/app` are migrated: the outline setting is
+  dropped, a saved `large` (or `gros`) pixel size becomes `medium` (`src/ui/legacy.ts`).
+- `mediabunny` (video export of `/app`) is no longer a dependency of the package: only the website uses it.
+
+### Fixed (docs)
+
+- `/docs`: the clone URL of the shell examples is no longer colored as a comment, and `#` comments of shell lines are;
+  the side menu lights the section being read (it used to light the next one after a jump to an anchor).
+- `docs/styles.md`: the cadence goes back to every frame below 6 ms (it said 5; the code says `CADENCE_FULL_MS` = 6).
+
 ### Changed (performance)
 
 - **Each Mochi keeps its own 3D body** (meshes, face texture, accessories) while all of them still share one WebGL
@@ -324,4 +358,5 @@ fixed, and the measurement is in the commit that fixes it.
   become public.
 
 [unreleased]: https://github.com/robinnat/mochi/commits/main
+[0.2.0]: https://github.com/robinnat/mochi/commits/main
 [0.1.1]: https://github.com/robinnat/mochi/commits/main

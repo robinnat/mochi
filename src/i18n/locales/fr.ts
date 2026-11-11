@@ -41,8 +41,7 @@ export default {
     expression: 'Expression',
     color: 'Couleur',
     style: 'Style',
-    pixelSize: 'Taille des pixels',
-    outline: 'Contour cartoon'
+    pixelSize: 'Taille des pixels'
   },
 
   /**
@@ -147,7 +146,6 @@ export default {
   },
 
   pixelSizes: {
-    large: 'Gros',
     medium: 'Moyens',
     end: 'Fins'
   },

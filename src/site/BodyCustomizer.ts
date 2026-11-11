@@ -188,7 +188,6 @@ export const BodyCustomizer: Component<Record<string, never>> = () => {
                 shape: b.shape,
                 color: b.color,
                 renderStyle: b.renderStyle,
-                outline: false,
                 mood: b.mood,
                 laptop: b.laptop,
                 accessories: b.accessories,

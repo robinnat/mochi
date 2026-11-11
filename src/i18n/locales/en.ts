@@ -28,8 +28,7 @@ const en: typeof fr = {
     expression: 'Expression',
     color: 'Color',
     style: 'Style',
-    pixelSize: 'Pixel size',
-    outline: 'Cartoon outline'
+    pixelSize: 'Pixel size'
   },
 
   export: {
@@ -128,7 +127,6 @@ const en: typeof fr = {
   },
 
   pixelSizes: {
-    large: 'Large',
     medium: 'Medium',
     end: 'Fine'
   },

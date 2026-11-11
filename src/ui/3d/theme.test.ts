@@ -198,47 +198,19 @@ describe('theme: painting the face (Mochi3d)', () => {
   })
 })
 
-describe('outline thickness (Mochi3d)', () => {
+describe('no outline option any more (11/11/2026)', () => {
   beforeEach(() => {
     fakeDom()
   })
   afterEach(() => vi.unstubAllGlobals())
 
-  const halfThickness = (m: Mochi3d) => (m as unknown as { thickness: { value: number } }).thickness.value
+  const shell = (m: Mochi3d) => (m as unknown as { shell: { visible: boolean } }).shell.visible
 
-  it.each(['soft', 'toon', 'pixel'] as const)('%s: the outline is available, and its thickness follows the factor (1 = base value)', (renderStyle) => {
+  it.each(['soft', 'toon', 'pixel'] as const)('%s: the public styles never show the outline shell', (renderStyle) => {
     const m = new Mochi3d(32)
-    m.setRenderStyle(renderStyle, true)
-    expect((m as unknown as { shell: { visible: boolean } }).shell.visible).toBe(true)
-    m.fitOutline(1)
-    const base = halfThickness(m)
-    m.setOutlineWidth(2)
-    m.fitOutline(1)
-    expect(halfThickness(m)).toBeCloseTo(2 * base, 6)
-    m.setOutlineWidth(0.5)
-    m.fitOutline(1)
-    expect(halfThickness(m)).toBeCloseTo(0.5 * base, 6)
-    m.setOutlineWidth(1)
-    m.fitOutline(1)
-    expect(halfThickness(m)).toBeCloseTo(base, 6)
-  })
-
-  it('the factor is bounded and an absurd value falls back to the default', () => {
-    const m = new Mochi3d(32)
-    m.fitOutline(1)
-    const base = halfThickness(m)
-    m.setOutlineWidth(1000)
-    m.fitOutline(1)
-    expect(halfThickness(m)).toBeCloseTo(base * 4, 6)
-    m.setOutlineWidth(Number.NaN)
-    m.fitOutline(1)
-    expect(halfThickness(m)).toBeCloseTo(base, 6)
-  })
-
-  it('with no outline asked, Soft has no shell', () => {
-    const m = new Mochi3d(32)
-    m.setRenderStyle('soft', false)
-    expect((m as unknown as { shell: { visible: boolean } }).shell.visible).toBe(false)
+    m.setRenderStyle(renderStyle)
+    expect(shell(m)).toBe(false)
+    expect('setOutlineWidth' in m).toBe(false)
   })
 })
 

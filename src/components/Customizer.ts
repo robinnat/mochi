@@ -10,12 +10,10 @@ export interface CustomizerProps {
   color: string
   expression: string
   renderStyle: RenderStyleId
-  outline: boolean
   onShape: (v: string) => void
   onColor: (v: string) => void
   onExpression: (v: string) => void
   onRender: (v: RenderStyleId) => void
-  onOutline: (v: boolean) => void
 }
 
 /**
@@ -46,18 +44,6 @@ export const Customizer: Component<CustomizerProps> = (props) => () =>
           onClick: () => props.onRender(r)
         })
       )
-    ),
-    // the outline: all three styles
-    h(
-      'label',
-      { class: 'mt-3 flex cursor-pointer items-center gap-2 text-xs' },
-      h('input', {
-        type: 'checkbox',
-        class: 'size-4 cursor-pointer accent-[var(--ink)]',
-        checked: props.outline,
-        onChange: (e: Event) => props.onOutline((e.target as HTMLInputElement).checked)
-      }),
-      t('panel.outline')
     ),
     h('h2', { class: 'mt-5 text-sm font-semibold' }, t('panel.shape')),
     h(

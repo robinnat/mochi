@@ -1,16 +1,14 @@
 {
   "name": "mochis",
-  "private": true,
-  "version": "0.1.1",
-  "type": "module",
-  "description": "Mochis: animated avatar engine for the web. Mochi characters in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch, 22 accessories and exports (PNG, SVG, GIF, MP4), all from the 3D.",
+  "version": "0.2.0",
+  "description": "Mochis: animated avatars for the web. A <mochi-bot> Web Component that draws a Mochi in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch and 23 accessories. No framework needed.",
   "license": "MIT",
   "author": "SYGEN SAS",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/robinnat/mochi.git"
   },
-  "homepage": "https://mochi-red-phi.vercel.app",
+  "homepage": "https://mochiz.vercel.app",
   "bugs": {
     "url": "https://github.com/robinnat/mochi/issues"
   },
@@ -19,10 +17,48 @@
     "threejs",
     "animation",
     "avatar",
-    "morphing",
+    "mascot",
     "web-components",
     "custom-element"
   ],
+  "type": "module",
+  "main": "./dist-lib/mochis.js",
+  "module": "./dist-lib/mochis.js",
+  "types": "./dist-lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-lib/types/index.d.ts",
+      "import": "./dist-lib/mochis.js",
+      "default": "./dist-lib/mochis.js"
+    },
+    "./catalog": {
+      "types": "./dist-lib/types/catalog.d.ts",
+      "import": "./dist-lib/catalog.js",
+      "default": "./dist-lib/catalog.js"
+    },
+    "./standalone": {
+      "types": "./dist-lib/types/index.d.ts",
+      "import": "./dist-lib/standalone/mochis.js",
+      "default": "./dist-lib/standalone/mochis.js"
+    },
+    "./standalone/catalog": {
+      "types": "./dist-lib/types/catalog.d.ts",
+      "import": "./dist-lib/standalone/catalog.js",
+      "default": "./dist-lib/standalone/catalog.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist-lib",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": [
+    "./dist-lib/mochis.js",
+    "./dist-lib/standalone/mochis.js"
+  ],
+  "peerDependencies": {
+    "three": "^0.187.0"
+  },
   "packageManager": "pnpm@11.17.0",
   "engines": {
     "node": ">=22.12.0"
@@ -33,18 +69,17 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:lib": "vite build --config vite.lib.config.ts"
-  },
-  "dependencies": {
-    "mediabunny": "^1.65.2",
-    "three": "0.187.0"
+    "build:lib": "vite build --config vite.lib.config.ts && vite build --config vite.lib.config.ts --mode standalone && node tools/lib-types.mjs",
+    "prepublishOnly": "pnpm test && pnpm build:lib"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",
     "@types/node": "^26.6.6",
     "@types/three": "0.187.0",
     "happy-dom": "^21.0.4",
+    "mediabunny": "^1.65.2",
     "tailwindcss": "^4.3.5",
+    "three": "0.187.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.5",
     "vitest": "^4.1.12"

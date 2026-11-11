@@ -358,7 +358,7 @@ function mochi(c: CanvasRenderingContext2D, a: Anim, i: number, p: Custom, t: nu
   const pixel = p.style.renderStyle === 'pixel'
   tile.width = tile.height = pixel ? Math.round((pixelGrid('fine') * FRAME) / HALF_VIEWBOX) : size
   const yaw = (a.yaw ? a.yaw(i, t) : 0) + 0.3 * kLaptop
-  renderAvatar(tile, frame, p.color, PAPER, p.style.renderStyle, false, 'strong', true, p.shape, yaw, p.sel, FRAME, p.theme, undefined, a.laptop ? a.laptop(i, t) : 0)
+  renderAvatar(tile, frame, p.color, PAPER, p.style.renderStyle, 'strong', p.shape, yaw, p.sel, FRAME, p.theme, undefined, a.laptop ? a.laptop(i, t) : 0)
   c.imageSmoothingEnabled = !pixel
   c.drawImage(tile, x0, y0, size, size)
   c.imageSmoothingEnabled = true
@@ -452,7 +452,7 @@ function planLaptop(): HTMLCanvasElement {
       const t = 0.85 + (k % 5) * 0.11
       const frame = engine(shape).sample(t, h.sample(t))
       tile.width = tile.height = cell
-      renderAvatar(tile, frame, color, PAPER, 'soft', false, 'strong', true, shape, yaw + 0.3, k % 3 === 1 ? { head: 'cap', eyes: 'round' } : {}, FRAME, theme, undefined, 1)
+      renderAvatar(tile, frame, color, PAPER, 'soft', 'strong', shape, yaw + 0.3, k % 3 === 1 ? { head: 'cap', eyes: 'round' } : {}, FRAME, theme, undefined, 1)
       c.drawImage(tile, x + v * cell, y, cell, cell)
     })
     text(c, SHAPE_NAMES[shape] ?? shape, x + 10, y + 26, 20, theme === 'dark' ? '#cfcbd6' : GRAY, true)

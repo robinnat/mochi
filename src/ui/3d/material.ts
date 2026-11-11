@@ -11,8 +11,8 @@
  * materials. So it can be imported statically (component types, tests under Node) without pulling in Three.js.
  *
  * The default is `soft` with `strong` softness (choice of 03/11/2026, after flat was judged a big block of shadow);
- * `flat` stays in the code, out of the interface; `realistic` stays available internally only. The cartoon outline is
- * an OPTION (`outline`), usable with `flat` as with `toon`: `toon-outline` is only `toon` with an outline.
+ * `flat` stays in the code, out of the interface; `realistic` stays available internally only. There is no public
+ * outline option any more (removed on 11/11/2026); `toon-outline` stays an internal material, `toon` with a shell.
  *
  * `toon` and `lowpoly` stay in the code (they cost nothing: one table row each) but are no longer offered in the
  * interface or the lab.
@@ -237,8 +237,3 @@ export function colorOutline(hex: string): string {
  * diameter) but stays visible (floor), and does not grow forever in close-up (ceiling).
  */
 export const outlineWidthPx = (diameterPx: number) => Math.min(3.4, Math.max(1.3, diameterPx * 0.02))
-
-/** Outline thickness factor: 1 = the base thickness (`outlineWidthPx`), bounded to stay clean. */
-export const DEFAULT_OUTLINE_WIDTH = 1
-export const MIN_OUTLINE_WIDTH = 0.4
-export const MAX_OUTLINE_WIDTH = 4

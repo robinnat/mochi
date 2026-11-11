@@ -167,30 +167,56 @@ describe('the documentation says what the code does', () => {
     const catalog = (await import('mochis/catalog')) as Record<string, unknown>
     const all = USER_CODE.map((b) => b.code).join('\n')
     const names = (file: string) =>
-      [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '\\./vendor/mochis/${file.replace('.', '\\.')}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
-    expect(names('catalog.js').length).toBeGreaterThan(0)
-    for (const n of names('mochis.js')) expect(full[n], n).toBeDefined()
-    for (const n of names('catalog.js')) expect(catalog[n], n).toBeDefined()
+      [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '${file}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
+    expect(names('mochis/catalog').length).toBeGreaterThan(0)
+    for (const n of names('mochis')) expect(full[n], n).toBeDefined()
+    for (const n of names('mochis/catalog')) expect(catalog[n], n).toBeDefined()
   })
 
-  it('npm is never presented as available: the package is not published yet', () => {
-    expect(GUIDE).toContain('coming soon')
-    expect(GUIDE).toContain('does not work today')
+  it('npm is the main install, with three as a peer dependency, and the package says the same', () => {
     const pkg = JSON.parse(read('package.json'))
+    expect(pkg.name).toBe('mochis')
+    expect(pkg.private).toBeUndefined()
+    expect(pkg.peerDependencies.three).toBeDefined()
+    expect(pkg.dependencies?.three).toBeUndefined()
+    for (const f of [README, read('README.fr.md'), GUIDE]) expect(f).toContain('npm install mochis three')
+    expect(GUIDE.indexOf('npm install mochis three')).toBeLessThan(GUIDE.indexOf('git clone'))
     expect(pkg.scripts['build:lib']).toContain('vite.lib.config.ts')
   })
 
-  it('library paths: /mochis/ in plain HTML, ./vendor/mochis/ with a bundler, never imported from public/', () => {
-    const all = [README, ...DOC_FILES.map((f) => read('docs/' + f))].join('\n')
+  it('library paths: the package names with npm, the standalone build from a CDN or a copied folder, never public/', () => {
+    const pkg = JSON.parse(read('package.json'))
+    const cdn = `https://cdn.jsdelivr.net/npm/mochis@${pkg.version}/dist-lib/standalone/mochis.js`
+    const all = [README, read('README.fr.md'), ...DOC_FILES.map((f) => read('docs/' + f))].join('\n')
     // the folder name of the old docs; a bundler cannot import from public/ (Vite fails to resolve it)
     expect(all).not.toMatch(/['"]\/mochi\/(mochis|catalog)\.js/)
     expect(all).not.toMatch(/public\/mochis?\b(?!\/\*)/)
+    // a CDN link always names the current version
+    for (const m of all.matchAll(/cdn\.jsdelivr\.net\/npm\/mochis@([^/]+)\//g)) expect(m[1]).toBe(pkg.version)
     for (const { code } of USER_CODE) {
-      for (const m of code.matchAll(/\bimport\s+(?:[^'"]+from\s+)?'([^']+)'/g)) expect(m[1], code).toMatch(/^\.\/vendor\/mochis\/(mochis|catalog)\.js$/)
-      for (const m of code.matchAll(/<script type="module" src="([^"]+)"/g)) expect(m[1], code).toMatch(/^\/mochis\/mochis\.js$/)
+      for (const m of code.matchAll(/\bimport\s+(?:[^'"]+from\s+)?'([^']+)'/g)) expect(m[1], code).toMatch(/^mochis(\/catalog)?$/)
+      for (const m of code.matchAll(/<script type="module" src="([^"]+)"/g)) expect(m[1], code).toBe(cdn)
     }
-    expect(GUIDE).toContain('cp -r dist-lib ../my-app/src/vendor/mochis')
+    expect(GUIDE).toContain('cp -r dist-lib/standalone ../my-app/src/vendor/mochis')
     expect(GUIDE).toContain("import './vendor/mochis/mochis.js'")
+  })
+
+  it('every public entry of the docs is an export of package.json, with its types', () => {
+    const pkg = JSON.parse(read('package.json'))
+    for (const entry of ['.', './catalog', './standalone', './standalone/catalog']) {
+      expect(pkg.exports[entry], entry).toBeDefined()
+      expect(pkg.exports[entry].types, entry).toMatch(/^\.\/dist-lib\/types\/(index|catalog)\.d\.ts$/)
+    }
+    expect(pkg.files).toEqual(['dist-lib', 'CHANGELOG.md'])
+    expect(pkg.sideEffects).toContain('./dist-lib/mochis.js')
+  })
+
+  it('the cadence thresholds written in the docs are the ones of the code', async () => {
+    const { CADENCE_LATE_MS, CADENCE_HALF_MS, CADENCE_FULL_MS } = await import('@/components/mochi-bot')
+    const styles = read('docs/styles.md')
+    expect(styles).toContain(`more than ${CADENCE_LATE_MS} ms apart`)
+    expect(styles).toContain(`costs more than ${CADENCE_HALF_MS} ms`)
+    expect(styles).toContain(`below ${CADENCE_FULL_MS} ms`)
   })
 
   it('the Node version is the same in package.json and the READMEs', () => {
@@ -198,5 +224,37 @@ describe('the documentation says what the code does', () => {
     expect(pkg.engines.node).toBe('>=22.12.0')
     for (const f of [README, read('README.fr.md'), GUIDE]) expect(f).toContain('22.12')
     expect(read('.github/workflows/ci.yml')).toContain('node-version: 24')
+  })
+})
+
+describe('docs side menu (/docs)', () => {
+  it('lights the section whose heading was just reached, not the next one', async () => {
+    const { activeSection, readingLine } = await import('./Docs')
+    const line = readingLine(800)
+    // a jump to the 2nd heading puts it at the top of the window; the 3rd heading is a little lower
+    expect(activeSection([-900, 0, 260, 1200], line)).toBe(1)
+    // before any heading reaches the line: the first section
+    expect(activeSection([300, 900], line)).toBe(0)
+    // at the bottom of the page, the last section (too short to reach the line)
+    expect(activeSection([-900, -300, 500], line, true)).toBe(2)
+    expect(activeSection([], line)).toBe(0)
+  })
+})
+
+describe('site address', () => {
+  const SITE = 'https://mochiz.vercel.app'
+  it('every public file names the current address, never the old one', () => {
+    const files = ['README.md', 'README.fr.md', 'package.json', 'index.html', 'docs.html', 'app.html', 'lab.html', '.github/ISSUE_TEMPLATE/config.yml', ...DOC_FILES.map((f) => 'docs/' + f)]
+    for (const f of files) expect(read(f), f).not.toContain('mochi-red-phi')
+    expect(JSON.parse(read('package.json')).homepage).toBe(SITE)
+    expect(README).toContain(SITE)
+  })
+  it('the public pages declare their canonical address and og:url', () => {
+    for (const [file, path] of [['index.html', '/'], ['docs.html', '/docs'], ['app.html', '/app']] as const) {
+      const html = read(file)
+      expect(html, file).toContain(`<link rel="canonical" href="${SITE}${path}" />`)
+      expect(html, file).toContain(`<meta property="og:url" content="${SITE}${path}" />`)
+      if (file !== 'app.html') expect(html, file).toContain(`content="${SITE}/og.png"`)
+    }
   })
 })

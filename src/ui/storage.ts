@@ -12,7 +12,7 @@ import { migrateLegacyStorage } from './legacy'
 const PREFIX = 'mochi:'
 
 /** Everything the app saves. */
-const NAMES = ['cycles', 'cycle', 'shape', 'color', 'expression', 'language', 'style', 'pixel', 'outline'] as const
+const NAMES = ['cycles', 'cycle', 'shape', 'color', 'expression', 'language', 'style', 'pixel'] as const
 
 export type NameStored = (typeof NAMES)[number]
 

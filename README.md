@@ -7,7 +7,7 @@
 
 # Mochis
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochi-red-phi.vercel.app)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochiz.vercel.app)
 
 Mochis are small animated characters for the web. One character is called a Mochi: a soft 3D shape with two eyes. It breathes, blinks, shows a mood and reacts when you touch it.
 
@@ -20,25 +20,29 @@ You add a Mochi to any page with one HTML tag, `<mochi-bot>`. It works in plain 
 - light and dark themes
 - PNG, SVG, GIF and MP4 exports, from the app
 
-**Website:** https://mochi-red-phi.vercel.app. The app, an online editor to design a Mochi and export it, is at `/app`.
+**Website:** https://mochiz.vercel.app. The app, an online editor to design a Mochi and export it, is at `/app`.
 
 ## Quick start
 
-> The npm package is coming soon. Until then, build the library from this repository: see [Install](docs/getting-started.md#install).
+Install it with npm:
 
-Load the library, then write the tag:
+```bash
+npm install mochis three
+```
+
+Import it once (`import 'mochis'`), then write the tag. In a plain HTML page, load it from a CDN instead:
 
 ```html live
-<script type="module" src="/mochis/mochis.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/mochis@0.2.0/dist-lib/standalone/mochis.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
 
-This is the plain HTML way. In an app with a bundler (Vite, webpack...), copy the library into `src/vendor/mochis/` and write `import './vendor/mochis/mochis.js'`: see [Install](docs/getting-started.md#install).
+Three.js is a peer dependency, and TypeScript types are included. Other ways (building from this repository): see [Install](docs/getting-started.md#install).
 
 ## Documentation
 
-The documentation lives in [docs/](docs/README.md). The website shows the same pages at [/docs](https://mochi-red-phi.vercel.app/docs).
+The documentation lives in [docs/](docs/README.md). The website shows the same pages at [/docs](https://mochiz.vercel.app/docs).
 
 - [Getting started](docs/getting-started.md): install, your first Mochi, options, moods, reactions, methods, events, accessories, styles, frameworks.
 - [Reference](docs/reference.md): every option, method, event and id.

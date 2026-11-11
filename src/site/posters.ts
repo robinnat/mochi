@@ -21,7 +21,6 @@ export interface PropsMochi {
   mood?: string
   yaw?: number
   accessories?: AccessorySelection
-  outline?: boolean
   theme?: ThemeSite
 }
 
@@ -46,7 +45,6 @@ export const CUSTOM_START: PropsMochi = {
   color: '#21b0ff',
   renderStyle: '3d',
   mood: 'idle',
-  outline: false,
   accessories: { head: { id: 'cap', c1: '#ff3b30', c2: '#ff3b30' } }
 }
 
