@@ -147,6 +147,11 @@ export class Mochi3d {
   private readonly shell: Mesh<BufferGeometry, MeshBasicMaterial>
   private renderStyle: Material = DEFAULT_MATERIAL
   private softness: Softness = DEFAULT_SOFTNESS
+  /**
+   * soft top-left light in the shader (part of the Soft relief): 1 = on (uniform shared by this body's materials and
+   * its accessories). It follows `shading`; there is no option for it.
+   */
+  private readonly uSoftLight = { value: 1 }
   /** black eyes (dark theme): 1 = no emission, no glow added on the eyes */
   private readonly uEye = { value: 0 }
   /** half thickness of the outline, in engine units (shell uniform) */
@@ -220,8 +225,9 @@ export class Mochi3d {
       // the toon shader can derive a normal per facet; only the typing does not declare it
       if (flat.facets) (m as unknown as { flatShading: boolean }).flatShading = true
     }
-    // continuous shading (AO, rims) only makes sense for the soft material: flat styles keep their clean tones
-    if (!flat || flat.smooth) rim(m, flat ? 0.7 : 0.5, flat ? 0.32 : 0.22, { ao: 1, eye: this.uEye })
+    // continuous shading (AO, rims, soft top-left light) only makes sense for the soft material: flat styles keep
+    // their clean tones
+    if (!flat || flat.smooth) rim(m, flat ? 0.7 : 0.5, flat ? 0.32 : 0.22, { softLight: this.uSoftLight, ao: 1, eye: this.uEye })
     m.emissiveIntensity = this.emission(m)
     this.materials.set(key, m)
     return m
@@ -239,12 +245,14 @@ export class Mochi3d {
   }
 
   /**
-   * Chooses the material. Called after `setShading` and before `update`. `shading` on = relief, off = one flat
-   * color. There is no highlight spot (removed on 11/11/2026).
+   * Chooses the material. Called after `setShading` and before `update`. `shading` on = relief (with the soft
+   * top-left light of the Soft style), off = one flat color. There is no shine spot (removed on 11/11/2026).
    */
   setRenderStyle(r: Material, softness: Softness = DEFAULT_SOFTNESS) {
     this.renderStyle = r
     this.softness = softness
+    // the soft top-left light belongs to the relief: on with shading, off without
+    this.uSoftLight.value = this.shading && settingFlat(r, softness)?.smooth ? 1 : 0
     this.mesh.material = this.shading ? this.mat(r, softness) : this.flat()
     // the inverted shell only belongs to the internal `toon-outline` material (out of the public styles)
     this.shell.visible = !!settingFlat(r, softness)?.outline
@@ -361,7 +369,7 @@ export class Mochi3d {
     frame = this.eyesOnFace(frame)
     const flat0 = settingFlat(this.renderStyle, this.softness)
     // accessories by slot: anchored on the volume of THIS body, recomputed when the body changes
-    this.acc3d.settings = flat0?.smooth ? { force: 0.7, top: 0.32, ao: 1 } : null
+    this.acc3d.settings = flat0?.smooth ? { force: 0.7, top: 0.32, ao: 1, softLight: this.uSoftLight } : null
     this.acc3d.body = color
     // v12: pieces are no longer rebuilt every frame (the body outline changes on every breath:
     // ray casting and geometries redone 60 times per second). They are built for the shape and style, on the

@@ -24,7 +24,7 @@ Each option is both an attribute (written in HTML, with dashes, as text) and a p
 | `laptop` | boolean | `true` | Shows the laptop of the `working` mood. |
 | `pixel` | `medium` or `fine` | `fine` | Pixel size of the Pixel style. |
 | `shadow` | boolean | `true` | Ground shadow under the body. |
-| `shading` | boolean | `true` | Shading of the body volume (the relief). `false` gives one flat color. |
+| `shading` | boolean | `true` | Shading of the body volume (the relief, with the soft light from the top left). `false` gives one flat color. |
 | `max-pixel-ratio` | number | `2` | Caps the sharpness of the 3D canvas (screen pixels per CSS pixel). `1.5` is lighter on phones. |
 | `label` | string | `Animated Mochi avatar` | Text read by screen readers instead of the drawing. The default is English, whatever the browser language: pass your own text for a page in another language. |
 

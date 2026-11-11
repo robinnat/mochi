@@ -34,8 +34,9 @@ First version ready for npm. Not published yet: the docs keep the install from t
 
 - **`outline` and `outline-width`** (cartoon outline) and the shared `currentOutline` setting, with the checkbox of
   `/app`. The thin outline of the Pixel style stays: it is part of the Pixel drawing, not an option.
-- **`highlight`**: the soft shine spot at the top left of the Soft style is gone, always. `shading` only means the
-  relief (`shading="false"`: one flat color).
+- **`highlight`**: the option is gone, and so is the small shine spot at the top left of the Soft style. The Soft style
+  keeps its volume: the side facing the top left still gets lighter, now in a long gradient with no edge, so it reads
+  as relief, not as a spot. This light is part of `shading` (`shading="false"`: one flat color, no light).
 - **Pixel size `large`**: `pixel` takes `medium` or `fine` (default `fine`).
 - An old attribute (`outline`, `outline-width`, `highlight`) on a page is simply ignored; an old `pixel="large"` falls
   back to `medium`. Settings saved in the browser by older versions of `/app` are migrated: the outline setting is
