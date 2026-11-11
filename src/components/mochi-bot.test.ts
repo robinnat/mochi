@@ -81,7 +81,7 @@ describe('<mochi-bot>: drawing', () => {
     host().appendChild(el)
     expect(el.svg!.getAttribute('aria-label')).toBe(DEFAULT_LABEL)
     expect(DEFAULT_LABEL).toBe('Animated Mochi avatar')
-    // the tag never loads the app's translations: only /app translates its interface
+    // the tag carries no translation layer: a page in another language passes its own `label`
     const source = readFileSync('src/components/mochi-bot.ts', 'utf8')
     expect(source).not.toMatch(/from '@\/i18n/)
   })

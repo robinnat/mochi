@@ -1,8 +1,8 @@
 /**
  * Real 3D rendering (WebGL, Three.js) of an engine frame.
  *
- * This module is NEVER imported statically: `mochi-bot.ts` and the lab page load it with `await import(...)` when the
- * 3D style is chosen. The rest of the app therefore does not carry Three.js (same rule as `mediabunny`).
+ * This module is NEVER imported statically: `mochi-bot.ts` loads it with `await import(...)` when the
+ * 3D style is chosen. The rest of a page therefore does not carry Three.js (same rule as `mediabunny`).
  *
  * The engine does not change: we read `engine.sample(t)` and draw it. The body is the inflated outline (`volume.ts`);
  * the eyes are painted in a texture projected from the front, at the exact positions the engine gives. So they are
@@ -43,7 +43,7 @@ import { Accessories3d } from './accessories3d'
 import { measureLandmarks } from './anchors'
 import type { AccessorySelection } from '@/bot/slots'
 import { rim } from './rim'
-import { leverDark, luminance, palettePixel, pixelEllipse, quantifier } from './pixel3d'
+import { leverDark, luminance, palettePixel, pixelEllipse, pixelShadowX, quantifier } from './pixel3d'
 import {
   colorOutline,
   lightingFlat,
@@ -130,7 +130,7 @@ export class Mochi3d {
   private eyeContrast = MIN_EYE_CONTRAST
   /** shape of the Mochi (`squircle`, `star`...): sets its volume profile and its eyes */
   private shape = ''
-  /** forced profile (lab option); otherwise the shape's */
+  /** forced profile (tools option); otherwise the shape's */
   private profileForced: ProfileVolume | null = null
   private get profile(): ProfileVolume {
     return this.profileForced ?? profileOf(this.shape)
@@ -1071,8 +1071,10 @@ export function renderAvatar(
     if (pixel) {
       // pixel: whole cells with hard edges, like the body (a blurred gradient would clash with the pixels); a darker
       // core and a lighter rim, the two-tone shading of pixel art
-      // centered on a cell corner: the rows are symmetric, left and right, top and bottom
-      const x = Math.round(k * (cx + viewHalf))
+      // centered UNDER the body, with no shift to the right (the soft styles push their shadow a little away from the
+      // light; on a coarse grid that shift became a whole cell, visibly off center at `pixel="medium"`). Snapped to a
+      // half cell, so that the rows are symmetric left and right.
+      const x = pixelShadowX(k, box?.center.x ?? 0, viewHalf)
       const y = Math.round(k * (neck + viewHalf - 2))
       c.fillStyle = hexA(scope, PIXEL_SHADOW_ALPHA[0])
       for (const [ry, x0, x1] of pixelEllipse(x, y, k * large, k * large * 0.2)) c.fillRect(x0, ry, x1 - x0, 1)

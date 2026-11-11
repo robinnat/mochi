@@ -2,7 +2,7 @@ import { ref } from '@/ui/dom/reactive'
 import { onUnmount } from '@/ui/dom/h'
 
 /**
- * `prefers-reduced-motion`, tracked live. The site follows it more strictly than the app: with this setting, no demo
+ * `prefers-reduced-motion`, tracked live. The site follows it more strictly than the tag: with this setting, no demo
  * loops, they show an image. Call it during a component's setup (listening stops with it).
  */
 export function useReduced() {

@@ -53,7 +53,7 @@ describe('the project name is Mochiz', () => {
     const pkg = JSON.parse(readFileSync(new URL('package.json', root), 'utf8')) as { name: string; description: string }
     expect(pkg.name).toBe('mochiz')
     expect(pkg.description).toMatch(/^Mochiz:/)
-    for (const page of ['index.html', 'app.html', 'docs.html']) {
+    for (const page of ['index.html', 'docs.html']) {
       const html = readFileSync(new URL(page, root), 'utf8')
       expect(html, page).toContain('<meta property="og:site_name" content="Mochiz" />')
     }

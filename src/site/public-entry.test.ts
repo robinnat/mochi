@@ -4,15 +4,14 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 /**
- * The site (home, docs) and the lab are SHOWCASES: they use Mochiz exactly like a user of the package, through its
- * public entries (`mochiz`, `mochiz/catalog`) and the `<mochi-bot>` tag. No import of an internal engine file
- * (`src/bot`, `src/ui/3d`, `src/components`...). Still allowed: their own code, the repository's small interface
- * library (`@/ui/dom`, which is not Mochiz), the texts (`@/i18n`), the styles and the Markdown docs
- * (`docs/*.md?raw`).
+ * The site (home, docs) is a SHOWCASE: it uses Mochiz exactly like a user of the package, through its public entries
+ * (`mochiz`, `mochiz/catalog`) and the `<mochi-bot>` tag. No import of an internal engine file (`src/bot`,
+ * `src/ui/3d`, `src/components`...). Still allowed: its own code, the repository's small interface library
+ * (`@/ui/dom`, which is not Mochiz) and the Markdown docs (`docs/*.md?raw`).
  */
 const SRC = fileURLToPath(new URL('..', import.meta.url))
-const FOLDERS = ['site', 'docs', 'lab']
-const ALLOWED = [/^mochiz(\/catalog)?$/, /^\/mochiz\/(mochiz|catalog)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|lab)\//, /^(\.\.\/)+docs\/[\w-]+\.md\?raw$/, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
+const FOLDERS = ['site', 'docs']
+const ALLOWED = [/^mochiz(\/catalog)?$/, /^\/mochiz\/(mochiz|catalog)\.js$/, /^@\/ui\/dom\//, /^@\/(site|docs)\//, /^(\.\.\/)+docs\/[\w-]+\.md\?raw$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
 
 const sources = FOLDERS.flatMap((d) =>
   readdirSync(join(SRC, d))
@@ -30,7 +29,7 @@ export function targetsImport(text: string): string[] {
 }
 
 describe('the site uses Mochiz through its public entry', () => {
-  it('finds the files of the site, the docs and the lab', () => {
+  it('finds the files of the site and the docs', () => {
     expect(sources.length).toBeGreaterThan(20)
   })
 
@@ -41,8 +40,8 @@ describe('the site uses Mochiz through its public entry', () => {
 
   it("home and docs only load the tag on demand: as a static import, only the catalog", () => {
     for (const { file, text } of sources) {
-      // the lab mounts Mochiz on load; thumbnails.ts only serves the tools/renders.ts tool
-      if (file.startsWith('lab/') || file === 'site/thumbnails.ts') continue
+      // thumbnails.ts only serves the tools/renders.ts tool
+      if (file === 'site/thumbnails.ts') continue
       expect(text, file).not.toMatch(/(?:^|\n)\s*import\s+(?!type\b)[^'";]*['"]mochiz['"]/)
     }
   })

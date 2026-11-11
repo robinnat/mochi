@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mochiz.vercel.app/sitemap.xml

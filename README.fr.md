@@ -18,9 +18,8 @@ On ajoute un Mochi à n'importe quelle page avec une seule balise HTML, `<mochi-
 - 7 humeurs, et 5 réactions (à une tape, une double tape, un appui long, une secousse, et un coucou à l'arrivée)
 - 22 accessoires à combiner, dans les couleurs de votre choix
 - thèmes clair et sombre
-- exports PNG, SVG, GIF et MP4, depuis l'app
 
-**Site :** https://mochiz.vercel.app. L'app, un éditeur en ligne pour créer un Mochi et l'exporter, est sur `/app`.
+**Site :** https://mochiz.vercel.app. La documentation est sur [/docs](https://mochiz.vercel.app/docs).
 
 Ce fichier est une traduction pour les lecteurs francophones. La documentation de référence est en anglais : tous les identifiants, attributs et exemples de code sont en anglais.
 
@@ -52,13 +51,13 @@ Il faut Node.js 22.12 ou plus récent (champ `engines` de package.json). La CI t
 
 ```bash
 npx -y pnpm@11.17.0 install
-npx -y pnpm@11.17.0 dev        # http://localhost:5190 (site sur /, app sur /app.html, labo sur /lab.html)
+npx -y pnpm@11.17.0 dev        # http://localhost:5190 (site sur /, doc sur /docs)
 npx -y pnpm@11.17.0 test       # tests (vitest)
 npx -y pnpm@11.17.0 build      # vérification des types, puis le site dans dist/
 npx -y pnpm@11.17.0 build:lib  # la bibliothèque seule, dans dist-lib/
 ```
 
-Le code est en TypeScript, sans framework. Le personnage est un Web Component natif. Le site et l'app utilisent un petit moteur de rendu maison (`src/ui/dom/`). Outils : Vite, Tailwind 4 (app seulement) et Three.js (chargé à la demande). [CHANGELOG.md](CHANGELOG.md) a une entrée par version.
+Le code est en TypeScript, sans framework. Le personnage est un Web Component natif. Le site utilise un petit moteur de rendu maison (`src/ui/dom/`). Outils : Vite et Three.js (chargé à la demande). [CHANGELOG.md](CHANGELOG.md) a une entrée par version.
 
 ## Contribuer
 

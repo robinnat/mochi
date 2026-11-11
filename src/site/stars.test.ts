@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DURATION_CACHE, formatStars, readCache, readResponse } from './stars'
+import { DURATION_CACHE, formatStars, readCache, readResponse, starsLabel } from './stars'
 
 describe('etoiles GitHub', () => {
   it('format compact', () => {
@@ -9,6 +9,12 @@ describe('etoiles GitHub', () => {
     expect(formatStars(1234)).toBe('1.2k')
     expect(formatStars(1299)).toBe('1.2k')
     expect(formatStars(15400)).toBe('15k')
+  })
+
+  it('says star in the singular for one', () => {
+    expect(starsLabel(0)).toBe('0 stars')
+    expect(starsLabel(1)).toBe('1 star')
+    expect(starsLabel(2)).toBe('2 stars')
   })
 
   it('only reads stargazers_count, a positive integer; otherwise nothing (never a fake number)', () => {

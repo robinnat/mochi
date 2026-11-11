@@ -64,8 +64,8 @@ export const Hero: Component<Record<string, never>> = () => {
         h(
           'div',
           { class: 'actions hx-actions rv-load', style: '--d: 3' },
-          h('a', { class: 'btn primary', href: '/app' }, 'Try the app ', h('span', { 'aria-hidden': 'true' }, '→')),
-          h('a', { class: 'btn', href: '/docs' }, 'Read the docs')
+          h('a', { class: 'btn primary', href: '/docs?page=getting-started' }, 'Get started ', h('span', { 'aria-hidden': 'true' }, '→')),
+          h('a', { class: 'btn', href: 'https://github.com/robinnat/mochiz' }, 'View on GitHub')
         ),
         h(
           'ul',

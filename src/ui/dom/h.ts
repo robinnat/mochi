@@ -13,7 +13,7 @@
  *   run
  *   at the same time.
  *
- * Used by the site, the app, the lab and the SVG drawing of `<mochi-bot>`.
+ * Used by the site, the docs and the SVG drawing of `<mochi-bot>`.
  */
 
 import { Effect, Scope, within, scheduleRender, setWithoutSignal, ref, untracked, onCleanup, type Ref } from './reactive'

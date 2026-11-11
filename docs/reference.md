@@ -32,7 +32,7 @@ A boolean (yes-or-no) attribute is on when present (`wave`), and off with `"fals
 
 ### Advanced options
 
-You rarely need these. The app uses them for its animation editor.
+You rarely need these.
 
 | Attribute | Type | Default | What it does |
 | --- | --- | --- | --- |
@@ -68,7 +68,7 @@ Listen to them with `addEventListener`. They are standard `CustomEvent`s and do 
 
 ## Cycle player
 
-The cycle player is how the app builds and exports an animation. Most pages do not need it: moods are simpler.
+The cycle player plays a montage of body states that you write yourself. Most pages do not need it: moods are simpler.
 
 A **cycle** is a list of **blocks**. A block plays one body state for a number of seconds. The states are `idle`, `thinking`, `wink`, `wide` and `sleep`. When the last block ends, the player starts again from the first one.
 
@@ -90,7 +90,7 @@ bot.playing = true
 | `elapsed` | the player | Seconds spent in the current block (event `elapsedchange`). |
 
 - `seek(index, offset)` jumps to block `index`, `offset` seconds in.
-- `renderAt(t)` draws the cycle at time `t` (seconds from its start), without playing it: the app uses it to export a video frame by frame.
+- `renderAt(t)` draws the cycle at time `t` (seconds from its start), without playing it: use it to record a video frame by frame.
 - A mood wins over the cycle: while `mood` is set, the body stays in `idle` and the blocks do not advance.
 
 ## Shapes

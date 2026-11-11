@@ -23,7 +23,7 @@ const VB_TEST = HALF_VIEWBOX
 
 /**
  * The "flat 3D" variants: pure settings (tones, thresholds, finesse). The WebGL rendering is viewed in
- * `lab.html#shapes3d`; here we lock what can be computed under Node.
+ * a browser; here we lock what can be computed under Node.
  */
 
 describe('material list', () => {

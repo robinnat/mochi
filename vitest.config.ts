@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   // the environment stays `node` by default; a DOM is asked for file by file (`// @vitest-environment happy-dom`)
   resolve: {
-    // the site, the docs and the lab use Mochiz like a user of the package: through its public entries
+    // the site and the docs use Mochiz like a user of the package: through its public entries
     alias: [
       // Three.js add-ons (BufferGeometryUtils) import 'three': point it at our single entry, one copy of each class
       { find: /^three$/, replacement: fileURLToPath(new URL('./src/ui/3d/three.ts', import.meta.url)) },

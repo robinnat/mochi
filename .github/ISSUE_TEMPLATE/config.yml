@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Live demo
     url: https://mochiz.vercel.app
-    about: Try Mochiz in your browser (the app is at /app, the docs at /docs).
+    about: See Mochiz in your browser (the docs are at /docs).
   - name: Report a security problem
     url: https://github.com/robinnat/mochiz/security/advisories/new
     about: Please report vulnerabilities privately, not in a public issue. See SECURITY.md.

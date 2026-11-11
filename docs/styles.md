@@ -8,7 +8,7 @@ Mochiz offers three styles, all in REAL 3D (Three.js, loaded on demand, one shar
 | **Flat** | `flat3d` | `toon`: three clean tones |
 | **Pixel** | `pixel3d` | rendered at low resolution (the `pixel` grid), reduced to a short palette (3 body tones, accessory tones, white eyes), a built-in 1 px outline (part of the Pixel look, not an option), scaled up with `image-rendering: pixelated` (`src/ui/3d/pixel3d.ts`) |
 
-**No 2D.** The old SVG drawings are gone from the code: no 2D fallback, no 2D export. An unknown `render-style` value falls back to the current setting. Without WebGL, a short message replaces the Mochi (`no3d` event). Exports (PNG, SVG, GIF, MP4) are made from the 3D: a still of the canvas, or an off-screen render frame by frame (see [Export](export.md)).
+**No 2D.** The old SVG drawings are gone from the code: no 2D fallback, no 2D export. An unknown `render-style` value falls back to the current setting. Without WebGL, a short message replaces the Mochi (`no3d` event). The still images of the website (`public/renders/`) are made from the 3D too, with `tools/renders.html`.
 
 **Eyes.** In the light theme the eyes are ALWAYS white, for every color (yellow `#ffd60a` and lime `#b6e800` included), with no outline: only the normal 3D shading of the eye remains. In the dark theme they are black.
 
@@ -50,7 +50,7 @@ The shadow is a smooth, matte ramp of `dot(normal, light)`, with the light at th
 
 Flat uses the `toon` material and Pixel the `pixel` material: the render style picks the material, there is no option for it. Other materials stay in the code but are not offered: `flat` (two tones only, judged too heavy), `toon-outline`, `lowpoly` and `realistic` (internal only). There is no cartoon outline option (removed in 0.2.0); the thin outline of the Pixel style is part of its drawing.
 
-Screenshots, taken from the lab (`/lab`): [Soft, Flat and Flat without shading](variants/3d-styles-sheet.png), [every shape in each style](variants/3d-shapes-sheet.png) and [every shape seen from four angles](variants/3d-turntable.png).
+Screenshots: [Soft, Flat and Flat without shading](variants/3d-styles-sheet.png), [every shape in each style](variants/3d-shapes-sheet.png) and [every shape seen from four angles](variants/3d-turntable.png).
 
 ## Known limits
 

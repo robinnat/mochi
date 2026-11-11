@@ -28,7 +28,7 @@ describe('style catalog', () => {
     expect(RENDER_STYLES).toEqual(['3d', 'flat3d', 'pixel3d'])
   })
 
-  it("refuses old 2D styles read back from storage: the app falls back to Soft", () => {
+  it("refuses old 2D styles from an old page: they fall back to Soft", () => {
     for (const old of ['original', 'pixel', 'argile', 'bubble']) expect(isRenderStyle(old)).toBe(false)
   })
 

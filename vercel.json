@@ -7,8 +7,18 @@
   "cleanUrls": true,
   "redirects": [
     {
+      "source": "/app",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/lab",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/labo",
-      "destination": "/lab",
+      "destination": "/",
       "permanent": true
     }
   ]

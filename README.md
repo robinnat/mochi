@@ -18,9 +18,8 @@ You add a Mochi to any page with one HTML tag, `<mochi-bot>`. It works in plain 
 - 7 moods, and 5 reactions (to a tap, a double tap, a long press, a shake, and a wave hello)
 - 22 accessories you can combine, in the colors you choose
 - light and dark themes
-- PNG, SVG, GIF and MP4 exports, from the app
 
-**Website:** https://mochiz.vercel.app. The app, an online editor to design a Mochi and export it, is at `/app`.
+**Website:** https://mochiz.vercel.app. The docs are at [/docs](https://mochiz.vercel.app/docs).
 
 ## Quick start
 
@@ -50,13 +49,13 @@ You need Node.js 22.12 or later (the `engines` field of package.json). The CI ru
 
 ```bash
 npx -y pnpm@11.17.0 install
-npx -y pnpm@11.17.0 dev        # http://localhost:5190 (site at /, app at /app.html, lab at /lab.html)
+npx -y pnpm@11.17.0 dev        # http://localhost:5190 (site at /, docs at /docs)
 npx -y pnpm@11.17.0 test       # tests (vitest)
 npx -y pnpm@11.17.0 build      # type check, then the website in dist/
 npx -y pnpm@11.17.0 build:lib  # the library alone, in dist-lib/
 ```
 
-The code is TypeScript with no framework. The character is a native web component. The website and the app use a small in-house renderer (`src/ui/dom/`). Tools: Vite, Tailwind 4 (app only) and Three.js (loaded on demand). [CHANGELOG.md](CHANGELOG.md) has one entry per version.
+The code is TypeScript with no framework. The character is a native web component. The website uses a small in-house renderer (`src/ui/dom/`). Tools: Vite and Three.js (loaded on demand). [CHANGELOG.md](CHANGELOG.md) has one entry per version.
 
 ## Contributing
 

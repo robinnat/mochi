@@ -1,7 +1,7 @@
 /**
  * Minimal reactivity, with no dependency: `ref`, `computed`, `watch`, `watchEffect`, `nextTick`.
  *
- * That is all the site, the app and the `<mochi-bot>` component need to track a state and only redo what depends on
+ * That is all the site, the docs and the `<mochi-bot>` component need to track a state and only redo what depends on
  * what changed. It works the classic way, "an effect reads values, values notify their readers":
  *
  * - a `ref` keeps a value and the list of effects that read it;

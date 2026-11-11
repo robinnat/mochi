@@ -82,4 +82,4 @@ straight in front (centered on the front face); with the layer they also take th
 head tilt and the gaze offset. Glasses and accessories keep reading the eye positions without the gaze
 offset, so they stay on the face.
 
-Try it: `pnpm dev`, then `/lab.html#moods`. Frames of the proposal videos: `tools/moods.html`.
+Try it on the [home page](https://mochiz.vercel.app/#moods) (locally: `pnpm dev`, then `/#moods`). Frames of the proposal videos: `tools/moods.html`.

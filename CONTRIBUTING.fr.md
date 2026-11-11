@@ -26,7 +26,7 @@ npx -y pnpm@11.17.0 install
 ## Lancer
 
 ```bash
-npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site sur /, app sur /app.html, labo sur /lab.html)
+npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site sur /, doc sur /docs)
 ```
 
 La 3D a besoin de WebGL. Si votre navigateur n'en a pas, un court message remplace le Mochi : il n'y a pas de repli en 2D.
@@ -54,8 +54,8 @@ Il n'y a pas de configuration de formateur ni de linter : suivez le code autour.
 - Les constantes de `src/bot/` sont des mesures, pas des choix. Ne les arrondissez pas et ne les
   « nettoyez » pas (voir [docs/measurements.md](docs/measurements.md)).
 - Tout est en anglais : code, commentaires, identifiants, tests et documentation (`src/english.test.ts` le
-  vérifie). Seules les traductions française et chinoise de l'interface de l'app (`src/i18n/locales/`) et les
-  fichiers `*.fr.md` sont en français.
+  vérifie). Seuls les fichiers `*.fr.md`
+  sont en français.
 - La page `/docs` du site est construite à partir de `README.md` et de `docs/*.md` : modifiez les fichiers
   Markdown, jamais la page (`src/docs/docs-source.test.ts` les garde identiques).
 - Gardez l'en-tête MIT de [LICENSE](LICENSE) tel quel, avec ses deux lignes de copyright.
