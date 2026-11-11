@@ -8,13 +8,13 @@ On the website, every example marked "Live" shows its result right below the cod
 
 ## Install
 
-> The npm package is coming soon. `mochiz` is not published yet, so `npm install mochiz` does not work today. Until then, build it from the repository.
+> The npm package is coming soon: `mochiz` is not on npm yet. Until then, build it from the repository.
 
 You need [Node.js](https://nodejs.org) 22.12 or later. Build the library once:
 
 ```bash
 git clone https://github.com/robinnat/mochiz.git
-cd mochi
+cd mochiz
 npx pnpm@11.17.0 install
 npx pnpm@11.17.0 build:lib
 ```

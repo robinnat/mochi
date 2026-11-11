@@ -19,7 +19,7 @@ avec `npx` : inutile d'installer pnpm globalement.
 
 ```bash
 git clone https://github.com/robinnat/mochiz.git
-cd mochi
+cd mochiz
 npx -y pnpm@11.17.0 install
 ```
 

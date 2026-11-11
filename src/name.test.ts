@@ -37,6 +37,18 @@ describe('the project name is Mochiz', () => {
     expect(hits).toEqual([])
   })
 
+  it('after a clone of mochiz.git, the folder to enter is mochiz', () => {
+    const hits: string[] = []
+    for (const f of trackedTextFiles()) {
+      const text = readFileSync(new URL(f, root), 'utf8')
+      if (!text.includes('mochiz.git')) continue
+      text.split('\n').forEach((line, i) => {
+        if (/\bcd\s+mochi(?![\w-])/.test(line)) hits.push(`${f}:${i + 1}: ${line.trim()}`)
+      })
+    }
+    expect(hits).toEqual([])
+  })
+
   it('the package is mochiz and the site names itself Mochiz', () => {
     const pkg = JSON.parse(readFileSync(new URL('package.json', root), 'utf8')) as { name: string; description: string }
     expect(pkg.name).toBe('mochiz')

@@ -54,7 +54,7 @@ You can also build the library yourself and copy it into your project:
 
 ```bash
 git clone https://github.com/robinnat/mochiz.git
-cd mochi
+cd mochiz
 npx pnpm@11.17.0 install
 npx pnpm@11.17.0 build:lib
 ```

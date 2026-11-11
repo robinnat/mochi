@@ -183,11 +183,12 @@ describe('the documentation says what the code does', () => {
     // `docs/drafts/PUBLISHED` is created on the day `mochiz` is published (see docs/drafts/npm-install.md)
     if (!existsSync(new URL('docs/drafts/PUBLISHED', root))) {
       expect(GUIDE).toContain('coming soon')
-      expect(GUIDE).toContain('does not work today')
+      expect(GUIDE).toContain('not on npm yet')
       const published = [README, read('README.fr.md'), ...DOC_FILES.map((f) => read('docs/' + f))]
       for (const src of published) {
         expect(src).not.toContain('cdn.jsdelivr.net/npm/mochiz')
-        for (const line of src.split('\n').filter((l) => l.includes('npm install mochiz'))) expect(line).toContain('does not work today')
+        // no npm command for the package at all, not even one marked as not working: a reader copies commands
+        expect(src).not.toMatch(/\b(npm|pnpm|yarn|bun)\s+(install|i|add)\b[^\n]*\bmochiz\b/)
       }
       expect(read('docs/drafts/npm-install.md')).toContain('npm install mochiz three')
     }
