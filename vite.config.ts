@@ -1,9 +1,55 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
+import { pageIdOf, pagesOf, SITE } from './src/docs/markdown'
+
+/** Clean page addresses in `pnpm dev` and `vite preview`, like on Vercel (`cleanUrls`): /app, /docs and /lab. */
+const PAGES = ['app', 'docs', 'lab']
+function cleanUrls(): Plugin {
+  const rewrite = (req: { url?: string }, _res: unknown, next: () => void) => {
+    const m = req.url?.match(/^\/([a-z]+)\/?(\?.*)?$/)
+    if (m && PAGES.includes(m[1]!)) req.url = `/${m[1]}.html${m[2] ?? ''}`
+    next()
+  }
+  return {
+    name: 'mochiz-clean-urls',
+    configureServer: (server) => void server.middlewares.use(rewrite),
+    configurePreviewServer: (server) => void server.middlewares.use(rewrite)
+  }
+}
+
+/**
+ * sitemap.xml, written at build time: the home page, the app, then every docs page listed by docs/README.md (the same
+ * list as the /docs menu), so a new docs page is in the sitemap without anyone thinking of it. The lab is left out:
+ * it is a page for contributors and says `noindex`.
+ */
+export function sitemap(): string {
+  const docs = pagesOf(readFileSync(new URL('./docs/README.md', import.meta.url), 'utf8')).map(
+    (p) => `${SITE}/docs?page=${pageIdOf(p.file)}`
+  )
+  const urls = [`${SITE}/`, `${SITE}/app`, `${SITE}/docs`, ...docs]
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...urls.map((u) => `  <url><loc>${u.replace(/&/g, '&amp;')}</loc></url>`),
+    '</urlset>',
+    ''
+  ].join('\n')
+}
+
+function sitemapFile(): Plugin {
+  return {
+    name: 'mochiz-sitemap',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemap() })
+    }
+  }
+}
 
 export default defineConfig({
-  plugins: [tailwindcss()],
+  plugins: [tailwindcss(), cleanUrls(), sitemapFile()],
   // Fixed port: the one the README gives, so it must hold for a bare `pnpm dev`.
   server: { port: 5190 },
   build: {

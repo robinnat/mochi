@@ -12,7 +12,7 @@ const frame = bot.sample(t, compose(idleGesture(t, seed), bounce(t - touchedAt))
 
 Without a second argument (or with `NEUTRAL_GESTURE`), `sample(t)` gives exactly the same frame as before, byte for byte (tested in `gestures.test.ts`). Everything stays pure: a function of time and a seed, no clock, no state.
 
-To see them: `lab.html#moods` (moods and reactions, in 3D).
+To see them: the [lab](https://mochiz.vercel.app/lab#moods) (moods and reactions, in 3D).
 
 ## What a gesture can change
 

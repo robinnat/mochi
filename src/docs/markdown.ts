@@ -120,18 +120,20 @@ export function parseMarkdown(src: string): Block[] {
   return out
 }
 
-/** Reads the inline part of a line: code, images, links, bold and italics. */
+/** Reads the inline part of a line: code, images, links (an image inside a link too, like a badge), bold and italics. */
 export function parseInline(src: string): Inline[] {
   const out: Inline[] = []
-  const re = /`([^`]+)`|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|\*\*(.+?)\*\*|(?<![\w*])\*([^*\s][^*]*?)\*(?![\w*])/g
+  const re =
+    /`([^`]+)`|\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)|!\[([^\]]*)\]\(([^)\s]+)\)|\[([^\]]+)\]\(([^)\s]+)\)|\*\*(.+?)\*\*|(?<![\w*])\*([^*\s][^*]*?)\*(?![\w*])/g
   let last = 0
   for (const m of src.matchAll(re)) {
     if (m.index! > last) out.push({ t: 'text', text: src.slice(last, m.index) })
     if (m[1] !== undefined) out.push({ t: 'code', text: m[1] })
-    else if (m[3] !== undefined) out.push({ t: 'img', alt: m[2]!, src: m[3] })
-    else if (m[5] !== undefined) out.push({ t: 'link', href: m[5], children: parseInline(m[4]!) })
-    else if (m[6] !== undefined) out.push({ t: 'strong', children: parseInline(m[6]) })
-    else if (m[7] !== undefined) out.push({ t: 'em', children: parseInline(m[7]) })
+    else if (m[4] !== undefined) out.push({ t: 'link', href: m[4], children: [{ t: 'img', alt: m[2]!, src: m[3]! }] })
+    else if (m[6] !== undefined) out.push({ t: 'img', alt: m[5]!, src: m[6] })
+    else if (m[8] !== undefined) out.push({ t: 'link', href: m[8], children: parseInline(m[7]!) })
+    else if (m[9] !== undefined) out.push({ t: 'strong', children: parseInline(m[9]) })
+    else if (m[10] !== undefined) out.push({ t: 'em', children: parseInline(m[10]) })
     last = m.index! + m[0].length
   }
   if (last < src.length) out.push({ t: 'text', text: src.slice(last) })
@@ -147,6 +149,9 @@ export function pagesOf(index: string): { file: string; title: string }[] {
 export const pageIdOf = (file: string) => (/(^|\/)README\.md$/.test(file) && !file.includes('docs/') ? 'overview' : file.replace(/^.*\//, '').replace(/\.md$/, ''))
 
 export const REPO = 'https://github.com/robinnat/mochiz'
+
+/** The address of the website. */
+export const SITE = 'https://mochiz.vercel.app'
 
 /**
  * Where a link of a documentation file points on the website. Links to other doc pages stay on the site

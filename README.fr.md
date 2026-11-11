@@ -52,7 +52,7 @@ Il faut Node.js 22.12 ou plus récent (champ `engines` de package.json). La CI t
 
 ```bash
 npx -y pnpm@11.17.0 install
-npx -y pnpm@11.17.0 dev        # http://localhost:5190 (site sur /, app sur /app.html, labo sur /lab.html)
+npx -y pnpm@11.17.0 dev        # http://localhost:5190 (site sur /, app sur /app, doc sur /docs, labo sur /lab)
 npx -y pnpm@11.17.0 test       # tests (vitest)
 npx -y pnpm@11.17.0 build      # vérification des types, puis le site dans dist/
 npx -y pnpm@11.17.0 build:lib  # la bibliothèque seule, dans dist-lib/

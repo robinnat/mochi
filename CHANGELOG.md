@@ -379,5 +379,5 @@ fixed, and the measurement is in the commit that fixes it.
   become public.
 
 [unreleased]: https://github.com/robinnat/mochiz/commits/main
-[0.2.0]: https://github.com/robinnat/mochiz/commits/main
+[0.2.0]: https://github.com/robinnat/mochiz/releases/tag/v0.2.0
 [0.1.1]: https://github.com/robinnat/mochiz/commits/main

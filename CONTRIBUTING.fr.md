@@ -26,7 +26,7 @@ npx -y pnpm@11.17.0 install
 ## Lancer
 
 ```bash
-npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site sur /, app sur /app.html, labo sur /lab.html)
+npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site sur /, app sur /app, doc sur /docs, labo sur /lab)
 ```
 
 La 3D a besoin de WebGL. Si votre navigateur n'en a pas, un court message remplace le Mochi : il n'y a pas de repli en 2D.

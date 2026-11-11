@@ -54,7 +54,9 @@
   ],
   "sideEffects": [
     "./dist-lib/mochiz.js",
-    "./dist-lib/standalone/mochiz.js"
+    "./dist-lib/standalone/mochiz.js",
+    "./src/**",
+    "**/*.css"
   ],
   "peerDependencies": {
     "@types/three": "^0.187.0",

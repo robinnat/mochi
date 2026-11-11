@@ -17,6 +17,11 @@ export function formatStars(n: number): string {
   return `${String(t).replace(/\.0$/, '')}k`
 }
 
+/** What a screen reader hears: « 1 star », « 0 stars », « 42 stars ». */
+export function starsLabel(n: number): string {
+  return `${n} ${n === 1 ? 'star' : 'stars'}`
+}
+
 /** Kept value if it is recent and valid; otherwise `null`. */
 export function readCache(raw: string | null, maintenant: number): number | null {
   if (!raw) return null

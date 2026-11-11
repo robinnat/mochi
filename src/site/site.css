@@ -2074,3 +2074,8 @@ header[id] {
 .docs-body h3 {
   scroll-margin-top: 84px;
 }
+/* a badge (an image inside a link, like the README license badge) stays on the line of its text */
+.doc a > img {
+  display: inline-block;
+  vertical-align: middle;
+}

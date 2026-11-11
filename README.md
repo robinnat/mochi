@@ -50,7 +50,7 @@ You need Node.js 22.12 or later (the `engines` field of package.json). The CI ru
 
 ```bash
 npx -y pnpm@11.17.0 install
-npx -y pnpm@11.17.0 dev        # http://localhost:5190 (site at /, app at /app.html, lab at /lab.html)
+npx -y pnpm@11.17.0 dev        # http://localhost:5190 (site at /, app at /app, docs at /docs, lab at /lab)
 npx -y pnpm@11.17.0 test       # tests (vitest)
 npx -y pnpm@11.17.0 build      # type check, then the website in dist/
 npx -y pnpm@11.17.0 build:lib  # the library alone, in dist-lib/

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { leverDark, luminance, palettePixel, pixelEllipse, quantifier, tonesOf } from './pixel3d'
+import { HALF_VIEWBOX } from '@/bot/frame'
+import { pixelGrid } from '@/ui/renderStyle'
+import { leverDark, luminance, palettePixel, pixelEllipse, pixelShadowX, quantifier, tonesOf } from './pixel3d'
 
 describe('pixel 3D style', () => {
   it('the body palette has three tones from darkest to lightest, plus the white of the eyes', () => {
@@ -90,4 +92,17 @@ describe('pixel ground shadow (11/11/2026)', () => {
     expect(pixelEllipse(5, 5, 0, 2)).toEqual([])
     expect(pixelEllipse(5, 5, 4, 0)).toEqual([])
   })
+})
+
+describe('pixel ground shadow', () => {
+  // the check of 11/11/2026: at pixel="medium" the shadow sat one cell to the right of the body
+  for (const size of ['medium', 'fine'] as const) {
+    it(`is centered under the body at pixel="${size}"`, () => {
+      const grid = pixelGrid(size)
+      const k = grid / (2 * HALF_VIEWBOX)
+      const x = pixelShadowX(k, 0, HALF_VIEWBOX)
+      expect(Math.abs(x - grid / 2)).toBeLessThanOrEqual(0.25)
+      for (const [, x0, x1] of pixelEllipse(x, 30, k * 72, k * 14)) expect((x0 + x1) / 2).toBeCloseTo(x, 5)
+    })
+  }
 })

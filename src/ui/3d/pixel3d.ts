@@ -211,3 +211,11 @@ export function pixelEllipse(cx: number, cy: number, rx: number, ry: number): Ar
   }
   return rows
 }
+
+
+/**
+ * Horizontal center of the Pixel ground shadow, in canvas pixels: under the body center (no offset), snapped to a
+ * half pixel so that `pixelEllipse` gives rows that are symmetric left and right.
+ */
+export const pixelShadowX = (k: number, bodyCenterX: number, viewHalf: number): number =>
+  Math.round(2 * k * (bodyCenterX + viewHalf)) / 2

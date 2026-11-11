@@ -1,7 +1,7 @@
 import { ref } from '@/ui/dom/reactive'
 import { h, onUnmount, onMount, type Component } from '@/ui/dom/h'
 import { chooseTheme, effectiveTheme } from './theme'
-import { loadStars, stars, formatStars } from './stars'
+import { loadStars, stars, formatStars, starsLabel } from './stars'
 
 /**
  * Top bar, shared by the site and the docs page. `home`: prefix of the anchors (empty on the home page, `/`
@@ -69,7 +69,7 @@ export const Nav: Component<NavProps> = (props) => {
             {
               class: ['nav-icon', { 'nav-stars': stars.value !== null }],
               href: 'https://github.com/robinnat/mochiz',
-              'aria-label': stars.value === null ? 'Mochiz on GitHub' : `Mochiz on GitHub, ${stars.value} stars`
+              'aria-label': stars.value === null ? 'Mochiz on GitHub' : `Mochiz on GitHub, ${starsLabel(stars.value)}`
             },
             h('svg', { viewBox: '0 0 16 16', width: '18', height: '18', 'aria-hidden': 'true' }, h('path', { fill: 'currentColor', d: GITHUB })),
             stars.value === null

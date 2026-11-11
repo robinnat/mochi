@@ -262,7 +262,21 @@ describe('site address', () => {
       const html = read(file)
       expect(html, file).toContain(`<link rel="canonical" href="${SITE}${path}" />`)
       expect(html, file).toContain(`<meta property="og:url" content="${SITE}${path}" />`)
-      if (file !== 'app.html') expect(html, file).toContain(`content="${SITE}/og.png"`)
+      expect(html, file).toContain(`<meta property="og:image" content="${SITE}/og.png" />`)
+      expect(html, file).toContain('<meta name="twitter:card" content="summary_large_image" />')
     }
+  })
+  it('the home page description gives the real counts of the catalog', async () => {
+    const { SHAPES, MOOD_IDS, ACCESSORIES } = await import('../catalog')
+    const html = read('index.html')
+    const description = html.match(/name="description"\s+content="([^"]+)"/)![1]!
+    expect(description).toContain(`${SHAPES.length} shapes`)
+    expect(description).toContain(`${MOOD_IDS.length} moods`)
+    expect(description).toContain(`${ACCESSORIES.length} accessories`)
+    expect(description).not.toMatch(/one soft shape/i)
+  })
+  it('robots.txt points to the sitemap of the site, and the 404 page exists', () => {
+    expect(read('public/robots.txt')).toContain(`Sitemap: ${SITE}/sitemap.xml`)
+    expect(read('public/404.html')).toContain('This page does not exist')
   })
 })
