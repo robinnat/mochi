@@ -61,7 +61,7 @@ describe('accessory strips (pieces alone)', () => {
   it('no body in the strips: pieces are rendered without a body, tightly framed and centered', () => {
     const v = source('./thumbnails.ts')
     // rendreAvatar(..., sansCorps = true, centre)
-    expect(v).toMatch(/undefined, true, center\)/)
+    expect(v).toMatch(/0, false, true, true, center\)/)
     expect(v).toContain('boxOpaque')
   })
 

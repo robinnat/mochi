@@ -32,7 +32,7 @@ function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, px: numbe
   const ts = o.t ?? 1.2
   const gesture = o.mood ? new Moods(o.mood).sample(ts) : undefined
   const frame = new BotEngine(RADIUS, 'idle', SHAPE.radii, null).sample(ts, gesture)
-  renderAvatar(t, frame, o.color, PAPER, o.renderStyle, false, 'strong', true, 'heart', o.yaw ?? 0, o.sel ?? {}, frame)
+  renderAvatar(t, frame, o.color, PAPER, o.renderStyle, 'heart', o.yaw ?? 0, o.sel ?? {}, frame)
   ctx.imageSmoothingEnabled = !pixel
   ctx.drawImage(t, x, y, px, px)
 }

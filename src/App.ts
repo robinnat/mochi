@@ -35,7 +35,6 @@ import { INTRO, INTRO_GAZE, POSE_AT, introDue } from '@/ui/intro'
 import { write, read, type NameStored } from '@/ui/storage'
 import {
   isRenderStyle,
-  currentOutline,
   currentPixel,
   DEFAULT_PIXEL,
   DEFAULT_RENDER_STYLE,
@@ -282,14 +281,8 @@ export const App: Component<Record<string, never>> = () => {
   const renderStyle = ref<RenderStyleId>(stored('style', DEFAULT_RENDER_STYLE, isRenderStyle) as RenderStyleId)
   // pixel density: the finest, with no choice in the interface
   const pixel = ref<PixelSizeId>(DEFAULT_PIXEL)
-  const outline = ref(stored('outline', '0', (v) => v === '0' || v === '1') === '1')
   currentRenderStyle.value = renderStyle.value
   currentPixel.value = pixel.value
-  currentOutline.value = outline.value
-  watch(outline, (v) => {
-    currentOutline.value = v
-    write('outline', v ? '1' : '0')
-  })
   watch(renderStyle, (v) => {
     currentRenderStyle.value = v
     write('style', v)
@@ -659,9 +652,7 @@ export const App: Component<Record<string, never>> = () => {
                     expression: expression.value,
                     onExpression: (x) => (expression.value = x),
                     renderStyle: renderStyle.value,
-                    onRender: (x) => (renderStyle.value = x),
-                    outline: outline.value,
-                    onOutline: (x) => (outline.value = x)
+                    onRender: (x) => (renderStyle.value = x)
                   })
             )
           : null

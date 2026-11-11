@@ -22,3 +22,21 @@ describe('example highlighting', () => {
     expect(h).toContain('<span class="c-word">import</span>')
   })
 })
+
+describe('shell examples (/docs)', () => {
+  it('a URL is not a comment: the clone command keeps its address in plain text', () => {
+    const h = highlight('git clone https://github.com/robinnat/mochiz.git')
+    expect(h).not.toContain('c-com')
+    expect(h.replace(/<\/?span[^>]*>/g, '')).toBe('git clone https://github.com/robinnat/mochiz.git')
+  })
+
+  it('a # after a space is a shell comment, a hex color is not', () => {
+    expect(highlight('npx pnpm@11.17.0 test       # tests (vitest)')).toContain('<span class="c-com"># tests (vitest)</span>')
+    expect(highlight("color: '#ff8800'")).not.toContain('c-com')
+    expect(highlight('<mochi-bot color="#f80"></mochi-bot>')).not.toContain('c-com')
+  })
+
+  it('a JavaScript comment is still a comment', () => {
+    expect(highlight('const a = 1 // one')).toContain('<span class="c-com">// one</span>')
+  })
+})

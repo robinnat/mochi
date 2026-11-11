@@ -4,15 +4,15 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 /**
- * The site (home, docs) and the lab are SHOWCASES: they use Mochis exactly like a user of the package, through its
- * public entries (`mochis`, `mochis/catalog`) and the `<mochi-bot>` tag. No import of an internal engine file
+ * The site (home, docs) and the lab are SHOWCASES: they use Mochiz exactly like a user of the package, through its
+ * public entries (`mochiz`, `mochiz/catalog`) and the `<mochi-bot>` tag. No import of an internal engine file
  * (`src/bot`, `src/ui/3d`, `src/components`...). Still allowed: their own code, the repository's small interface
- * library (`@/ui/dom`, which is not Mochis), the texts (`@/i18n`), the styles and the Markdown docs
+ * library (`@/ui/dom`, which is not Mochiz), the texts (`@/i18n`), the styles and the Markdown docs
  * (`docs/*.md?raw`).
  */
 const SRC = fileURLToPath(new URL('..', import.meta.url))
 const FOLDERS = ['site', 'docs', 'lab']
-const ALLOWED = [/^mochis(\/catalog)?$/, /^\/mochis\/(mochis|catalog)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|lab)\//, /^(\.\.\/)+docs\/[\w-]+\.md\?raw$/, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
+const ALLOWED = [/^mochiz(\/catalog)?$/, /^\/mochiz\/(mochiz|catalog)\.js$/, /^@\/ui\/dom\//, /^@\/i18n(\/|$)/, /^@\/(site|docs|lab)\//, /^(\.\.\/)+docs\/[\w-]+\.md\?raw$/, /^@\/styles\.css$/, /^\.\//, /^three$/, /^vitest$/, /^node:/]
 
 const sources = FOLDERS.flatMap((d) =>
   readdirSync(join(SRC, d))
@@ -29,7 +29,7 @@ export function targetsImport(text: string): string[] {
   return out
 }
 
-describe('the site uses Mochis through its public entry', () => {
+describe('the site uses Mochiz through its public entry', () => {
   it('finds the files of the site, the docs and the lab', () => {
     expect(sources.length).toBeGreaterThan(20)
   })
@@ -41,9 +41,9 @@ describe('the site uses Mochis through its public entry', () => {
 
   it("home and docs only load the tag on demand: as a static import, only the catalog", () => {
     for (const { file, text } of sources) {
-      // the lab mounts Mochis on load; thumbnails.ts only serves the tools/renders.ts tool
+      // the lab mounts Mochiz on load; thumbnails.ts only serves the tools/renders.ts tool
       if (file.startsWith('lab/') || file === 'site/thumbnails.ts') continue
-      expect(text, file).not.toMatch(/(?:^|\n)\s*import\s+(?!type\b)[^'";]*['"]mochis['"]/)
+      expect(text, file).not.toMatch(/(?:^|\n)\s*import\s+(?!type\b)[^'";]*['"]mochiz['"]/)
     }
   })
 

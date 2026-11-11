@@ -1,5 +1,5 @@
 /**
- * PRE-RENDERED images of the site: each frozen Mochi of the page (small hero Mochis, shapes, cards, accessory icons)
+ * PRE-RENDERED images of the site: each frozen Mochi of the page (small hero Mochiz, shapes, cards, accessory icons)
  * and the poster of each live Mochi (shown at once, before the 3D is ready) is an image of the REAL 3D, rendered once
  * by the real component (`tools/renders.html`, headless Chrome) into `public/renders/`, in light and dark. On load,
  * the page has neither Three.js to download nor 3D rendering to do for these images, and never a 2D fallback on
@@ -7,7 +7,7 @@
  *
  * The props written here are those the page passes to the live Mochi: the poster and the live 3D are the same image.
  */
-import { ACCESSORIES, type Slot, type RenderStyleId, type AccessorySelection } from 'mochis/catalog'
+import { ACCESSORIES, type Slot, type RenderStyleId, type AccessorySelection } from 'mochiz/catalog'
 import { SHAPES_3D } from './catalog'
 import { STYLES_SITE } from './style'
 
@@ -21,7 +21,6 @@ export interface PropsMochi {
   mood?: string
   yaw?: number
   accessories?: AccessorySelection
-  outline?: boolean
   theme?: ThemeSite
 }
 
@@ -35,7 +34,7 @@ export interface Poster {
 }
 
 /*
- * ------------------------------------------------------------------ the live Mochis (and their poster)
+ * ------------------------------------------------------------------ the live Mochiz (and their poster)
  */
 export const MOODS_BOT: PropsMochi = { shape: 'squircle', color: '#00c7be', renderStyle: '3d', mood: 'idle' }
 export const INTER_BOT: PropsMochi = { shape: 'star', color: '#ffd60a', renderStyle: '3d', mood: 'idle' }
@@ -46,7 +45,6 @@ export const CUSTOM_START: PropsMochi = {
   color: '#21b0ff',
   renderStyle: '3d',
   mood: 'idle',
-  outline: false,
   accessories: { head: { id: 'cap', c1: '#ff3b30', c2: '#ff3b30' } }
 }
 

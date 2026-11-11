@@ -3,7 +3,7 @@
  *
  * Why: the `three` package entry is one big prebuilt file whose classes are not tree-shaken (loaders, animation,
  * audio, WebXR... all ended up in the bundle, 744 kB). Importing each class from its own source file keeps only what
- * Mochis draws with. A single entry also keeps a single copy of each class (`instanceof` stays true): mixing this
+ * Mochiz draws with. A single entry also keeps a single copy of each class (`instanceof` stays true): mixing this
  * file and `'three'` would load Three.js twice, so the build configs also point `'three'` here (the Three.js add-ons
  * we use, such as `BufferGeometryUtils`, import `'three'`). `src/ui/3d/three.test.ts` checks these rules.
  */

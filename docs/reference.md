@@ -22,12 +22,9 @@ Each option is both an attribute (written in HTML, with dashes, as text) and a p
 | `fps` | number | none | Caps the number of frames per second. |
 | `yaw` | number | `0` | Turns the model around its vertical axis, in radians. |
 | `laptop` | boolean | `true` | Shows the laptop of the `working` mood. |
-| `outline` | boolean | `false` | Cartoon outline (a dark line around the body), in all three styles. |
-| `outline-width` | number | `1` | Outline thickness: `2` is twice as thick. From 0.4 to 4. |
-| `pixel` | `large`, `medium` or `fine` | `fine` | Pixel size of the Pixel style. |
-| `highlight` | boolean | `true` | Small shine at the top left of the Soft style. |
-| `shadow` | boolean | `true` | Ground shadow under the body. |
-| `shading` | boolean | `true` | Shading of the body volume. `false` gives a flat color. |
+| `pixel` | `medium` or `fine` | `fine` | Pixel size of the Pixel style. |
+| `shadow` | boolean | `true` | Ground shadow under the body, in all three styles (soft in Soft, flat in Flat, made of pixels in Pixel). |
+| `shading` | boolean | `true` | Shading of the body volume (the relief), Flat and Pixel styles only. `false` gives one flat color. Soft is always shaded: it ignores `shading`. |
 | `max-pixel-ratio` | number | `2` | Caps the sharpness of the 3D canvas (screen pixels per CSS pixel). `1.5` is lighter on phones. |
 | `label` | string | `Animated Mochi avatar` | Text read by screen readers instead of the drawing. The default is English, whatever the browser language: pass your own text for a page in another language. |
 
@@ -41,7 +38,6 @@ You rarely need these. The app uses them for its animation editor.
 | --- | --- | --- | --- |
 | `expression` | string | `neutral` | Resting expression, see [Expressions](#expressions). |
 | `cycle` | JSON array | the built-in cycle | The animation of the [cycle player](#cycle-player), as a list of blocks. |
-| `softness` | `light` or `strong` | `strong` | How dark the shading of the Soft style is. |
 | `paper` | string | `#f9f9f9` | Color of the page behind the Mochi, used for the depth haze. |
 
 Two more options exist only as properties, because their value is a function: `gaze` (a scripted gaze) and `gesture` (small moves added to the pose).
@@ -198,14 +194,16 @@ One accessory per slot (`head`, `eyes`, `neck`, `back`). Use the id alone, or `{
 
 The library has two public entry points:
 
-- `mochis` (`dist-lib/mochis.js`): the `<mochi-bot>` tag, the engine and the catalogs;
-- `mochis/catalog` (`dist-lib/catalog.js`): the catalogs alone, without the tag, to build a picker.
+- `mochiz` (`dist-lib/mochiz.js`): the `<mochi-bot>` tag, the engine and the catalogs;
+- `mochiz/catalog` (`dist-lib/catalog.js`): the catalogs alone, without the tag, to build a picker.
+
+In the copied `standalone` folder they are `mochiz.js` and `catalog.js`, with Three.js included. The files at the root of `dist-lib/` are the same two entries without Three.js, for the npm package (coming soon).
 
 The engine (`src/bot/`) computes each frame of a Mochi. It has no framework and no clock: `engine.sample(t)` gives the same frame for the same time `t`. It plays states, the basic animations of the body (`idle`, `thinking`, `wink`, `wide`, `sleep`); moods are built on top of them.
 
 ```js
-import { BotEngine, SHAPE_BY_ID, RADIUS } from './vendor/mochis/mochis.js'
-import { SHAPES, ACCESSORIES, MOOD_IDS } from './vendor/mochis/catalog.js'
+import { BotEngine, SHAPE_BY_ID, RADIUS } from './vendor/mochiz/mochiz.js'
+import { SHAPES, ACCESSORIES, MOOD_IDS } from './vendor/mochiz/catalog.js'
 
 const engine = new BotEngine(RADIUS, 'idle', SHAPE_BY_ID.get('star').radii)
 engine.setState('wink', 2) // change state at t = 2 s
@@ -223,6 +221,6 @@ const hats = ACCESSORIES.filter((a) => a.slot === 'head').map((a) => a.id)
 | `MOOD_IDS`, `REACTION_IDS`, `resolveMood(id)` | Mood and reaction ids. |
 | `ACCESSORIES`, `SLOTS`, `accessoriesInSlot(slot)` | The accessory catalog. |
 | `RENDER_STYLES`, `PIXEL_SIZES` | Style and pixel size ids. |
-| `currentTheme`, `currentRenderStyle`, `currentOutline` | Settings shared by every Mochi without its own value. `currentTheme.value` is `auto` (follow the device), `light` or `dark`. |
+| `currentTheme`, `currentRenderStyle` | Settings shared by every Mochi without its own value. `currentTheme.value` is `auto` (follow the device), `light` or `dark`. |
 | `shapePath(radii)` | An SVG path of a shape, for an icon in a picker. |
 | `load3d()` | Loads the 3D part early (optional). |

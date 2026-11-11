@@ -9,8 +9,8 @@ import type fr from './fr'
  */
 const zh: typeof fr = {
   app: {
-    name: 'mochis',
-    title: 'Mochis, 动画头像',
+    name: 'mochiz',
+    title: 'Mochiz, 动画头像',
     botAria: 'Mochi 动画头像'
   },
 
@@ -31,8 +31,7 @@ const zh: typeof fr = {
     expression: '表情',
     color: '颜色',
     style: '风格',
-    pixelSize: '像素大小',
-    outline: '卡通轮廓'
+    pixelSize: '像素大小'
   },
 
   export: {
@@ -129,7 +128,6 @@ const zh: typeof fr = {
   },
 
   pixelSizes: {
-    large: '大',
     medium: '中',
     end: '小'
   },

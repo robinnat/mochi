@@ -1,11 +1,11 @@
 import { h, type Component } from '@/ui/dom/h'
-import 'mochis'
-import type { Softness, RenderStyleId } from 'mochis'
+import 'mochiz'
+import type { RenderStyleId } from 'mochiz'
 import { sizeCell } from './width'
 
 /**
- * `#shapes3d`: the Flat style (without then with the cartoon outline) and the Soft style (smooth shading, two
- * settings: light and strong), on five shapes. `?s=<size>`; `?t=<time>` freezes the image; `?c=<color>` forces a
+ * `#shapes3d`: the Soft style (smooth shading, always on), then the Flat style with and without shading, on five
+ * shapes. `?s=<size>`; `?t=<time>` freezes the image; `?c=<color>` forces a
  * single color; `?v=rows` puts one style per ROW and one shape per column (portrait, readable on a phone). `?x=1,3,4`
  * only keeps those variants, `?f=star` (or `?f=circle,star,cloud`) only those shapes.
  */
@@ -13,16 +13,12 @@ interface Variant {
   letter: string
   name: string
   renderStyle: RenderStyleId
-  softness?: Softness
-  outline?: boolean
-  highlight?: boolean
+  shading?: boolean
 }
 const ALL: Variant[] = [
-  { letter: '', name: 'Flat', renderStyle: 'flat3d', outline: false },
-  { letter: '', name: 'Flat + cartoon outline', renderStyle: 'flat3d', outline: true },
-  { letter: '', name: 'Soft (light)', renderStyle: '3d', softness: 'light', outline: false },
-  { letter: '', name: 'Soft strong + highlight (default)', renderStyle: '3d', softness: 'strong', outline: false },
-  { letter: '', name: 'Soft strong without highlight', renderStyle: '3d', softness: 'strong', outline: false, highlight: false }
+  { letter: '', name: 'Soft (default)', renderStyle: '3d' },
+  { letter: '', name: 'Flat', renderStyle: 'flat3d' },
+  { letter: '', name: 'Flat without shading', renderStyle: 'flat3d', shading: false }
 ]
 // five shapes, each in a flat color (the same as the customizer)
 const ALL_SHAPES = [
@@ -34,7 +30,7 @@ const ALL_SHAPES = [
 ]
 
 const key = (f: { id: string }, v: Variant) =>
-  `${f.id}-${v.renderStyle === 'flat3d' ? 'flat' : 'soft'}${v.softness ? '-' + v.softness : ''}${v.outline ? '-contour' : ''}${v.highlight === false ? '-sansreflet' : ''}`
+  `${f.id}-${v.renderStyle === 'flat3d' ? 'flat' : 'soft'}${v.shading === false ? '-unshaded' : ''}`
 
 export const FlatSheet3d: Component<Record<string, never>> = () => {
   const q = new URLSearchParams(location.search)
@@ -53,9 +49,7 @@ export const FlatSheet3d: Component<Record<string, never>> = () => {
       shape: f.id,
       color: forced ?? f.color,
       renderStyle: v.renderStyle,
-      softness: v.softness,
-      outline: v.outline,
-      highlight: v.highlight,
+      shading: v.shading,
       frozenAt: t,
       cycle: [{ state: 'idle', duration: 3 }],
       'data-cell': key(f, v)
@@ -69,7 +63,7 @@ export const FlatSheet3d: Component<Record<string, never>> = () => {
     h(
       'main',
       { class: 'p-4' },
-      h('h1', { class: 'mb-3 text-lg font-bold' }, '3D: Flat, Soft light, Soft strong'),
+      h('h1', { class: 'mb-3 text-lg font-bold' }, '3D: Soft, Flat, Flat without shading'),
       h(
         'div',
         { class: 'max-w-full overflow-x-auto' },

@@ -1,5 +1,5 @@
 /*
- * Mochis website (v10): big, airy. A huge, very bold type, soft cards, the Mochis carry the only strong colors. All
+ * Mochiz website (v10): big, airy. A huge, very bold type, soft cards, the Mochiz carry the only strong colors. All
  * motion goes through transform and opacity; prefers-reduced-motion turns it off (at the bottom of the file).
  */
 :root {
@@ -204,7 +204,7 @@ header[id] {
   display: block;
 }
 /*
- * the word "Mochis" is set in Fredoka 600, served with the site (v13): a 7 kB file with the Latin letters only
+ * the word "Mochiz" is set in Fredoka 600, served with the site (v13): a 7 kB file with the Latin letters only
  * (fonts/OFL.txt: SIL Open Font License). The Google Fonts stylesheet it replaces blocked the first paint (~0.8 s on
  * a phone) for a single word.
  */

@@ -8,6 +8,7 @@ import {
   DEFAULT_RENDER_STYLE,
   RENDER_STYLES,
   effectiveRenderStyle,
+  effectivePixel,
   currentRenderStyle,
   renderStyleSuffix,
   PIXEL_SIZES
@@ -58,22 +59,31 @@ describe('style catalog', () => {
 })
 
 describe('pixel size', () => {
-  it('has three sizes, the finest by default', () => {
-    expect(PIXEL_SIZES.map((p) => p.id)).toEqual(['large', 'medium', 'fine'])
+  it('has two sizes, the finest by default (large removed on 11/11/2026)', () => {
+    expect(PIXEL_SIZES.map((p) => p.id)).toEqual(['medium', 'fine'])
     expect(DEFAULT_PIXEL).toBe('fine')
     expect(isPixelSize('medium')).toBe(true)
     expect(isPixelSize('enorme')).toBe(false)
+    expect(isPixelSize('large')).toBe(false)
   })
 
-  it('gives a ball 16 to 32 pixels wide', () => {
+  it('an old pixel size falls back to the closest one left, an unknown one to the current setting', () => {
+    expect(effectivePixel('large')).toBe('medium')
+    expect(effectivePixel('gros')).toBe('medium')
+    expect(effectivePixel('medium')).toBe('medium')
+    expect(effectivePixel('fine')).toBe('fine')
+    expect(effectivePixel('huge')).toBe(DEFAULT_PIXEL)
+    expect(effectivePixel(undefined)).toBe(DEFAULT_PIXEL)
+  })
+
+  it('gives a ball 24 to 32 pixels wide', () => {
     for (const p of PIXEL_SIZES) {
       const g = pixelGrid(p.id)
       // the grid covers the whole viewBox, the ball only takes RADIUS / HALF_VIEWBOX of it
       const diameter = (g * RADIUS) / HALF_VIEWBOX
-      expect(diameter).toBeGreaterThanOrEqual(15.5)
+      expect(diameter).toBeGreaterThanOrEqual(23.5)
       expect(diameter).toBeLessThanOrEqual(32.5)
     }
-    expect(pixelGrid('large')).toBeLessThan(pixelGrid('medium'))
     expect(pixelGrid('medium')).toBeLessThan(pixelGrid('fine'))
   })
 })

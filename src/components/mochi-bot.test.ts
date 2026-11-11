@@ -35,8 +35,8 @@ describe('<mochi-bot> : declaration', () => {
     expect(PROPERTIES.map((p) => p.name).sort()).toEqual(
       [
         'accessories', 'block', 'color', 'cycle', 'elapsed', 'expression', 'follow', 'fps', 'frozenAt', 'gaze', 'gesture',
-        'highlight', 'interactions', 'label', 'laptop', 'maxPixelRatio', 'mood', 'outline', 'outlineWidth', 'paper', 'pixel',
-        'playing', 'renderStyle', 'shading', 'shadow', 'shape', 'size', 'softness', 'state', 'theme', 'wave', 'yaw'
+        'interactions', 'label', 'laptop', 'maxPixelRatio', 'mood', 'paper', 'pixel',
+        'playing', 'renderStyle', 'shading', 'shadow', 'shape', 'size', 'state', 'theme', 'wave', 'yaw'
       ].sort()
     )
   })
@@ -45,7 +45,8 @@ describe('<mochi-bot> : declaration', () => {
     const obs = MochiBotElement.observedAttributes
     expect(obs).toContain('frozen-at')
     expect(obs).toContain('max-pixel-ratio')
-    expect(obs).toContain('outline-width')
+    // removed options (11/11/2026): an old attribute on a page is simply ignored (softness: Soft has one look)
+    for (const gone of ['outline', 'outline-width', 'highlight', 'softness']) expect(obs).not.toContain(gone)
     expect(obs).not.toContain('gesture')
     expect(obs).not.toContain('gaze')
     expect(attributeOf('maxPixelRatio')).toBe('max-pixel-ratio')

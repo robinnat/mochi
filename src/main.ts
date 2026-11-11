@@ -6,6 +6,6 @@ import './styles.css'
 
 // only the app follows its language on the page (`lang` attribute, tab title)
 followLanguageDocument()
-// the app's interface is light only: its Mochis stay light even when the device is in dark mode
+// the app's interface is light only: its Mochiz stay light even when the device is in dark mode
 currentTheme.value = 'light'
 mountApp(App, '#app')

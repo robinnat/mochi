@@ -1,6 +1,6 @@
 # Getting started
 
-Mochis are small animated characters for the web. One character is called a Mochi. This project gives you one HTML tag, `<mochi-bot>`, that draws a Mochi in real 3D.
+Mochiz are small animated characters for the web. One character is called a Mochi. This project gives you one HTML tag, `<mochi-bot>`, that draws a Mochi in real 3D.
 
 `<mochi-bot>` is a **web component**: an HTML tag defined in JavaScript, that every modern browser understands. So it works in plain HTML and in any framework (React, Vue, Svelte, Angular...).
 
@@ -8,57 +8,57 @@ On the website, every example marked "Live" shows its result right below the cod
 
 ## Install
 
-> The npm package is coming soon. `mochis` is not published yet, so `npm install mochis` does not work today. Until then, build it from the repository.
+> The npm package is coming soon: `mochiz` is not on npm yet. Until then, build it from the repository.
 
 You need [Node.js](https://nodejs.org) 22.12 or later. Build the library once:
 
 ```bash
-git clone https://github.com/robinnat/mochi.git
-cd mochi
+git clone https://github.com/robinnat/mochiz.git
+cd mochiz
 npx pnpm@11.17.0 install
 npx pnpm@11.17.0 build:lib
 ```
 
-This writes the library to the `dist-lib/` folder. Copy the whole folder into your project, and keep its files together: the 3D part and Three.js (the 3D library) are separate files, loaded only when a Mochi is shown. Then load the library once per page. Loading it declares the `<mochi-bot>` tag. Pick the case that matches your project.
+This writes the library to the `dist-lib/` folder. Copy its `standalone` folder into your project: it holds everything, Three.js (the 3D library) included. Keep its files together: the 3D part is a separate file, loaded only when a Mochi is shown. Then load the library once per page. Loading it declares the `<mochi-bot>` tag. Pick the case that matches your project.
 
 ### Plain HTML
 
-Copy the folder next to your page, under the name `mochis`:
+Copy the folder next to your page, under the name `mochiz`:
 
 ```bash
-cp -r dist-lib ../my-site/mochis
+cp -r dist-lib/standalone ../my-site/mochiz
 ```
 
 Then load it with a script tag:
 
 ```html
-<script type="module" src="/mochis/mochis.js"></script>
+<script type="module" src="/mochiz/mochiz.js"></script>
 ```
 
 ### An app with a bundler (Vite, webpack...)
 
-A bundler is a tool that packs your source files into a few files for the browser. Copy the folder into your source code, under `src/vendor/mochis`:
+A bundler is a tool that packs your source files into a few files for the browser. Copy the folder into your source code, under `src/vendor/mochiz`:
 
 ```bash
-cp -r dist-lib ../my-app/src/vendor/mochis
+cp -r dist-lib/standalone ../my-app/src/vendor/mochiz
 ```
 
 Then import it from a file of `src/` (here `src/main.js`), with a relative path:
 
 ```js
-import './vendor/mochis/mochis.js'
+import './vendor/mochiz/mochiz.js'
 ```
 
 Do not put the library in `public/`: a bundler serves that folder as is and cannot import JavaScript from it (Vite stops with "failed to resolve import").
 
 You need nothing else. The built files keep the MIT license notice: ship it with your app.
 
-The examples below load the library the plain HTML way (`/mochis/mochis.js`) and import it the bundler way (`./vendor/mochis/mochis.js`). Use the path that matches your project.
+The examples below load the library the plain HTML way (`/mochiz/mochiz.js`) and import it the bundler way (`./vendor/mochiz/mochiz.js`). Use the path that matches your project.
 
 ## Your first Mochi
 
 ```html live
-<script type="module" src="/mochis/mochis.js"></script>
+<script type="module" src="/mochiz/mochiz.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
@@ -206,21 +206,24 @@ There are three styles, all in real 3D. The model is the same, only the drawing 
 <!-- Soft is the default -->
 <mochi-bot render-style="3d"></mochi-bot>
 
-<!-- Pixel, with medium pixels (large, medium or fine; fine is the default) -->
+<!-- Pixel, with medium pixels (medium or fine; fine is the default) -->
 <mochi-bot render-style="pixel3d" pixel="medium"></mochi-bot>
 
-<!-- Flat, with a cartoon outline twice as thick as usual -->
-<mochi-bot render-style="flat3d" outline outline-width="2"></mochi-bot>
+<!-- Flat: two or three flat tones -->
+<mochi-bot render-style="flat3d"></mochi-bot>
 ```
 
-A few more options change the look in every style:
+A few more options change the look. `yaw` and `shadow` work in every style; `shading` only in Flat and Pixel (Soft is always shaded):
 
 ```html live
 <!-- turn the model: an angle in radians (a full turn is about 6.28) -->
 <mochi-bot yaw="0.5"></mochi-bot>
 
-<!-- no highlight, no ground shadow, no body shading -->
-<mochi-bot highlight="false" shadow="false" shading="false"></mochi-bot>
+<!-- no ground shadow (Soft, Flat and Pixel all draw one by default) -->
+<mochi-bot shadow="false"></mochi-bot>
+
+<!-- Flat without body shading: one flat color -->
+<mochi-bot render-style="flat3d" shading="false"></mochi-bot>
 ```
 
 ## Light and dark
@@ -236,7 +239,7 @@ To choose the theme yourself, set it on one Mochi:
 Or set it for every Mochi of the page that has no `theme` of its own, for example when your site has its own light and dark switch:
 
 ```js
-import { currentTheme } from './vendor/mochis/mochis.js'
+import { currentTheme } from './vendor/mochiz/mochiz.js'
 
 currentTheme.value = 'dark' // 'light', 'dark', or 'auto' to follow the device again (the default)
 ```
@@ -252,11 +255,11 @@ currentTheme.value = 'dark' // 'light', 'dark', or 'auto' to follow the device a
 ```
 
 - `frozen-at` draws one exact instant (a time in seconds) without any animation loop. Use it for lists and thumbnails.
-- `fps` caps the number of frames per second: lighter when many Mochis move at once.
+- `fps` caps the number of frames per second: lighter when many Mochiz move at once.
 - `max-pixel-ratio` caps the sharpness of the 3D canvas (2 by default). `1.5` is lighter on phones.
-- All the Mochis of a page share one WebGL context (one 3D drawing surface), so a page can show many of them. Each Mochi still keeps its own body, face and accessories, so one Mochi never redoes the work of another.
+- All the Mochiz of a page share one WebGL context (one 3D drawing surface), so a page can show many of them. Each Mochi still keeps its own body, face and accessories, so one Mochi never redoes the work of another.
 - A Mochi off the screen (scrolled away or in a hidden panel) draws nothing. Its clock keeps going, and it is up to date as soon as it comes back into view.
-- When drawing every Mochi at every frame gets too heavy (a slow phone, many Mochis on screen), each one draws every other frame by itself: 30 frames per second, steady, and the page keeps its own speed. A Mochi with its own `fps` keeps it.
+- When drawing every Mochi at every frame gets too heavy (a slow phone, many Mochiz on screen), each one draws every other frame by itself: 30 frames per second, steady, and the page keeps its own speed. A Mochi with its own `fps` keeps it.
 - When a Mochi is removed from the page, it stops its animation loop and its listeners by itself.
 
 ```html
@@ -269,7 +272,7 @@ currentTheme.value = 'dark' // 'light', 'dark', or 'auto' to follow the device a
 
 ```jsx
 // React 19
-import './vendor/mochis/mochis.js'
+import './vendor/mochiz/mochiz.js'
 
 export function Avatar({ mood }) {
   return <mochi-bot shape="star" color="#2d5bff" mood={mood} size="160" onready={() => console.log('ready')} />
@@ -279,7 +282,7 @@ export function Avatar({ mood }) {
 ```svelte
 <!-- Svelte 5 -->
 <script>
-  import './vendor/mochis/mochis.js'
+  import './vendor/mochiz/mochiz.js'
   let mood = $state('idle')
 </script>
 
@@ -290,7 +293,7 @@ export function Avatar({ mood }) {
 ```vue
 <!-- Vue: tell Vue that mochi-bot is a custom element (compilerOptions.isCustomElement) -->
 <script setup>
-import './vendor/mochis/mochis.js'
+import './vendor/mochiz/mochiz.js'
 </script>
 
 <template>

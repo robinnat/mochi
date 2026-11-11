@@ -5,8 +5,6 @@ const base: OptionsExtrait = {
   shape: 'star',
   color: 'violet',
   renderStyle: '3d',
-  outline: false,
-  highlight: true,
   mood: 'idle',
   accessories: {},
   theme: 'auto',
@@ -20,19 +18,13 @@ describe('code excerpt of the customization', () => {
     for (const absent of ['render-style=', 'outline', 'shading', 'thickness', 'accessories', 'theme', 'laptop']) expect(e).not.toContain(absent)
   })
 
-  it('the outline applies to all three styles, the highlight only to Soft, no shading any more', () => {
-    for (const renderStyle of ['3d', 'flat3d', 'pixel3d'] as const) expect(extraitCode({ ...base, renderStyle, outline: true })).toContain('outline')
-    expect(extraitCode(base)).not.toContain('shading')
-    expect(extraitCode({ ...base, highlight: false })).toContain('highlight="false"')
-    expect(extraitCode({ ...base, renderStyle: 'flat3d', highlight: false })).not.toContain('highlight')
+  it('never writes the removed options (outline, highlight) nor shading, in any style', () => {
+    for (const renderStyle of ['3d', 'flat3d', 'pixel3d'] as const) {
+      const e = extraitCode({ ...base, renderStyle })
+      for (const absent of ['outline', 'highlight', 'shading']) expect(e).not.toContain(absent)
+    }
     expect(extraitCode({ ...base, renderStyle: 'pixel3d' })).toContain('render-style="pixel3d"')
     expect(extraitCode({ ...base, renderStyle: 'pixel3d' })).not.toContain('pixel=')
-  })
-
-  it('the outline width is written only if it differs from the default and the outline is on', () => {
-    expect(extraitCode({ ...base, outline: true, thickness: 1 })).not.toContain('thickness')
-    expect(extraitCode({ ...base, outline: true, thickness: 2.5 })).toContain('  outline-width="2.5"')
-    expect(extraitCode({ ...base, outline: false, thickness: 2.5 })).not.toContain('thickness')
   })
 
   it('theme, laptop of the working mood and accessories with their colors', () => {
@@ -59,7 +51,7 @@ describe('code excerpt of the customization', () => {
     expect(accessoriesAsCode({ neck: 'bowtie', back: 'cape' })).toBe("{ neck: 'bowtie', back: 'cape' }")
   })
 
-  it('free color: the code writes the chosen hex, without outline or highlight when the site does not pass them', () => {
+  it('free color: the code writes the chosen hex, and nothing else', () => {
     const free: OptionsExtrait = { shape: 'heart', color: '#ff8800', renderStyle: 'pixel3d', mood: 'idle', accessories: {}, theme: 'auto', laptop: true }
     const e = extraitCode(free)
     expect(e).toContain('color="#ff8800"')

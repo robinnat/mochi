@@ -1,7 +1,7 @@
 import { computed, ref } from '@/ui/dom/reactive'
 import { h, type Component } from '@/ui/dom/h'
-import 'mochis'
-import { MOOD_IDS, REACTION_IDS, type MochiBotElement, type MoodId } from 'mochis'
+import 'mochiz'
+import { MOOD_IDS, REACTION_IDS, type MochiBotElement, type MoodId } from 'mochiz'
 
 /**
  * `#moods`: the real component, with its moods and its interactions wired to the pointer. Hover, tap, double tap,

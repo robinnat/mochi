@@ -7,9 +7,10 @@ const initial = (name: string) => PROPERTIES.find((p) => p.name === name)!.initi
  * The 3D rendering options exposed by the component (the site's 3D section and the dashboard rely on them).
  */
 describe('<mochi-bot>: 3D rendering options', () => {
-  it('ground shadow, cartoon outline, highlight and theme are options', () => {
+  it('ground shadow, shading and theme are options; outline and highlight are gone (11/11/2026)', () => {
     const names = PROPERTIES.map((p) => p.name)
-    for (const name of ['shadow', 'shading', 'outline', 'outlineWidth', 'highlight', 'theme', 'accessories', 'laptop', 'mood']) expect(names, name).toContain(name)
+    for (const name of ['shadow', 'shading', 'theme', 'accessories', 'laptop', 'mood']) expect(names, name).toContain(name)
+    for (const name of ['outline', 'outlineWidth', 'highlight']) expect(names, name).not.toContain(name)
   })
   it("the shadow is on by default (the previous rendering does not change)", () => {
     expect(initial('shadow')).toBe(true)

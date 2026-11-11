@@ -7,8 +7,16 @@ import { ShapeSheet } from './ShapeSheet'
  * and `#shapes3d` the 3D sheets (loaded on demand).
  */
 type Sheet = 'shapes' | 'shapes3d' | 'turn' | 'moods'
-const read = (): Sheet =>
-  location.hash.startsWith('#moods') ? 'moods' : location.hash.startsWith('#tour') ? 'turn' : location.hash.startsWith('#formes3d') ? 'shapes3d' : 'shapes'
+/** The sheet of the hash. The French hashes of older links (`#tour`, `#formes3d`) still open their sheet. */
+export const sheetOf = (hash: string): Sheet =>
+  hash.startsWith('#moods')
+    ? 'moods'
+    : hash.startsWith('#turn') || hash.startsWith('#tour')
+      ? 'turn'
+      : hash.startsWith('#shapes3d') || hash.startsWith('#formes3d')
+        ? 'shapes3d'
+        : 'shapes'
+const read = (): Sheet => sheetOf(location.hash)
 
 const LOADERS: Record<Exclude<Sheet, 'shapes'>, () => Promise<Component<Record<string, never>>>> = {
   shapes3d: () => import('./FlatSheet3d').then((m) => m.FlatSheet3d),
@@ -42,7 +50,7 @@ export const Lab: Component<Record<string, never>> = () => {
       h(
         'nav',
         { class: 'flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--line)] px-4 py-3 text-sm' },
-        h('strong', null, 'Mochi lab'),
+        h('strong', null, 'Mochiz lab'),
         link('shapes', 'shapes'),
         link('shapes3d', 'shapes 3D'),
         link('moods', 'moods'),

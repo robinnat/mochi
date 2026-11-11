@@ -2,14 +2,14 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
-  <img src="docs/banner.png" alt="Mochis" width="100%">
+  <img src="docs/banner.png" alt="Mochiz" width="100%">
 </picture>
 
-# Mochis
+# Mochiz
 
-[![Licence : MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Démo en ligne**](https://mochi-red-phi.vercel.app)
+[![Licence : MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Démo en ligne**](https://mochiz.vercel.app)
 
-Les Mochis sont de petits personnages animés pour le web. Un personnage s'appelle un Mochi : une forme douce en 3D avec deux yeux. Il respire, cligne des yeux, montre une humeur et réagit quand on le touche.
+Les Mochiz sont de petits personnages animés pour le web. Un personnage s'appelle un Mochi : une forme douce en 3D avec deux yeux. Il respire, cligne des yeux, montre une humeur et réagit quand on le touche.
 
 On ajoute un Mochi à n'importe quelle page avec une seule balise HTML, `<mochi-bot>`. Elle marche en HTML simple et dans n'importe quel framework (React, Vue, Svelte, Angular...).
 
@@ -20,7 +20,7 @@ On ajoute un Mochi à n'importe quelle page avec une seule balise HTML, `<mochi-
 - thèmes clair et sombre
 - exports PNG, SVG, GIF et MP4, depuis l'app
 
-**Site :** https://mochi-red-phi.vercel.app. L'app, un éditeur en ligne pour créer un Mochi et l'exporter, est sur `/app`.
+**Site :** https://mochiz.vercel.app. L'app, un éditeur en ligne pour créer un Mochi et l'exporter, est sur `/app`.
 
 Ce fichier est une traduction pour les lecteurs francophones. La documentation de référence est en anglais : tous les identifiants, attributs et exemples de code sont en anglais.
 
@@ -31,16 +31,16 @@ Ce fichier est une traduction pour les lecteurs francophones. La documentation d
 Chargez la bibliothèque, puis écrivez la balise :
 
 ```html
-<script type="module" src="/mochis/mochis.js"></script>
+<script type="module" src="/mochiz/mochiz.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
 
-C'est la façon HTML simple. Dans une app avec un bundler (Vite, webpack...), copiez la bibliothèque dans `src/vendor/mochis/` et écrivez `import './vendor/mochis/mochis.js'` : voir [Install](docs/getting-started.md#install).
+C'est la façon HTML simple. Dans une app avec un bundler (Vite, webpack...), copiez la bibliothèque dans `src/vendor/mochiz/` et écrivez `import './vendor/mochiz/mochiz.js'` : voir [Install](docs/getting-started.md#install).
 
 ## Documentation
 
-La documentation est dans [docs/](docs/README.md), en anglais. Le site montre les mêmes pages sur [/docs](https://mochi-red-phi.vercel.app/docs).
+La documentation est dans [docs/](docs/README.md), en anglais. Le site montre les mêmes pages sur [/docs](https://mochiz.vercel.app/docs).
 
 - [Getting started](docs/getting-started.md) : installation, premier Mochi, options, humeurs, réactions, méthodes, événements, accessoires, styles, frameworks.
 - [Reference](docs/reference.md) : toutes les options, méthodes, événements et identifiants.

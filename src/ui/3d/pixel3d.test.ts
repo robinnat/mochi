@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { leverDark, luminance, palettePixel, quantifier, tonesOf } from './pixel3d'
+import { leverDark, luminance, palettePixel, pixelEllipse, quantifier, tonesOf } from './pixel3d'
 
 describe('pixel 3D style', () => {
   it('the body palette has three tones from darkest to lightest, plus the white of the eyes', () => {
@@ -59,5 +59,35 @@ describe('pixel 3D style', () => {
     const px = (x: number, y: number) => data[(y * w + x) * 4]
     expect(px(3, 5)).toBe(255) // the missing corner is filled
     expect(px(7, 0)).not.toBe(255) // the lone pixel is no longer white
+  })
+})
+
+describe('pixel ground shadow (11/11/2026)', () => {
+  it('whole cells only: integer rows and columns, symmetric, widest in the middle', () => {
+    const rows = pixelEllipse(25.5, 40, 11.6, 2.3)
+    expect(rows.length).toBeGreaterThanOrEqual(4)
+    expect(rows.length).toBeLessThanOrEqual(5)
+    for (const [y, x0, x1] of rows) {
+      expect(Number.isInteger(y) && Number.isInteger(x0) && Number.isInteger(x1)).toBe(true)
+      expect(x1).toBeGreaterThan(x0)
+      // centered on 25.5: as many cells on each side
+      expect(25.5 - x0).toBeCloseTo(x1 - 25.5, 5)
+    }
+    const widths = rows.map(([, x0, x1]) => x1 - x0)
+    expect(Math.max(...widths)).toBeGreaterThanOrEqual(22)
+    expect(Math.max(...widths)).toBeLessThanOrEqual(24)
+    expect(widths[0]).toBeLessThan(Math.max(...widths))
+  })
+
+  it('a cell is in when its center is inside the ellipse', () => {
+    for (const [y, x0, x1] of pixelEllipse(10, 10, 6, 3)) {
+      for (const x of [x0, x1 - 1]) expect(((x + 0.5 - 10) / 6) ** 2 + ((y + 0.5 - 10) / 3) ** 2).toBeLessThan(1)
+      for (const x of [x0 - 1, x1]) expect(((x + 0.5 - 10) / 6) ** 2 + ((y + 0.5 - 10) / 3) ** 2).toBeGreaterThanOrEqual(1)
+    }
+  })
+
+  it('nothing for an empty ellipse', () => {
+    expect(pixelEllipse(5, 5, 0, 2)).toEqual([])
+    expect(pixelEllipse(5, 5, 4, 0)).toEqual([])
   })
 })

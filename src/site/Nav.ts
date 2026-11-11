@@ -23,7 +23,7 @@ const GITHUB = 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55
 /** Full star (GitHub star icon, drawn by hand). */
 const STAR = 'M8 .9l2.1 4.4 4.8.6-3.5 3.3.9 4.8L8 11.7 3.7 14l.9-4.8L1.1 5.9l4.8-.6L8 .9Z'
 
-/** The Mochis mark: a light and a dark version, the CSS shows the one of the current theme. */
+/** The Mochiz mark: a light and a dark version, the CSS shows the one of the current theme. */
 export const brandMark = (size: number) => [
   h('img', { class: 'mark mark-light', src: '/mark-light-96.png', width: String(size), height: String(size), alt: '' }),
   h('img', { class: 'mark mark-dark', src: '/mark-dark-96.png', width: String(size), height: String(size), alt: '' })
@@ -51,9 +51,9 @@ export const Nav: Component<NavProps> = (props) => {
         { class: 'nav-in' },
         h(
           'a',
-          { class: 'brand', href: home() || '#top', 'aria-label': 'Mochis, home' },
+          { class: 'brand', href: home() || '#top', 'aria-label': 'Mochiz, home' },
           brandMark(28),
-          h('span', { class: 'wordmark' }, 'Mochis')
+          h('span', { class: 'wordmark' }, 'Mochiz')
         ),
         h(
           'div',
@@ -68,8 +68,8 @@ export const Nav: Component<NavProps> = (props) => {
             'a',
             {
               class: ['nav-icon', { 'nav-stars': stars.value !== null }],
-              href: 'https://github.com/robinnat/mochi',
-              'aria-label': stars.value === null ? 'Mochis on GitHub' : `Mochis on GitHub, ${stars.value} stars`
+              href: 'https://github.com/robinnat/mochiz',
+              'aria-label': stars.value === null ? 'Mochiz on GitHub' : `Mochiz on GitHub, ${stars.value} stars`
             },
             h('svg', { viewBox: '0 0 16 16', width: '18', height: '18', 'aria-hidden': 'true' }, h('path', { fill: 'currentColor', d: GITHUB })),
             stars.value === null

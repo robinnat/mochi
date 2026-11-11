@@ -1,15 +1,9 @@
-import { SLOTS, ACCESSORY_BY_KEY, type RenderStyleId, type AccessorySelection } from 'mochis/catalog'
+import { SLOTS, ACCESSORY_BY_KEY, type RenderStyleId, type AccessorySelection } from 'mochiz/catalog'
 
 export interface OptionsExtrait {
   shape: string
   color: string
   renderStyle: RenderStyleId
-  /** outline: options of the PACKAGE, no longer shown on the site (06/11/2026); absent = no outline */
-  outline?: boolean
-  /** outline width (factor, 1 = default); written only if it differs and the outline is on */
-  thickness?: number
-  /** soft highlight of the Soft 3D: on by default, `false` only for code that turns it off */
-  highlight?: boolean
   mood: string
   /** accessories by slot, with their colors */
   accessories: AccessorySelection
@@ -63,11 +57,6 @@ export function accessoriesAsJson(sel: AccessorySelection): string {
 export function extraitCode(o: OptionsExtrait): string {
   const l = [`  shape="${o.shape}"`, `  color="${o.color}"`]
   if (o.renderStyle !== '3d') l.push(`  render-style="${o.renderStyle}"`)
-  if (o.outline) {
-    l.push('  outline')
-    if (o.thickness !== undefined && Math.abs(o.thickness - 1) > 1e-6) l.push(`  outline-width="${Number(o.thickness.toFixed(2))}"`)
-  }
-  if (o.renderStyle === '3d' && o.highlight === false) l.push('  highlight="false"')
   l.push(`  mood="${o.mood}"`)
   if (o.mood === 'working' && !o.laptop) l.push('  laptop="false"')
   const acc = accessoriesAsJson(o.accessories)

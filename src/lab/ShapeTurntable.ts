@@ -1,6 +1,6 @@
 import { ref } from '@/ui/dom/reactive'
 import { h, onUnmount, onMount, type Component } from '@/ui/dom/h'
-import { BotEngine, load3d, COLOR_BY_ID, HALF_VIEWBOX, RADIUS, SHAPES } from 'mochis'
+import { BotEngine, load3d, COLOR_BY_ID, HALF_VIEWBOX, RADIUS, SHAPES } from 'mochiz'
 import { sizeCell } from './width'
 
 /**
@@ -50,7 +50,7 @@ export const ShapeTurntable: Component<Record<string, never>> = () => {
     const body: InstanceType<typeof Mochi3d>[] = []
     for (const f of SHAPE_LIST) {
       const m = new Mochi3d(512)
-      m.setRenderStyle('soft', false, 'strong', true)
+      m.setRenderStyle('soft')
       m.setShape(f.id)
       const engine = new BotEngine(RADIUS, 'idle', f.radii, null)
       m.update(engine.sample(t), hex, '#f9f9f9')

@@ -8,7 +8,7 @@ import type { Theme } from '../src/ui/3d/theme'
 import { pixelGrid } from '../src/ui/renderStyle'
 
 /**
- * Renders a mood or interaction animation: three Mochis side by side (varied shapes, colors, styles and accessories,
+ * Renders a mood or interaction animation: three Mochiz side by side (varied shapes, colors, styles and accessories,
  * one in the dark theme). Same chain as the component: `Moods.sample` -> `BotEngine.sample(t, gesture)` ->
  * `renderAvatar`. Each frame is a pure function of `t`: events (tap, press...) are replayed with their times, so any
  * frame renders alone.
@@ -58,7 +58,7 @@ interface Custom {
 }
 
 /**
- * The cast of an animation: 3 Mochis, all different, one in dark; covers the 11 shapes from one animation to the
+ * The cast of an animation: 3 Mochiz, all different, one in dark; covers the 11 shapes from one animation to the
  * next.
  */
 function distribution(a: number): Custom[] {
@@ -358,7 +358,7 @@ function mochi(c: CanvasRenderingContext2D, a: Anim, i: number, p: Custom, t: nu
   const pixel = p.style.renderStyle === 'pixel'
   tile.width = tile.height = pixel ? Math.round((pixelGrid('fine') * FRAME) / HALF_VIEWBOX) : size
   const yaw = (a.yaw ? a.yaw(i, t) : 0) + 0.3 * kLaptop
-  renderAvatar(tile, frame, p.color, PAPER, p.style.renderStyle, false, 'strong', true, p.shape, yaw, p.sel, FRAME, p.theme, undefined, a.laptop ? a.laptop(i, t) : 0)
+  renderAvatar(tile, frame, p.color, PAPER, p.style.renderStyle, p.shape, yaw, p.sel, FRAME, p.theme, undefined, a.laptop ? a.laptop(i, t) : 0)
   c.imageSmoothingEnabled = !pixel
   c.drawImage(tile, x0, y0, size, size)
   c.imageSmoothingEnabled = true
@@ -452,7 +452,7 @@ function planLaptop(): HTMLCanvasElement {
       const t = 0.85 + (k % 5) * 0.11
       const frame = engine(shape).sample(t, h.sample(t))
       tile.width = tile.height = cell
-      renderAvatar(tile, frame, color, PAPER, 'soft', false, 'strong', true, shape, yaw + 0.3, k % 3 === 1 ? { head: 'cap', eyes: 'round' } : {}, FRAME, theme, undefined, 1)
+      renderAvatar(tile, frame, color, PAPER, 'soft', shape, yaw + 0.3, k % 3 === 1 ? { head: 'cap', eyes: 'round' } : {}, FRAME, theme, undefined, 1)
       c.drawImage(tile, x + v * cell, y, cell, cell)
     })
     text(c, SHAPE_NAMES[shape] ?? shape, x + 10, y + 26, 20, theme === 'dark' ? '#cfcbd6' : GRAY, true)

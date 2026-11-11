@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { ACCESSORIES, ACCESSORY_BY_KEY } from 'mochis/catalog'
+import { ACCESSORIES, ACCESSORY_BY_KEY } from 'mochiz/catalog'
 import { POSTERS, SCROLL, PIECES, urlPoster, urlPiece } from './posters'
 
 const publicDir = new URL('../../public', import.meta.url)
@@ -34,7 +34,7 @@ describe('images pre-rendues (v11)', () => {
     }
     const v = read('Alive.ts')
     // the component arrives through the package's public entry, as for a user
-    expect(v).toContain("import('mochis')")
+    expect(v).toContain("import('mochiz')")
     expect(v).toContain('onReady: whenReady')
     expect(v).toContain('IntersectionObserver')
   })

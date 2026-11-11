@@ -5,6 +5,61 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-11
+
+### Changed (name)
+
+- **The project is renamed Mochiz** (it was Mochis), to match the website https://mochiz.vercel.app. The npm package
+  is now `mochiz` (entries `mochiz`, `mochiz/catalog`, `mochiz/standalone`, files `dist-lib/mochiz.js` and
+  `dist-lib/standalone/mochiz.js`), and the copy folder of the docs is `mochiz` (`/mochiz/mochiz.js`,
+  `src/vendor/mochiz/`). The `<mochi-bot>` tag does not change, and one character is still called a Mochi. The lines
+  below were written before the rename and keep the old name.
+
+First version ready for npm. Not published yet: the docs keep the install from the repository (copy of
+`dist-lib/standalone`) until it is; the npm instructions wait in `docs/drafts/npm-install.md`.
+
+### Added (package)
+
+- **npm package `mochis`**: `exports` for `mochis` and `mochis/catalog`, with real TypeScript declarations
+  (`dist-lib/types/`, generated from the sources); `document.querySelector('mochi-bot')` is typed.
+- **Three.js is a peer dependency** (`three` `^0.187.0`): the package build imports it from your project
+  (`three/src/...`, one file per class), so your bundler keeps one copy and only the classes Mochis draws with.
+- **Standalone build** (`mochis/standalone`, `dist-lib/standalone/`): the same two entries with Three.js included. It is
+  the folder the docs tell you to copy (plain HTML or `src/vendor/mochis`).
+- The package only ships `dist-lib/`, the READMEs, the license and this changelog; `sideEffects` names the two files
+  that declare the tag.
+- The website moved to https://mochiz.vercel.app (canonical and `og:url` tags added).
+
+### Removed (breaking)
+
+- **`outline` and `outline-width`** (cartoon outline) and the shared `currentOutline` setting, with the checkbox of
+  `/app`. The thin outline of the Pixel style stays: it is part of the Pixel drawing, not an option.
+- **`highlight`**: the option is gone, and so is the small shine spot at the top left of the Soft style. The Soft style
+  keeps its volume: the side facing the top left still gets lighter, now in a long gradient with no edge, so it reads
+  as relief, not as a spot. This light is part of the Soft relief.
+- **`softness`** (the `light` or `strong` shading of the Soft style) and the `Softness` type: the difference barely
+  showed. Soft always has its former `strong` look.
+- **`shading` no longer changes Soft**: Soft is always shaded (without relief it looked exactly like Flat without
+  shading). `shading="false"` still gives one flat color in Flat and Pixel; on Soft it is ignored.
+- **Pixel size `large`**: `pixel` takes `medium` or `fine` (default `fine`).
+- An old attribute (`outline`, `outline-width`, `highlight`, `softness`) on a page is simply ignored; an old
+  `pixel="large"` falls back to `medium`. Settings saved in the browser by older versions of `/app` are migrated: the
+  outline and softness settings are dropped, a saved `large` (or `gros`) pixel size becomes `medium`
+  (`src/ui/legacy.ts`).
+- `mediabunny` (video export of `/app`) is no longer a dependency of the package: only the website uses it.
+
+### Added (styles)
+
+- **Ground shadow in the Pixel style**: like Soft and Flat, Pixel now draws a shadow under the body (on by default,
+  `shadow="false"` turns it off). It is made of whole pixels with hard edges, a darker core and a lighter rim, to match
+  the pixel look (Soft keeps its soft gradient, Flat its flat ellipse).
+
+### Fixed (docs)
+
+- `/docs`: the clone URL of the shell examples is no longer colored as a comment, and `#` comments of shell lines are;
+  the side menu lights the section being read (it used to light the next one after a jump to an anchor).
+- `docs/styles.md`: the cadence goes back to every frame below 6 ms (it said 5; the code says `CADENCE_FULL_MS` = 6).
+
 ### Changed (performance)
 
 - **Each Mochi keeps its own 3D body** (meshes, face texture, accessories) while all of them still share one WebGL
@@ -61,7 +116,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The `worn` option (an older set of eight accessories, a duplicate of `accessories`) and its 3D pieces.
 - The `material` option: the render style picks the material (`3d` is Soft, `flat3d` Flat, `pixel3d` Pixel), and
-  `softness` still tunes Soft. The `Material` type is no longer exported.
+  `softness` still tuned Soft (removed in 0.2.0). The `Material` type is no longer exported.
 - **No 2D any more.** The old SVG drawings (`original`, `pixel`, `argile`, `bubble`, partly derived from bloub) are
   gone, with their pixel-art rasteriser, the 2D drawing of worn accessories and the 2D job accessories (the
   `accessory` prop). Mochi is always drawn in 3D (Soft, Flat, Pixel). An unknown `renderStyle` (old ids included) falls
@@ -323,5 +378,6 @@ fixed, and the measurement is in the commit that fixes it.
 - `StateDef.hint`: 15 hardcoded French strings nothing read, inside a type meant to
   become public.
 
-[unreleased]: https://github.com/robinnat/mochi/commits/main
-[0.1.1]: https://github.com/robinnat/mochi/commits/main
+[unreleased]: https://github.com/robinnat/mochiz/commits/main
+[0.2.0]: https://github.com/robinnat/mochiz/commits/main
+[0.1.1]: https://github.com/robinnat/mochiz/commits/main

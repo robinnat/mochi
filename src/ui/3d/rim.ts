@@ -6,18 +6,30 @@
  * - soft shading (studio AO): the bottom and the edges darken slightly;
  * - bottom-right glow (backlight / bounce): fresnel limited to a sector towards 4 o'clock;
  * - light top-left glow: same principle towards 10 o'clock, much more discreet;
- * - soft highlight: a wide light spot towards the top left, tinted by the material. No scene light: these are
- *   material effects (a few lines of shader).
+ * - soft top-left light: the side that faces the top left gets lighter, in a long gradient (this is what gives the Soft
+ *   style its volume). It starts low (`SOFT_LIGHT_FROM`) so it has no edge: there is no shine spot any more (removed on
+ *   11/11/2026). It is part of `shading`: on with it, off without it.
+ * No scene light: these are material effects (a few lines of shader).
  */
 import type { Material, WebGLProgramParametersWithUniforms } from './three'
 
+/**
+ * Soft top-left light: where the gradient starts (cosine to the light direction) and how much it adds. Starting at 0.5
+ * (and not 0.72 as before 11/11/2026) spreads it over the whole lit side: volume, no spot.
+ */
+export const SOFT_LIGHT_FROM = 0.5
+export const SOFT_LIGHT_GAIN = 0.22
+
 export interface OptionsRim {
-  /** soft highlight uniform (0 = none); absent = no highlight */
-  highlight?: { value: number }
+  /**
+   * soft top-left light uniform (1 = on, 0 = off): part of the relief of the Soft style, shared by a body and its
+   * accessories; absent = none. It is not a public option: it follows `shading`.
+   */
+  softLight?: { value: number }
   /** share of the soft shading (0..1); 0 = none */
   ao?: number
   /**
-   * "black eyes" uniform (dark theme): 1 = glows and highlight are not added on the eyes (read from the material's
+   * "black eyes" uniform (dark theme): 1 = glows are not added on the eyes (read from the material's
    * emission mask), which stay plain black; 0 = previous rendering
    */
   eye?: { value: number }
@@ -28,10 +40,10 @@ export function rim(m: Material, force = 0.55, top = 0, opts: OptionsRim = {}) {
   const ao = opts.ao ?? 0
   m.onBeforeCompile = (sh: WebGLProgramParametersWithUniforms, r) => {
     prev?.call(m, sh, r)
-    if (opts.highlight) sh.uniforms.uHighlight = opts.highlight
+    if (opts.softLight) sh.uniforms.uSoftLight = opts.softLight
     if (opts.eye) sh.uniforms.uEye = opts.eye
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', `${opts.highlight ? 'uniform float uHighlight;\n' : ''}${opts.eye ? 'uniform float uEye;\n' : ''}#include <common>`)
+      .replace('#include <common>', `${opts.softLight ? 'uniform float uSoftLight;\n' : ''}${opts.eye ? 'uniform float uEye;\n' : ''}#include <common>`)
       .replace(
         '#include <opaque_fragment>',
         `{
@@ -53,15 +65,16 @@ export function rim(m: Material, force = 0.55, top = 0, opts: OptionsRim = {}) {
   float glowTop = pow(edge, 2.6) * sectH;
   outgoingLight += tint * glowTop * ${top.toFixed(2)} * eyeBlack;
   ${
-    opts.highlight
-      ? `// soft highlight: a wide spot towards the top left
-  float hl = smoothstep(0.72, 0.99, dot(nL, normalize(vec3(-0.5, 0.62, 0.6))));
-  outgoingLight += tint * hl * 0.22 * uHighlight * eyeBlack;`
+    opts.softLight
+      ? `// soft top-left light (volume): the side facing the light gets lighter, in a long gradient with no edge,
+  // so it reads as relief and never as a shine spot (the old 0.72..0.99 range drew a visible spot, 11/11/2026)
+  float hl = smoothstep(${SOFT_LIGHT_FROM.toFixed(2)}, 1.0, dot(nL, normalize(vec3(-0.5, 0.62, 0.6))));
+  outgoingLight += tint * hl * ${SOFT_LIGHT_GAIN.toFixed(2)} * uSoftLight * eyeBlack;`
       : ''
   }
 }
 #include <opaque_fragment>`
       )
   }
-  m.customProgramCacheKey = () => `rim${force}-${top}-${ao}-${opts.highlight ? 'r' : ''}${opts.eye ? 'o' : ''}`
+  m.customProgramCacheKey = () => `rim${force}-${top}-${ao}-${opts.softLight ? 'r' : ''}${opts.eye ? 'o' : ''}`
 }

@@ -10,9 +10,10 @@
  * This module is PURE (no Three.js dependency): it sets tones, thresholds and finesse, which `scene3d.ts` turns into
  * materials. So it can be imported statically (component types, tests under Node) without pulling in Three.js.
  *
- * The default is `soft` with `strong` softness (choice of 03/11/2026, after flat was judged a big block of shadow);
- * `flat` stays in the code, out of the interface; `realistic` stays available internally only. The cartoon outline is
- * an OPTION (`outline`), usable with `flat` as with `toon`: `toon-outline` is only `toon` with an outline.
+ * The default is `soft` (choice of 03/11/2026, after flat was judged a big block of shadow). It has a single setting
+ * (the former `strong` softness): the `softness` option was removed on 11/11/2026 because the difference did not show;
+ * `flat` stays in the code, out of the interface; `realistic` stays available internally only. There is no public
+ * outline option any more (removed on 11/11/2026); `toon-outline` stays an internal material, `toon` with a shell.
  *
  * `toon` and `lowpoly` stay in the code (they cost nothing: one table row each) but are no longer offered in the
  * interface or the lab.
@@ -23,15 +24,6 @@ import { DEFAULT_FINESSE, type Finesse } from './volume'
 export type Material = 'realistic' | 'toon' | 'toon-outline' | 'lowpoly' | 'flat' | 'soft' | 'pixel'
 
 export const MATERIALS: Material[] = ['realistic', 'toon', 'toon-outline', 'lowpoly', 'flat', 'soft', 'pixel']
-
-/**
- * Setting of the `soft` material (smooth, matte shading): `light` or `strong`. Only concerns `soft`; ignored by the
- * other materials.
- */
-export type Softness = 'light' | 'strong'
-export const SOFTNESSES: Softness[] = ['light', 'strong']
-export const DEFAULT_SOFTNESS: Softness = 'strong'
-export const isSoftness = (v: string): v is Softness => (SOFTNESSES as string[]).includes(v)
 
 export const DEFAULT_MATERIAL: Material = 'soft'
 
@@ -74,30 +66,18 @@ export interface SettingFlat {
 
 /**
  * `soft`: the flat color dominates (tone 1 over the whole top left and the center), the shadow is only a veil that
- * slowly settles towards the bottom right. Tones in linear light (Three): 0.70 linear = about 16 % darker on screen
- * (sRGB), 0.56 = about 24 %.
+ * slowly settles towards the bottom right. Tones in linear light (Three): 0.56 = about 24 % darker on screen (sRGB).
+ * A single setting since 11/11/2026 (the former `strong`; the lighter `light` was removed with the `softness` option).
  */
-const SOFT: Record<Softness, SettingFlat> = {
-  light: {
-    thresholds: [],
-    tones: [0.7, 1],
-    facets: false,
-    outline: false,
-    organic: false,
-    finesse: null,
-    reduction: 1,
-    smooth: { from: -0.75, a: 0.7 }
-  },
-  strong: {
-    thresholds: [],
-    tones: [0.56, 1],
-    facets: false,
-    outline: false,
-    organic: false,
-    finesse: null,
-    reduction: 1,
-    smooth: { from: -0.75, a: 0.7 }
-  }
+const SOFT: SettingFlat = {
+  thresholds: [],
+  tones: [0.56, 1],
+  facets: false,
+  outline: false,
+  organic: false,
+  finesse: null,
+  reduction: 1,
+  smooth: { from: -0.75, a: 0.7 }
 }
 
 /** The settings: a single table, tuned by eye in `#shapes3d`. */
@@ -150,11 +130,17 @@ const FLAT: Record<Exclude<Material, 'realistic' | 'soft'>, SettingFlat> = {
   }
 }
 
-/** Setting of a flat variant, `null` for realistic. `softness` only applies to `soft`. */
-export function settingFlat(r: Material, softness: Softness = DEFAULT_SOFTNESS): SettingFlat | null {
+/** Setting of a flat variant, `null` for realistic. */
+export function settingFlat(r: Material): SettingFlat | null {
   if (r === 'realistic') return null
-  return r === 'soft' ? SOFT[softness] : FLAT[r]
+  return r === 'soft' ? SOFT : FLAT[r]
 }
+
+/**
+ * Whether the body is shaded (relief). The Soft material is ALWAYS shaded (11/11/2026: Soft without shading was the
+ * same as Flat without shading), so `shading: false` only changes the other materials (Flat, Pixel).
+ */
+export const shadedFor = (r: Material, shading: boolean): boolean => shading || r === 'soft'
 
 /** Mesh in use: `full` (realistic finesse) or `coarse` (lowpoly). */
 export const meshOf = (r: Material): 'full' | 'grossier' =>
@@ -237,8 +223,3 @@ export function colorOutline(hex: string): string {
  * diameter) but stays visible (floor), and does not grow forever in close-up (ceiling).
  */
 export const outlineWidthPx = (diameterPx: number) => Math.min(3.4, Math.max(1.3, diameterPx * 0.02))
-
-/** Outline thickness factor: 1 = the base thickness (`outlineWidthPx`), bounded to stay clean. */
-export const DEFAULT_OUTLINE_WIDTH = 1
-export const MIN_OUTLINE_WIDTH = 0.4
-export const MAX_OUTLINE_WIDTH = 4

@@ -10,7 +10,8 @@ const WORDS = 'import|from|export|const|let|new|function|return|await|async|type
 
 const TOKEN = new RegExp(
   [
-    '(?<com><!--[\\s\\S]*?-->|\\/\\/[^\\n]*|^#[^\\n]*)',
+    // `//` after a colon is a URL (https://...), not a comment; `# ` after a space is a shell comment, `#f80` a color
+    '(?<com><!--[\\s\\S]*?-->|(?<!:)\\/\\/[^\\n]*|^#[^\\n]*|(?<=[ \\t])# [^\\n]*)',
     '(?<str>"(?:[^"\\\\\\n]|\\\\.)*"|\'(?:[^\'\\\\\\n]|\\\\.)*\'|`(?:[^`\\\\]|\\\\.)*`)',
     '(?<tag><\\/?[A-Za-z][\\w-]*|\\/?>)',
     '(?<attr>[:@]?[A-Za-z][\\w-]*(?==))',

@@ -2,14 +2,14 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
-  <img src="docs/banner.png" alt="Mochis" width="100%">
+  <img src="docs/banner.png" alt="Mochiz" width="100%">
 </picture>
 
-# Mochis
+# Mochiz
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochi-red-phi.vercel.app)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochiz.vercel.app)
 
-Mochis are small animated characters for the web. One character is called a Mochi: a soft 3D shape with two eyes. It breathes, blinks, shows a mood and reacts when you touch it.
+Mochiz are small animated characters for the web. One character is called a Mochi: a soft 3D shape with two eyes. It breathes, blinks, shows a mood and reacts when you touch it.
 
 You add a Mochi to any page with one HTML tag, `<mochi-bot>`. It works in plain HTML and in any framework (React, Vue, Svelte, Angular...).
 
@@ -20,7 +20,7 @@ You add a Mochi to any page with one HTML tag, `<mochi-bot>`. It works in plain 
 - light and dark themes
 - PNG, SVG, GIF and MP4 exports, from the app
 
-**Website:** https://mochi-red-phi.vercel.app. The app, an online editor to design a Mochi and export it, is at `/app`.
+**Website:** https://mochiz.vercel.app. The app, an online editor to design a Mochi and export it, is at `/app`.
 
 ## Quick start
 
@@ -29,16 +29,16 @@ You add a Mochi to any page with one HTML tag, `<mochi-bot>`. It works in plain 
 Load the library, then write the tag:
 
 ```html live
-<script type="module" src="/mochis/mochis.js"></script>
+<script type="module" src="/mochiz/mochiz.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
 
-This is the plain HTML way. In an app with a bundler (Vite, webpack...), copy the library into `src/vendor/mochis/` and write `import './vendor/mochis/mochis.js'`: see [Install](docs/getting-started.md#install).
+This is the plain HTML way. In an app with a bundler (Vite, webpack...), copy the library into `src/vendor/mochiz/` and write `import './vendor/mochiz/mochiz.js'`: see [Install](docs/getting-started.md#install).
 
 ## Documentation
 
-The documentation lives in [docs/](docs/README.md). The website shows the same pages at [/docs](https://mochi-red-phi.vercel.app/docs).
+The documentation lives in [docs/](docs/README.md). The website shows the same pages at [/docs](https://mochiz.vercel.app/docs).
 
 - [Getting started](docs/getting-started.md): install, your first Mochi, options, moods, reactions, methods, events, accessories, styles, frameworks.
 - [Reference](docs/reference.md): every option, method, event and id.

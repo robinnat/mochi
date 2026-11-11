@@ -126,6 +126,26 @@ function block(b: Block, from: '' | 'docs/', key: number): Child {
   }
 }
 
+/**
+ * Height, from the top of the window, of the "reading line": the section being read is the last one whose heading is
+ * above it. A quarter of the window, at least 96 px (a heading reached through a link sits right at the top).
+ */
+export const readingLine = (windowHeight: number) => Math.max(96, windowHeight * 0.25)
+
+/**
+ * Index of the section being read, from the `tops` of the section headings (in window coordinates, in page order):
+ * the last heading above the reading line, the first section before any heading gets there, and the last section at
+ * the bottom of the page (a short last section never reaches the line). The old observer only lit a heading while it
+ * crossed a thin band of the screen, so after a jump to an anchor it lit the NEXT section.
+ */
+export function activeSection(tops: number[], line: number, atBottom = false): number {
+  if (!tops.length) return 0
+  if (atBottom) return tops.length - 1
+  let i = 0
+  for (let k = 0; k < tops.length; k++) if (tops[k]! <= line) i = k
+  return i
+}
+
 /** The page asked for in the address (`/docs?page=reference`), or the first guide. */
 function currentPage(): DocPage {
   const id = typeof location === 'undefined' ? '' : new URLSearchParams(location.search).get('page') ?? ''
@@ -139,27 +159,33 @@ export const Docs: Component<Record<string, never>> = () => {
   const title = blocks.find((b) => b.t === 'heading' && b.level === 1) as { text: string } | undefined
   const body = blocks.filter((b) => !(b.t === 'heading' && b.level === 1))
   const sections = body.filter((b): b is Extract<Block, { t: 'heading' }> => b.t === 'heading' && b.level === 2)
-  if (typeof document !== 'undefined') document.title = `${title?.text ?? page.title} | Mochis docs`
+  if (typeof document !== 'undefined') document.title = `${title?.text ?? page.title} | Mochiz docs`
 
   /** Section of the page currently at the top of the screen. */
   const current = ref(sections[0]?.id ?? '')
-  let obs: IntersectionObserver | null = null
+  let frame = 0
+  const spy = () => {
+    frame = 0
+    const tops = sections.map((x) => document.getElementById(x.id)?.getBoundingClientRect().top ?? Infinity)
+    const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2
+    const i = activeSection(tops, readingLine(window.innerHeight), atBottom)
+    current.value = sections[i]?.id ?? current.value
+  }
+  const onScroll = () => {
+    if (!frame) frame = requestAnimationFrame(spy)
+  }
   onMount(() => {
-    if (typeof IntersectionObserver === 'undefined') return
-    obs = new IntersectionObserver(
-      (es) => {
-        for (const e of es) if (e.isIntersecting) current.value = e.target.id
-      },
-      { rootMargin: '-20% 0px -70% 0px' }
-    )
-    for (const s of sections) {
-      const el = document.getElementById(s.id)
-      if (el) obs.observe(el)
-    }
     // the browser jumped before the page was drawn: jump again to the anchor
     if (location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    spy()
   })
-  onUnmount(() => obs?.disconnect())
+  onUnmount(() => {
+    window.removeEventListener('scroll', onScroll)
+    window.removeEventListener('resize', onScroll)
+    if (frame) cancelAnimationFrame(frame)
+  })
 
   return () =>
     h(
@@ -174,7 +200,7 @@ export const Docs: Component<Record<string, never>> = () => {
           { class: 'docs-head wrap' },
           h('p', { class: 'eyebrow' }, 'Documentation'),
           h('h1', { class: 'docs-title' }, title?.text ?? page.title),
-          h('p', { class: 'note' }, 'This page is ', h('a', { href: `https://github.com/robinnat/mochi/blob/main/${page.file}` }, page.file), ' of the repository.')
+          h('p', { class: 'note' }, 'This page is ', h('a', { href: `https://github.com/robinnat/mochiz/blob/main/${page.file}` }, page.file), ' of the repository.')
         ),
         h(
           'div',

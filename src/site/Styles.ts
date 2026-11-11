@@ -5,7 +5,7 @@ import { Alive } from './Alive'
 import { STYLE_BOT } from './posters'
 import { useReduced } from './reduced'
 import { reveal, useWidth, useVisible } from './motion'
-import type { RenderStyleId } from 'mochis/catalog'
+import type { RenderStyleId } from 'mochiz/catalog'
 
 /**
  * The three styles, on scroll: the scene stays stuck while the three steps go by, and the Mochi changes style when a
@@ -17,7 +17,7 @@ const STEPS: { id: RenderStyleId; name: string; code: string; text: string; back
     id: '3d',
     name: 'Soft',
     code: 'render-style="3d"',
-    text: 'Smooth studio shading, rim glows and a soft highlight, lit the same way from every side. The default.',
+    text: 'Smooth studio shading and soft rim glows, lit the same way from every side. The default.',
     background: 'var(--p-lavande)'
   },
   {
@@ -31,7 +31,7 @@ const STEPS: { id: RenderStyleId; name: string; code: string; text: string; back
     id: 'flat3d',
     name: 'Flat',
     code: 'render-style="flat3d"',
-    text: 'Two or three flat tones and no gloss, for a bold, graphic look. Add a cartoon outline with the outline attribute.',
+    text: 'Two or three flat tones and no gloss, for a bold, graphic look.',
     background: 'var(--p-peche)'
   }
 ]

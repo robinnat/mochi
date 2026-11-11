@@ -1454,8 +1454,8 @@ export class Accessories3d {
   private geos: BufferGeometry[] = []
   private readonly materials = new Map<string, MatDef>()
   private source: MatDef | null = null
-  /** same lighting as the body (rims, soft shading, highlight): set by `Mochi3d` */
-  settings: { force: number; top: number; ao: number; highlight?: { value: number } } | null = null
+  /** same lighting as the body (rims, soft shading, soft top-left light): set by `Mochi3d` */
+  settings: { force: number; top: number; ao: number; softLight?: { value: number } } | null = null
   /** soft shadows on the body (engine space, y down), valid after `update` */
   shadows: Shadow[] = []
   /** colors in use (pixel art palette) */
@@ -1504,7 +1504,7 @@ export class Accessories3d {
       if (o < 1) m.depthWrite = false
       if (d) m.side = DoubleSide
       const g = this.settings
-      if (g) rim(m, g.force, g.top, { ao: g.ao, highlight: g.highlight })
+      if (g) rim(m, g.force, g.top, { ao: g.ao, softLight: g.softLight })
       this.materials.set(key, m)
     }
     return m

@@ -3,7 +3,7 @@
  * PIECES ALONE (without a body), in many color variants. Everything is DETERMINISTIC: the same strips on every visit,
  * and testable without a browser. No rendering here: `thumbnails.ts` draws.
  */
-import { SLOTS, type Slot } from 'mochis/catalog'
+import { SLOTS, type Slot } from 'mochiz/catalog'
 import { SITE_ACCESSORIES, PALETTE_SITE } from './catalog'
 
 export interface ItemStrip {

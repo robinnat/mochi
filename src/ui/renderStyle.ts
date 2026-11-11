@@ -11,6 +11,7 @@
 
 import { ref } from '@/ui/dom/reactive'
 import { HALF_VIEWBOX, RADIUS } from '@/bot/frame'
+import { LEGACY_PIXEL_SIZES } from '@/ui/legacy'
 
 /** The three styles, all in real 3D (WebGL): `3d` (Soft), `flat3d` (Flat) and `pixel3d` (Pixel). */
 export type RenderStyleId = '3d' | 'flat3d' | 'pixel3d'
@@ -32,22 +33,24 @@ export const materialFor = <T extends string>(r: RenderStyleId, soft: T): T | 't
 
 /* ----------------------------------------------------------------- pixel art */
 
-/** Pixel size of the Pixel style (`pixel3d`): it sets the resolution of its canvas. */
-export type PixelSizeId = 'large' | 'medium' | 'fine'
+/**
+ * Pixel size of the Pixel style (`pixel3d`): it sets the resolution of its canvas. `large` was removed on 11/11/2026:
+ * an old `large` falls back to `medium` (`effectivePixel`, and the migration of saved settings in `legacy.ts`).
+ */
+export type PixelSizeId = 'medium' | 'fine'
 
 /**
  * Pixel size, given as the DIAMETER of the ball in pixels: that is what you see, "a 24-pixel ball", not a grid size
  * that includes the rings' margin.
  */
 export const PIXEL_SIZES: { id: PixelSizeId; diameter: number }[] = [
-  { id: 'large', diameter: 16 },
   { id: 'medium', diameter: 24 },
   { id: 'fine', diameter: 32 }
 ]
 
 /**
- * Pixel (3D): size of the low resolution canvas. The finest density (32 pixels across) is the default; the others are
- * still accepted by the `pixel` prop, with no choice in the interface.
+ * Pixel (3D): size of the low resolution canvas. The finest density (32 pixels across) is the default; `medium` is
+ * the other choice.
  */
 export const DEFAULT_PIXEL: PixelSizeId = 'fine'
 
@@ -73,14 +76,19 @@ export function pixelGrid(size: PixelSizeId): number {
  * what the screen shows at that instant.
  */
 export const currentRenderStyle = ref<RenderStyleId>(DEFAULT_RENDER_STYLE)
-/** Cartoon outline of the real 3D (option of the 3D style); tracked like `currentRenderStyle`. */
-export const currentOutline = ref(false)
 export const currentPixel = ref<PixelSizeId>(DEFAULT_PIXEL)
 
 /** The style to render: the given one if known, else the current setting. */
 export const effectiveRenderStyle = (r: string | undefined): RenderStyleId => (r && isRenderStyle(r) ? r : currentRenderStyle.value)
-export const effectivePixel = (p: PixelSizeId | undefined): PixelSizeId =>
-  p ?? currentPixel.value
+/**
+ * The pixel size to render: the given one if known, an old id moved to its new one (`large` -> `medium`), else the
+ * current setting.
+ */
+export function effectivePixel(p: string | undefined): PixelSizeId {
+  if (!p) return currentPixel.value
+  const v = LEGACY_PIXEL_SIZES[p] ?? p
+  return isPixelSize(v) ? v : currentPixel.value
+}
 
 /** Added to the exported file name: the real style (`3d`, `flat3d`, `pixel3d`). */
 export const renderStyleSuffix = (r: RenderStyleId) => r

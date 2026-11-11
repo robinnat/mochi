@@ -146,7 +146,7 @@ export function pagesOf(index: string): { file: string; title: string }[] {
 /** The page id of a Markdown file: `getting-started.md` -> `getting-started`, the root README -> `overview`. */
 export const pageIdOf = (file: string) => (/(^|\/)README\.md$/.test(file) && !file.includes('docs/') ? 'overview' : file.replace(/^.*\//, '').replace(/\.md$/, ''))
 
-export const REPO = 'https://github.com/robinnat/mochi'
+export const REPO = 'https://github.com/robinnat/mochiz'
 
 /**
  * Where a link of a documentation file points on the website. Links to other doc pages stay on the site

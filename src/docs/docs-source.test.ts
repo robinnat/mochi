@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { ACCESSORIES, ACCESSORY_BY_KEY, SLOTS, type Slot } from '@/bot/slots'
 import { MOOD_IDS, REACTION_IDS, resolveMood } from '@/bot/moods'
@@ -163,34 +163,68 @@ describe('the documentation says what the code does', () => {
   })
 
   it('the names imported in the examples exist in the public entry points', async () => {
-    const full = (await import('mochis')) as Record<string, unknown>
-    const catalog = (await import('mochis/catalog')) as Record<string, unknown>
+    const full = (await import('mochiz')) as Record<string, unknown>
+    const catalog = (await import('mochiz/catalog')) as Record<string, unknown>
     const all = USER_CODE.map((b) => b.code).join('\n')
     const names = (file: string) =>
-      [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '\\./vendor/mochis/${file.replace('.', '\\.')}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
+      [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '\\./vendor/mochiz/${file.replace('.', '\\.')}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
     expect(names('catalog.js').length).toBeGreaterThan(0)
-    for (const n of names('mochis.js')) expect(full[n], n).toBeDefined()
+    for (const n of names('mochiz.js')) expect(full[n], n).toBeDefined()
     for (const n of names('catalog.js')) expect(catalog[n], n).toBeDefined()
   })
 
-  it('npm is never presented as available: the package is not published yet', () => {
-    expect(GUIDE).toContain('coming soon')
-    expect(GUIDE).toContain('does not work today')
+  it('the package is ready for npm (name, peer three) but the published docs never present npm as available', () => {
     const pkg = JSON.parse(read('package.json'))
+    expect(pkg.name).toBe('mochiz')
+    expect(pkg.private).toBeUndefined()
+    expect(pkg.peerDependencies.three).toBeDefined()
+    expect(pkg.dependencies?.three).toBeUndefined()
     expect(pkg.scripts['build:lib']).toContain('vite.lib.config.ts')
+    // `docs/drafts/PUBLISHED` is created on the day `mochiz` is published (see docs/drafts/npm-install.md)
+    if (!existsSync(new URL('docs/drafts/PUBLISHED', root))) {
+      expect(GUIDE).toContain('coming soon')
+      expect(GUIDE).toContain('not on npm yet')
+      const published = [README, read('README.fr.md'), ...DOC_FILES.map((f) => read('docs/' + f))]
+      for (const src of published) {
+        expect(src).not.toContain('cdn.jsdelivr.net/npm/mochiz')
+        // no npm command for the package at all, not even one marked as not working: a reader copies commands
+        expect(src).not.toMatch(/\b(npm|pnpm|yarn|bun)\s+(install|i|add)\b[^\n]*\bmochiz\b/)
+      }
+      expect(read('docs/drafts/npm-install.md')).toContain('npm install mochiz three')
+    }
   })
 
-  it('library paths: /mochis/ in plain HTML, ./vendor/mochis/ with a bundler, never imported from public/', () => {
-    const all = [README, ...DOC_FILES.map((f) => read('docs/' + f))].join('\n')
+  it('library paths: /mochiz/ in plain HTML, ./vendor/mochiz/ with a bundler, copied from the standalone build, never public/', () => {
+    const all = [README, read('README.fr.md'), ...DOC_FILES.map((f) => read('docs/' + f))].join('\n')
     // the folder name of the old docs; a bundler cannot import from public/ (Vite fails to resolve it)
-    expect(all).not.toMatch(/['"]\/mochi\/(mochis|catalog)\.js/)
-    expect(all).not.toMatch(/public\/mochis?\b(?!\/\*)/)
+    expect(all).not.toMatch(/['"]\/mochi\/(mochiz|catalog)\.js/)
+    expect(all).not.toMatch(/public\/mochiz?\b(?!\/\*)/)
     for (const { code } of USER_CODE) {
-      for (const m of code.matchAll(/\bimport\s+(?:[^'"]+from\s+)?'([^']+)'/g)) expect(m[1], code).toMatch(/^\.\/vendor\/mochis\/(mochis|catalog)\.js$/)
-      for (const m of code.matchAll(/<script type="module" src="([^"]+)"/g)) expect(m[1], code).toMatch(/^\/mochis\/mochis\.js$/)
+      for (const m of code.matchAll(/\bimport\s+(?:[^'"]+from\s+)?'([^']+)'/g)) expect(m[1], code).toMatch(/^\.\/vendor\/mochiz\/(mochiz|catalog)\.js$/)
+      for (const m of code.matchAll(/<script type="module" src="([^"]+)"/g)) expect(m[1], code).toBe('/mochiz/mochiz.js')
     }
-    expect(GUIDE).toContain('cp -r dist-lib ../my-app/src/vendor/mochis')
-    expect(GUIDE).toContain("import './vendor/mochis/mochis.js'")
+    // the root of dist-lib/ needs the project's three (npm build): a copied folder is the standalone one
+    expect(GUIDE).toContain('cp -r dist-lib/standalone ../my-site/mochiz')
+    expect(GUIDE).toContain('cp -r dist-lib/standalone ../my-app/src/vendor/mochiz')
+    expect(GUIDE).toContain("import './vendor/mochiz/mochiz.js'")
+  })
+
+  it('every public entry of the docs is an export of package.json, with its types', () => {
+    const pkg = JSON.parse(read('package.json'))
+    for (const entry of ['.', './catalog', './standalone', './standalone/catalog']) {
+      expect(pkg.exports[entry], entry).toBeDefined()
+      expect(pkg.exports[entry].types, entry).toMatch(/^\.\/dist-lib\/types\/(index|catalog)\.d\.ts$/)
+    }
+    expect(pkg.files).toEqual(['dist-lib', 'CHANGELOG.md'])
+    expect(pkg.sideEffects).toContain('./dist-lib/mochiz.js')
+  })
+
+  it('the cadence thresholds written in the docs are the ones of the code', async () => {
+    const { CADENCE_LATE_MS, CADENCE_HALF_MS, CADENCE_FULL_MS } = await import('@/components/mochi-bot')
+    const styles = read('docs/styles.md')
+    expect(styles).toContain(`more than ${CADENCE_LATE_MS} ms apart`)
+    expect(styles).toContain(`costs more than ${CADENCE_HALF_MS} ms`)
+    expect(styles).toContain(`below ${CADENCE_FULL_MS} ms`)
   })
 
   it('the Node version is the same in package.json and the READMEs', () => {
@@ -198,5 +232,37 @@ describe('the documentation says what the code does', () => {
     expect(pkg.engines.node).toBe('>=22.12.0')
     for (const f of [README, read('README.fr.md'), GUIDE]) expect(f).toContain('22.12')
     expect(read('.github/workflows/ci.yml')).toContain('node-version: 24')
+  })
+})
+
+describe('docs side menu (/docs)', () => {
+  it('lights the section whose heading was just reached, not the next one', async () => {
+    const { activeSection, readingLine } = await import('./Docs')
+    const line = readingLine(800)
+    // a jump to the 2nd heading puts it at the top of the window; the 3rd heading is a little lower
+    expect(activeSection([-900, 0, 260, 1200], line)).toBe(1)
+    // before any heading reaches the line: the first section
+    expect(activeSection([300, 900], line)).toBe(0)
+    // at the bottom of the page, the last section (too short to reach the line)
+    expect(activeSection([-900, -300, 500], line, true)).toBe(2)
+    expect(activeSection([], line)).toBe(0)
+  })
+})
+
+describe('site address', () => {
+  const SITE = 'https://mochiz.vercel.app'
+  it('every public file names the current address, never the old one', () => {
+    const files = ['README.md', 'README.fr.md', 'package.json', 'index.html', 'docs.html', 'app.html', 'lab.html', '.github/ISSUE_TEMPLATE/config.yml', ...DOC_FILES.map((f) => 'docs/' + f)]
+    for (const f of files) expect(read(f), f).not.toContain('mochi-red-phi')
+    expect(JSON.parse(read('package.json')).homepage).toBe(SITE)
+    expect(README).toContain(SITE)
+  })
+  it('the public pages declare their canonical address and og:url', () => {
+    for (const [file, path] of [['index.html', '/'], ['docs.html', '/docs'], ['app.html', '/app']] as const) {
+      const html = read(file)
+      expect(html, file).toContain(`<link rel="canonical" href="${SITE}${path}" />`)
+      expect(html, file).toContain(`<meta property="og:url" content="${SITE}${path}" />`)
+      if (file !== 'app.html') expect(html, file).toContain(`content="${SITE}/og.png"`)
+    }
   })
 })

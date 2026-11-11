@@ -62,15 +62,25 @@ export const LEGACY_EXPRESSIONS: Record<string, string> = {
   somnolent: 'sleepy'
 }
 
-/** Old pixel size id -> new pixel size id. */
-export const LEGACY_PIXEL_SIZES: Record<string, string> = { gros: 'large', moyen: 'medium', fin: 'fine' }
+/**
+ * Old pixel size id -> new pixel size id. The `large` size was removed on 11/11/2026: it becomes `medium`, the closest
+ * size left (and the French `gros` with it).
+ */
+export const LEGACY_PIXEL_SIZES: Record<string, string> = { gros: 'medium', large: 'medium', moyen: 'medium', fin: 'fine' }
+
+/**
+ * Settings that no longer exist: removed from the storage on the first read. The cartoon outline option (`outline`,
+ * French `contour`) was removed on 11/11/2026; the soft highlight never had a saved setting. The Soft style's
+ * `softness` (French `douceur`) was removed the same day: Soft now has a single look; its `shading` is ignored too
+ * (Soft is always shaded), but the `shading` setting itself stays, for Flat and Pixel.
+ */
+export const REMOVED_KEYS = ['contour', 'outline', 'douceur', 'softness']
 
 /** Old storage name -> new storage name and the table that translates its value (none: copied as is). */
 const LEGACY_KEYS: Array<{ from: string; to: string; values?: Record<string, string> }> = [
   { from: 'forme', to: 'shape', values: LEGACY_SHAPES },
   { from: 'couleur', to: 'color', values: LEGACY_COLORS },
   { from: 'langue', to: 'language' },
-  { from: 'contour', to: 'outline' },
   { from: 'shape', to: 'shape', values: LEGACY_SHAPES },
   { from: 'color', to: 'color', values: LEGACY_COLORS },
   { from: 'expression', to: 'expression', values: LEGACY_EXPRESSIONS },
@@ -85,6 +95,7 @@ export type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
  * under the new name. Safe to call many times: once nothing old is left, it changes nothing.
  */
 export function migrateLegacyStorage(store: StorageLike, prefix: string): void {
+  for (const name of REMOVED_KEYS) if (store.getItem(prefix + name) !== null) store.removeItem(prefix + name)
   for (const { from, to, values } of LEGACY_KEYS) {
     const old = store.getItem(prefix + from)
     if (old === null) continue

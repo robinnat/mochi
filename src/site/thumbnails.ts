@@ -4,7 +4,7 @@
  * The strips then scroll in pure CSS over images: no 3D rendering while scrolling, smooth even on iPhone. The 3D
  * comes through `load3d` (public entry): dynamic loading only. Used by `tools/renders.ts`.
  */
-import { BotEngine, load3d, contrast, HALF_VIEWBOX, mixHex, RADIUS, SHAPE_BY_ID } from 'mochis'
+import { BotEngine, load3d, contrast, HALF_VIEWBOX, mixHex, RADIUS, SHAPE_BY_ID } from 'mochiz'
 import type { ItemStrip } from './strips'
 
 /** Side of a thumbnail in pixels (shown at half size: dense screens). */
@@ -103,7 +103,7 @@ export async function renderThumbnail(item: ItemStrip, theme: 'light' | 'dark'):
     const frame = engine.sample(T_IMAGE)
     const sel = { [item.slot]: { id: item.accessory, c1: colorForTheme(item.c1, theme), c2: colorForTheme(item.c2, theme) } }
     const render = (cv: HTMLCanvasElement, viewFrame: number, center: { x: number; y: number }) =>
-      m.renderAvatar(cv, frame, '#8b3dff', PAPER, 'soft', false, 'strong', true, 'circle', item.yaw, sel, viewFrame, theme, undefined, 0, false, true, undefined, true, center)
+      m.renderAvatar(cv, frame, '#8b3dff', PAPER, 'soft', 'circle', item.yaw, sel, viewFrame, theme, undefined, 0, false, true, true, center)
     // passe 1 : mesure
     const measure = document.createElement('canvas')
     measure.width = measure.height = SIZE_MEASURE

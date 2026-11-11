@@ -1,10 +1,10 @@
 /**
- * Site catalog: ENGLISH labels. Ids come from the package (`mochis`, the library's public entry, as for any user);
+ * Site catalog: ENGLISH labels. Ids come from the package (`mochiz`, the library's public entry, as for any user);
  * the site defines no measurement. Labels of shapes, colors, states and styles reuse the app's
  * (`src/i18n/locales/en.ts`).
  */
 import en from '@/i18n/locales/en'
-import { ACCESSORIES, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochis/catalog'
+import { ACCESSORIES, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochiz/catalog'
 
 export const SHAPE_LABEL = en.shapes as Record<string, string>
 export const COLOR_LABEL = en.colors as Record<string, string>
