@@ -160,7 +160,7 @@ describe('theme: painting the face (Mochi3d)', () => {
     expect(s.masque).toContain('#fff')
   })
 
-  it.each(['soft', 'toon', 'pixel'] as const)('%s: without shading, the body is flat (material without light); with it, the previous material', (renderStyle) => {
+  it.each(['toon', 'pixel'] as const)('%s: without shading, the body is flat (material without light); with it, the previous material', (renderStyle) => {
     const m = new Mochi3d(32)
     m.setShading(false)
     m.setRenderStyle(renderStyle)
@@ -168,6 +168,16 @@ describe('theme: painting the face (Mochi3d)', () => {
     m.setShading(true)
     m.setRenderStyle(renderStyle)
     expect(m.mesh.material.type).not.toBe('MeshBasicMaterial')
+  })
+
+  it('soft: always shaded, shading false is ignored (11/11/2026)', () => {
+    const m = new Mochi3d(32)
+    m.setShading(false)
+    m.setRenderStyle('soft')
+    expect(m.mesh.material.type).toBe('MeshToonMaterial')
+    m.setShading(true)
+    m.setRenderStyle('soft')
+    expect(m.mesh.material.type).toBe('MeshToonMaterial')
   })
 
   it.each(['soft', 'toon', 'realistic'] as const)('%s: the dark eye does not glow (zero emission), the light eye does', (renderStyle) => {

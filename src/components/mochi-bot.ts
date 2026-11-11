@@ -39,7 +39,7 @@ import { HALF_VIEWBOX, RADIUS } from '@/bot/frame'
 import { STATE_BY_ID, type StateId } from '@/bot/states'
 import { compose, sleepZ, type Gesture } from '@/bot/gestures'
 import { Moods, REACTION_FOR_EVENT, mustRedraw, resolveMood, type ReactionId } from '@/bot/moods'
-import { DEFAULT_SOFTNESS, DEFAULT_MATERIAL, type Softness, type Material } from '@/ui/3d/material'
+import { DEFAULT_MATERIAL, type Material } from '@/ui/3d/material'
 import { type Theme } from '@/ui/3d/theme'
 import { resolveTheme } from '@/ui/3d/currentTheme'
 import type { AccessorySelection } from '@/bot/slots'
@@ -92,12 +92,11 @@ export interface MochiBotProps {
  * setting. The old `large` falls back to `medium`.
  */
   pixel: PixelSizeId | undefined
-  /** Shading of the Soft style (`renderStyle` = `3d`): `light` or `strong`. Ignored by Flat and Pixel. */
-  softness: Softness
-  /** Ground shadow under the body, in 3D (default: yes). */
+  /** Ground shadow under the body, in all three styles (default: yes). */
   shadow: boolean
   /**
-   * Shading of the body volume, in 3D (default: yes): the relief. `false`: one flat body color, eyes unchanged.
+   * Shading of the body volume, Flat and Pixel styles (default: yes): the relief. `false`: one flat body color, eyes
+   * unchanged. The Soft style is always shaded: `false` is ignored there.
    */
   shading: boolean
   /** Angle of the body around the vertical axis, in radians (real 3D only). 0 = facing front. */
@@ -167,7 +166,6 @@ export const PROPERTIES: DefProp[] = [
   { name: 'gaze', kind: 'function', initial: d(null), withoutAttribute: true },
   { name: 'renderStyle', kind: 'text', initial: d(undefined) },
   { name: 'pixel', kind: 'text', initial: d(undefined) },
-  { name: 'softness', kind: 'text', initial: d(DEFAULT_SOFTNESS) },
   { name: 'shadow', kind: 'boolean', initial: d(true) },
   { name: 'shading', kind: 'boolean', initial: d(true) },
   { name: 'yaw', kind: 'number', initial: d(0) },
@@ -649,7 +647,7 @@ function mountBot(host: MochiBotElement): Internal {
     if (props.frozenAt === undefined && !driven && readyEmitted && drawnFrame === cadence.frame) return
     drawnFrame = cadence.frame
     const t0 = performance.now()
-    m.renderAvatar(canvas, frame.value, ink.value, props.paper, render3dEff.value, props.softness, props.shape, props.yaw + 0.3 * turnLaptop(), props.accessories ?? {}, undefined, themeEff.value, undefined, laptopScale(), props.shadow, props.shading, false, undefined, slot ?? undefined)
+    m.renderAvatar(canvas, frame.value, ink.value, props.paper, render3dEff.value, props.shape, props.yaw + 0.3 * turnLaptop(), props.accessories ?? {}, undefined, themeEff.value, undefined, laptopScale(), props.shadow, props.shading, false, undefined, slot ?? undefined)
     cadence.cost += performance.now() - t0
     if (!readyEmitted) {
       readyEmitted = true
@@ -677,7 +675,7 @@ function mountBot(host: MochiBotElement): Internal {
   })
 
   watch(
-    [frame, real3d, canvasRef, ink, pxCanvas, render3dEff, () => props.softness, () => props.yaw, themeEff, () => props.accessories, () => props.shadow, () => props.shading],
+    [frame, real3d, canvasRef, ink, pxCanvas, render3dEff, () => props.yaw, themeEff, () => props.accessories, () => props.shadow, () => props.shading],
     draw3d,
     { flush: 'post' }
   )

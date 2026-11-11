@@ -70,9 +70,11 @@ export const LEGACY_PIXEL_SIZES: Record<string, string> = { gros: 'medium', larg
 
 /**
  * Settings that no longer exist: removed from the storage on the first read. The cartoon outline option (`outline`,
- * French `contour`) was removed on 11/11/2026; the soft highlight never had a saved setting.
+ * French `contour`) was removed on 11/11/2026; the soft highlight never had a saved setting. The Soft style's
+ * `softness` (French `douceur`) was removed the same day: Soft now has a single look; its `shading` is ignored too
+ * (Soft is always shaded), but the `shading` setting itself stays, for Flat and Pixel.
  */
-const REMOVED_KEYS = ['contour', 'outline']
+export const REMOVED_KEYS = ['contour', 'outline', 'douceur', 'softness']
 
 /** Old storage name -> new storage name and the table that translates its value (none: copied as is). */
 const LEGACY_KEYS: Array<{ from: string; to: string; values?: Record<string, string> }> = [

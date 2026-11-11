@@ -16,7 +16,11 @@ Mochiz offers three styles, all in REAL 3D (Three.js, loaded on demand, one shar
 
 Shading is NOT painted in the face texture (that used to darken the back and sides and left a seam). Everything is computed in the shader, in camera space, on the whole volume: soft occlusion towards the bottom and the edges, a glow at the bottom right (4 o'clock), a light glow at the top left (10 o'clock), and a soft light from the top left: the side facing it gets lighter, in a long gradient. That light is what gives the Soft style its volume. It has no edge, so there is no shine spot (the small spot and the `highlight` option were removed in 0.2.0; the volume stays). The texture only holds the color and the eyes.
 
-`shading="false"` turns all of this off: the body is one flat color, the eyes do not change.
+The Soft style is always shaded: without its relief it would look exactly like Flat without shading, so it ignores `shading="false"`.
+
+`shading="false"` works on Flat and Pixel: the body is one flat color, the eyes do not change.
+
+**Ground shadow.** All three styles draw a shadow on the ground under the body (`shadow`, on by default, `shadow="false"` turns it off): a soft gradient in Soft, a flat semi-transparent ellipse in Flat, and an ellipse made of whole pixels with hard edges in Pixel (a darker core and a lighter rim).
 
 ## 3D shapes
 
@@ -40,16 +44,13 @@ The engine does not change: `engine.sample(t)` gives the same frame, and the sta
 
 ## Materials
 
-The material of the Soft style is `soft`. It has one setting, `softness`:
-
-- `strong` (default): the darkest tone is 0.56 in linear light, about 24 % darker on screen;
-- `light`: 0.70, about 16 % darker.
+The material of the Soft style is `soft`. It has no setting: its darkest tone is 0.56 in linear light, about 24 % darker on screen. (The `softness` option was removed in 0.2.0: its lighter setting barely showed.)
 
 The shadow is a smooth, matte ramp of `dot(normal, light)`, with the light at the top left, in front. On top of it, the soft top-left light adds volume; there is no shine spot on the body.
 
 Flat uses the `toon` material and Pixel the `pixel` material: the render style picks the material, there is no option for it. Other materials stay in the code but are not offered: `flat` (two tones only, judged too heavy), `toon-outline`, `lowpoly` and `realistic` (internal only). There is no cartoon outline option (removed in 0.2.0); the thin outline of the Pixel style is part of its drawing.
 
-Screenshots, taken from the lab (`/lab`): [the four looks of Flat and Soft](variants/3d-styles-sheet.png), [every shape in each style](variants/3d-shapes-sheet.png) and [every shape seen from four angles](variants/3d-turntable.png).
+Screenshots, taken from the lab (`/lab`): [Soft, Flat and Flat without shading](variants/3d-styles-sheet.png), [every shape in each style](variants/3d-shapes-sheet.png) and [every shape seen from four angles](variants/3d-turntable.png).
 
 ## Known limits
 

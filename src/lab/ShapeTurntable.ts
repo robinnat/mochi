@@ -50,7 +50,7 @@ export const ShapeTurntable: Component<Record<string, never>> = () => {
     const body: InstanceType<typeof Mochi3d>[] = []
     for (const f of SHAPE_LIST) {
       const m = new Mochi3d(512)
-      m.setRenderStyle('soft', 'strong')
+      m.setRenderStyle('soft')
       m.setShape(f.id)
       const engine = new BotEngine(RADIUS, 'idle', f.radii, null)
       m.update(engine.sample(t), hex, '#f9f9f9')

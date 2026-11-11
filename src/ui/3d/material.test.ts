@@ -14,9 +14,7 @@ import {
   DEFAULT_MATERIAL,
   MATERIALS,
   settingFlat,
-  SOFTNESSES,
-  DEFAULT_SOFTNESS,
-  isSoftness
+  shadedFor
 } from './material'
 import { HALF_VIEWBOX } from '@/bot/frame'
 import { bodyOutline, inflate, reduce, vertices } from './volume'
@@ -29,9 +27,8 @@ const VB_TEST = HALF_VIEWBOX
  */
 
 describe('material list', () => {
-  it('the default is soft strong (design choice, 03/11), flat stays in the code, realistic stays available', () => {
+  it('the default is soft (design choice, 03/11), flat stays in the code, realistic stays available', () => {
     expect(DEFAULT_MATERIAL).toBe('soft')
-    expect(DEFAULT_SOFTNESS).toBe('strong')
     expect(MATERIALS).toEqual(['realistic', 'toon', 'toon-outline', 'lowpoly', 'flat', 'soft', 'pixel'])
     expect(MATERIALS.every(isMaterial)).toBe(true)
     expect(isMaterial('plastic')).toBe(false)
@@ -139,48 +136,47 @@ describe('maillage grossier (lowpoly)', () => {
 })
 
 describe('soft: smooth, matte shading', () => {
-  const ramp = (d: 'light' | 'strong') => Array.from(gradientMap(settingFlat('soft', d)!))
+  const ramp = () => Array.from(gradientMap(settingFlat('soft')!))
 
   it('no step: the ramp is continuous, increasing, with no jump', () => {
-    for (const d of SOFTNESSES) {
-      const g = ramp(d)
-      expect(g.length).toBeGreaterThanOrEqual(128)
-      for (let i = 1; i < g.length; i++) {
-        expect(g[i]!).toBeGreaterThanOrEqual(g[i - 1]!)
-        expect(g[i]! - g[i - 1]!).toBeLessThanOrEqual(8)
-      }
-      expect(g[0]).toBe(0)
-      expect(g[g.length - 1]).toBe(255)
+    const g = ramp()
+    expect(g.length).toBeGreaterThanOrEqual(128)
+    for (let i = 1; i < g.length; i++) {
+      expect(g[i]!).toBeGreaterThanOrEqual(g[i - 1]!)
+      expect(g[i]! - g[i - 1]!).toBeLessThanOrEqual(8)
     }
+    expect(g[0]).toBe(0)
+    expect(g[g.length - 1]).toBe(255)
   })
 
   it('the base color dominates: full tone from the center to the top left', () => {
-    const g = ramp('light')
+    const g = ramp()
     const dot = (d: number) => g[Math.floor(((d + 1) / 2) * g.length)]!
-    expect(dot(0.65)).toBeGreaterThan(240) // face a la camera : lumiere en haut a gauche, devant
+    expect(dot(0.65)).toBeGreaterThan(240) // facing the camera: light at the top left, in front
     expect(dot(0.9)).toBe(255)
   })
 
-  it('low contrast, and strong darker than light; no tone lighter than the base', () => {
-    const l = settingFlat('soft', 'light')!
-    const m = settingFlat('soft', 'strong')!
-    expect(Math.max(...l.tones)).toBe(1)
-    expect(Math.max(...m.tones)).toBe(1)
-    expect(Math.min(...m.tones)).toBeLessThan(Math.min(...l.tones))
-    expect(Math.min(...m.tones)).toBeGreaterThan(0.5)
-    expect(lightingFlat(l).ramp[0]).toBe(0)
+  it('a single look, the former strong one: low contrast, no tone lighter than the base (11/11/2026)', () => {
+    const p = settingFlat('soft')!
+    expect(p.tones).toEqual([0.56, 1])
+    expect(Math.max(...p.tones)).toBe(1)
+    expect(Math.min(...p.tones)).toBeGreaterThan(0.5)
+    expect(lightingFlat(p).ramp[0]).toBe(0)
   })
 
   it('a single material: no facets, no own outline, no boundary noise', () => {
-    for (const d of SOFTNESSES) {
-      const p = settingFlat('soft', d)!
-      expect(p.facets || p.outline || p.organic).toBe(false)
-      expect(meshOf('soft')).toBe('full')
-      expect(isFlat('soft')).toBe(true)
-    }
-    expect(SOFTNESSES.every(isSoftness)).toBe(true)
-    expect(isSoftness('mou')).toBe(false)
+    const p = settingFlat('soft')!
+    expect(p.facets || p.outline || p.organic).toBe(false)
+    expect(meshOf('soft')).toBe('full')
+    expect(isFlat('soft')).toBe(true)
     expect(DEFAULT_MATERIAL).toBe('soft')
-    expect(DEFAULT_SOFTNESS).toBe('strong')
+  })
+
+  it('Soft is always shaded: shading false only turns the relief off for the other materials (11/11/2026)', () => {
+    expect(shadedFor('soft', false)).toBe(true)
+    expect(shadedFor('soft', true)).toBe(true)
+    expect(shadedFor('toon', false)).toBe(false)
+    expect(shadedFor('pixel', false)).toBe(false)
+    expect(shadedFor('toon', true)).toBe(true)
   })
 })

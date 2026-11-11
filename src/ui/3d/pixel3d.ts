@@ -191,3 +191,23 @@ export function quantifier(
     data[i * 4 + 2] = Math.round(data[i * 4 + 2]! * 0.42)
   }
 }
+
+/**
+ * Ground shadow of the Pixel style, as pixel rows: the cells whose CENTER falls inside the ellipse (center `cx`, `cy`,
+ * half axes `rx`, `ry`, in canvas pixels). Hard edges, whole cells, like the body: a blurred gradient would clash with
+ * the pixels. Each row is `[y, x0, x1]` (x1 excluded). Computed in a few rows (the ellipse is flat), drawn with
+ * `fillRect`: no measurable cost per frame.
+ */
+export function pixelEllipse(cx: number, cy: number, rx: number, ry: number): Array<[number, number, number]> {
+  const rows: Array<[number, number, number]> = []
+  if (rx <= 0 || ry <= 0) return rows
+  for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) {
+    const dy = (y + 0.5 - cy) / ry
+    if (dy * dy >= 1) continue
+    const half = rx * Math.sqrt(1 - dy * dy)
+    const x0 = Math.ceil(cx - half - 0.5)
+    const x1 = Math.floor(cx + half - 0.5) + 1
+    if (x1 > x0) rows.push([y, x0, x1])
+  }
+  return rows
+}

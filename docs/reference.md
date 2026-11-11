@@ -23,8 +23,8 @@ Each option is both an attribute (written in HTML, with dashes, as text) and a p
 | `yaw` | number | `0` | Turns the model around its vertical axis, in radians. |
 | `laptop` | boolean | `true` | Shows the laptop of the `working` mood. |
 | `pixel` | `medium` or `fine` | `fine` | Pixel size of the Pixel style. |
-| `shadow` | boolean | `true` | Ground shadow under the body. |
-| `shading` | boolean | `true` | Shading of the body volume (the relief, with the soft light from the top left). `false` gives one flat color. |
+| `shadow` | boolean | `true` | Ground shadow under the body, in all three styles (soft in Soft, flat in Flat, made of pixels in Pixel). |
+| `shading` | boolean | `true` | Shading of the body volume (the relief), Flat and Pixel styles only. `false` gives one flat color. Soft is always shaded: it ignores `shading`. |
 | `max-pixel-ratio` | number | `2` | Caps the sharpness of the 3D canvas (screen pixels per CSS pixel). `1.5` is lighter on phones. |
 | `label` | string | `Animated Mochi avatar` | Text read by screen readers instead of the drawing. The default is English, whatever the browser language: pass your own text for a page in another language. |
 
@@ -38,7 +38,6 @@ You rarely need these. The app uses them for its animation editor.
 | --- | --- | --- | --- |
 | `expression` | string | `neutral` | Resting expression, see [Expressions](#expressions). |
 | `cycle` | JSON array | the built-in cycle | The animation of the [cycle player](#cycle-player), as a list of blocks. |
-| `softness` | `light` or `strong` | `strong` | How dark the shading of the Soft style is. |
 | `paper` | string | `#f9f9f9` | Color of the page behind the Mochi, used for the depth haze. |
 
 Two more options exist only as properties, because their value is a function: `gaze` (a scripted gaze) and `gesture` (small moves added to the pose).

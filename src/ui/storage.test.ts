@@ -117,6 +117,14 @@ describe('migration of settings saved with the old French ids', () => {
     expect(heap2.get('mochi:pixel')).toBe('medium')
   })
 
+  it('drops the removed softness setting of the Soft style, keeps shading (11/11/2026)', () => {
+    const heap = memory({ 'mochi:softness': 'light', 'mochi:douceur': 'leger', 'mochi:shading': 'false' })
+    expect(read('shape')).toBeNull()
+    expect(heap.has('mochi:softness')).toBe(false)
+    expect(heap.has('mochi:douceur')).toBe(false)
+    expect(heap.get('mochi:shading')).toBe('false')
+  })
+
   it('never overwrites a value already saved under the new name', () => {
     const heap = memory({ 'mochi:forme': 'etoile', 'mochi:shape': 'cloud' })
     expect(read('shape')).toBe('cloud')

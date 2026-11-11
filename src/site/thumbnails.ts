@@ -103,7 +103,7 @@ export async function renderThumbnail(item: ItemStrip, theme: 'light' | 'dark'):
     const frame = engine.sample(T_IMAGE)
     const sel = { [item.slot]: { id: item.accessory, c1: colorForTheme(item.c1, theme), c2: colorForTheme(item.c2, theme) } }
     const render = (cv: HTMLCanvasElement, viewFrame: number, center: { x: number; y: number }) =>
-      m.renderAvatar(cv, frame, '#8b3dff', PAPER, 'soft', 'strong', 'circle', item.yaw, sel, viewFrame, theme, undefined, 0, false, true, true, center)
+      m.renderAvatar(cv, frame, '#8b3dff', PAPER, 'soft', 'circle', item.yaw, sel, viewFrame, theme, undefined, 0, false, true, true, center)
     // passe 1 : mesure
     const measure = document.createElement('canvas')
     measure.width = measure.height = SIZE_MEASURE

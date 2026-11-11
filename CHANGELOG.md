@@ -36,12 +36,23 @@ First version ready for npm. Not published yet: the docs keep the install from t
   `/app`. The thin outline of the Pixel style stays: it is part of the Pixel drawing, not an option.
 - **`highlight`**: the option is gone, and so is the small shine spot at the top left of the Soft style. The Soft style
   keeps its volume: the side facing the top left still gets lighter, now in a long gradient with no edge, so it reads
-  as relief, not as a spot. This light is part of `shading` (`shading="false"`: one flat color, no light).
+  as relief, not as a spot. This light is part of the Soft relief.
+- **`softness`** (the `light` or `strong` shading of the Soft style) and the `Softness` type: the difference barely
+  showed. Soft always has its former `strong` look.
+- **`shading` no longer changes Soft**: Soft is always shaded (without relief it looked exactly like Flat without
+  shading). `shading="false"` still gives one flat color in Flat and Pixel; on Soft it is ignored.
 - **Pixel size `large`**: `pixel` takes `medium` or `fine` (default `fine`).
-- An old attribute (`outline`, `outline-width`, `highlight`) on a page is simply ignored; an old `pixel="large"` falls
-  back to `medium`. Settings saved in the browser by older versions of `/app` are migrated: the outline setting is
-  dropped, a saved `large` (or `gros`) pixel size becomes `medium` (`src/ui/legacy.ts`).
+- An old attribute (`outline`, `outline-width`, `highlight`, `softness`) on a page is simply ignored; an old
+  `pixel="large"` falls back to `medium`. Settings saved in the browser by older versions of `/app` are migrated: the
+  outline and softness settings are dropped, a saved `large` (or `gros`) pixel size becomes `medium`
+  (`src/ui/legacy.ts`).
 - `mediabunny` (video export of `/app`) is no longer a dependency of the package: only the website uses it.
+
+### Added (styles)
+
+- **Ground shadow in the Pixel style**: like Soft and Flat, Pixel now draws a shadow under the body (on by default,
+  `shadow="false"` turns it off). It is made of whole pixels with hard edges, a darker core and a lighter rim, to match
+  the pixel look (Soft keeps its soft gradient, Flat its flat ellipse).
 
 ### Fixed (docs)
 
@@ -105,7 +116,7 @@ First version ready for npm. Not published yet: the docs keep the install from t
 
 - The `worn` option (an older set of eight accessories, a duplicate of `accessories`) and its 3D pieces.
 - The `material` option: the render style picks the material (`3d` is Soft, `flat3d` Flat, `pixel3d` Pixel), and
-  `softness` still tunes Soft. The `Material` type is no longer exported.
+  `softness` still tuned Soft (removed in 0.2.0). The `Material` type is no longer exported.
 - **No 2D any more.** The old SVG drawings (`original`, `pixel`, `argile`, `bubble`, partly derived from bloub) are
   gone, with their pixel-art rasteriser, the 2D drawing of worn accessories and the 2D job accessories (the
   `accessory` prop). Mochi is always drawn in 3D (Soft, Flat, Pixel). An unknown `renderStyle` (old ids included) falls

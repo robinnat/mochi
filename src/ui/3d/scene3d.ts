@@ -43,7 +43,7 @@ import { Accessories3d } from './accessories3d'
 import { measureLandmarks } from './anchors'
 import type { AccessorySelection } from '@/bot/slots'
 import { rim } from './rim'
-import { leverDark, luminance, palettePixel, quantifier } from './pixel3d'
+import { leverDark, luminance, palettePixel, pixelEllipse, quantifier } from './pixel3d'
 import {
   colorOutline,
   lightingFlat,
@@ -52,8 +52,7 @@ import {
   gradientMap,
   meshOf,
   settingFlat,
-  type Softness,
-  DEFAULT_SOFTNESS,
+  shadedFor,
   type Material,
   DEFAULT_MATERIAL
 } from './material'
@@ -146,7 +145,6 @@ export class Mochi3d {
   /** dark outline (inverted shell), visible only in `toon-outline` */
   private readonly shell: Mesh<BufferGeometry, MeshBasicMaterial>
   private renderStyle: Material = DEFAULT_MATERIAL
-  private softness: Softness = DEFAULT_SOFTNESS
   /**
    * soft top-left light in the shader (part of the Soft relief): 1 = on (uniform shared by this body's materials and
    * its accessories). It follows `shading`; there is no option for it.
@@ -187,11 +185,11 @@ export class Mochi3d {
   }
 
   /** Material of a variant, created on demand and kept. */
-  private mat(r: Material, softness: Softness = this.softness): MatDef {
-    const key = `${r}|${r === 'soft' ? softness : ''}`
+  private mat(r: Material): MatDef {
+    const key = r
     const already = this.materials.get(key)
     if (already) return already
-    const flat = settingFlat(r, softness)
+    const flat = settingFlat(r)
     let m: MatDef
     if (!flat) {
       m = new MeshStandardMaterial({
@@ -239,23 +237,28 @@ export class Mochi3d {
     return this.matFlat
   }
 
-  /** Turns the volume shading on or off (Soft, Flat and Pixel). Called before `setRenderStyle`. */
+  /**
+   * Turns the volume shading on or off (Flat and Pixel; the Soft style is always shaded, see `shadedFor`). Called
+   * before `setRenderStyle`.
+   */
   setShading(yes: boolean) {
-    this.shading = yes
+    this.shadingAsked = yes
   }
+  /** shading asked by the caller; the one applied (`shading`) also depends on the material */
+  private shadingAsked = true
 
   /**
    * Chooses the material. Called after `setShading` and before `update`. `shading` on = relief (with the soft
    * top-left light of the Soft style), off = one flat color. There is no shine spot (removed on 11/11/2026).
    */
-  setRenderStyle(r: Material, softness: Softness = DEFAULT_SOFTNESS) {
+  setRenderStyle(r: Material) {
     this.renderStyle = r
-    this.softness = softness
+    this.shading = shadedFor(r, this.shadingAsked)
     // the soft top-left light belongs to the relief: on with shading, off without
-    this.uSoftLight.value = this.shading && settingFlat(r, softness)?.smooth ? 1 : 0
-    this.mesh.material = this.shading ? this.mat(r, softness) : this.flat()
+    this.uSoftLight.value = this.shading && settingFlat(r)?.smooth ? 1 : 0
+    this.mesh.material = this.shading ? this.mat(r) : this.flat()
     // the inverted shell only belongs to the internal `toon-outline` material (out of the public styles)
-    this.shell.visible = !!settingFlat(r, softness)?.outline
+    this.shell.visible = !!settingFlat(r)?.outline
   }
 
   /**
@@ -348,7 +351,7 @@ export class Mochi3d {
     const mat = this.mesh.material
     mat.transparent = frame.bodyAlpha < 1
     mat.opacity = frame.bodyAlpha
-    const flat = settingFlat(this.renderStyle, this.softness)
+    const flat = settingFlat(this.renderStyle)
     const m = materialKind(color)
     const mt = this.meshData(frame)
     this.mesh.geometry = this.shell.geometry = mt.geo
@@ -367,7 +370,7 @@ export class Mochi3d {
     // (eye offset): only the painted eyes follow it, the glasses stay on the face
     const frameFace = frame.face ? this.eyesOnFace(frame, true) : null
     frame = this.eyesOnFace(frame)
-    const flat0 = settingFlat(this.renderStyle, this.softness)
+    const flat0 = settingFlat(this.renderStyle)
     // accessories by slot: anchored on the volume of THIS body, recomputed when the body changes
     this.acc3d.settings = flat0?.smooth ? { force: 0.7, top: 0.32, ao: 1, softLight: this.uSoftLight } : null
     this.acc3d.body = color
@@ -375,7 +378,7 @@ export class Mochi3d {
     // ray casting and geometries redone 60 times per second). They are built for the shape and style, on the
     // body of this frame, then follow the body with a transform (below).
     const keyBody = `${this.renderStyle}|${this.shape}`
-    this.acc3d.update(this.accs, keyBody, this.mat(this.renderStyle, this.softness), () => {
+    this.acc3d.update(this.accs, keyBody, this.mat(this.renderStyle), () => {
       const ye = eyesOf(frame)
       const sc = ye.map((o) => ({ x: o.x, y: -o.y, r: o.r }))
       return measureLandmarks(this.mesh.geometry, sc, ye.length === 2 ? radiusLens(ye[0]!, ye[1]!) : 22)
@@ -387,7 +390,7 @@ export class Mochi3d {
     // nothing but the eyes is painted in the texture, so the back and sides get the same shading as the face
     const eyesPainted = frameFace ?? frame
     const cheeks = frameFace?.face?.cheeks ?? 0
-    const keyFace = `${this.renderStyle}|${this.softness}|${this.shading}|${this.theme}|${color}|${paper}|${JSON.stringify(eyesPainted.eyes)}|${cheeks.toFixed(2)}|${shadows.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
+    const keyFace = `${this.renderStyle}|${this.shading}|${this.theme}|${color}|${paper}|${JSON.stringify(eyesPainted.eyes)}|${cheeks.toFixed(2)}|${shadows.map((o) => [o.x, o.y, o.rx, o.ry].map((v) => Math.round(v)).join(',')).join(';')}`
     if (keyFace !== this.keyFace) {
       this.keyFace = keyFace
       // flat keeps the chosen color as is (no pastel), with no eye hollow
@@ -462,7 +465,7 @@ export class Mochi3d {
   }
 
   private fill(frame: BotFrame, mt: BodyMesh) {
-    const flat = settingFlat(this.renderStyle, this.softness)
+    const flat = settingFlat(this.renderStyle)
     let pts = bodyOutline(frame.bodyPath, flat && flat.reduction > 1 ? 1 : undefined)
     if (flat && flat.reduction > 1) pts = reduce(pts, flat.reduction)
     if (pts.length < 3) return
@@ -790,6 +793,12 @@ function organiser(m: MeshToonMaterial) {
 /** Cheek pink: blends with the body color (never laid flat on top). */
 export const PLAYED = '#ff5c8a'
 
+/**
+ * Ground shadow of the Pixel style: opacity of the outer ellipse, then of the core laid over it (darker together).
+ * A little stronger than the Flat style's 0.26 on average: the pixel palette has no soft edge to carry it.
+ */
+export const PIXEL_SHADOW_ALPHA: [number, number] = [0.24, 0.2]
+
 /** Position of the main light in the avatar's frame: top left, in front. */
 const KEY_AVATAR: [number, number, number] = [-1.1, 1.5, 1.6]
 
@@ -798,11 +807,8 @@ const KEY_AVATAR: [number, number, number] = [-1.1, 1.5, 1.6]
  * black shadows, a small backlight on the right. Flat variants: only an ambient and a directional light, which set
  * the tones (`lightingFlat`). Returns every light and the main one.
  */
-export function lights(
-  r: Material = DEFAULT_MATERIAL,
-  softness: Softness = DEFAULT_SOFTNESS
-): { all: Light[]; key: DirectionalLight } {
-  const flat = settingFlat(r, softness)
+export function lights(r: Material = DEFAULT_MATERIAL): { all: Light[]; key: DirectionalLight } {
+  const flat = settingFlat(r)
   if (flat) {
     const e = lightingFlat(flat)
     const key = new DirectionalLight(0xffffff, e.directe)
@@ -817,8 +823,8 @@ export function lights(
 }
 
 /** Adds a material's lights to the scene; returns the main one (cast shadows). */
-export function light(scene: Scene, r: Material = DEFAULT_MATERIAL, softness: Softness = DEFAULT_SOFTNESS): DirectionalLight {
-  const l = lights(r, softness)
+export function light(scene: Scene, r: Material = DEFAULT_MATERIAL): DirectionalLight {
+  const l = lights(r)
   for (const x of l.all) scene.add(x)
   return l.key
 }
@@ -840,7 +846,6 @@ let share: {
   current: Mochi3d
   /** installed material and its lights: changed only when the material changes */
   renderStyle: Material
-  softness: Softness
   lights: Light[]
 } | null = null
 
@@ -859,7 +864,7 @@ function context() {
   for (const x of l.all) scene.add(x)
   const mochi = new Mochi3d(512)
   scene.add(mochi.mesh)
-  share = { renderer, scene, camera, mochi, current: mochi, renderStyle: DEFAULT_MATERIAL, softness: DEFAULT_SOFTNESS, lights: l.all }
+  share = { renderer, scene, camera, mochi, current: mochi, renderStyle: DEFAULT_MATERIAL, lights: l.all }
   return share
 }
 
@@ -914,25 +919,23 @@ export function warmUp() {
   const ctx3 = context()
   const { renderer, scene, camera, mochi } = ctx3
   install(ctx3, mochi)
-  const before = { renderStyle: ctx3.renderStyle, softness: ctx3.softness }
-  const trials: [Material, Softness][] = [['soft', 'strong'], ['toon', DEFAULT_SOFTNESS], ['pixel', DEFAULT_SOFTNESS]]
-  for (const [r, d] of trials) {
+  const before = ctx3.renderStyle
+  const trials: Material[] = ['soft', 'toon', 'pixel']
+  for (const r of trials) {
     for (const x of ctx3.lights) scene.remove(x)
-    const l = lights(r, d)
+    const l = lights(r)
     for (const x of l.all) scene.add(x)
     ctx3.lights = l.all
     ctx3.renderStyle = r
-    ctx3.softness = d
-    mochi.setRenderStyle(r, d)
+    mochi.setRenderStyle(r)
     renderer.compile(scene, camera)
   }
   // back to the previous state: the next rendered avatar sets its own settings anyway
   for (const x of ctx3.lights) scene.remove(x)
-  const l = lights(before.renderStyle, before.softness)
+  const l = lights(before)
   for (const x of l.all) scene.add(x)
   ctx3.lights = l.all
-  ctx3.renderStyle = before.renderStyle
-  ctx3.softness = before.softness
+  ctx3.renderStyle = before
 }
 
 /** true if the browser can do WebGL; otherwise the avatar shows a message instead of the Mochi. */
@@ -963,7 +966,6 @@ export function renderAvatar(
   color: string,
   paper: string,
   material: Material = DEFAULT_MATERIAL,
-  softness: Softness = DEFAULT_SOFTNESS,
   shape = '',
   yaw = 0,
   accessories: AccessorySelection = {},
@@ -979,7 +981,7 @@ export function renderAvatar(
   laptop = 0,
   /** ground shadow under the body (default: yes) */
   shadow = true,
-  /** volume model (body shading): on by default; off = flat color */
+  /** volume model (body shading): on by default; off = flat color (Flat and Pixel only: Soft is always shaded) */
   shading = true,
   /**
  * true: the body is not drawn, only the accessories are (anchored on this invisible body); no shadow or outline
@@ -1010,18 +1012,17 @@ export function renderAvatar(
     mochi = slot.mochi
   }
   install(ctx3, mochi)
-  if (ctx3.renderStyle !== material || ctx3.softness !== softness) {
+  if (ctx3.renderStyle !== material) {
     // a page can show several materials: lights only change when needed
     for (const x of ctx3.lights) scene.remove(x)
-    const l = lights(material, softness)
+    const l = lights(material)
     for (const x of l.all) scene.add(x)
     ctx3.lights = l.all
     ctx3.renderStyle = material
-    ctx3.softness = softness
   }
   mochi.setWithoutBody(withoutBody)
   mochi.setShading(shading)
-  mochi.setRenderStyle(material, softness)
+  mochi.setRenderStyle(material)
   mochi.setShape(shape)
   mochi.setTheme(theme, eyeContrast)
   mochi.setAccessories(accessories)
@@ -1056,6 +1057,53 @@ export function renderAvatar(
   c.setTransform(1, 0, 0, 1, 0, 0)
   c.clearRect(0, 0, px, px)
   if (!mochi.mesh.visible) return
+  const k = px / (2 * viewHalf)
+  if (shadow && !withoutBody) {
+    // ground shadow: an ellipse under the lowest point
+    const neck = -mochi.neck
+    const box = mochi.mesh.geometry.boundingSphere
+    const large = (box?.radius ?? 100) * 0.72
+    const cx = (box?.center.x ?? 0) + 6
+    const flat = settingFlat(material)
+    const scope = materialKind(color).scope
+    c.save()
+    c.globalAlpha = frame.bodyAlpha
+    if (pixel) {
+      // pixel: whole cells with hard edges, like the body (a blurred gradient would clash with the pixels); a darker
+      // core and a lighter rim, the two-tone shading of pixel art
+      // centered on a cell corner: the rows are symmetric, left and right, top and bottom
+      const x = Math.round(k * (cx + viewHalf))
+      const y = Math.round(k * (neck + viewHalf - 2))
+      c.fillStyle = hexA(scope, PIXEL_SHADOW_ALPHA[0])
+      for (const [ry, x0, x1] of pixelEllipse(x, y, k * large, k * large * 0.2)) c.fillRect(x0, ry, x1 - x0, 1)
+      c.fillStyle = hexA(scope, PIXEL_SHADOW_ALPHA[1])
+      for (const [ry, x0, x1] of pixelEllipse(x, y, k * large * 0.62, k * large * 0.2 * 0.62)) c.fillRect(x0, ry, x1 - x0, 1)
+    } else {
+      c.translate(k * (cx + viewHalf), k * (neck + viewHalf - 2))
+      c.scale(1, 0.2)
+      c.beginPath()
+      c.arc(0, 0, k * large, 0, Math.PI * 2)
+      if (flat?.smooth) {
+        // soft: smooth ground shadow, a very light gradient with no sharp edge
+        const g = c.createRadialGradient(0, 0, 0, 0, 0, k * large)
+        g.addColorStop(0, hexA(scope, 0.34))
+        g.addColorStop(0.6, hexA(scope, 0.17))
+        g.addColorStop(1, hexA(scope, 0))
+        c.fillStyle = g
+      } else if (flat) {
+        // flat 3D: a full, semi-transparent ellipse, no blur
+        c.fillStyle = hexA(scope, 0.26)
+      } else {
+        const g = c.createRadialGradient(0, 0, 0, 0, 0, k * large)
+        g.addColorStop(0, hexA(scope, 0.42))
+        g.addColorStop(1, hexA(scope, 0))
+        c.fillStyle = g
+      }
+      c.fill()
+    }
+    c.restore()
+  }
+  c.globalAlpha = 1
   if (pixel) {
     // downscaling and the palette run on a small SOFTWARE canvas (`willReadFrequently`): reading back the pixels
     // of the visible (accelerated) canvas forced a full sync every frame, half the time (v12)
@@ -1075,41 +1123,6 @@ export function renderAvatar(
     c.drawImage(cp.canvas, 0, 0)
     return
   }
-  const k = px / (2 * viewHalf)
-  if (shadow && !withoutBody) {
-    // ground shadow: an ellipse under the lowest point
-    const neck = -mochi.neck
-    const box = mochi.mesh.geometry.boundingSphere
-    const large = (box?.radius ?? 100) * 0.72
-    const cx = (box?.center.x ?? 0) + 6
-    const flat = settingFlat(material, softness)
-    c.save()
-    c.translate(k * (cx + viewHalf), k * (neck + viewHalf - 2))
-    c.scale(1, 0.2)
-    const scope = materialKind(color).scope
-    c.globalAlpha = frame.bodyAlpha
-    c.beginPath()
-    c.arc(0, 0, k * large, 0, Math.PI * 2)
-    if (flat?.smooth) {
-      // soft: smooth ground shadow, a very light gradient with no sharp edge
-      const g = c.createRadialGradient(0, 0, 0, 0, 0, k * large)
-      g.addColorStop(0, hexA(scope, 0.34))
-      g.addColorStop(0.6, hexA(scope, 0.17))
-      g.addColorStop(1, hexA(scope, 0))
-      c.fillStyle = g
-    } else if (flat) {
-      // flat 3D: a full, semi-transparent ellipse, no blur
-      c.fillStyle = hexA(scope, 0.26)
-    } else {
-      const g = c.createRadialGradient(0, 0, 0, 0, 0, k * large)
-      g.addColorStop(0, hexA(scope, 0.42))
-      g.addColorStop(1, hexA(scope, 0))
-      c.fillStyle = g
-    }
-    c.fill()
-    c.restore()
-  }
-  c.globalAlpha = 1
   c.drawImage(canvasGl, 0, sy, pxRender, pxRender, 0, 0, px, px)
 }
 

@@ -90,3 +90,15 @@ describe('3D performance (v13)', () => {
     expect(html).toContain(`;[${HERO_FIRST.map((n) => `'${n}'`).join(', ')}].forEach(`)
   })
 })
+
+describe('ground shadow in every style (11/11/2026)', () => {
+  it('the shadow is drawn before the Pixel branch returns, with whole cells (fillRect), no gradient', () => {
+    const body = scene.slice(scene.indexOf('export function renderAvatar('))
+    const shadowAt = body.indexOf('if (shadow && !withoutBody)')
+    const pixelReturnAt = body.indexOf('if (pixel) {\n    // downscaling')
+    expect(shadowAt).toBeGreaterThan(0)
+    expect(pixelReturnAt).toBeGreaterThan(shadowAt)
+    const pixelShadow = body.slice(shadowAt, pixelReturnAt)
+    expect(pixelShadow).toMatch(/pixelEllipse\([^)]*\)\) c\.fillRect\(x0, ry, x1 - x0, 1\)/)
+  })
+})

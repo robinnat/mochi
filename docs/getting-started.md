@@ -213,14 +213,17 @@ There are three styles, all in real 3D. The model is the same, only the drawing 
 <mochi-bot render-style="flat3d"></mochi-bot>
 ```
 
-A few more options change the look in every style:
+A few more options change the look. `yaw` and `shadow` work in every style; `shading` only in Flat and Pixel (Soft is always shaded):
 
 ```html live
 <!-- turn the model: an angle in radians (a full turn is about 6.28) -->
 <mochi-bot yaw="0.5"></mochi-bot>
 
-<!-- no ground shadow, no body shading (one flat color) -->
-<mochi-bot shadow="false" shading="false"></mochi-bot>
+<!-- no ground shadow (Soft, Flat and Pixel all draw one by default) -->
+<mochi-bot shadow="false"></mochi-bot>
+
+<!-- Flat without body shading: one flat color -->
+<mochi-bot render-style="flat3d" shading="false"></mochi-bot>
 ```
 
 ## Light and dark
