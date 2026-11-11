@@ -5,14 +5,6 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Removed
-
-- The legacy `/app` editor and the `/lab` page; both now redirect to the home page (`/labo` too). Their code goes with
-  them: the editor (timeline, customizer, export bar, dialogs), its French and Chinese translations, the arrival
-  animation and the migration of the settings it saved in the browser, and the lab sheets. The library and the
-  `<mochi-bot>` tag do not change; an old `pixel="large"` still falls back to `medium`.
-- Tailwind CSS: only the editor used it.
-
 ## [0.2.0] - 2026-11-11
 
 ### Changed (name)
@@ -51,10 +43,16 @@ First version ready for npm. Not published yet: the docs keep the install from t
   shading). `shading="false"` still gives one flat color in Flat and Pixel; on Soft it is ignored.
 - **Pixel size `large`**: `pixel` takes `medium` or `fine` (default `fine`).
 - An old attribute (`outline`, `outline-width`, `highlight`, `softness`) on a page is simply ignored; an old
-  `pixel="large"` falls back to `medium`. Settings saved in the browser by older versions of `/app` are migrated: the
-  outline and softness settings are dropped, a saved `large` (or `gros`) pixel size becomes `medium`
-  (`src/ui/legacy.ts`).
-- `mediabunny` (video export of `/app`) is no longer a dependency of the package: only the website uses it.
+  `pixel="large"` (or the old `gros`) falls back to `medium` (`src/ui/legacy.ts`).
+- `mediabunny` is no longer a dependency of the package: only the repository's image tool uses it.
+
+### Removed (site)
+
+- The legacy `/app` editor and the `/lab` page; both now redirect to the home page (`/labo` too). Their code goes with
+  them: the editor (timeline, customizer, export bar, dialogs), its French and Chinese translations, the arrival
+  animation and the migration of the settings it saved in the browser, and the lab sheets. The library and the
+  `<mochi-bot>` tag do not change; an old `pixel="large"` still falls back to `medium`.
+- Tailwind CSS: only the editor used it.
 
 ### Added (styles)
 
@@ -386,6 +384,6 @@ fixed, and the measurement is in the commit that fixes it.
 - `StateDef.hint`: 15 hardcoded French strings nothing read, inside a type meant to
   become public.
 
-[unreleased]: https://github.com/robinnat/mochiz/commits/main
+[unreleased]: https://github.com/robinnat/mochiz/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/robinnat/mochiz/releases/tag/v0.2.0
 [0.1.1]: https://github.com/robinnat/mochiz/commits/main
