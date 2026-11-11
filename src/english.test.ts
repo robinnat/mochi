@@ -36,7 +36,9 @@ const ALLOWED_FILES = new Set([
 const ALLOWED_LINES: Record<string, RegExp> = {
   'src/ui/export.test.ts': /Cycle par d[eé]faut|cycle-par-defaut|cyclepardfaut/,
   // the GitHub API path
-  'src/site/stars.ts': /api\.github\.com\/repos\//
+  'src/site/stars.ts': /api\.github\.com\/repos\//,
+  // the old address of the lab, still redirected
+  'src/build-entries.test.ts': /\/labo\b/
 }
 
 function walk(dir: string, out: string[] = []): string[] {
