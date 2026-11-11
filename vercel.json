@@ -12,12 +12,27 @@
       "permanent": true
     },
     {
+      "source": "/app/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/lab",
       "destination": "/",
       "permanent": true
     },
     {
+      "source": "/lab/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/labo",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/labo/",
       "destination": "/",
       "permanent": true
     }
