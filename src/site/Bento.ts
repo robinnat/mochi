@@ -6,7 +6,7 @@ import { SLOT_LABEL } from './catalog'
 import { reveal } from './motion'
 
 /**
- * The rest, as cards: light and dark, accessories, loading on demand, pure engine, exports. Still images only.
+ * The rest, as cards: light and dark, accessories, loading on demand, pure engine, any framework. Still images only.
  */
 const N_ACC = ACCESSORIES.length
 const SLOT_COUNT = SLOTS.length
@@ -61,9 +61,9 @@ export const Bento: Component<Record<string, never>> = () => () =>
       h(
         'article',
         { ref: reveal(4), class: 'card-b b-export' },
-        h('div', { class: 'b-formats' }, h('span', null, 'SVG'), h('span', null, 'PNG'), h('span', null, 'GIF'), h('span', null, 'MP4')),
-        h('h3', null, 'Exports'),
-        h('p', null, 'Save a frame or a whole loop from the ', h('a', { href: '/app' }, 'app'), '.')
+        h('div', { class: 'b-formats' }, h('span', null, 'HTML'), h('span', null, 'React'), h('span', null, 'Vue'), h('span', null, 'Svelte')),
+        h('h3', null, 'Any framework'),
+        h('p', null, 'A standard HTML tag. ', h('a', { href: '/docs?page=getting-started#in-a-framework' }, 'Use it anywhere'), '.')
       )
     )
   )

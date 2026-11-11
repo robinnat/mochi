@@ -199,12 +199,11 @@ below that.
 
 ## Labels don't live in `src/bot/`
 
-The catalogs (`states.ts`, `skins.ts`, `expressions.ts`) carry **ids**, and the
-display resolves `t('states.wink')`. The corollary is that their ids are
-**literal unions** (`ShapeId`, `ColorId`, `ExpressionId`, `StateId`), not for
-neatness, but because that is what makes the compiler check that every entry has
-its label in all three languages. Adding a shape without its label doesn't
-compile.
+The catalogs (`states.ts`, `skins.ts`, `expressions.ts`) carry **ids**; the page
+that shows them owns the labels (the website's are in `src/site/catalog.ts`). Their
+ids are **literal unions** (`ShapeId`, `ColorId`, `ExpressionId`, `StateId`), so a
+label table typed by them (`Record<ColorId, string>`) does not compile when an id
+has no label.
 
 There used to be one exception, `StateDef.hint`: a hardcoded French string per state that
 nothing read. It is gone, a label in `src/bot/` contradicts the rule above, and this
@@ -212,7 +211,7 @@ field would have gone out in a public type.
 
 ## One state is not measured: `swirl`
 
-It's the entry transition for the settings view, chosen rather than measured (like
+It was the entry transition of the old editor's settings view, chosen rather than measured (like
 `--ink`). It sits deliberately **outside `SEQUENCE`** (so it appears in neither
 the palette nor the board, and a test locks that) and carries both `baseBody` and
 `baseFace`, which is what lets it morph from the user's chosen shape towards the
@@ -251,6 +250,6 @@ callers being careful.
 
 ## Colors: two blacks that don't move together
 
-`--ink` (`styles.css`) is the **interface** color, a night blue, chosen, not
+`--ink` (`src/site/site.css`) is the **interface** color, a night blue, chosen, not
 measured. The video's black is the bot's, in `skins.ts` (`ink`, `#0a0a0c`).
 Retouching one doesn't touch the other.

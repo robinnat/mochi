@@ -1,8 +1,8 @@
 /**
  * Real 3D rendering (WebGL, Three.js) of an engine frame.
  *
- * This module is NEVER imported statically: `mochi-bot.ts` and the lab page load it with `await import(...)` when the
- * 3D style is chosen. The rest of the app therefore does not carry Three.js (same rule as `mediabunny`).
+ * This module is NEVER imported statically: `mochi-bot.ts` loads it with `await import(...)` when the
+ * 3D style is chosen. The rest of a page therefore does not carry Three.js (same rule as `mediabunny`).
  *
  * The engine does not change: we read `engine.sample(t)` and draw it. The body is the inflated outline (`volume.ts`);
  * the eyes are painted in a texture projected from the front, at the exact positions the engine gives. So they are
@@ -130,7 +130,7 @@ export class Mochi3d {
   private eyeContrast = MIN_EYE_CONTRAST
   /** shape of the Mochi (`squircle`, `star`...): sets its volume profile and its eyes */
   private shape = ''
-  /** forced profile (lab option); otherwise the shape's */
+  /** forced profile (tools option); otherwise the shape's */
   private profileForced: ProfileVolume | null = null
   private get profile(): ProfileVolume {
     return this.profileForced ?? profileOf(this.shape)

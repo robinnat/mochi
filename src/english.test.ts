@@ -6,8 +6,7 @@ import { describe, expect, it } from 'vitest'
  * the source. It is a net, not a translator: it lists frequent words that have no English homonym in this code base.
  *
  * Allowed on purpose:
- * - the French and Chinese translations of the app (`src/i18n/locales/fr.ts`, `zh.ts`): that is their job;
- * - `src/ui/legacy.ts` and its tests: they read the old French ids saved in visitors' browsers;
+ * - `src/ui/legacy.ts`: it still accepts the old French pixel sizes of the `pixel` attribute;
  * - quoted test data that exercises accents (an accented montage name in `export.test.ts`).
  */
 
@@ -28,10 +27,7 @@ const FRENCH = [
 const WORD = new RegExp(`(?<![\\w-])(${FRENCH.join('|')})(?![\\w-])`, 'i')
 
 const ALLOWED_FILES = new Set([
-  'src/i18n/locales/fr.ts',
-  'src/i18n/locales/zh.ts',
   'src/ui/legacy.ts',
-  'src/ui/storage.test.ts',
   'src/english.test.ts',
   // the docs test holds its own list of French words to catch
   'src/docs/docs-source.test.ts'
@@ -40,9 +36,7 @@ const ALLOWED_FILES = new Set([
 const ALLOWED_LINES: Record<string, RegExp> = {
   'src/ui/export.test.ts': /Cycle par d[eé]faut|cycle-par-defaut|cyclepardfaut/,
   // the GitHub API path
-  'src/site/stars.ts': /api\.github\.com\/repos\//,
-  // names the old French keys it migrates
-  'src/ui/storage.ts': /mochi:forme/
+  'src/site/stars.ts': /api\.github\.com\/repos\//
 }
 
 function walk(dir: string, out: string[] = []): string[] {

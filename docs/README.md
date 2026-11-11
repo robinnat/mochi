@@ -15,7 +15,3 @@ These pages are the documentation of Mochiz. The website shows exactly the same 
 - [Moods](moods.md): moods and reactions.
 - [Gestures](gestures.md): small extra moves on top of the pose.
 - [Accessories](accessories.md): how accessories are built and placed.
-- [Arrival sequence](intro.md): the animation when you land on the app.
-- [Export](export.md): images, GIF and video exports.
-- [Interface](interface.md): notes on the app interface.
-- [Languages](i18n.md): the translation layer of the app.

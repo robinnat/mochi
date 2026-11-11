@@ -1,13 +1,30 @@
 /**
  * Site catalog: ENGLISH labels. Ids come from the package (`mochiz`, the library's public entry, as for any user);
- * the site defines no measurement. Labels of shapes, colors, states and styles reuse the app's
- * (`src/i18n/locales/en.ts`).
+ * the site defines no measurement.
  */
-import en from '@/i18n/locales/en'
-import { ACCESSORIES, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochiz/catalog'
+import { ACCESSORIES, COLORS, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochiz/catalog'
 
-export const SHAPE_LABEL = en.shapes as Record<string, string>
-export const COLOR_LABEL = en.colors as Record<string, string>
+/** English name of each catalog color. Typed by the catalog's ids: a new color without a name does not compile. */
+export const COLOR_LABEL: Record<(typeof COLORS)[number]['id'], string> & Record<string, string> = {
+  ink: 'Ink',
+  cream: 'Cream',
+  brown: 'Brown',
+  red: 'Tomato',
+  coral: 'Coral',
+  orange: 'Orange',
+  amber: 'Sunny yellow',
+  lime: 'Lime',
+  apple: 'Apple green',
+  green: 'Emerald',
+  turquoise: 'Turquoise',
+  sky: 'Sky',
+  blue: 'Royal blue',
+  violet: 'Violet',
+  magenta: 'Magenta',
+  pink: 'Pink',
+  cherry: 'Cherry',
+  gray: 'Gray'
+}
 export const SHAPE_ID_LIST = SHAPES.map((s) => s.id)
 
 /**

@@ -4,7 +4,7 @@
  * accessory pickers) without loading the component right away; `mochiz` (the full entry) re-exports all of this and
  * declares the tag.
  *
- * The repository's site, docs and lab only use these two entries: they use Mochiz exactly like a user of the package
+ * The repository's site and docs only use these two entries: they use Mochiz exactly like a user of the package
  * (`src/site/public-entry.test.ts` checks it).
  */
 import { closedPath, toPoints } from './bot/shape'

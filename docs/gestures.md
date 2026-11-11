@@ -12,7 +12,7 @@ const frame = bot.sample(t, compose(idleGesture(t, seed), bounce(t - touchedAt))
 
 Without a second argument (or with `NEUTRAL_GESTURE`), `sample(t)` gives exactly the same frame as before, byte for byte (tested in `gestures.test.ts`). Everything stays pure: a function of time and a seed, no clock, no state.
 
-To see them: the [lab](https://mochiz.vercel.app/lab#moods) (moods and reactions, in 3D).
+To see them: the moods and reactions sections of the [home page](https://mochiz.vercel.app/#moods).
 
 ## What a gesture can change
 
@@ -33,7 +33,7 @@ A squash, then a small damped spring over `BOUNCE_DURATION` (0.7 s). It is the o
 
 ## At work (`ACTIVITIES`)
 
-Each activity plays an engine state on a loop (`timeActivity`) and adds a gesture: `reflection` (three pulsing dots), `typing` (eyes down, small taps) and `sweep` (the gaze reads from left to right). They all go through the face. The app picks the activity of each role.
+Each activity plays an engine state on a loop (`timeActivity`) and adds a gesture: `reflection` (three pulsing dots), `typing` (eyes down, small taps) and `sweep` (the gaze reads from left to right). They all go through the face. The page that hosts the Mochi picks the activity of each role.
 
 ## The engine alone, for another page
 

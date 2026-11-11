@@ -145,7 +145,7 @@ const d = <T>(v: T) => () => v
 
 /**
  * Default alternative text, in English whatever the browser language: the tag never translates itself. A page in
- * another language passes its own `label` (the app does).
+ * another language passes its own `label`.
  */
 export const DEFAULT_LABEL = 'Animated Mochi avatar'
 /** Shown instead of the Mochi when the browser cannot draw 3D (no WebGL). */

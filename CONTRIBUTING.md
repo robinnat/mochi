@@ -26,7 +26,7 @@ npx -y pnpm@11.17.0 install
 ## Run
 
 ```bash
-npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site at /, app at /app, docs at /docs, lab at /lab)
+npx -y pnpm@11.17.0 dev      # http://localhost:5190 (site at /, docs at /docs)
 ```
 
 The 3D needs WebGL. If your browser has none, a short message replaces the Mochi: there is no 2D fallback.
@@ -52,8 +52,8 @@ There is no formatter or linter config: follow the code around you.
   (`await import(...)`), never with a static `import` (`src/site/site.test.ts` checks it for the site).
 - The constants in `src/bot/` are measurements, not choices. Do not round or "clean up" them
   (see [docs/measurements.md](docs/measurements.md)).
-- Everything is in English: code, comments, ids, tests and docs (`src/english.test.ts` checks it). Only the French
-  and Chinese translations of the app's interface (`src/i18n/locales/`) and the `*.fr.md` files are in French.
+- Everything is in English: code, comments, ids, tests and docs (`src/english.test.ts` checks it). Only the `*.fr.md`
+  files are in French.
 - The website's `/docs` page is built from `README.md` and `docs/*.md`: edit the Markdown files, never the page
   (`src/docs/docs-source.test.ts` keeps them identical).
 - Keep the MIT header in [LICENSE](LICENSE) as it is, both copyright lines included.

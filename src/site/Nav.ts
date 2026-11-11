@@ -107,7 +107,7 @@ export const Nav: Component<NavProps> = (props) => {
                   h('path', { d: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linejoin': 'round' })
                 )
           ),
-          h('a', { class: 'nav-cta', href: '/app' }, 'Open the app')
+          h('a', { class: 'nav-cta', href: '/docs?page=getting-started' }, 'Get started')
         )
       )
     )

@@ -17,10 +17,10 @@ body:
     id: steps
     attributes:
       label: Steps to reproduce
-      description: Where (site, /app, /docs, your own app) and what you did, step by step.
+      description: Where (site, /docs, your own app) and what you did, step by step.
       placeholder: |
-        1. Open /app
-        2. Pick the star shape and the Pixel style
+        1. Add <mochi-bot shape="star" render-style="pixel"> to a page
+        2. Tap it twice
         3. ...
     validations:
       required: true

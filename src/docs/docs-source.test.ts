@@ -252,13 +252,13 @@ describe('docs side menu (/docs)', () => {
 describe('site address', () => {
   const SITE = 'https://mochiz.vercel.app'
   it('every public file names the current address, never the old one', () => {
-    const files = ['README.md', 'README.fr.md', 'package.json', 'index.html', 'docs.html', 'app.html', 'lab.html', '.github/ISSUE_TEMPLATE/config.yml', ...DOC_FILES.map((f) => 'docs/' + f)]
+    const files = ['README.md', 'README.fr.md', 'package.json', 'index.html', 'docs.html', '.github/ISSUE_TEMPLATE/config.yml', ...DOC_FILES.map((f) => 'docs/' + f)]
     for (const f of files) expect(read(f), f).not.toContain('mochi-red-phi')
     expect(JSON.parse(read('package.json')).homepage).toBe(SITE)
     expect(README).toContain(SITE)
   })
   it('the public pages declare their canonical address and og:url', () => {
-    for (const [file, path] of [['index.html', '/'], ['docs.html', '/docs'], ['app.html', '/app']] as const) {
+    for (const [file, path] of [['index.html', '/'], ['docs.html', '/docs']] as const) {
       const html = read(file)
       expect(html, file).toContain(`<link rel="canonical" href="${SITE}${path}" />`)
       expect(html, file).toContain(`<meta property="og:url" content="${SITE}${path}" />`)

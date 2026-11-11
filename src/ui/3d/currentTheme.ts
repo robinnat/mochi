@@ -6,8 +6,7 @@ export type ThemeSetting = Theme | 'auto'
 
 /**
  * Theme of every Mochi that has no `theme` of its own. `auto` (the default) follows the device: dark when the
- * visitor's system is in dark mode. A page with its own theme switch sets `light` or `dark` here (the site does);
- * the app sets `light`, since its interface is light only.
+ * visitor's system is in dark mode. A page with its own theme switch sets `light` or `dark` here (the site does).
  */
 export const currentTheme = ref<ThemeSetting>('auto')
 

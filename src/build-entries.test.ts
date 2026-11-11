@@ -1,6 +1,7 @@
 // Builds the site for real and checks that every page that shows Mochiz loads the code that defines <mochi-bot>.
 // Why: on 11/11/2026 the `sideEffects` field of package.json made the bundler drop `import '@/components/mochi-bot'`
-// (an import kept only for what it does, not for a value). /app and /lab went live empty, and every other test was green.
+// (an import kept only for what it does, not for a value). The pages of that time went live empty, and every other test
+// was green.
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -12,7 +13,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url))
 let out = ''
 
 // Every JS file a page loads before it runs: its module scripts, then their static imports, recursively.
-// Dynamic imports (`import('./x.js')`) are followed too: the lab loads its sheets that way.
+// Dynamic imports (`import('./x.js')`) are followed too: the home page loads the tag that way.
 function loadedFiles(page: string): Set<string> {
   const html = readFileSync(join(out, page), 'utf8')
   const todo = [...html.matchAll(/<script[^>]*type="module"[^>]*src="\/([^"]+)"/g)].map((m) => m[1]!)
@@ -51,28 +52,50 @@ describe('production build', () => {
     if (out) rmSync(out, { recursive: true, force: true })
   })
 
-  it('has the four pages, the 404 page, robots.txt and the sitemap', () => {
+  it('has the two pages, the 404 page, robots.txt and the sitemap', () => {
     const pages = readdirSync(out).filter((f) => f.endsWith('.html'))
-    expect(pages.sort()).toEqual(['404.html', 'app.html', 'docs.html', 'index.html', 'lab.html'])
+    // no /app nor /lab any more (removed on 11/11/2026, redirected to the home page by vercel.json)
+    expect(pages.sort()).toEqual(['404.html', 'docs.html', 'index.html'])
     expect(readFileSync(join(out, 'robots.txt'), 'utf8')).toContain('Sitemap: https://mochiz.vercel.app/sitemap.xml')
     const sitemap = readFileSync(join(out, 'sitemap.xml'), 'utf8')
-    for (const url of ['/', '/app', '/docs', '/docs?page=getting-started', '/docs?page=reference']) {
+    for (const url of ['/', '/docs', '/docs?page=getting-started', '/docs?page=reference']) {
       expect(sitemap).toContain(`<loc>https://mochiz.vercel.app${url}</loc>`)
     }
-    // the lab says noindex: it stays out of the sitemap
+    expect(sitemap).not.toContain('/app')
     expect(sitemap).not.toContain('/lab')
   })
 
-  // the home page, the docs, the app and the lab all show Mochiz: each must register the tag
-  for (const page of ['index.html', 'docs.html', 'app.html', 'lab.html']) {
+  // the home page and the docs both show Mochiz: each must register the tag
+  for (const page of ['index.html', 'docs.html']) {
     it(`${page} defines <mochi-bot>`, () => {
       expect(definesMochiBot(page)).toBe(true)
     })
   }
 
   it('keeps the CSS of every page', () => {
-    for (const page of ['index.html', 'docs.html', 'app.html', 'lab.html']) {
+    for (const page of ['index.html', 'docs.html']) {
       expect(readFileSync(join(out, page), 'utf8')).toMatch(/<link rel="stylesheet"[^>]+\.css"/)
+    }
+  })
+})
+
+// /app (the old editor) and /lab were removed on 11/11/2026. Links to them exist outside the site (old README, shared
+// links): Vercel sends them to the home page with a permanent redirect instead of a 404.
+describe('removed pages', () => {
+  it('vercel.json redirects /app, /lab and /labo to the home page, permanently', () => {
+    const vercel = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8')) as {
+      redirects: { source: string; destination: string; permanent: boolean }[]
+    }
+    for (const source of ['/app', '/lab', '/labo']) {
+      expect(vercel.redirects, source).toContainEqual({ source, destination: '/', permanent: true })
+    }
+  })
+
+  it('no page of the site links to /app or /lab any more', () => {
+    const files = ['index.html', 'docs.html', 'public/404.html', 'README.md', 'CONTRIBUTING.md']
+    const site = readdirSync(join(ROOT, 'src/site')).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+    for (const f of [...files, ...site.map((f) => 'src/site/' + f)]) {
+      expect(readFileSync(join(ROOT, f), 'utf8'), f).not.toMatch(/["'(]\/(app|lab)\b/)
     }
   })
 })

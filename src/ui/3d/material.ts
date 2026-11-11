@@ -16,7 +16,7 @@
  * outline option any more (removed on 11/11/2026); `toon-outline` stays an internal material, `toon` with a shell.
  *
  * `toon` and `lowpoly` stay in the code (they cost nothing: one table row each) but are no longer offered in the
- * interface or the lab.
+ * public options.
  */
 
 import { DEFAULT_FINESSE, type Finesse } from './volume'

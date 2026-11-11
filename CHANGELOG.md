@@ -5,6 +5,14 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Removed
+
+- The legacy `/app` editor and the `/lab` page; both now redirect to the home page (`/labo` too). Their code goes with
+  them: the editor (timeline, customizer, export bar, dialogs), its French and Chinese translations, the arrival
+  animation and the migration of the settings it saved in the browser, and the lab sheets. The library and the
+  `<mochi-bot>` tag do not change; an old `pixel="large"` still falls back to `medium`.
+- Tailwind CSS: only the editor used it.
+
 ## [0.2.0] - 2026-11-11
 
 ### Changed (name)
