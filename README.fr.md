@@ -26,21 +26,17 @@ Ce fichier est une traduction pour les lecteurs francophones. La documentation d
 
 ## Démarrage rapide
 
-Installez-la avec npm :
+> Le paquet npm arrive bientôt. D'ici là, construisez la bibliothèque depuis ce dépôt : voir [Install](docs/getting-started.md#install).
 
-```bash
-npm install mochis three
-```
-
-Importez-la une fois (`import 'mochis'`), puis écrivez la balise. Dans une page HTML simple, chargez-la plutôt depuis un CDN :
+Chargez la bibliothèque, puis écrivez la balise :
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochis@0.2.0/dist-lib/standalone/mochis.js"></script>
+<script type="module" src="/mochis/mochis.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
 
-Three.js est une dépendance « peer » (votre projet l'installe une fois), et les types TypeScript sont inclus. Autres façons (construire depuis ce dépôt) : voir [Install](docs/getting-started.md#install).
+C'est la façon HTML simple. Dans une app avec un bundler (Vite, webpack...), copiez la bibliothèque dans `src/vendor/mochis/` et écrivez `import './vendor/mochis/mochis.js'` : voir [Install](docs/getting-started.md#install).
 
 ## Documentation
 

@@ -198,13 +198,13 @@ The library has two public entry points:
 - `mochis` (`dist-lib/mochis.js`): the `<mochi-bot>` tag, the engine and the catalogs;
 - `mochis/catalog` (`dist-lib/catalog.js`): the catalogs alone, without the tag, to build a picker.
 
-Both use your project's Three.js (a peer dependency). `mochis/standalone` and `mochis/standalone/catalog` (`dist-lib/standalone/`) are the same two entries with Three.js included, for a page without a build tool.
+In the copied `standalone` folder they are `mochis.js` and `catalog.js`, with Three.js included. The files at the root of `dist-lib/` are the same two entries without Three.js, for the npm package (coming soon).
 
 The engine (`src/bot/`) computes each frame of a Mochi. It has no framework and no clock: `engine.sample(t)` gives the same frame for the same time `t`. It plays states, the basic animations of the body (`idle`, `thinking`, `wink`, `wide`, `sleep`); moods are built on top of them.
 
 ```js
-import { BotEngine, SHAPE_BY_ID, RADIUS } from 'mochis'
-import { SHAPES, ACCESSORIES, MOOD_IDS } from 'mochis/catalog'
+import { BotEngine, SHAPE_BY_ID, RADIUS } from './vendor/mochis/mochis.js'
+import { SHAPES, ACCESSORIES, MOOD_IDS } from './vendor/mochis/catalog.js'
 
 const engine = new BotEngine(RADIUS, 'idle', SHAPE_BY_ID.get('star').radii)
 engine.setState('wink', 2) // change state at t = 2 s

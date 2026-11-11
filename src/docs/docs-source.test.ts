@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { ACCESSORIES, ACCESSORY_BY_KEY, SLOTS, type Slot } from '@/bot/slots'
 import { MOOD_IDS, REACTION_IDS, resolveMood } from '@/bot/moods'
@@ -167,36 +167,43 @@ describe('the documentation says what the code does', () => {
     const catalog = (await import('mochis/catalog')) as Record<string, unknown>
     const all = USER_CODE.map((b) => b.code).join('\n')
     const names = (file: string) =>
-      [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '${file}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
-    expect(names('mochis/catalog').length).toBeGreaterThan(0)
-    for (const n of names('mochis')) expect(full[n], n).toBeDefined()
-    for (const n of names('mochis/catalog')) expect(catalog[n], n).toBeDefined()
+      [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '\\./vendor/mochis/${file.replace('.', '\\.')}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
+    expect(names('catalog.js').length).toBeGreaterThan(0)
+    for (const n of names('mochis.js')) expect(full[n], n).toBeDefined()
+    for (const n of names('catalog.js')) expect(catalog[n], n).toBeDefined()
   })
 
-  it('npm is the main install, with three as a peer dependency, and the package says the same', () => {
+  it('the package is ready for npm (name, peer three) but the published docs never present npm as available', () => {
     const pkg = JSON.parse(read('package.json'))
     expect(pkg.name).toBe('mochis')
     expect(pkg.private).toBeUndefined()
     expect(pkg.peerDependencies.three).toBeDefined()
     expect(pkg.dependencies?.three).toBeUndefined()
-    for (const f of [README, read('README.fr.md'), GUIDE]) expect(f).toContain('npm install mochis three')
-    expect(GUIDE.indexOf('npm install mochis three')).toBeLessThan(GUIDE.indexOf('git clone'))
     expect(pkg.scripts['build:lib']).toContain('vite.lib.config.ts')
+    // `docs/drafts/PUBLISHED` is created on the day `mochis` is published (see docs/drafts/npm-install.md)
+    if (!existsSync(new URL('docs/drafts/PUBLISHED', root))) {
+      expect(GUIDE).toContain('coming soon')
+      expect(GUIDE).toContain('does not work today')
+      const published = [README, read('README.fr.md'), ...DOC_FILES.map((f) => read('docs/' + f))]
+      for (const src of published) {
+        expect(src).not.toContain('cdn.jsdelivr.net/npm/mochis')
+        for (const line of src.split('\n').filter((l) => l.includes('npm install mochis'))) expect(line).toContain('does not work today')
+      }
+      expect(read('docs/drafts/npm-install.md')).toContain('npm install mochis three')
+    }
   })
 
-  it('library paths: the package names with npm, the standalone build from a CDN or a copied folder, never public/', () => {
-    const pkg = JSON.parse(read('package.json'))
-    const cdn = `https://cdn.jsdelivr.net/npm/mochis@${pkg.version}/dist-lib/standalone/mochis.js`
+  it('library paths: /mochis/ in plain HTML, ./vendor/mochis/ with a bundler, copied from the standalone build, never public/', () => {
     const all = [README, read('README.fr.md'), ...DOC_FILES.map((f) => read('docs/' + f))].join('\n')
     // the folder name of the old docs; a bundler cannot import from public/ (Vite fails to resolve it)
     expect(all).not.toMatch(/['"]\/mochi\/(mochis|catalog)\.js/)
     expect(all).not.toMatch(/public\/mochis?\b(?!\/\*)/)
-    // a CDN link always names the current version
-    for (const m of all.matchAll(/cdn\.jsdelivr\.net\/npm\/mochis@([^/]+)\//g)) expect(m[1]).toBe(pkg.version)
     for (const { code } of USER_CODE) {
-      for (const m of code.matchAll(/\bimport\s+(?:[^'"]+from\s+)?'([^']+)'/g)) expect(m[1], code).toMatch(/^mochis(\/catalog)?$/)
-      for (const m of code.matchAll(/<script type="module" src="([^"]+)"/g)) expect(m[1], code).toBe(cdn)
+      for (const m of code.matchAll(/\bimport\s+(?:[^'"]+from\s+)?'([^']+)'/g)) expect(m[1], code).toMatch(/^\.\/vendor\/mochis\/(mochis|catalog)\.js$/)
+      for (const m of code.matchAll(/<script type="module" src="([^"]+)"/g)) expect(m[1], code).toBe('/mochis/mochis.js')
     }
+    // the root of dist-lib/ needs the project's three (npm build): a copied folder is the standalone one
+    expect(GUIDE).toContain('cp -r dist-lib/standalone ../my-site/mochis')
     expect(GUIDE).toContain('cp -r dist-lib/standalone ../my-app/src/vendor/mochis')
     expect(GUIDE).toContain("import './vendor/mochis/mochis.js'")
   })

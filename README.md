@@ -24,21 +24,17 @@ You add a Mochi to any page with one HTML tag, `<mochi-bot>`. It works in plain 
 
 ## Quick start
 
-Install it with npm:
+> The npm package is coming soon. Until then, build the library from this repository: see [Install](docs/getting-started.md#install).
 
-```bash
-npm install mochis three
-```
-
-Import it once (`import 'mochis'`), then write the tag. In a plain HTML page, load it from a CDN instead:
+Load the library, then write the tag:
 
 ```html live
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochis@0.2.0/dist-lib/standalone/mochis.js"></script>
+<script type="module" src="/mochis/mochis.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
 
-Three.js is a peer dependency, and TypeScript types are included. Other ways (building from this repository): see [Install](docs/getting-started.md#install).
+This is the plain HTML way. In an app with a bundler (Vite, webpack...), copy the library into `src/vendor/mochis/` and write `import './vendor/mochis/mochis.js'`: see [Install](docs/getting-started.md#install).
 
 ## Documentation
 

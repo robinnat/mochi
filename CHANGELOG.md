@@ -7,7 +7,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.0] - 2026-11-11
 
-First version ready for npm (`npm install mochis three`). Not published yet.
+First version ready for npm. Not published yet: the docs keep the install from the repository (copy of
+`dist-lib/standalone`) until it is; the npm instructions wait in `docs/drafts/npm-install.md`.
 
 ### Added (package)
 
@@ -15,8 +16,8 @@ First version ready for npm (`npm install mochis three`). Not published yet.
   (`dist-lib/types/`, generated from the sources); `document.querySelector('mochi-bot')` is typed.
 - **Three.js is a peer dependency** (`three` `^0.187.0`): the package build imports it from your project
   (`three/src/...`, one file per class), so your bundler keeps one copy and only the classes Mochis draws with.
-- **Standalone build** (`mochis/standalone`, `dist-lib/standalone/`): the same two entries with Three.js included, for a
-  plain HTML page (a `<script type="module">` from a CDN or a copied folder).
+- **Standalone build** (`mochis/standalone`, `dist-lib/standalone/`): the same two entries with Three.js included. It is
+  the folder the docs tell you to copy (plain HTML or `src/vendor/mochis`).
 - The package only ships `dist-lib/`, the READMEs, the license and this changelog; `sideEffects` names the two files
   that declare the tag.
 - The website moved to https://mochiz.vercel.app (canonical and `og:url` tags added).

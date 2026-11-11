@@ -8,39 +8,9 @@ On the website, every example marked "Live" shows its result right below the cod
 
 ## Install
 
-### With npm (recommended)
+> The npm package is coming soon. `mochis` is not published yet, so `npm install mochis` does not work today. Until then, build it from the repository.
 
-You need [Node.js](https://nodejs.org) 22.12 or later. Install Mochis and Three.js (the 3D library Mochis draws with):
-
-```bash
-npm install mochis three
-```
-
-Three.js is a peer dependency: your project installs it once, and Mochis uses that copy. Then import the library once, from a file of your app (here `src/main.js`). Importing it declares the `<mochi-bot>` tag:
-
-```js
-import 'mochis'
-```
-
-That is all. TypeScript types come with the package: `document.querySelector('mochi-bot')` is typed, and so are the catalogs. If your `tsconfig.json` sets `skipLibCheck` to `false`, also install the Three.js types: `npm install -D @types/three`. The 3D part loads by itself, only when a Mochi is shown.
-
-To build a picker without loading the tag, import the catalogs alone:
-
-```js
-import { SHAPES, COLORS } from 'mochis/catalog'
-```
-
-### Plain HTML, without a build tool
-
-Load the standalone build (Three.js included) from a CDN, with a script tag:
-
-```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochis@0.2.0/dist-lib/standalone/mochis.js"></script>
-```
-
-### Without npm: build it from the repository
-
-You can also build the library yourself and copy it into your project:
+You need [Node.js](https://nodejs.org) 22.12 or later. Build the library once:
 
 ```bash
 git clone https://github.com/robinnat/mochi.git
@@ -49,19 +19,46 @@ npx pnpm@11.17.0 install
 npx pnpm@11.17.0 build:lib
 ```
 
-This writes the library to `dist-lib/`. Copy the `dist-lib/standalone` folder (Three.js included), and keep its files together: the 3D part is a separate file, loaded only when a Mochi is shown.
+This writes the library to the `dist-lib/` folder. Copy its `standalone` folder into your project: it holds everything, Three.js (the 3D library) included. Keep its files together: the 3D part is a separate file, loaded only when a Mochi is shown. Then load the library once per page. Loading it declares the `<mochi-bot>` tag. Pick the case that matches your project.
 
-- Plain HTML: copy it next to your page, under the name `mochis` (`cp -r dist-lib/standalone ../my-site/mochis`), then load it with `<script type="module" src="/mochis/mochis.js"></script>`.
-- An app with a bundler (Vite, webpack...): copy it into your source code (`cp -r dist-lib/standalone ../my-app/src/vendor/mochis`), then write `import './vendor/mochis/mochis.js'` in a file of `src/`. Do not put it in `public/`: a bundler serves that folder as is and cannot import JavaScript from it.
+### Plain HTML
 
-The built files keep the MIT license notice: ship it with your app.
+Copy the folder next to your page, under the name `mochis`:
 
-The examples below load the library from the CDN in plain HTML and with `import 'mochis'` in JavaScript. Use the way that matches your project.
+```bash
+cp -r dist-lib/standalone ../my-site/mochis
+```
+
+Then load it with a script tag:
+
+```html
+<script type="module" src="/mochis/mochis.js"></script>
+```
+
+### An app with a bundler (Vite, webpack...)
+
+A bundler is a tool that packs your source files into a few files for the browser. Copy the folder into your source code, under `src/vendor/mochis`:
+
+```bash
+cp -r dist-lib/standalone ../my-app/src/vendor/mochis
+```
+
+Then import it from a file of `src/` (here `src/main.js`), with a relative path:
+
+```js
+import './vendor/mochis/mochis.js'
+```
+
+Do not put the library in `public/`: a bundler serves that folder as is and cannot import JavaScript from it (Vite stops with "failed to resolve import").
+
+You need nothing else. The built files keep the MIT license notice: ship it with your app.
+
+The examples below load the library the plain HTML way (`/mochis/mochis.js`) and import it the bundler way (`./vendor/mochis/mochis.js`). Use the path that matches your project.
 
 ## Your first Mochi
 
 ```html live
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochis@0.2.0/dist-lib/standalone/mochis.js"></script>
+<script type="module" src="/mochis/mochis.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
@@ -239,7 +236,7 @@ To choose the theme yourself, set it on one Mochi:
 Or set it for every Mochi of the page that has no `theme` of its own, for example when your site has its own light and dark switch:
 
 ```js
-import { currentTheme } from 'mochis'
+import { currentTheme } from './vendor/mochis/mochis.js'
 
 currentTheme.value = 'dark' // 'light', 'dark', or 'auto' to follow the device again (the default)
 ```
@@ -272,7 +269,7 @@ currentTheme.value = 'dark' // 'light', 'dark', or 'auto' to follow the device a
 
 ```jsx
 // React 19
-import 'mochis'
+import './vendor/mochis/mochis.js'
 
 export function Avatar({ mood }) {
   return <mochi-bot shape="star" color="#2d5bff" mood={mood} size="160" onready={() => console.log('ready')} />
@@ -282,7 +279,7 @@ export function Avatar({ mood }) {
 ```svelte
 <!-- Svelte 5 -->
 <script>
-  import 'mochis'
+  import './vendor/mochis/mochis.js'
   let mood = $state('idle')
 </script>
 
@@ -293,7 +290,7 @@ export function Avatar({ mood }) {
 ```vue
 <!-- Vue: tell Vue that mochi-bot is a custom element (compilerOptions.isCustomElement) -->
 <script setup>
-import 'mochis'
+import './vendor/mochis/mochis.js'
 </script>
 
 <template>
