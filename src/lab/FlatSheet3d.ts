@@ -66,7 +66,7 @@ export const FlatSheet3d: Component<Record<string, never>> = () => {
     h(
       'main',
       { class: 'p-4' },
-      h('h1', { class: 'mb-3 text-lg font-bold' }, '3D: Flat, Soft light, Soft strong'),
+      h('h1', { class: 'mb-3 text-lg font-bold' }, '3D: Flat, Soft light, Soft strong, Soft without shading'),
       h(
         'div',
         { class: 'max-w-full overflow-x-auto' },

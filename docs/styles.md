@@ -49,7 +49,7 @@ The shadow is a smooth, matte ramp of `dot(normal, light)`, with the light at th
 
 Flat uses the `toon` material and Pixel the `pixel` material: the render style picks the material, there is no option for it. Other materials stay in the code but are not offered: `flat` (two tones only, judged too heavy), `toon-outline`, `lowpoly` and `realistic` (internal only). There is no cartoon outline option (removed in 0.2.0); the thin outline of the Pixel style is part of its drawing.
 
-Screenshots: `docs/variants/`.
+Screenshots, taken from the lab (`/lab`): [the four looks of Flat and Soft](variants/3d-styles-sheet.png), [every shape in each style](variants/3d-shapes-sheet.png) and [every shape seen from four angles](variants/3d-turntable.png).
 
 ## Known limits
 
