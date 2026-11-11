@@ -159,7 +159,7 @@ export const Docs: Component<Record<string, never>> = () => {
   const title = blocks.find((b) => b.t === 'heading' && b.level === 1) as { text: string } | undefined
   const body = blocks.filter((b) => !(b.t === 'heading' && b.level === 1))
   const sections = body.filter((b): b is Extract<Block, { t: 'heading' }> => b.t === 'heading' && b.level === 2)
-  if (typeof document !== 'undefined') document.title = `${title?.text ?? page.title} | Mochis docs`
+  if (typeof document !== 'undefined') document.title = `${title?.text ?? page.title} | Mochiz docs`
 
   /** Section of the page currently at the top of the screen. */
   const current = ref(sections[0]?.id ?? '')
@@ -200,7 +200,7 @@ export const Docs: Component<Record<string, never>> = () => {
           { class: 'docs-head wrap' },
           h('p', { class: 'eyebrow' }, 'Documentation'),
           h('h1', { class: 'docs-title' }, title?.text ?? page.title),
-          h('p', { class: 'note' }, 'This page is ', h('a', { href: `https://github.com/robinnat/mochi/blob/main/${page.file}` }, page.file), ' of the repository.')
+          h('p', { class: 'note' }, 'This page is ', h('a', { href: `https://github.com/robinnat/mochiz/blob/main/${page.file}` }, page.file), ' of the repository.')
         ),
         h(
           'div',

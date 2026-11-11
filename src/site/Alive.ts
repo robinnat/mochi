@@ -1,6 +1,6 @@
 import { ref, watch } from '@/ui/dom/reactive'
 import { h, onUnmount, onMount, type Component } from '@/ui/dom/h'
-import type { MochiBotElement, MochiBotProps } from 'mochis'
+import type { MochiBotElement, MochiBotProps } from 'mochiz'
 import { urlPoster } from './posters'
 import { effectiveTheme } from './theme'
 import { pageReady, warmUpStyles, RATIO_MAX, FPS_ALIVE } from './ready'
@@ -28,7 +28,7 @@ export interface AliveProps {
 let loading: Promise<unknown> | null = null
 const componentLoaded = ref(typeof customElements !== 'undefined' && !!customElements.get('mochi-bot'))
 function loadComponent() {
-  loading ??= import('mochis').then(() => (componentLoaded.value = true))
+  loading ??= import('mochiz').then(() => (componentLoaded.value = true))
 }
 
 export const Alive: Component<AliveProps> = (props) => {

@@ -7,6 +7,14 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.0] - 2026-11-11
 
+### Changed (name)
+
+- **The project is renamed Mochiz** (it was Mochis), to match the website https://mochiz.vercel.app. The npm package
+  is now `mochiz` (entries `mochiz`, `mochiz/catalog`, `mochiz/standalone`, files `dist-lib/mochiz.js` and
+  `dist-lib/standalone/mochiz.js`), and the copy folder of the docs is `mochiz` (`/mochiz/mochiz.js`,
+  `src/vendor/mochiz/`). The `<mochi-bot>` tag does not change, and one character is still called a Mochi. The lines
+  below were written before the rename and keep the old name.
+
 First version ready for npm. Not published yet: the docs keep the install from the repository (copy of
 `dist-lib/standalone`) until it is; the npm instructions wait in `docs/drafts/npm-install.md`.
 
@@ -358,6 +366,6 @@ fixed, and the measurement is in the commit that fixes it.
 - `StateDef.hint`: 15 hardcoded French strings nothing read, inside a type meant to
   become public.
 
-[unreleased]: https://github.com/robinnat/mochi/commits/main
-[0.2.0]: https://github.com/robinnat/mochi/commits/main
-[0.1.1]: https://github.com/robinnat/mochi/commits/main
+[unreleased]: https://github.com/robinnat/mochiz/commits/main
+[0.2.0]: https://github.com/robinnat/mochiz/commits/main
+[0.1.1]: https://github.com/robinnat/mochiz/commits/main

@@ -1,8 +1,8 @@
 import { ref } from '@/ui/dom/reactive'
-import { load3d } from 'mochis/catalog'
+import { load3d } from 'mochiz/catalog'
 
 /**
- * The page is "ready" when it has finished loading and the browser has a free moment: only then do live Mochis
+ * The page is "ready" when it has finished loading and the browser has a free moment: only then do live Mochiz
  * (Three.js, 3D rendering) mount. Until then, the page shows their pre-rendered images.
  */
 export const pageReady = ref(false)
@@ -17,7 +17,7 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * Phone (coarse pointer): fewer pixels for live Mochis. Frames per second are no longer capped (v12): the cap at 30
+ * Phone (coarse pointer): fewer pixels for live Mochiz. Frames per second are no longer capped (v12): the cap at 30
  * gave jolts (one frame out of two skipped, irregularly) and the cost per frame went down.
  */
 export const mobile = typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(pointer: coarse)').matches

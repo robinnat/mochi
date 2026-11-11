@@ -9,7 +9,7 @@ function frames(n: number, cost: number, step = 16) {
   const start = cadence.ms + step
   for (let i = 0; i < n; i++) {
     cadenceFrame(start + i * step)
-    // in half cadence, only half of the Mochis draw in a frame
+    // in half cadence, only half of the Mochiz draw in a frame
     cadence.cost += cadence.half ? cost / 2 : cost
   }
 }
@@ -33,7 +33,7 @@ describe('adaptive cadence (v13)', () => {
     expect(cadence.half).toBe(false)
   })
 
-  it('late frames because of the Mochis: every other frame (each at 30 per second), then back when it gets light', () => {
+  it('late frames because of the Mochiz: every other frame (each at 30 per second), then back when it gets light', () => {
     frames(120, 20, CADENCE_LATE_MS + 13)
     expect(cadence.half).toBe(true)
     // between the two thresholds: no flapping, even once the frames are on time again
@@ -43,7 +43,7 @@ describe('adaptive cadence (v13)', () => {
     expect(cadence.half).toBe(false)
   })
 
-  it('late frames that the Mochis do not cause (a busy page): no change', () => {
+  it('late frames that the Mochiz do not cause (a busy page): no change', () => {
     frames(200, 1, 40)
     expect(cadence.half).toBe(false)
     frames(200, 1, 16)

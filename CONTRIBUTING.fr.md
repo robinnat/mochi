@@ -1,8 +1,8 @@
 [English](CONTRIBUTING.md) | **Français**
 
-# Contribuer à Mochis
+# Contribuer à Mochiz
 
-Merci de prendre ce temps. Mochis est un petit projet maintenu sur du temps libre, donc les
+Merci de prendre ce temps. Mochiz est un petit projet maintenu sur du temps libre, donc les
 relectures peuvent prendre un moment. Les pull requests petites et ciblées sont les plus faciles à relire.
 
 ## Avant de commencer
@@ -18,7 +18,7 @@ Il vous faut Node.js 24 (la version utilisée par la CI) et Git. Le projet utili
 avec `npx` : inutile d'installer pnpm globalement.
 
 ```bash
-git clone https://github.com/robinnat/mochi.git
+git clone https://github.com/robinnat/mochiz.git
 cd mochi
 npx -y pnpm@11.17.0 install
 ```

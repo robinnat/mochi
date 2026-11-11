@@ -1,16 +1,16 @@
 {
-  "name": "mochis",
+  "name": "mochiz",
   "version": "0.2.0",
-  "description": "Mochis: animated avatars for the web. A <mochi-bot> Web Component that draws a Mochi in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch and 22 accessories. No framework needed.",
+  "description": "Mochiz: animated avatars for the web. A <mochi-bot> Web Component that draws a Mochi in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch and 22 accessories. No framework needed.",
   "license": "MIT",
   "author": "SYGEN SAS",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/robinnat/mochi.git"
+    "url": "git+https://github.com/robinnat/mochiz.git"
   },
   "homepage": "https://mochiz.vercel.app",
   "bugs": {
-    "url": "https://github.com/robinnat/mochi/issues"
+    "url": "https://github.com/robinnat/mochiz/issues"
   },
   "keywords": [
     "3d",
@@ -22,14 +22,14 @@
     "custom-element"
   ],
   "type": "module",
-  "main": "./dist-lib/mochis.js",
-  "module": "./dist-lib/mochis.js",
+  "main": "./dist-lib/mochiz.js",
+  "module": "./dist-lib/mochiz.js",
   "types": "./dist-lib/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist-lib/types/index.d.ts",
-      "import": "./dist-lib/mochis.js",
-      "default": "./dist-lib/mochis.js"
+      "import": "./dist-lib/mochiz.js",
+      "default": "./dist-lib/mochiz.js"
     },
     "./catalog": {
       "types": "./dist-lib/types/catalog.d.ts",
@@ -38,8 +38,8 @@
     },
     "./standalone": {
       "types": "./dist-lib/types/index.d.ts",
-      "import": "./dist-lib/standalone/mochis.js",
-      "default": "./dist-lib/standalone/mochis.js"
+      "import": "./dist-lib/standalone/mochiz.js",
+      "default": "./dist-lib/standalone/mochiz.js"
     },
     "./standalone/catalog": {
       "types": "./dist-lib/types/catalog.d.ts",
@@ -53,8 +53,8 @@
     "CHANGELOG.md"
   ],
   "sideEffects": [
-    "./dist-lib/mochis.js",
-    "./dist-lib/standalone/mochis.js"
+    "./dist-lib/mochiz.js",
+    "./dist-lib/standalone/mochiz.js"
   ],
   "peerDependencies": {
     "@types/three": "^0.187.0",

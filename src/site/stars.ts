@@ -5,7 +5,7 @@ import { ref } from '@/ui/dom/reactive'
  * is public: no secret). A single call per visit, kept one hour in the browser. If the call fails, hits GitHub's
  * limit or returns something else than a number: `null`, and the bar shows the icon alone. Never a fake number.
  */
-export const API_REPO = 'https://api.github.com/repos/robinnat/mochi'
+export const API_REPO = 'https://api.github.com/repos/robinnat/mochiz'
 export const KEY_CACHE = 'mochi:stars'
 export const DURATION_CACHE = 60 * 60 * 1000
 

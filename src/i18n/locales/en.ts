@@ -6,8 +6,8 @@ import type fr from './fr'
  */
 const en: typeof fr = {
   app: {
-    name: 'mochis',
-    title: 'Mochis, animated avatar',
+    name: 'mochiz',
+    title: 'Mochiz, animated avatar',
     botAria: 'Animated Mochi avatar'
   },
 

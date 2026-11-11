@@ -866,7 +866,7 @@ function install(ctx3: NonNullable<typeof share>, m: Mochi3d) {
 /**
  * An avatar's own 3D body (v13): its mesh cache, its face textures and its accessories, kept from one frame to the
  * next. With a single body shared by every Mochi of the page, each one undid the previous one's work: accessories
- * rebuilt with ray casting, face repainted and sent again to the GPU, for every Mochi, every frame (6 Mochis with
+ * rebuilt with ray casting, face repainted and sent again to the GPU, for every Mochi, every frame (6 Mochiz with
  * accessories: 4 frames per second on a Mac). The WebGL context stays shared. Made by `avatarSlot`, freed by
  * `releaseSlot`.
  */

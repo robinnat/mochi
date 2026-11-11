@@ -4,7 +4,7 @@
 
 ## Versions suivies
 
-Mochis n'est pas encore publié sur npm et n'a pas de version publiée. Seul le dernier commit de
+Mochiz n'est pas encore publié sur npm et n'a pas de version publiée. Seul le dernier commit de
 la branche `main` est suivi. Les correctifs arrivent sur `main` ; les commits plus anciens ne sont pas
 corrigés.
 
@@ -20,9 +20,9 @@ sécurité.
 
 Signalez-le plutôt en privé sur GitHub :
 
-1. Allez dans l'[onglet Security](https://github.com/robinnat/mochi/security) du dépôt.
+1. Allez dans l'[onglet Security](https://github.com/robinnat/mochiz/security) du dépôt.
 2. Cliquez sur **Report a vulnerability** (ou ouvrez directement
-   [ce formulaire](https://github.com/robinnat/mochi/security/advisories/new)).
+   [ce formulaire](https://github.com/robinnat/mochiz/security/advisories/new)).
 3. Décrivez le problème, comment le reproduire, et ce qu'un attaquant pourrait en faire.
 
 Si vous ne pouvez pas utiliser le formulaire GitHub, écrivez en secours à sygen.contact@gmail.com, avec « Security » dans l'objet.
@@ -33,7 +33,7 @@ Si le signalement est confirmé, le correctif arrive sur `main` par une pull req
 
 ## Périmètre
 
-Mochis tourne dans le navigateur et n'a ni serveur, ni comptes, ni stockage de données en dehors
+Mochiz tourne dans le navigateur et n'a ni serveur, ni comptes, ni stockage de données en dehors
 du `localStorage` du visiteur. Les signalements sur le code de ce dépôt et sur le site de démo construit
 à partir de lui sont les bienvenus. Les problèmes des dépendances tierces sont mieux signalés à leurs
 propres projets.

@@ -88,7 +88,7 @@ window.renderAll = async (prefix = '') => {
   return out
 }
 
-/** Renders a free list of Mochis (check sheets, outside the site's manifest). */
+/** Renders a free list of Mochiz (check sheets, outside the site's manifest). */
 window.renderList = async (list) => {
   const out: string[] = []
   for (const it of list) {

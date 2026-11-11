@@ -1,10 +1,10 @@
 /**
- * LIGHT public entry of the library (`mochis/catalog`): the catalogs (shapes, colors, moods, accessories, styles)
- * and the shared settings, WITHOUT the `<mochi-bot>` tag. To build an interface around Mochis (shape, color,
- * accessory pickers) without loading the component right away; `mochis` (the full entry) re-exports all of this and
+ * LIGHT public entry of the library (`mochiz/catalog`): the catalogs (shapes, colors, moods, accessories, styles)
+ * and the shared settings, WITHOUT the `<mochi-bot>` tag. To build an interface around Mochiz (shape, color,
+ * accessory pickers) without loading the component right away; `mochiz` (the full entry) re-exports all of this and
  * declares the tag.
  *
- * The repository's site, docs and lab only use these two entries: they use Mochis exactly like a user of the package
+ * The repository's site, docs and lab only use these two entries: they use Mochiz exactly like a user of the package
  * (`src/site/public-entry.test.ts` checks it).
  */
 import { closedPath, toPoints } from './bot/shape'

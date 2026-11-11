@@ -41,7 +41,7 @@ describe('site v10', () => {
   it('npm install is never presented as available on the site', () => {
     for (const f of pages) {
       const t = read(f)
-      if (t.includes('npm install mochis')) expect(t, f).toMatch(/coming soon/i)
+      if (t.includes('npm install mochiz')) expect(t, f).toMatch(/coming soon/i)
     }
     expect(read('DocsTeaser.ts')).toMatch(/coming\s+soon/)
   })

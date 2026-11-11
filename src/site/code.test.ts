@@ -25,9 +25,9 @@ describe('example highlighting', () => {
 
 describe('shell examples (/docs)', () => {
   it('a URL is not a comment: the clone command keeps its address in plain text', () => {
-    const h = highlight('git clone https://github.com/robinnat/mochi.git')
+    const h = highlight('git clone https://github.com/robinnat/mochiz.git')
     expect(h).not.toContain('c-com')
-    expect(h.replace(/<\/?span[^>]*>/g, '')).toBe('git clone https://github.com/robinnat/mochi.git')
+    expect(h.replace(/<\/?span[^>]*>/g, '')).toBe('git clone https://github.com/robinnat/mochiz.git')
   })
 
   it('a # after a space is a shell comment, a hex color is not', () => {

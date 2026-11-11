@@ -19,8 +19,8 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "mochis": ["./src/index.ts"],
-      "mochis/catalog": ["./src/catalog.ts"],
+      "mochiz": ["./src/index.ts"],
+      "mochiz/catalog": ["./src/catalog.ts"],
       "@/*": ["./src/*"]
     }
   },

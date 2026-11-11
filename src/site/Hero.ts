@@ -4,10 +4,10 @@ import { Poster } from './Poster'
 import { HeroFigures } from './HeroFigures'
 import { SCROLL } from './posters'
 import { SITE_ACCESSORIES } from './catalog'
-import type { AccessoryChoice, Slot } from 'mochis/catalog'
+import type { AccessoryChoice, Slot } from 'mochiz/catalog'
 
 /**
- * Hero: "the crowd" (chosen on 09/11/2026). No 3D on the first screen: a small crowd of all different Mochis, as
+ * Hero: "the crowd" (chosen on 09/11/2026). No 3D on the first screen: a small crowd of all different Mochiz, as
  * pre-rendered images floating in CSS. Tapping one makes it jump and tells what it wears; "Shuffle" calls others from
  * the same curated list as the accessories card. Very light on iPhone.
  */
@@ -59,7 +59,7 @@ export const Hero: Component<Record<string, never>> = () => {
         h(
           'p',
           { class: 'hx-lede rv-load', style: '--d: 2' },
-          'Mochis are animated 3D characters for the web: pick a shape, a color and a few accessories. Each one breathes, blinks and reacts to touch.'
+          'Mochiz are animated 3D characters for the web: pick a shape, a color and a few accessories. Each one breathes, blinks and reacts to touch.'
         ),
         h(
           'div',

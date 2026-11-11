@@ -1,6 +1,6 @@
 import { ref } from '@/ui/dom/reactive'
 import { h, onUnmount, onMount, type Component } from '@/ui/dom/h'
-import { BotEngine, load3d, COLOR_BY_ID, HALF_VIEWBOX, RADIUS, SHAPES } from 'mochis'
+import { BotEngine, load3d, COLOR_BY_ID, HALF_VIEWBOX, RADIUS, SHAPES } from 'mochiz'
 import { sizeCell } from './width'
 
 /**

@@ -21,7 +21,7 @@ export interface PreviewProps {
 export const Preview: Component<PreviewProps> = (props) => {
   // the tag is only declared once the library is loaded: elements already placed update by themselves
   onMount(() => {
-    import('mochis').catch(() => {})
+    import('mochiz').catch(() => {})
   })
   return () =>
     h(

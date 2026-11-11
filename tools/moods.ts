@@ -8,7 +8,7 @@ import type { Theme } from '../src/ui/3d/theme'
 import { pixelGrid } from '../src/ui/renderStyle'
 
 /**
- * Renders a mood or interaction animation: three Mochis side by side (varied shapes, colors, styles and accessories,
+ * Renders a mood or interaction animation: three Mochiz side by side (varied shapes, colors, styles and accessories,
  * one in the dark theme). Same chain as the component: `Moods.sample` -> `BotEngine.sample(t, gesture)` ->
  * `renderAvatar`. Each frame is a pure function of `t`: events (tap, press...) are replayed with their times, so any
  * frame renders alone.
@@ -58,7 +58,7 @@ interface Custom {
 }
 
 /**
- * The cast of an animation: 3 Mochis, all different, one in dark; covers the 11 shapes from one animation to the
+ * The cast of an animation: 3 Mochiz, all different, one in dark; covers the 11 shapes from one animation to the
  * next.
  */
 function distribution(a: number): Custom[] {

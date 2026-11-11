@@ -15,8 +15,8 @@ export default {
      * logotype, not the name. A proper name is not translated either. `title` serves as `document.title`. See also
      * the <title> of index.html, which is static.
      */
-    name: 'mochis',
-    title: 'Mochis, avatar animé',
+    name: 'mochiz',
+    title: 'Mochiz, avatar animé',
     botAria: 'Avatar Mochi animé'
   },
 

@@ -31,7 +31,7 @@ export const DocsTeaser: Component<Record<string, never>> = () => () =>
           'div',
           { ref: reveal(3), class: 'actions left' },
           h('a', { class: 'btn primary', href: '/docs' }, 'Read the docs ', h('span', { 'aria-hidden': 'true' }, '→')),
-          h('a', { class: 'btn', href: 'https://github.com/robinnat/mochi' }, 'View on GitHub')
+          h('a', { class: 'btn', href: 'https://github.com/robinnat/mochiz' }, 'View on GitHub')
         )
       ),
       h('div', { ref: reveal(2) }, c(CodeBlock, { code: QUICK_EXAMPLE, title: 'index.html' }))

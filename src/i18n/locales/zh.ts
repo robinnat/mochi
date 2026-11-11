@@ -9,8 +9,8 @@ import type fr from './fr'
  */
 const zh: typeof fr = {
   app: {
-    name: 'mochis',
-    title: 'Mochis, 动画头像',
+    name: 'mochiz',
+    title: 'Mochiz, 动画头像',
     botAria: 'Mochi 动画头像'
   },
 

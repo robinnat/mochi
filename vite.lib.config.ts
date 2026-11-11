@@ -2,11 +2,11 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 
 /**
- * Library only (`pnpm build:lib`). Two builds of the same two public entries, `mochis` (the `<mochi-bot>` Web
- * Component, the engine and the catalogs) and `mochis/catalog` (the catalogs alone, without the tag):
+ * Library only (`pnpm build:lib`). Two builds of the same two public entries, `mochiz` (the `<mochi-bot>` Web
+ * Component, the engine and the catalogs) and `mochiz/catalog` (the catalogs alone, without the tag):
  *
  * - default mode -> `dist-lib/`: the npm package. Three.js is NOT inside: it is a peer dependency, imported from the
- *   project's own `three` (`three/src/...`, one file per class, so the project's bundler keeps only what Mochis draws
+ *   project's own `three` (`three/src/...`, one file per class, so the project's bundler keeps only what Mochiz draws
  *   with).
  * - `--mode standalone` -> `dist-lib/standalone/`: Three.js included, for a plain HTML page (a `<script type="module">`
  *   from a CDN or a copied folder), where there is no bundler to resolve `three`.
@@ -30,9 +30,9 @@ export default defineConfig(({ mode }) => {
         external: standalone ? [] : [/^three\/src\//]
       },
       lib: {
-        // two public entries: `mochis` (the tag and everything else) and `mochis/catalog` (without the tag)
+        // two public entries: `mochiz` (the tag and everything else) and `mochiz/catalog` (without the tag)
         entry: {
-          mochis: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
+          mochiz: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
           catalog: fileURLToPath(new URL('./src/catalog.ts', import.meta.url))
         },
         formats: ['es'],

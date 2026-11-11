@@ -1,8 +1,8 @@
-# Mochis documentation
+# Mochiz documentation
 
-These pages are the documentation of Mochis. The website shows exactly the same pages at [/docs](https://mochiz.vercel.app/docs): it is built from these files.
+These pages are the documentation of Mochiz. The website shows exactly the same pages at [/docs](https://mochiz.vercel.app/docs): it is built from these files.
 
-## Use Mochis
+## Use Mochiz
 
 - [Getting started](getting-started.md): install, your first Mochi, options, moods, reactions, methods, events, accessories, styles, frameworks.
 - [Reference](reference.md): every option, method, event and id.

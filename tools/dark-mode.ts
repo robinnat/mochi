@@ -117,7 +117,7 @@ function sheetShapes(style: keyof typeof STYLES, offset: number) {
   return c
 }
 
-/** The same Mochis in dark, on a dark background (dashboard) then on a light background. */
+/** The same Mochiz in dark, on a dark background (dashboard) then on a light background. */
 function planchefonds() {
   const cell = 270
   const cols = 4

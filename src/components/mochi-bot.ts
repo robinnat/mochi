@@ -224,9 +224,9 @@ const EVENT_FOR_PROP: Partial<Record<keyof MochiBotProps, string>> = {
 /* ------------------------------------------------------------------ cadence */
 
 /**
- * Adaptive cadence shared by every Mochi of the page (v13). Each browser frame, the 3D drawing time of all the Mochis
+ * Adaptive cadence shared by every Mochi of the page (v13). Each browser frame, the 3D drawing time of all the Mochiz
  * is added up. When frames come late (more than `CADENCE_LATE_MS` apart on average) AND drawing every Mochi at every
- * frame costs more than `CADENCE_HALF_MS` (a slow phone, many Mochis on screen), each one draws every other frame, half
+ * frame costs more than `CADENCE_HALF_MS` (a slow phone, many Mochiz on screen), each one draws every other frame, half
  * of them on even frames and half on odd ones: every Mochi still moves at 30 frames per second, steadily, and the page
  * gets its time back. Back to every frame when drawing them all costs less than `CADENCE_FULL_MS`. A fast computer
  * that keeps up never halves. A Mochi with its own `fps` keeps it.

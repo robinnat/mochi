@@ -1,13 +1,13 @@
 import { computed, ref, watch } from '@/ui/dom/reactive'
 import { h, onUnmount, onMount, type Component } from '@/ui/dom/h'
 import { SCROLL, SIZE_SCROLL, urlPoster } from './posters'
-import type { AccessoryChoice, Slot } from 'mochis/catalog'
+import type { AccessoryChoice, Slot } from 'mochiz/catalog'
 import { SITE_ACCESSORIES } from './catalog'
 import { useReduced } from './reduced'
 import { effectiveTheme } from './theme'
 
 /**
- * "Accessories" card: a fixed list of Mochis (body, colors, one piece per slot) scrolls on a loop (about 1.3 s each).
+ * "Accessories" card: a fixed list of Mochiz (body, colors, one piece per slot) scrolls on a loop (about 1.3 s each).
  * No 3D here: each step is a pre-rendered image of the real 3D (`public/renders/scroll-*.webp`), we only swap images.
  * The timer only runs when the card is on screen and the tab visible; with `prefers-reduced-motion`, a single
  * accessory stays, still.

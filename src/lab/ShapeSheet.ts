@@ -1,6 +1,6 @@
 import { h, type Component } from '@/ui/dom/h'
-import 'mochis'
-import { SHAPES, type RenderStyleId } from 'mochis'
+import 'mochiz'
+import { SHAPES, type RenderStyleId } from 'mochiz'
 import { sizeCell } from './width'
 
 /** The three styles, all in 3D: Soft, Flat and Pixel. */

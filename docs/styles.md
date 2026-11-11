@@ -1,6 +1,6 @@
 # Styles
 
-Mochis offers three styles, all in REAL 3D (Three.js, loaded on demand, one shared WebGL context):
+Mochiz offers three styles, all in REAL 3D (Three.js, loaded on demand, one shared WebGL context):
 
 | Style | `render-style` id | How it is drawn |
 | --- | --- | --- |
@@ -35,7 +35,7 @@ The engine does not change: `engine.sample(t)` gives the same frame, and the sta
 - **One WebGL context** for every avatar of the page (`renderAvatar`): each one asks for a frame, which is rendered and copied into its own canvas. Each `<mochi-bot>` has its own 3D body (`avatarSlot`): its meshes, its face texture (sized to the render, 512 px at most) and its accessories stay from one frame to the next. The outline and the face are rebuilt only when they changed.
 - **Off screen, nothing is drawn**: an `IntersectionObserver` pauses the drawing of a Mochi out of view; its clock keeps going.
 - **Adaptive cadence**: the drawing time of every Mochi is added up each frame. When frames come late (more than 20 ms apart) and drawing all of them costs more than 8 ms, each Mochi draws every other frame, half on even frames and half on odd ones (30 per second each); back to every frame below 6 ms. A computer that keeps up never halves (`cadenceFrame` in `mochi-bot.ts`).
-- **Three.js enters through `src/ui/3d/three.ts`** only: each class is imported from its own source file, so the bundle keeps only what Mochis draws with.
+- **Three.js enters through `src/ui/3d/three.ts`** only: each class is imported from its own source file, so the bundle keeps only what Mochiz draws with.
 - **Loaded on demand**: `scene3d.ts` is never imported statically (about 133 kB gzip). `mochi-bot.ts` loads it when it mounts; until then the Mochi is not drawn (the `ready` event fires on the first frame).
 
 ## Materials
@@ -53,6 +53,6 @@ Screenshots, taken from the lab (`/lab`): [the four looks of Flat and Soft](vari
 
 ## Known limits
 
-- Cost per frame: measured in a browser without a GPU (a worst case) for three animated 3D Mochis, 2.7 ms of JavaScript update and about 21 ms of software rendering. On a real GPU the rendering is negligible. Still images (`frozen-at`) render only once.
+- Cost per frame: measured in a browser without a GPU (a worst case) for three animated 3D Mochiz, 2.7 ms of JavaScript update and about 21 ms of software rendering. On a real GPU the rendering is negligible. Still images (`frozen-at`) render only once.
 - `<foreignObject>` in Safari on iPhone is not tested yet.
 - 3D GIFs are heavy (about 800 kB for 3 s): gradients make many colors, and a GIF keeps 256.
