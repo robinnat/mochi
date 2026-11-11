@@ -25,7 +25,7 @@ export const DocsTeaser: Component<Record<string, never>> = () => () =>
           { ref: reveal(2), class: 'lede' },
           'One web component, ',
           h('code', null, '<mochi-bot>'),
-          ', in plain HTML or any framework (React, Svelte, Angular...). Three.js loads only when a 3D Mochi shows up. The npm package is coming soon; today you build it from the repository.'
+          ', in plain HTML or any framework (React, Svelte, Angular...). Install it with npm (npm install mochiz three) or load it from a CDN. Three.js loads only when a 3D Mochi shows up.'
         ),
         h(
           'div',

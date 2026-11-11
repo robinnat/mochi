@@ -7,7 +7,7 @@
 
 # Mochiz
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochiz.vercel.app)
+[![npm](https://img.shields.io/npm/v/mochiz.svg)](https://www.npmjs.com/package/mochiz) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Live demo**](https://mochiz.vercel.app)
 
 Mochiz are small animated characters for the web. One character is called a Mochi: a soft 3D shape with two eyes. It breathes, blinks, shows a mood and reacts when you touch it.
 
@@ -23,17 +23,21 @@ You add a Mochi to any page with one HTML tag, `<mochi-bot>`. It works in plain 
 
 ## Quick start
 
-> The npm package is coming soon. Until then, build the library from this repository: see [Install](docs/getting-started.md#install).
+Install it with npm:
 
-Load the library, then write the tag:
+```bash
+npm install mochiz three
+```
+
+Import it once (`import 'mochiz'`), then write the tag. In a plain HTML page, load it from a CDN instead:
 
 ```html live
-<script type="module" src="/mochiz/mochiz.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz@0.2.1/dist-lib/standalone/mochiz.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
 
-This is the plain HTML way. In an app with a bundler (Vite, webpack...), copy the library into `src/vendor/mochiz/` and write `import './vendor/mochiz/mochiz.js'`: see [Install](docs/getting-started.md#install).
+Three.js is a peer dependency, and TypeScript types are included. Other ways (building from this repository): see [Install](docs/getting-started.md#install).
 
 ## Documentation
 

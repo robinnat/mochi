@@ -1,6 +1,6 @@
 {
   "name": "mochiz",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Mochiz: animated avatars for the web. A <mochi-bot> Web Component that draws a Mochi in real 3D (Soft, Flat, Pixel), with 12 shapes, 7 moods, reactions to touch and 22 accessories. No framework needed.",
   "license": "MIT",
   "author": "SYGEN SAS",
@@ -19,7 +19,12 @@
     "avatar",
     "mascot",
     "web-components",
-    "custom-element"
+    "custom-element",
+    "mochi",
+    "avatars",
+    "webgl",
+    "web-component",
+    "three"
   ],
   "type": "module",
   "main": "./dist-lib/mochiz.js",
@@ -58,6 +63,9 @@
     "./src/**",
     "**/*.css"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "@types/three": "^0.187.0",
     "three": "^0.187.0"
@@ -78,7 +86,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build:lib": "vite build --config vite.lib.config.ts && vite build --config vite.lib.config.ts --mode standalone && node tools/lib-types.mjs",
-    "prepublishOnly": "pnpm test && pnpm build:lib"
+    "prepublishOnly": "npm run test && npm run build:lib"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

@@ -1,4 +1,7 @@
-# Draft: npm install (not published)
+# Draft: npm install (applied)
+
+**Applied for 0.2.1 (2026-11-11)**: the published docs now carry this text, and `docs/drafts/PUBLISHED` exists. This
+file is kept as the record of what was moved.
 
 This page is NOT part of the documentation: `/docs` only reads `docs/*.md`, and nothing links here. It holds the
 npm version of the install instructions, ready for the day the `mochiz` package is published on npm.

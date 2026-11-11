@@ -4,11 +4,12 @@
 
 ## Supported versions
 
-Mochiz is not published on npm yet and has no releases. Only the latest commit of the
-`main` branch is supported. Fixes land on `main`; older commits are not patched.
+Mochiz is published on npm as `mochiz`. Only the latest release on npm and the latest commit of the `main` branch
+are supported. Fixes land on `main`, then in a new release; older versions are not patched.
 
 | Version | Supported |
 | --- | --- |
+| Latest npm release (0.2.x) | Yes |
 | `main` (latest) | Yes |
 | Anything older | No |
 

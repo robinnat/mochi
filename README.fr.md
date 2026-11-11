@@ -7,7 +7,7 @@
 
 # Mochiz
 
-[![Licence : MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Démo en ligne**](https://mochiz.vercel.app)
+[![npm](https://img.shields.io/npm/v/mochiz.svg)](https://www.npmjs.com/package/mochiz) [![Licence : MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Démo en ligne**](https://mochiz.vercel.app)
 
 Les Mochiz sont de petits personnages animés pour le web. Un personnage s'appelle un Mochi : une forme douce en 3D avec deux yeux. Il respire, cligne des yeux, montre une humeur et réagit quand on le touche.
 
@@ -25,17 +25,21 @@ Ce fichier est une traduction pour les lecteurs francophones. La documentation d
 
 ## Démarrage rapide
 
-> Le paquet npm arrive bientôt. D'ici là, construisez la bibliothèque depuis ce dépôt : voir [Install](docs/getting-started.md#install).
+Installez-la avec npm :
 
-Chargez la bibliothèque, puis écrivez la balise :
+```bash
+npm install mochiz three
+```
+
+Importez-la une fois (`import 'mochiz'`), puis écrivez la balise. Dans une page HTML simple, chargez-la plutôt depuis un CDN :
 
 ```html
-<script type="module" src="/mochiz/mochiz.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz@0.2.1/dist-lib/standalone/mochiz.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
 
-C'est la façon HTML simple. Dans une app avec un bundler (Vite, webpack...), copiez la bibliothèque dans `src/vendor/mochiz/` et écrivez `import './vendor/mochiz/mochiz.js'` : voir [Install](docs/getting-started.md#install).
+Three.js est une dépendance « peer » (votre projet l'installe une fois), et les types TypeScript sont inclus. Autres façons (construire depuis ce dépôt) : voir [Install](docs/getting-started.md#install).
 
 ## Documentation
 
