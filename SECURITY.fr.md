@@ -4,7 +4,7 @@
 
 ## Versions suivies
 
-Mochiz est publié sur npm sous le nom `mochiz`. Seules la dernière version publiée sur npm et le dernier commit de la
+Mochiz est publié sur npm sous le nom `mochiz-world`. Seules la dernière version publiée sur npm et le dernier commit de la
 branche `main` sont suivis. Les correctifs arrivent sur `main`, puis dans une nouvelle version ; les versions plus
 anciennes ne sont pas corrigées.
 

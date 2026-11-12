@@ -4,7 +4,7 @@
 
 ## Supported versions
 
-Mochiz is published on npm as `mochiz`. Only the latest release on npm and the latest commit of the `main` branch
+Mochiz is published on npm as `mochiz-world`. Only the latest release on npm and the latest commit of the `main` branch
 are supported. Fixes land on `main`, then in a new release; older versions are not patched.
 
 | Version | Supported |

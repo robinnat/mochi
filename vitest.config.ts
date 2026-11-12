@@ -8,8 +8,8 @@ export default defineConfig({
     alias: [
       // Three.js add-ons (BufferGeometryUtils) import 'three': point it at our single entry, one copy of each class
       { find: /^three$/, replacement: fileURLToPath(new URL('./src/ui/3d/three.ts', import.meta.url)) },
-      { find: /^mochiz$/, replacement: fileURLToPath(new URL('./src/index.ts', import.meta.url)) },
-      { find: /^mochiz\/catalog$/, replacement: fileURLToPath(new URL('./src/catalog.ts', import.meta.url)) },
+      { find: /^mochiz-world$/, replacement: fileURLToPath(new URL('./src/index.ts', import.meta.url)) },
+      { find: /^mochiz-world\/catalog$/, replacement: fileURLToPath(new URL('./src/catalog.ts', import.meta.url)) },
       { find: /^@\//, replacement: fileURLToPath(new URL('./src/', import.meta.url)) }
     ]
   },

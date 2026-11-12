@@ -1,4 +1,4 @@
-import { SLOTS, ACCESSORY_BY_KEY, type RenderStyleId, type AccessorySelection } from 'mochiz/catalog'
+import { SLOTS, ACCESSORY_BY_KEY, type RenderStyleId, type AccessorySelection } from 'mochiz-world/catalog'
 
 export interface OptionsExtrait {
   shape: string

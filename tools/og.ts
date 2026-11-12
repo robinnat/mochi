@@ -1,5 +1,5 @@
 import { h, render } from '../src/ui/dom/h'
-import 'mochiz'
+import 'mochiz-world'
 
 // two still Mochiz: a sky blue ball and an orange star (P1, 09/11/2026), in Soft 3D, at a precise time
 render(

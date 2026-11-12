@@ -194,16 +194,16 @@ One accessory per slot (`head`, `eyes`, `neck`, `back`). Use the id alone, or `{
 
 The library has two public entry points:
 
-- `mochiz` (`dist-lib/mochiz.js`): the `<mochi-bot>` tag, the engine and the catalogs;
-- `mochiz/catalog` (`dist-lib/catalog.js`): the catalogs alone, without the tag, to build a picker.
+- `mochiz-world` (`dist-lib/mochiz.js`): the `<mochi-bot>` tag, the engine and the catalogs;
+- `mochiz-world/catalog` (`dist-lib/catalog.js`): the catalogs alone, without the tag, to build a picker.
 
-They use the Three.js of your project (`three` is a peer dependency). `mochiz/standalone` and `mochiz/standalone/catalog` (`dist-lib/standalone/`) are the same two entries with Three.js included: the CDN script tag loads that build, and it is the folder you copy when you build the library yourself.
+They use the Three.js of your project (`three` is a peer dependency). `mochiz-world/standalone` and `mochiz-world/standalone/catalog` (`dist-lib/standalone/`) are the same two entries with Three.js included: the CDN script tag loads that build, and it is the folder you copy when you build the library yourself.
 
 The engine (`src/bot/`) computes each frame of a Mochi. It has no framework and no clock: `engine.sample(t)` gives the same frame for the same time `t`. It plays states, the basic animations of the body (`idle`, `thinking`, `wink`, `wide`, `sleep`); moods are built on top of them.
 
 ```js
-import { BotEngine, SHAPE_BY_ID, RADIUS } from 'mochiz'
-import { SHAPES, ACCESSORIES, MOOD_IDS } from 'mochiz/catalog'
+import { BotEngine, SHAPE_BY_ID, RADIUS } from 'mochiz-world'
+import { SHAPES, ACCESSORIES, MOOD_IDS } from 'mochiz-world/catalog'
 
 const engine = new BotEngine(RADIUS, 'idle', SHAPE_BY_ID.get('star').radii)
 engine.setState('wink', 2) // change state at t = 2 s

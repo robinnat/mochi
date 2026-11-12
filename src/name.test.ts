@@ -49,9 +49,9 @@ describe('the project name is Mochiz', () => {
     expect(hits).toEqual([])
   })
 
-  it('the package is mochiz and the site names itself Mochiz', () => {
+  it('the package is mochiz-world and the site names itself Mochiz', () => {
     const pkg = JSON.parse(readFileSync(new URL('package.json', root), 'utf8')) as { name: string; description: string }
-    expect(pkg.name).toBe('mochiz')
+    expect(pkg.name).toBe('mochiz-world')
     expect(pkg.description).toMatch(/^Mochiz:/)
     for (const page of ['index.html', 'docs.html']) {
       const html = readFileSync(new URL(page, root), 'utf8')

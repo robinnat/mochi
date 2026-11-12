@@ -7,7 +7,7 @@
 
 # Mochiz
 
-[![npm](https://img.shields.io/npm/v/mochiz.svg)](https://www.npmjs.com/package/mochiz) [![Licence : MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Démo en ligne**](https://mochiz.vercel.app)
+[![npm](https://img.shields.io/npm/v/mochiz-world.svg)](https://www.npmjs.com/package/mochiz-world) [![Licence : MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [**Démo en ligne**](https://mochiz.vercel.app)
 
 Les Mochiz sont de petits personnages animés pour le web. Un personnage s'appelle un Mochi : une forme douce en 3D avec deux yeux. Il respire, cligne des yeux, montre une humeur et réagit quand on le touche.
 
@@ -28,13 +28,13 @@ Ce fichier est une traduction pour les lecteurs francophones. La documentation d
 Installez-la avec npm :
 
 ```bash
-npm install mochiz three
+npm install mochiz-world three
 ```
 
-Importez-la une fois (`import 'mochiz'`), puis écrivez la balise. Dans une page HTML simple, chargez-la plutôt depuis un CDN :
+Importez-la une fois (`import 'mochiz-world'`), puis écrivez la balise. Dans une page HTML simple, chargez-la plutôt depuis un CDN :
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz@0.2.1/dist-lib/standalone/mochiz.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz-world@0.2.1/dist-lib/standalone/mochiz.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```

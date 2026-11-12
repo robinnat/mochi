@@ -4,7 +4,7 @@
  * The strips then scroll in pure CSS over images: no 3D rendering while scrolling, smooth even on iPhone. The 3D
  * comes through `load3d` (public entry): dynamic loading only. Used by `tools/renders.ts`.
  */
-import { BotEngine, load3d, contrast, HALF_VIEWBOX, mixHex, RADIUS, SHAPE_BY_ID } from 'mochiz'
+import { BotEngine, load3d, contrast, HALF_VIEWBOX, mixHex, RADIUS, SHAPE_BY_ID } from 'mochiz-world'
 import type { ItemStrip } from './strips'
 
 /** Side of a thumbnail in pixels (shown at half size: dense screens). */

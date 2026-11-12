@@ -13,13 +13,13 @@ On the website, every example marked "Live" shows its result right below the cod
 You need [Node.js](https://nodejs.org) 22.12 or later. Install Mochiz and Three.js (the 3D library Mochiz draws with):
 
 ```bash
-npm install mochiz three
+npm install mochiz-world three
 ```
 
 Three.js is a peer dependency: your project installs it once, and Mochiz uses that copy. Then import the library once, from a file of your app (here `src/main.js`). Importing it declares the `<mochi-bot>` tag:
 
 ```js
-import 'mochiz'
+import 'mochiz-world'
 ```
 
 That is all. TypeScript types come with the package: `document.querySelector('mochi-bot')` is typed, and so are the catalogs. If your `tsconfig.json` sets `skipLibCheck` to `false`, also install the Three.js types: `npm install -D @types/three`. The 3D part loads by itself, only when a Mochi is shown.
@@ -27,7 +27,7 @@ That is all. TypeScript types come with the package: `document.querySelector('mo
 To build a picker without loading the tag, import the catalogs alone:
 
 ```js
-import { SHAPES, COLORS } from 'mochiz/catalog'
+import { SHAPES, COLORS } from 'mochiz-world/catalog'
 ```
 
 ### Plain HTML, without a build tool
@@ -35,7 +35,7 @@ import { SHAPES, COLORS } from 'mochiz/catalog'
 Load the standalone build (Three.js included) from a CDN, with a script tag:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz@0.2.1/dist-lib/standalone/mochiz.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz-world@0.2.1/dist-lib/standalone/mochiz.js"></script>
 ```
 
 ### Without npm: build it from the repository
@@ -56,12 +56,12 @@ This writes the library to `dist-lib/`. Copy the `dist-lib/standalone` folder (T
 
 The built files keep the MIT license notice: ship it with your app.
 
-The examples below load the library from the CDN in plain HTML and with `import 'mochiz'` in JavaScript. Use the way that matches your project.
+The examples below load the library from the CDN in plain HTML and with `import 'mochiz-world'` in JavaScript. Use the way that matches your project.
 
 ## Your first Mochi
 
 ```html live
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz@0.2.1/dist-lib/standalone/mochiz.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz-world@0.2.1/dist-lib/standalone/mochiz.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
@@ -242,7 +242,7 @@ To choose the theme yourself, set it on one Mochi:
 Or set it for every Mochi of the page that has no `theme` of its own, for example when your site has its own light and dark switch:
 
 ```js
-import { currentTheme } from 'mochiz'
+import { currentTheme } from 'mochiz-world'
 
 currentTheme.value = 'dark' // 'light', 'dark', or 'auto' to follow the device again (the default)
 ```
@@ -275,7 +275,7 @@ currentTheme.value = 'dark' // 'light', 'dark', or 'auto' to follow the device a
 
 ```jsx
 // React 19
-import 'mochiz'
+import 'mochiz-world'
 
 export function Avatar({ mood }) {
   return <mochi-bot shape="star" color="#2d5bff" mood={mood} size="160" onready={() => console.log('ready')} />
@@ -285,7 +285,7 @@ export function Avatar({ mood }) {
 ```svelte
 <!-- Svelte 5 -->
 <script>
-  import 'mochiz'
+  import 'mochiz-world'
   let mood = $state('idle')
 </script>
 
@@ -296,7 +296,7 @@ export function Avatar({ mood }) {
 ```vue
 <!-- Vue: tell Vue that mochi-bot is a custom element (compilerOptions.isCustomElement) -->
 <script setup>
-import 'mochiz'
+import 'mochiz-world'
 </script>
 
 <template>

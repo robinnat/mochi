@@ -14,8 +14,8 @@ export function licenseNotice(standalone: boolean): string {
 }
 
 /**
- * Library only (`pnpm build:lib`). Two builds of the same two public entries, `mochiz` (the `<mochi-bot>` Web
- * Component, the engine and the catalogs) and `mochiz/catalog` (the catalogs alone, without the tag):
+ * Library only (`pnpm build:lib`). Two builds of the same two public entries, `mochiz-world` (the `<mochi-bot>` Web
+ * Component, the engine and the catalogs) and `mochiz-world/catalog` (the catalogs alone, without the tag):
  *
  * - default mode -> `dist-lib/`: the npm package. Three.js is NOT inside: it is a peer dependency, imported from the
  *   project's own `three` (`three/src/...`, one file per class, so the project's bundler keeps only what Mochiz draws
@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
         external: standalone ? [] : [/^three\/src\//]
       },
       lib: {
-        // two public entries: `mochiz` (the tag and everything else) and `mochiz/catalog` (without the tag)
+        // two public entries: `mochiz-world` (the tag and everything else) and `mochiz-world/catalog` (without the tag)
         entry: {
           mochiz: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
           catalog: fileURLToPath(new URL('./src/catalog.ts', import.meta.url))

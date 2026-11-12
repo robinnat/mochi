@@ -1,6 +1,6 @@
 /**
- * PUBLIC entry point of the library (`pnpm build:lib` -> `dist-lib/mochiz.js`, alias `mochiz` in the repository):
- * importing this file declares the `<mochi-bot>` tag. It also re-exports the light entry `mochiz/catalog` (catalogs
+ * PUBLIC entry point of the library (`pnpm build:lib` -> `dist-lib/mochiz.js`, alias `mochiz-world` in the repository):
+ * importing this file declares the `<mochi-bot>` tag. It also re-exports the light entry `mochiz-world/catalog` (catalogs
  * and shared settings) and the engine, for those who build around it.
  *
  * Three.js is not in this file: it loads separately, with the first 3D Mochi (or through `load3d`).

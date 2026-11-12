@@ -1,4 +1,4 @@
-import type { RenderStyleId } from 'mochiz/catalog'
+import type { RenderStyleId } from 'mochiz-world/catalog'
 
 /** The three 3D styles shown on the site, in the site's order: Soft, Pixel and Flat. */
 export const STYLES_SITE: { id: RenderStyleId; label: string }[] = [

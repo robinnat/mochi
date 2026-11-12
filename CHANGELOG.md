@@ -9,10 +9,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- **Published on npm**: `npm install mochiz three`, then `import 'mochiz'`. The docs (Getting started, README) now
-  install from npm, and give a CDN script tag for plain HTML
-  (`https://cdn.jsdelivr.net/npm/mochiz@0.2.1/dist-lib/standalone/mochiz.js`, Three.js included). Building the library
-  from the repository is still described.
+- **Published on npm as `mochiz-world`**: `npm install mochiz-world three`, then `import 'mochiz-world'`. npm refuses
+  the name `mochiz` (too close to the `mocha` package), so the package is `mochiz-world` (entries `mochiz-world`,
+  `mochiz-world/catalog`, `mochiz-world/standalone`); the project, the `<mochi-bot>` tag and the built file names
+  (`dist-lib/mochiz.js`) do not change. The docs (Getting started, README) now install from npm, and give a CDN
+  script tag for plain HTML (`https://cdn.jsdelivr.net/npm/mochiz-world@0.2.1/dist-lib/standalone/mochiz.js`,
+  Three.js included). Building the library from the repository is still described.
 - `publishConfig` (public access) and `prepublishOnly` (tests, then the library build) in package.json.
 
 ### Fixed

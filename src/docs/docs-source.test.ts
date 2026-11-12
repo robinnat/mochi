@@ -163,46 +163,46 @@ describe('the documentation says what the code does', () => {
   })
 
   it('the names imported in the examples exist in the public entry points', async () => {
-    const full = (await import('mochiz')) as Record<string, unknown>
-    const catalog = (await import('mochiz/catalog')) as Record<string, unknown>
+    const full = (await import('mochiz-world')) as Record<string, unknown>
+    const catalog = (await import('mochiz-world/catalog')) as Record<string, unknown>
     const all = USER_CODE.map((b) => b.code).join('\n')
     const names = (entry: string) =>
       [...all.matchAll(new RegExp(`import \\{([^}]+)\\} from '${entry}'`, 'g'))].flatMap((m) => m[1]!.split(',').map((x) => x.trim()).filter(Boolean))
-    expect(names('mochiz').length).toBeGreaterThan(0)
-    expect(names('mochiz/catalog').length).toBeGreaterThan(0)
-    for (const n of names('mochiz')) expect(full[n], n).toBeDefined()
-    for (const n of names('mochiz/catalog')) expect(catalog[n], n).toBeDefined()
+    expect(names('mochiz-world').length).toBeGreaterThan(0)
+    expect(names('mochiz-world/catalog').length).toBeGreaterThan(0)
+    for (const n of names('mochiz-world')) expect(full[n], n).toBeDefined()
+    for (const n of names('mochiz-world/catalog')) expect(catalog[n], n).toBeDefined()
   })
 
   it('the package is ready for npm (name, peer three) but the published docs never present npm as available', () => {
     const pkg = JSON.parse(read('package.json'))
-    expect(pkg.name).toBe('mochiz')
+    expect(pkg.name).toBe('mochiz-world')
     expect(pkg.private).toBeUndefined()
     expect(pkg.peerDependencies.three).toBeDefined()
     expect(pkg.dependencies?.three).toBeUndefined()
     expect(pkg.scripts['build:lib']).toContain('vite.lib.config.ts')
-    // `docs/drafts/PUBLISHED` is created on the day `mochiz` is published (see docs/drafts/npm-install.md)
+    // `docs/drafts/PUBLISHED` is created on the day `mochiz-world` is published (see docs/drafts/npm-install.md)
     if (!existsSync(new URL('docs/drafts/PUBLISHED', root))) {
       expect(GUIDE).toContain('coming soon')
       expect(GUIDE).toContain('not on npm yet')
       const published = [README, read('README.fr.md'), ...DOC_FILES.map((f) => read('docs/' + f))]
       for (const src of published) {
-        expect(src).not.toContain('cdn.jsdelivr.net/npm/mochiz')
+        expect(src).not.toContain('cdn.jsdelivr.net/npm/mochiz-world')
         // no npm command for the package at all, not even one marked as not working: a reader copies commands
-        expect(src).not.toMatch(/\b(npm|pnpm|yarn|bun)\s+(install|i|add)\b[^\n]*\bmochiz\b/)
+        expect(src).not.toMatch(/\b(npm|pnpm|yarn|bun)\s+(install|i|add)\b[^\n]*\bmochiz-world\b/)
       }
-      expect(read('docs/drafts/npm-install.md')).toContain('npm install mochiz three')
+      expect(read('docs/drafts/npm-install.md')).toContain('npm install mochiz-world three')
       return
     }
     // published: the docs install with npm, and every CDN link names the version of package.json
     expect(GUIDE).not.toMatch(/coming soon|not on npm yet/)
-    for (const src of [README, read('README.fr.md'), GUIDE]) expect(src).toContain('npm install mochiz three')
+    for (const src of [README, read('README.fr.md'), GUIDE]) expect(src).toContain('npm install mochiz-world three')
     const all = [README, read('README.fr.md'), ...DOC_FILES.map((f) => read('docs/' + f))].join('\n')
-    const cdn = [...all.matchAll(/https:\/\/cdn\.jsdelivr\.net\/npm\/mochiz@([^/\s]+)\/([^"\s`)]+)/g)]
+    const cdn = [...all.matchAll(/https:\/\/cdn\.jsdelivr\.net\/npm\/mochiz-world@([^/\s]+)\/([^"\s`)]+)/g)]
     expect(cdn.length).toBeGreaterThan(2)
     for (const m of cdn) {
       expect(m[1], m[0]).toBe(pkg.version)
-      // the file the CDN serves is the one the package exports as `mochiz/standalone`
+      // the file the CDN serves is the one the package exports as `mochiz-world/standalone`
       expect('./' + m[2], m[0]).toBe(pkg.exports['./standalone'].import)
     }
   })
@@ -213,9 +213,9 @@ describe('the documentation says what the code does', () => {
     expect(all).not.toMatch(/['"]\/mochi\/(mochiz|catalog)\.js/)
     expect(all).not.toMatch(/public\/mochiz?\b(?!\/\*)/)
     const pkg = JSON.parse(read('package.json'))
-    const CDN = `https://cdn.jsdelivr.net/npm/mochiz@${pkg.version}/dist-lib/standalone/mochiz.js`
+    const CDN = `https://cdn.jsdelivr.net/npm/mochiz-world@${pkg.version}/dist-lib/standalone/mochiz.js`
     for (const { code } of USER_CODE) {
-      for (const m of code.matchAll(/\bimport\s+(?:[^'"]+from\s+)?'([^']+)'/g)) expect(m[1], code).toMatch(/^mochiz(\/catalog)?$/)
+      for (const m of code.matchAll(/\bimport\s+(?:[^'"]+from\s+)?'([^']+)'/g)) expect(m[1], code).toMatch(/^mochiz-world(\/catalog)?$/)
       for (const m of code.matchAll(/<script type="module" src="([^"]+)"/g)) expect(m[1], code).toBe(CDN)
     }
     // building it yourself: the root of dist-lib/ needs the project's three (npm build), so the copied folder is the standalone one

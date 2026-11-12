@@ -1,5 +1,5 @@
 import { computed, ref, watch } from '@/ui/dom/reactive'
-import { currentTheme } from 'mochiz/catalog'
+import { currentTheme } from 'mochiz-world/catalog'
 
 /**
  * Light, dark or the device's. The choice is kept in the browser (if possible); the page carries `data-theme` and
