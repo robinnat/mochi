@@ -1,7 +1,7 @@
 /**
- * LIGHT public entry of the library (`mochiz/catalog`): the catalogs (shapes, colors, moods, accessories, styles)
+ * LIGHT public entry of the library (`mochiz-world/catalog`): the catalogs (shapes, colors, moods, accessories, styles)
  * and the shared settings, WITHOUT the `<mochi-bot>` tag. To build an interface around Mochiz (shape, color,
- * accessory pickers) without loading the component right away; `mochiz` (the full entry) re-exports all of this and
+ * accessory pickers) without loading the component right away; `mochiz-world` (the full entry) re-exports all of this and
  * declares the tag.
  *
  * The repository's site and docs only use these two entries: they use Mochiz exactly like a user of the package

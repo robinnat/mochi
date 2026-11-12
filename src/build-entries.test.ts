@@ -82,11 +82,12 @@ describe('production build', () => {
 // /app (the old editor) and /lab were removed on 11/11/2026. Links to them exist outside the site (old README, shared
 // links): Vercel sends them to the home page with a permanent redirect instead of a 404.
 describe('removed pages', () => {
-  it('vercel.json redirects /app, /lab and /labo to the home page, permanently', () => {
+  it('vercel.json redirects /app, /lab and /labo to the home page, permanently, with or without a final slash', () => {
     const vercel = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8')) as {
       redirects: { source: string; destination: string; permanent: boolean }[]
     }
-    for (const source of ['/app', '/lab', '/labo']) {
+    // with cleanUrls, Vercel treats /app/ as another path: without its own line it was a 404
+    for (const source of ['/app', '/app/', '/lab', '/lab/', '/labo', '/labo/']) {
       expect(vercel.redirects, source).toContainEqual({ source, destination: '/', permanent: true })
     }
   })

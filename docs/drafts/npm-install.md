@@ -1,15 +1,18 @@
-# Draft: npm install (not published)
+# Draft: npm install (applied)
+
+**Applied for 0.2.1 (2026-11-11)**: the published docs now carry this text, and `docs/drafts/PUBLISHED` exists. This
+file is kept as the record of what was moved.
 
 This page is NOT part of the documentation: `/docs` only reads `docs/*.md`, and nothing links here. It holds the
-npm version of the install instructions, ready for the day the `mochiz` package is published on npm.
+npm version of the install instructions, ready for the day the `mochiz-world` package is published on npm.
 
 **On publication day:**
 
 1. Publish the package (`npm publish`, from a clean `main`, after `pnpm test` and `pnpm build:lib`).
 2. Create the empty file `docs/drafts/PUBLISHED`. Until it exists, `src/docs/docs-source.test.ts` fails if the
-   published docs mention `npm install mochiz` or the jsDelivr link.
+   published docs mention `npm install mochiz-world` or the jsDelivr link.
 3. Replace the `## Install` section of `docs/getting-started.md` with the one below, and the quick starts of
-   `README.md` and `README.fr.md` with theirs. Switch the examples to `import 'mochiz'` and the CDN script tag.
+   `README.md` and `README.fr.md` with theirs. Switch the examples to `import 'mochiz-world'` and the CDN script tag.
 4. Update the docs tests that check the install paths (search `PUBLISHED` in `docs-source.test.ts`).
 
 ---
@@ -23,13 +26,13 @@ npm version of the install instructions, ready for the day the `mochiz` package 
 You need [Node.js](https://nodejs.org) 22.12 or later. Install Mochiz and Three.js (the 3D library Mochiz draws with):
 
 ```bash
-npm install mochiz three
+npm install mochiz-world three
 ```
 
 Three.js is a peer dependency: your project installs it once, and Mochiz uses that copy. Then import the library once, from a file of your app (here `src/main.js`). Importing it declares the `<mochi-bot>` tag:
 
 ```js
-import 'mochiz'
+import 'mochiz-world'
 ```
 
 That is all. TypeScript types come with the package: `document.querySelector('mochi-bot')` is typed, and so are the catalogs. If your `tsconfig.json` sets `skipLibCheck` to `false`, also install the Three.js types: `npm install -D @types/three`. The 3D part loads by itself, only when a Mochi is shown.
@@ -37,7 +40,7 @@ That is all. TypeScript types come with the package: `document.querySelector('mo
 To build a picker without loading the tag, import the catalogs alone:
 
 ```js
-import { SHAPES, COLORS } from 'mochiz/catalog'
+import { SHAPES, COLORS } from 'mochiz-world/catalog'
 ```
 
 ### Plain HTML, without a build tool
@@ -45,7 +48,7 @@ import { SHAPES, COLORS } from 'mochiz/catalog'
 Load the standalone build (Three.js included) from a CDN, with a script tag:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz@0.2.0/dist-lib/standalone/mochiz.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz-world@0.2.0/dist-lib/standalone/mochiz.js"></script>
 ```
 
 ### Without npm: build it from the repository
@@ -66,7 +69,7 @@ This writes the library to `dist-lib/`. Copy the `dist-lib/standalone` folder (T
 
 The built files keep the MIT license notice: ship it with your app.
 
-The examples below load the library from the CDN in plain HTML and with `import 'mochiz'` in JavaScript. Use the way that matches your project.
+The examples below load the library from the CDN in plain HTML and with `import 'mochiz-world'` in JavaScript. Use the way that matches your project.
 
 
 ---
@@ -78,13 +81,13 @@ The examples below load the library from the CDN in plain HTML and with `import 
 Install it with npm:
 
 ```bash
-npm install mochiz three
+npm install mochiz-world three
 ```
 
-Import it once (`import 'mochiz'`), then write the tag. In a plain HTML page, load it from a CDN instead:
+Import it once (`import 'mochiz-world'`), then write the tag. In a plain HTML page, load it from a CDN instead:
 
 ```html live
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz@0.2.0/dist-lib/standalone/mochiz.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz-world@0.2.0/dist-lib/standalone/mochiz.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```
@@ -101,13 +104,13 @@ Three.js is a peer dependency, and TypeScript types are included. Other ways (bu
 Installez-la avec npm :
 
 ```bash
-npm install mochiz three
+npm install mochiz-world three
 ```
 
-Importez-la une fois (`import 'mochiz'`), puis écrivez la balise. Dans une page HTML simple, chargez-la plutôt depuis un CDN :
+Importez-la une fois (`import 'mochiz-world'`), puis écrivez la balise. Dans une page HTML simple, chargez-la plutôt depuis un CDN :
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz@0.2.0/dist-lib/standalone/mochiz.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/mochiz-world@0.2.0/dist-lib/standalone/mochiz.js"></script>
 
 <mochi-bot shape="star" color="blue" mood="idle" size="200" wave></mochi-bot>
 ```

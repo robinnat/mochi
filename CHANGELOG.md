@@ -5,6 +5,30 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-11
+
+### Added
+
+- **Published on npm as `mochiz-world`**: `npm install mochiz-world three`, then `import 'mochiz-world'`. npm refuses
+  the name `mochiz` (too close to the `mocha` package), so the package is `mochiz-world` (entries `mochiz-world`,
+  `mochiz-world/catalog`, `mochiz-world/standalone`); the project, the `<mochi-bot>` tag and the built file names
+  (`dist-lib/mochiz.js`) do not change. The docs (Getting started, README) now install from npm, and give a CDN
+  script tag for plain HTML (`https://cdn.jsdelivr.net/npm/mochiz-world@0.2.1/dist-lib/standalone/mochiz.js`,
+  Three.js included). Building the library from the repository is still described.
+- `publishConfig` (public access) and `prepublishOnly` (tests, then the library build) in package.json.
+
+### Fixed
+
+- `/app/`, `/lab/` and `/labo/` (with a final slash) redirect to the home page like `/app`, `/lab` and `/labo`; they
+  gave a 404.
+- The favicon, the app icons (`icon-192.png`, `icon-512.png`, `apple-touch-icon.png`) and the logo of the menu were
+  made before the shine spot of the Soft style was removed: they are rendered again from the current Soft style.
+- The Pixel images of the home page (`public/renders/*pixel3d*`) are rendered again with the centered ground shadow.
+- This changelog: the 0.2.0 line about `sideEffects` listed two files; it lists the four entries.
+- `SECURITY.md`: the supported version is the latest npm release.
+- The built files of the library carry the MIT notice again (`/*! Mochiz ... */` at the top of each file, plus the
+  Three.js notice in the standalone build): minification had removed it, while the docs ask you to ship it.
+
 ## [0.2.0] - 2026-11-11
 
 ### Changed (name)
@@ -26,8 +50,9 @@ First version ready for npm. Not published yet: the docs keep the install from t
   (`three/src/...`, one file per class), so your bundler keeps one copy and only the classes Mochis draws with.
 - **Standalone build** (`mochis/standalone`, `dist-lib/standalone/`): the same two entries with Three.js included. It is
   the folder the docs tell you to copy (plain HTML or `src/vendor/mochis`).
-- The package only ships `dist-lib/`, the READMEs, the license and this changelog; `sideEffects` names the two files
-  that declare the tag.
+- The package only ships `dist-lib/`, the READMEs, the license and this changelog. `sideEffects` names the two files
+  that declare the tag (`dist-lib/mochiz.js` and `dist-lib/standalone/mochiz.js`), the sources (`./src/**`, which the
+  website imports directly: without it, the build dropped the import that declares the tag) and CSS files.
 - The website moved to https://mochiz.vercel.app (canonical and `og:url` tags added).
 
 ### Removed (breaking)
@@ -384,6 +409,7 @@ fixed, and the measurement is in the commit that fixes it.
 - `StateDef.hint`: 15 hardcoded French strings nothing read, inside a type meant to
   become public.
 
-[unreleased]: https://github.com/robinnat/mochiz/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/robinnat/mochiz/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/robinnat/mochiz/releases/tag/v0.2.1
 [0.2.0]: https://github.com/robinnat/mochiz/releases/tag/v0.2.0
 [0.1.1]: https://github.com/robinnat/mochiz/commits/main

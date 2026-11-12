@@ -1,8 +1,8 @@
 /**
- * Site catalog: ENGLISH labels. Ids come from the package (`mochiz`, the library's public entry, as for any user);
+ * Site catalog: ENGLISH labels. Ids come from the package (`mochiz-world`, the library's public entry, as for any user);
  * the site defines no measurement.
  */
-import { ACCESSORIES, COLORS, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochiz/catalog'
+import { ACCESSORIES, COLORS, SLOTS, MOOD_IDS, REACTION_IDS, RENDER_STYLES, SHAPES, accessoriesInSlot, type Slot, type MoodId } from 'mochiz-world/catalog'
 
 /** English name of each catalog color. Typed by the catalog's ids: a new color without a name does not compile. */
 export const COLOR_LABEL: Record<(typeof COLORS)[number]['id'], string> & Record<string, string> = {

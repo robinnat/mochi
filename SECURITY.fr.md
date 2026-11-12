@@ -4,12 +4,13 @@
 
 ## Versions suivies
 
-Mochiz n'est pas encore publié sur npm et n'a pas de version publiée. Seul le dernier commit de
-la branche `main` est suivi. Les correctifs arrivent sur `main` ; les commits plus anciens ne sont pas
-corrigés.
+Mochiz est publié sur npm sous le nom `mochiz-world`. Seules la dernière version publiée sur npm et le dernier commit de la
+branche `main` sont suivis. Les correctifs arrivent sur `main`, puis dans une nouvelle version ; les versions plus
+anciennes ne sont pas corrigées.
 
 | Version | Suivie |
 | --- | --- |
+| Dernière version npm (0.2.x) | Oui |
 | `main` (dernière) | Oui |
 | Toute version plus ancienne | Non |
 

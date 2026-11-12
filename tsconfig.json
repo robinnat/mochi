@@ -18,8 +18,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "mochiz": ["./src/index.ts"],
-      "mochiz/catalog": ["./src/catalog.ts"],
+      "mochiz-world": ["./src/index.ts"],
+      "mochiz-world/catalog": ["./src/catalog.ts"],
       "@/*": ["./src/*"]
     }
   },

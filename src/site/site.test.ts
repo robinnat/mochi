@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { FIGURES } from './catalog'
 import { ACCESSORIES } from '@/bot/slots'
@@ -38,10 +38,18 @@ describe('site v10', () => {
     }
   })
 
-  it('npm install is never presented as available on the site', () => {
+  // `docs/drafts/PUBLISHED` exists once `mochiz-world` is on npm (see docs/drafts/npm-install.md)
+  const published = existsSync(new URL('../../docs/drafts/PUBLISHED', import.meta.url))
+
+  it('the site presents npm install only once the package is published', () => {
+    if (published) {
+      expect(read('DocsTeaser.ts')).toContain('npm install mochiz-world three')
+      expect(read('DocsTeaser.ts')).not.toMatch(/coming\s+soon/)
+      return
+    }
     for (const f of pages) {
       const t = read(f)
-      if (t.includes('npm install mochiz')) expect(t, f).toMatch(/coming soon/i)
+      if (t.includes('npm install mochiz-world')) expect(t, f).toMatch(/coming soon/i)
     }
     expect(read('DocsTeaser.ts')).toMatch(/coming\s+soon/)
   })
